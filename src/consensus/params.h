@@ -151,6 +151,10 @@ struct Params {
         } // no default case, so the compiler can warn about missing cases
         return std::numeric_limits<int>::max();
     }
+    int32_t nAuxpowChainId;
+    int nAuxpowStartHeight;
+    bool fStrictChainId;
+    int nLegacyBlocksBefore; // -1 for "always allow"
 };
 
 } // namespace Consensus
