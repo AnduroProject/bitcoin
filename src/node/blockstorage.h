@@ -139,10 +139,10 @@ class BlockManager
 {
     friend Chainstate;
     friend ChainstateManager;
-
+public:
+    const Consensus::Params& GetConsensus() const { return m_opts.chainparams.GetConsensus(); }
 private:
     const CChainParams& GetParams() const { return m_opts.chainparams; }
-    const Consensus::Params& GetConsensus() const { return m_opts.chainparams.GetConsensus(); }
     /**
      * Load the blocktree off disk and into memory. Populate certain metadata
      * per index entry (nStatus, nChainWork, nTimeMax, etc.) as well as peripheral
@@ -414,6 +414,7 @@ public:
     bool ReadBlock(CBlock& block, const FlatFilePos& pos, const std::optional<uint256>& expected_hash) const;
     bool ReadBlock(CBlock& block, const CBlockIndex& index) const;
     bool ReadRawBlock(std::vector<std::byte>& block, const FlatFilePos& pos) const;
+    bool ReadBlockHeader(CBlockHeader& block, const CBlockIndex& pindex) const;
 
     bool ReadBlockUndo(CBlockUndo& blockundo, const CBlockIndex& index) const;
 

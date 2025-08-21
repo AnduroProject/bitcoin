@@ -6,6 +6,7 @@
 #include <chainparams.h>
 #include <consensus/merkle.h>
 #include <pow.h>
+#include <primitives/pureheader.h>
 #include <streams.h>
 #include <test/util/random.h>
 #include <test/util/txmempool.h>
@@ -17,6 +18,12 @@
 const std::vector<CTransactionRef> empty_extra_txn;
 
 BOOST_FIXTURE_TEST_SUITE(blockencodings_tests, RegTestingSetup)
+
+static void SetBlockVersion(CPureBlockHeader& header, int32_t baseVersion) {
+  const int32_t nChainId = Params().GetConsensus().nAuxpowChainId;
+  header.SetBaseVersion(baseVersion, nChainId);
+}
+
 
 static CMutableTransaction BuildTransactionTestCase() {
     CMutableTransaction tx;
@@ -33,7 +40,7 @@ static CBlock BuildBlockTestCase(FastRandomContext& ctx) {
 
     block.vtx.resize(3);
     block.vtx[0] = MakeTransactionRef(tx);
-    block.nVersion = 42;
+    SetBlockVersion(block, 42);
     block.hashPrevBlock = ctx.rand256();
     block.nBits = 0x207fffff;
 
@@ -275,7 +282,7 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
     auto rand_ctx(FastRandomContext(uint256{42}));
     block.vtx.resize(1);
     block.vtx[0] = MakeTransactionRef(std::move(coinbase));
-    block.nVersion = 42;
+    SetBlockVersion(block, 42);
     block.hashPrevBlock = rand_ctx.rand256();
     block.nBits = 0x207fffff;
 

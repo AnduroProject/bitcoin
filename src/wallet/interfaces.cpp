@@ -8,6 +8,7 @@
 #include <consensus/amount.h>
 #include <interfaces/chain.h>
 #include <interfaces/handler.h>
+#include <node/context.h>
 #include <node/types.h>
 #include <policy/fees.h>
 #include <primitives/transaction.h>
@@ -16,6 +17,7 @@
 #include <support/allocators/secure.h>
 #include <sync.h>
 #include <uint256.h>
+#include <util/any.h>
 #include <util/check.h>
 #include <util/translation.h>
 #include <util/ui_change_type.h>
@@ -559,6 +561,7 @@ public:
             m_rpc_commands.emplace_back(command.category, command.name, [this, &command](const JSONRPCRequest& request, UniValue& result, bool last_handler) {
                 JSONRPCRequest wallet_request = request;
                 wallet_request.context = &m_context;
+                wallet_request.context2 = util::AnyPtr<node::NodeContext>(request.context);
                 return command.actor(wallet_request, result, last_handler);
             }, command.argNames, command.unique_id);
             m_rpc_handlers.emplace_back(m_context.chain->handleRpc(m_rpc_commands.back()));
