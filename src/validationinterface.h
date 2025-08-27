@@ -16,6 +16,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <coordinate/signed_block.h>
 
 namespace util {
 class TaskRunnerInterface;
