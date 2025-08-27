@@ -223,7 +223,7 @@ void UnserializeTransaction(TxType& tx, Stream& s, const TransactionSerParams& p
     const bool fAllowWitness = params.allow_witness;
 
     s >> tx.version;
-    if (tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
         s >> tx.assetType;
         s >> tx.precision;
         s >> tx.ticker;
@@ -271,7 +271,7 @@ void SerializeTransaction(const TxType& tx, Stream& s, const TransactionSerParam
     const bool fAllowWitness = params.allow_witness;
 
     s << tx.version;
-    if (tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
         s << tx.assetType;
         s << tx.precision;
         s << tx.ticker;

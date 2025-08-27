@@ -163,7 +163,7 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
 
 bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee, bool isConnectBlock)
 {
-    if(tx.nVersion == TRANSACTION_PEGIN_VERSION) {
+    if(tx.version == TRANSACTION_PEGIN_VERSION) {
         for (const CTxIn& txin : tx.vin) {
             const COutPoint &prevout = txin.prevout;
             if (inputs.isPeginSpent(prevout)) {
@@ -212,7 +212,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, 
                 assert(!coin.IsSpent());
             }
 
-            if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION || tx.nVersion == 2) {
+            if(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION || tx.version == 2) {
                 if(coin.IsBitAsset()) {
                     return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-txns-coins-not-exist");
                 }

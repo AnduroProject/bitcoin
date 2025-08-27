@@ -120,7 +120,7 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction &tx, int nHeight, const
     bool fCoinbase = tx.IsCoinBase();
     const Txid& txid = tx.GetHash();
 
-    if(tx.nVersion == TRANSACTION_PEGIN_VERSION) {
+    if(tx.version == TRANSACTION_PEGIN_VERSION) {
         const std::vector<std::vector<unsigned char> >& stack = tx.vin[0].scriptWitness.stack;
         CDataStream stream(stack[2], SER_NETWORK, PROTOCOL_VERSION);
         CAmount value;
@@ -132,7 +132,7 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction &tx, int nHeight, const
             
         // One of the input coins is a BitAsset, coins adding up to the asset
         // input amount will be marked as BitAssets
-        if(tx.nVersion == TRANSACTION_PRECONF_VERSION && !tx.IsCoinBase()) {
+        if(tx.version == TRANSACTION_PRECONF_VERSION && !tx.IsCoinBase()) {
             bool overwrite = check_for_overwrite ? cache.HaveCoin(COutPoint(txid, 0)) : fCoinbase;
             CTxOut refund(preconfRefund, tx.vout[0].scriptPubKey);
             cache.AddCoin(COutPoint(txid, 0), Coin(refund, nHeight, fCoinbase, false, false, true, false, 0), overwrite);
@@ -140,13 +140,13 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction &tx, int nHeight, const
 
         // Label BitAsset outputs until we account for all BitAsset input
         CAmount amountAssetOut = CAmount(0);
-        size_t startValue = tx.nVersion == TRANSACTION_PRECONF_VERSION ? 1 : 0;
+        size_t startValue = tx.version == TRANSACTION_PRECONF_VERSION ? 1 : 0;
         for (size_t i = startValue; i < tx.vout.size(); ++i) {
             bool overwrite = check_for_overwrite ? cache.HaveCoin(COutPoint(txid, i)) : fCoinbase;
             bool fAsset = amountAssetIn > amountAssetOut;
             bool fControl = nControlN >= 0 && (int)i == nControlN;
             uint32_t nID = nNewAssetID ? nNewAssetID : nAssetID;
-            cache.AddCoin(COutPoint(txid, i), Coin(tx.vout[i], nHeight, fCoinbase, fAsset, fControl, tx.nVersion == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
+            cache.AddCoin(COutPoint(txid, i), Coin(tx.vout[i], nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
             if (fAsset)
                 amountAssetOut += tx.vout[i].nValue;
         }
@@ -157,17 +157,17 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction &tx, int nHeight, const
         // 0: controller output
         // 1: genesis output
         // The rest are normal outputs
-        bool fNewAsset = tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION;
+        bool fNewAsset = tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION;
         for (size_t i = 0; i < tx.vout.size(); ++i) {
             bool fAsset = fNewAsset && i < 2;
             bool fControl = fNewAsset && i == 0;
             uint32_t nID = nNewAssetID ? nNewAssetID : nAssetID;
             bool overwrite = check_for_overwrite ? cache.HaveCoin(COutPoint(txid, i)) : fCoinbase;
-            if(tx.nVersion == TRANSACTION_PRECONF_VERSION && i == 0 && !tx.IsCoinBase()) {
+            if(tx.version == TRANSACTION_PRECONF_VERSION && i == 0 && !tx.IsCoinBase()) {
                 CTxOut refund(preconfRefund, tx.vout[i].scriptPubKey);
-                cache.AddCoin(COutPoint(txid, i), Coin(refund, nHeight, fCoinbase, fAsset, fControl, tx.nVersion == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
+                cache.AddCoin(COutPoint(txid, i), Coin(refund, nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
             } else {
-                cache.AddCoin(COutPoint(txid, i), Coin(tx.vout[i], nHeight, fCoinbase, fAsset, fControl, tx.nVersion == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
+                cache.AddCoin(COutPoint(txid, i), Coin(tx.vout[i], nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
             }
         }
     }

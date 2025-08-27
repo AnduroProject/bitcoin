@@ -98,8 +98,8 @@ bool IsStandard(const CScript& scriptPubKey, TxoutType& whichType)
 
 bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_datacarrier_bytes, bool permit_bare_multisig, const CFeeRate& dust_relay_fee, std::string& reason)
 {
-    if (tx.nVersion != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.nVersion != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.nVersion != TRANSACTION_PRECONF_VERSION && tx.nVersion != TRANSACTION_PEGIN_VERSION) {
-        if (tx.nVersion > TX_MAX_STANDARD_VERSION || tx.nVersion < 1) {
+    if (tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.version != TRANSACTION_PRECONF_VERSION && tx.version != TRANSACTION_PEGIN_VERSION) {
+        if (tx.version > TX_MAX_STANDARD_VERSION || tx.version < 1) {
             reason = "version";
             return false;
         }
@@ -110,7 +110,7 @@ bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_dat
     // almost as much to process as they cost the sender in fees, because
     // computing signature hashes is O(ninputs*txsize). Limiting transactions
     // to MAX_STANDARD_TX_WEIGHT mitigates CPU exhaustion attacks.
-   if (tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+   if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
         unsigned int sz = GetTransactionWeight(tx);
         if (sz > MAX_STANDARD_TX_WEIGHT_ASSET) {
             reason = "tx-size";
@@ -167,7 +167,7 @@ bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_dat
 
     // Only MAX_DUST_OUTPUTS_PER_TX dust is permitted(on otherwise valid ephemeral dust)
     if (GetDust(tx, dust_relay_fee).size() > MAX_DUST_OUTPUTS_PER_TX) {
-        if (tx.nVersion != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.nVersion != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.nVersion != TRANSACTION_PRECONF_VERSION) {
+        if (tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.version != TRANSACTION_PRECONF_VERSION) {
             reason = "dust";
             return false;
         }
@@ -177,10 +177,10 @@ bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_dat
 }
 
 bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& mapInputs) {
-    if(tx.nVersion == TRANSACTION_PEGIN_VERSION) {
+    if(tx.version == TRANSACTION_PEGIN_VERSION) {
         return true;
     }
-    LogPrintf("transaction version is %i \n", tx.nVersion);
+    LogPrintf("transaction version is %i \n", tx.version);
     CAmount amountAssetInOut = CAmount(0); 
     uint32_t currentAssetID = 0;
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
@@ -209,7 +209,7 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
         }
 
 
-        if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.nVersion == TRANSACTION_PRECONF_VERSION ) {
+        if(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION ) {
             // check first input is asset
             if(fBitAssetControl) {
                 LogPrintf("Asset controller value not accepted \n");
@@ -232,24 +232,24 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
     
         }
 
-        if (tx.nVersion == 2 && fBitAsset) {
+        if (tx.version == 2 && fBitAsset) {
             LogPrintf("Asset inputs not accepted in standard transaction \n");
             return false;
         }
     }
 
-    if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && amountAssetInOut == 0) {
+    if(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && amountAssetInOut == 0) {
         LogPrintf("Asset inputs missing \n");
         return false;
     }
 
-    if(amountAssetInOut > 0 && !(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.nVersion == TRANSACTION_PRECONF_VERSION)) {
+    if(amountAssetInOut > 0 && !(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION)) {
         LogPrintf("Invalid transaction hold asset inptu \n");
     }
     
     if(amountAssetInOut > 0) {
         CAmount amountAssetOut = CAmount(0); 
-        size_t startValue = tx.nVersion == TRANSACTION_PRECONF_VERSION ? 1 : 0;
+        size_t startValue = tx.version == TRANSACTION_PRECONF_VERSION ? 1 : 0;
         for (unsigned int i = startValue; i < tx.vout.size(); i++) {
             if(amountAssetOut == amountAssetInOut) {
                 break;

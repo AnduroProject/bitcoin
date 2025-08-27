@@ -816,7 +816,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     TxValidationState& state = ws.m_state;
 
     int coordinateOutputs = 0;
-    if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+    if(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
 
         if (tx.vout.size() < 2) {
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "Invalid CoordinateAsset creation - vout too small");
@@ -831,8 +831,8 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "Invalid CoordinateAsset Asset Precision");
         }
         coordinateOutputs = 2;
-    } else if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.nVersion == TRANSACTION_PRECONF_VERSION) {
-        if(tx.nVersion == TRANSACTION_PRECONF_VERSION) {
+    } else if(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION) {
+        if(tx.version == TRANSACTION_PRECONF_VERSION) {
             if (tx.vout.size() <= 1) {
                 return state.Invalid(TxValidationResult::TX_CONSENSUS, "Preconf transaction atleast have 2 output");
             }
@@ -840,7 +840,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         coordinateOutputs = getAssetOutputCount(tx,m_active_chainstate);
     } 
 
-    if((m_pool.is_preconf && tx.nVersion != TRANSACTION_PRECONF_VERSION) || (!m_pool.is_preconf && tx.nVersion == TRANSACTION_PRECONF_VERSION)) {
+    if((m_pool.is_preconf && tx.version != TRANSACTION_PRECONF_VERSION) || (!m_pool.is_preconf && tx.version == TRANSACTION_PRECONF_VERSION)) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "transaction version not supported");
     }
 
@@ -2282,7 +2282,7 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txund
     nControlNOut = -1; // Track asset controller outputs
     nAssetIDOut = 0; // Track asset ID
     // mark inputs spent
-    if (!tx.IsCoinBase() && tx.nVersion != TRANSACTION_PEGIN_VERSION) {
+    if (!tx.IsCoinBase() && tx.version != TRANSACTION_PEGIN_VERSION) {
         txundo.vprevout.reserve(tx.vin.size());
         for (size_t x = 0; x < tx.vin.size(); x++) {
             const CTxIn &txin = tx.vin[x];
@@ -2293,7 +2293,7 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txund
             uint32_t nAssetID = 0;
             bool is_spent = inputs.SpendCoin(txin.prevout, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &txundo.vprevout.back());
             
-            if(tx.nVersion == TRANSACTION_PRECONF_VERSION && !is_spent) {
+            if(tx.version == TRANSACTION_PRECONF_VERSION && !is_spent) {
                return;
             } else {
                assert(is_spent);
@@ -2882,7 +2882,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     for (unsigned int i = 0; i < block.pegins.size(); i++)
     {
         const CTransaction &tx = *(block.pegins[i]);
-        if (tx.nVersion != TRANSACTION_PEGIN_VERSION) {
+        if (tx.version != TRANSACTION_PEGIN_VERSION) {
             return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid pegin transaction version");
         }
         CAmount txfee = 0;
@@ -2924,7 +2924,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
         if (!tx.IsCoinBase())
         {
-            if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && !m_chainman.ActiveChainstate().isAssetPrune) {
+            if(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && !m_chainman.ActiveChainstate().isAssetPrune) {
                 if(tx.payloadData.compare("") == 0 || tx.payload.ToString().compare(prepareMessageHash(tx.payloadData).ToString()) != 0) {
                     return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): transaction payload missing");
                 }
@@ -3008,7 +3008,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
         // New asset created - set asset ID # and update CoordinateAssetDB
         uint32_t nNewAssetID = 0;
-        if (tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
             if (tx.vout.size() < 2) {
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - vout too small");
             }
@@ -3086,7 +3086,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             nNewAssetID = asset.nID;
         }
 
-        if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        if(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
             removeMempoolAsset(tx);
         }
 
@@ -3098,7 +3098,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         int nControlN = -1;
         uint32_t nAssetID = 0;
         CAmount preconfCurrentFee = CAmount(0);
-        UpdateCoins(tx, view, (i == 0 || tx.nVersion == TRANSACTION_PEGIN_VERSION) ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight, amountAssetIn, nControlN, nAssetID, nNewAssetID, preconfCurrentFee);
+        UpdateCoins(tx, view, (i == 0 || tx.version == TRANSACTION_PEGIN_VERSION) ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight, amountAssetIn, nControlN, nAssetID, nNewAssetID, preconfCurrentFee);
     }
     const auto time_3{SteadyClock::now()};
     m_chainman.time_connect += time_3 - time_2;
