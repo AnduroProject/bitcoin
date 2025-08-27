@@ -158,6 +158,16 @@ static std::vector<RPCArg> CreateTxDoc()
         {"locktime", RPCArg::Type::NUM, RPCArg::Default{0}, "Raw locktime. Non-0 value also locktime-activates inputs"},
         {"replaceable", RPCArg::Type::BOOL, RPCArg::Default{true}, "Marks this transaction as BIP125-replaceable.\n"
                 "Allows this transaction to be replaced by a transaction with higher fees. If provided, it is an error if explicit sequence numbers are incompatible."},
+        {"assetInfo", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "Additional parameters for asset creation",
+            {
+                {"assettype", RPCArg::Type::NUM, RPCArg::Optional::NO, "The asset type"},
+                {"precision", RPCArg::Type::NUM, RPCArg::Optional::NO, "Precision number for token"},
+                {"ticker", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker symbol"},
+                {"headline", RPCArg::Type::STR, RPCArg::Optional::NO, "The headline"},
+                {"payload", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The payload"},
+                {"payloaddata", RPCArg::Type::STR, RPCArg::Optional::NO, "The payload data"}
+            }
+        }
     };
 }
 
@@ -467,7 +477,18 @@ static RPCHelpMan createrawtransaction()
         rbf = request.params[3].get_bool();
     }
     CMutableTransaction rawTx = ConstructTransaction(request.params[0], request.params[1], request.params[2], rbf);
-
+    if (!request.params[4].isNull()) {
+        const UniValue& assetParams = request.params[4];
+        if (assetParams.isObject()) {
+            rawTx.nVersion = 10;
+            rawTx.assetType = assetParams["assettype"].getInt<int>();
+            rawTx.precision = assetParams["precision"].getInt<int>();
+            rawTx.ticker = assetParams["ticker"].get_str();
+            rawTx.headline = assetParams["headline"].get_str();
+            rawTx.payload = uint256S(assetParams["payload"].get_str());
+            rawTx.payloadData = assetParams["payloaddata"].get_str();
+        }
+    }
     return EncodeHexTx(CTransaction(rawTx));
 },
     };
