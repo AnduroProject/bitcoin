@@ -7,6 +7,7 @@
 #define BITCOIN_CONSENSUS_AMOUNT_H
 
 #include <cstdint>
+#include <limits>
 
 /** Amount in satoshis (Can be negative) */
 typedef int64_t CAmount;
