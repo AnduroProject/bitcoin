@@ -217,6 +217,15 @@ void ValidationSignals::BlockConnected(ChainstateRole role, const std::shared_pt
                           pindex->nHeight);
 }
 
+void CMainSignals::SignBlockConnected(const SignedBlock &pblock) {
+    auto event = [pblock, this] {
+        m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.SignedBlockConnected(pblock); });
+    };
+    ENQUEUE_AND_LOG_EVENT(event, "%s:  block hash=%s signed block height=%d", __func__,
+                          pblock.GetHash().ToString(),
+                          pblock.nHeight);
+}
+
 void ValidationSignals::MempoolTransactionsRemovedForBlock(const std::vector<RemovedMempoolTransactionInfo>& txs_removed_for_block, unsigned int nBlockHeight)
 {
     auto event = [txs_removed_for_block, nBlockHeight, this] {

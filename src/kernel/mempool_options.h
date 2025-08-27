@@ -55,7 +55,7 @@ struct MemPoolOptions {
     bool require_standard{true};
     bool persist_v1_dat{DEFAULT_PERSIST_V1_DAT};
     MemPoolLimits limits{};
-
+    bool is_preconf{false};
     ValidationSignals* signals{nullptr};
 };
 } // namespace kernel

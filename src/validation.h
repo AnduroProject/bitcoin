@@ -265,7 +265,7 @@ struct PackageMempoolAcceptResult
  * @returns a MempoolAcceptResult indicating whether the transaction was accepted/rejected with reason.
  */
 MempoolAcceptResult AcceptToMemoryPool(Chainstate& active_chainstate, const CTransactionRef& tx,
-                                       int64_t accept_time, bool bypass_limits, bool test_accept)
+                                       int64_t accept_time, bool bypass_limits, bool test_accept, bool is_preconf=false)
     EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /**
@@ -539,6 +539,10 @@ protected:
     //! Only the active chainstate has a mempool.
     CTxMemPool* m_mempool;
 
+    //! Optional preconf mempool that is kept in sync with the chain.
+    //! Only the active chainstate has a preconf mempool.
+    CTxMemPool* m_preconf_mempool;
+
     //! Manages the UTXO set, which is a reflection of the contents of `m_chain`.
     std::unique_ptr<CoinsViews> m_coins_views;
 
@@ -559,6 +563,11 @@ protected:
     mutable const CBlockIndex* m_cached_snapshot_base GUARDED_BY(::cs_main){nullptr};
 
 public:
+
+    std::unique_ptr<CoordinateAssetDB> passettree;
+
+    std::unique_ptr<SignedBlocksDB> psignedblocktree;
+
     //! Reference to a BlockManager instance which itself is shared across all
     //! Chainstate instances.
     node::BlockManager& m_blockman;
@@ -570,6 +579,7 @@ public:
 
     explicit Chainstate(
         CTxMemPool* mempool,
+        CTxMemPool* preconf_mempool,
         node::BlockManager& blockman,
         ChainstateManager& chainman,
         std::optional<uint256> from_snapshot_blockhash = std::nullopt);
@@ -736,6 +746,7 @@ public:
     // Apply the effects of a block disconnection on the UTXO set.
     bool DisconnectTip(BlockValidationState& state, DisconnectedBlockTransactions* disconnectpool) EXCLUSIVE_LOCKS_REQUIRED(cs_main, m_mempool->cs);
 
+    bool ConnectSignedBlock(const SignedBlock& block) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
     // Manual block validity manipulation:
     /** Mark a block as precious and reorganize.
      *
@@ -1077,7 +1088,7 @@ public:
     //!
     //! @param[in] mempool              The mempool to pass to the chainstate
     //                                  constructor
-    Chainstate& InitializeChainstate(CTxMemPool* mempool) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+    Chainstate& InitializeChainstate(CTxMemPool* mempool, CTxMemPool* preconfmempool) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 
     //! Get all chainstates currently being used.
     std::vector<Chainstate*> GetAll();

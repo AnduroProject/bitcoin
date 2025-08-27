@@ -201,6 +201,10 @@ private:
         const Chainstate& chain,
         ChainstateManager& chainman);
 
+    void FindFilesToAssetPrune(
+        const Chainstate& chain,
+        ChainstateManager& chainman);
+
     RecursiveMutex cs_LastBlockFile;
     std::vector<CBlockFileInfo> m_blockfile_info;
 

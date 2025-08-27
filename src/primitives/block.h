@@ -12,6 +12,7 @@
 #include <serialize.h>
 #include <uint256.h>
 #include <util/time.h>
+#include <coordinate/signed_block.h>
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -65,6 +66,11 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransactionRef> vtx;
+    std::vector<CTransactionRef> pegins;
+    std::vector<SignedBlock> preconfBlock;
+    ReconciliationBlock reconciliationBlock;
+    std::string currentKeys;
+    int32_t currentIndex;
 
     // Memory-only flags for caching expensive checks
     mutable bool fChecked;                            // CheckBlock()
@@ -79,12 +85,21 @@ public:
     CBlock(const CBlockHeader &header)
     {
         SetNull();
+        vtx.clear();
+        pegins.clear();
+        preconfBlock.clear();
+        reconciliationBlock.SetNull();
         *(static_cast<CBlockHeader*>(this)) = header;
     }
 
     SERIALIZE_METHODS(CBlock, obj)
     {
         READWRITE(AsBase<CBlockHeader>(obj), obj.vtx);
+        READWRITE(obj.pegins);
+        READWRITE(obj.preconfBlock);
+        READWRITE(obj.reconciliationBlock);
+        READWRITE(obj.currentKeys);
+        READWRITE(obj.currentIndex);
     }
 
     void SetNull()
@@ -94,6 +109,8 @@ public:
         fChecked = false;
         m_checked_witness_commitment = false;
         m_checked_merkle_root = false;
+        currentKeys = "";
+        currentIndex = 0;
     }
 
     CBlockHeader GetBlockHeader() const

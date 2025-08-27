@@ -203,10 +203,51 @@ UniValue blockheaderToJSON(const BlockManager& blockman, const CBlockIndex& tip,
 UniValue blockToJSON(BlockManager& blockman, const CBlock& block, const CBlockIndex& tip, const CBlockIndex& blockindex, TxVerbosity verbosity, const uint256 pow_limit)
 {
     UniValue result = blockheaderToJSON(blockman, tip, blockindex, pow_limit);
-
+    result.pushKV("currentkeys", block.currentKeys.empty() ? "" : block.currentKeys);
+    result.pushKV("currentindex", block.currentIndex);
     result.pushKV("strippedsize", (int)::GetSerializeSize(TX_NO_WITNESS(block)));
     result.pushKV("size", (int)::GetSerializeSize(TX_WITH_WITNESS(block)));
     result.pushKV("weight", (int)::GetBlockWeight(block));
+
+    UniValue preconfblocks(UniValue::VARR);
+    for (const SignedBlock& signedBlock : block.preconfBlock) {
+        UniValue result(UniValue::VOBJ);
+        result.pushKV("fee", signedBlock.currentFee);
+        result.pushKV("blockindex", (uint64_t)signedBlock.blockIndex);
+        result.pushKV("height", (uint64_t)signedBlock.nHeight);
+        result.pushKV("time", signedBlock.nTime);
+        result.pushKV("previousblock", signedBlock.hashPrevSignedBlock.ToString());
+        result.pushKV("merkleroot", signedBlock.hashMerkleRoot.ToString());
+        result.pushKV("hash", signedBlock.GetHash().ToString());
+        UniValue txs(UniValue::VARR);
+        for (size_t i = 0; i < signedBlock.vtx.size(); ++i) {
+            const CTransactionRef& tx = signedBlock.vtx.at(i);
+            UniValue objTx(UniValue::VOBJ);
+            TxToUniv(*tx, /*block_hash=*/uint256(), /*entry=*/objTx, /*include_hex=*/true, 1);
+            txs.push_back(objTx);
+        }
+        result.pushKV("tx", txs);
+        preconfblocks.push_back(result);
+    }
+    result.pushKV("preconfblocks", preconfblocks);
+
+    // invalid tx info
+    UniValue invalidTxs(UniValue::VARR);
+    for (const ReconciliationInvalidTx& rTx : block.reconciliationBlock.tx) {
+        invalidTxs.push_back(rTx.txHash.ToString());
+    }
+    result.pushKV("invalidtxs", invalidTxs);
+    result.pushKV("reconcileMerkleRoot", block.reconciliationBlock.reconcileMerkleRoot.ToString());
+
+    UniValue pegins(UniValue::VARR);
+    for (size_t i = 0; i < block.pegins.size(); ++i) {
+        const CTransactionRef& tx =  block.pegins.at(i);
+        UniValue objTx(UniValue::VOBJ);
+        TxToUniv(*tx, /*block_hash=*/uint256(), /*entry=*/objTx, /*include_hex=*/true, 1);
+        pegins.push_back(objTx);
+    }
+    result.pushKV("pegins", pegins);
+
     UniValue txs(UniValue::VARR);
     txs.reserve(block.vtx.size());
 

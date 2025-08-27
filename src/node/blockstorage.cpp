@@ -376,6 +376,57 @@ void BlockManager::FindFilesToPrune(
              min_block_to_prune, last_block_can_prune, count);
 }
 
+void BlockManager::FindFilesToAssetPrune(
+    const Chainstate& chain,
+    ChainstateManager& chainman)
+{
+    LOCK2(cs_main, cs_LastBlockFile);
+    LogPrintf("asset prune start================= \n");
+    // Distribute our -prune budget over all chainstates.
+    if (chain.m_chain.Height() < 0) {
+        return;
+    }
+
+    if (static_cast<uint64_t>(chain.m_chain.Height()) <= chainman.GetParams().AssetPruneAfterHeight()) {
+        return;
+    }
+
+    uint32_t pruneHeight = static_cast<uint32_t>(chain.m_chain.Height()) - static_cast<uint32_t>(chainman.GetParams().AssetPruneAfterHeight());
+
+    uint32_t lastAsssetPrune = 0;
+    chain.passettree->GetLastAssetPruneHeight(lastAsssetPrune);
+
+    if (pruneHeight <= lastAsssetPrune) {
+        return;
+    }
+
+    CChain& active_chain = chainman.ActiveChain();
+    while (pruneHeight > lastAsssetPrune)
+    {
+        lastAsssetPrune = lastAsssetPrune + 1;
+        CBlock block;
+        bool isRequireUpdate = false;
+        if (!chainman.m_blockman.ReadBlockFromDisk(block, *CHECK_NONFATAL(active_chain[lastAsssetPrune]))) {
+                LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[lastAsssetPrune])->GetBlockHash().ToString());
+        }
+        const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(block.GetHash());
+        for (size_t i = 0; i < block.vtx.size(); i++) {
+            if(block.vtx[i]->nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && block.vtx[i]->assetType == 2) {
+                block.vtx[i]->payloadData = "";
+                isRequireUpdate = true;
+            }
+        }
+        if(isRequireUpdate) {
+            FlatFilePos block_pos{WITH_LOCK(cs_main, return pindex->GetBlockPos())};
+            if (!UpdateBlockToDisk(block, block_pos)) {
+                LogPrintf("asset prune block overwrite fails \n");
+            } 
+            chain.passettree->WriteAssetMinedBlock(block.GetHash());
+        }
+    }
+      chain.passettree->WriteLastAssetPruneHeight(lastAsssetPrune);
+}
+
 void BlockManager::UpdatePruneLock(const std::string& name, const PruneLockInfo& lock_info) {
     AssertLockHeld(::cs_main);
     m_prune_locks[name] = lock_info;

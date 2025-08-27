@@ -30,8 +30,10 @@ static constexpr unsigned int DEFAULT_BLOCK_RESERVED_WEIGHT{8000};
 static constexpr unsigned int MINIMUM_BLOCK_RESERVED_WEIGHT{2000};
 /** Default for -blockmintxfee, which sets the minimum feerate for a transaction in blocks created by mining code **/
 static constexpr unsigned int DEFAULT_BLOCK_MIN_TX_FEE{1000};
+static constexpr unsigned int DEFAULT_SIGNED_BLOCK_WEIGHT{1024000};
 /** The maximum weight for transactions we're willing to relay/mine */
 static constexpr int32_t MAX_STANDARD_TX_WEIGHT{400000};
+static constexpr unsigned int MAX_STANDARD_TX_WEIGHT_ASSET{4000000};
 /** The minimum non-witness size for transactions we're willing to relay/mine: one larger than 64  */
 static constexpr unsigned int MIN_STANDARD_TX_NONWITNESS_SIZE{65};
 /** Maximum number of signature check operations in an IsStandard() P2SH script */
@@ -181,5 +183,7 @@ static inline int64_t GetVirtualTransactionInputSize(const CTxIn& tx)
 {
     return GetVirtualTransactionInputSize(tx, 0, 0);
 }
+
+bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& mapInputs);
 
 #endif // BITCOIN_POLICY_POLICY_H

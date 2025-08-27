@@ -181,6 +181,7 @@ public:
 struct descendant_score {};
 struct entry_time {};
 struct ancestor_score {};
+struct expiry_height {};
 struct index_by_wtxid {};
 
 /**
@@ -327,6 +328,12 @@ public:
                 boost::multi_index::identity<CTxMemPoolEntry>,
                 CompareTxMemPoolEntryByEntryTime
             >,
+           // sorted by preconf expire height
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::tag<expiry_height>,
+                boost::multi_index::identity<CTxMemPoolEntry>,
+                CompareTxMemPoolEntryByExpiryHeight
+            >,
             // sorted by fee rate with ancestors
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<ancestor_score>,
@@ -415,7 +422,7 @@ private:
 public:
     indirectmap<COutPoint, const CTransaction*> mapNextTx GUARDED_BY(cs);
     std::map<uint256, CAmount> mapDeltas GUARDED_BY(cs);
-
+    const bool is_preconf;
     using Options = kernel::MemPoolOptions;
 
     const Options m_opts;
@@ -447,7 +454,7 @@ public:
     void removeForReorg(CChain& chain, std::function<bool(txiter)> filter_final_and_mature) EXCLUSIVE_LOCKS_REQUIRED(cs, cs_main);
     void removeConflicts(const CTransaction& tx) EXCLUSIVE_LOCKS_REQUIRED(cs);
     void removeForBlock(const std::vector<CTransactionRef>& vtx, unsigned int nBlockHeight) EXCLUSIVE_LOCKS_REQUIRED(cs);
-
+    void removeForPreconfBlock(const std::vector<CTransactionRef>& vtx) EXCLUSIVE_LOCKS_REQUIRED(cs);
     bool CompareDepthAndScore(const Wtxid& hasha, const Wtxid& hashb) const;
     bool isSpent(const COutPoint& outpoint) const;
     unsigned int GetTransactionsUpdated() const;
@@ -588,6 +595,10 @@ public:
 
     /** Expire all transaction (and their dependencies) in the mempool older than time. Return the number of removed transactions. */
     int Expire(std::chrono::seconds time) EXCLUSIVE_LOCKS_REQUIRED(cs);
+
+     /** Expire all preconf transaction (and their dependencies) in the mempool older than time. Return the number of removed transactions. */
+    int PreconfExpire(uint64_t height) EXCLUSIVE_LOCKS_REQUIRED(cs);
+    
 
     /**
      * Calculate the ancestor and descendant count for the given transaction.

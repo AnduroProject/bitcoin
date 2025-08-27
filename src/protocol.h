@@ -115,6 +115,9 @@ inline constexpr const char* GETHEADERS{"getheaders"};
  * The tx message transmits a single transaction.
  */
 inline constexpr const char* TX{"tx"};
+
+inline constexpr const char* PRETX{"pretx"};
+
 /**
  * The headers message sends one or more block headers to a node which
  * previously requested certain headers with a getheaders message.
@@ -137,6 +140,14 @@ inline constexpr const char* GETADDR{"getaddr"};
  *   Only available with service bit NODE_BLOOM, see also BIP111.
  */
 inline constexpr const char* MEMPOOL{"mempool"};
+
+inline constexpr  const char* PREBLOCKSIGNREQUEST{"presignreq"};
+
+inline constexpr  const char* PREBLOCKSIGNREPONSE{"presignres"};
+
+inline constexpr  const char* PRECONFSIGNATUREPUSH{"preconfpush"};
+
+inline constexpr  const char* PRECONFFINALIZEPUSH{"signedpush"};
 /**
  * The ping message is sent periodically to help confirm that the receiving
  * peer is still connected.

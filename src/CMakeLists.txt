@@ -112,6 +112,9 @@ add_library(bitcoin_consensus STATIC EXCLUDE_FROM_ALL
   primitives/block.cpp
   primitives/pureheader.cpp
   primitives/transaction.cpp
+  primitives/bitcoin/block.cpp
+  primitives/bitcoin/transaction.cpp
+  primitives/bitcoin/merkleblock.cpp
   pubkey.cpp
   script/interpreter.cpp
   script/script.cpp
@@ -136,6 +139,15 @@ add_library(bitcoin_common STATIC EXCLUDE_FROM_ALL
   auxpow.cpp
   base58.cpp
   bech32.cpp
+  coordinate/anduro_deposit.cpp
+  coordinate/anduro_validator.cpp
+  coordinate/coordinate_assets.cpp
+  coordinate/coordinate_mempool_entry.cpp
+  coordinate/coordinate_pegin.cpp
+  coordinate/coordinate_preconf.cpp
+  coordinate/invalid_tx.cpp
+  coordinate/signed_txindex.cpp
+  coordinate/coordinate_address.cpp
   chain.cpp
   chainparams.cpp
   chainparamsbase.cpp
@@ -294,6 +306,8 @@ add_library(bitcoin_node STATIC EXCLUDE_FROM_ALL
   policy/truc_policy.cpp
   rest.cpp
   rpc/auxpow_miner.cpp
+  rpc/coordinaterpc.cpp
+  rpc/preconf_mempool.cpp
   rpc/blockchain.cpp
   rpc/external_signer.cpp
   rpc/fees.cpp

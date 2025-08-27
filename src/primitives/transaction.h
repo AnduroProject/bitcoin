@@ -24,6 +24,11 @@
 #include <utility>
 #include <vector>
 
+static const int TRANSACTION_PEGIN_VERSION = 12;
+static const int TRANSACTION_PRECONF_VERSION = 9;
+static const int TRANSACTION_COORDINATE_ASSET_CREATE_VERSION = 10;
+static const int TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION = 11;
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
 {
@@ -218,6 +223,14 @@ void UnserializeTransaction(TxType& tx, Stream& s, const TransactionSerParams& p
     const bool fAllowWitness = params.allow_witness;
 
     s >> tx.version;
+    if (tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        s >> tx.assetType;
+        s >> tx.precision;
+        s >> tx.ticker;
+        s >> tx.headline;
+        s >> tx.payload;
+        s >> tx.payloadData;
+    }
     unsigned char flags = 0;
     tx.vin.clear();
     tx.vout.clear();
@@ -258,6 +271,14 @@ void SerializeTransaction(const TxType& tx, Stream& s, const TransactionSerParam
     const bool fAllowWitness = params.allow_witness;
 
     s << tx.version;
+    if (tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        s << tx.assetType;
+        s << tx.precision;
+        s << tx.ticker;
+        s << tx.headline;
+        s << tx.payload;
+        s << tx.payloadData;
+    }
     unsigned char flags = 0;
     // Consistency check
     if (fAllowWitness) {
@@ -306,6 +327,19 @@ public:
     const std::vector<CTxIn> vin;
     const std::vector<CTxOut> vout;
     const uint32_t version;
+    // asset Type
+    // 0 - Fungible
+    // 1 - Non-Fungible
+    // 2 - Non-Fungible collection
+    const int32_t assetType;
+    // precision
+    // 0 - if asset type is 1 and 2
+    // 1 to 8 for asset type 0
+    const int32_t precision;
+    const std::string ticker;
+    const std::string headline;
+    const uint256 payload;
+    mutable std::string payloadData;
     const uint32_t nLockTime;
 
 private:
@@ -380,6 +414,12 @@ struct CMutableTransaction
     std::vector<CTxOut> vout;
     uint32_t version;
     uint32_t nLockTime;
+    int32_t assetType;
+    int32_t precision;
+    std::string ticker;
+    std::string headline;
+    uint256 payload;
+    mutable std::string payloadData;
 
     explicit CMutableTransaction();
     explicit CMutableTransaction(const CTransaction& tx);

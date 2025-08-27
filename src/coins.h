@@ -41,21 +41,64 @@ public:
     //! at which height this containing transaction was included in the active block chain
     uint32_t nHeight : 31;
 
+    // TODO instead of tracking this, we could just check if the asset ID
+    // is > 0 (the default bitcoin asset reserves the first ID)
+    //! Is this a BitAsset?
+    bool fBitAsset;
+
+    //! Is this a BitAsset controller?
+    bool fBitAssetControl;
+
+    //! Is this a BitAsset controller?
+    bool isPreconf;
+
+    //! Is this a pegin transaction
+    bool isPegin;
+
+    uint32_t nAssetID;
+
+
     //! construct a Coin from a CTxOut and height/coinbase information.
-    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn) {}
-    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn) : out(outIn), fCoinBase(fCoinBaseIn),nHeight(nHeightIn) {}
+    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn, bool fBitAssetControlIn, bool isPreconfIn, bool isPeginIn, uint32_t nAssetIDIn) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
+    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn, bool fBitAssetControlIn, bool isPreconfIn, bool isPeginIn, uint32_t nAssetIDIn) : out(outIn), fCoinBase(fCoinBaseIn),nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
 
     void Clear() {
         out.SetNull();
         fCoinBase = false;
         nHeight = 0;
+        fBitAsset = false;
+        fBitAssetControl = false;
+        isPreconf = false;
+        isPegin = false;
+        nAssetID = 0;
     }
 
     //! empty constructor
-    Coin() : fCoinBase(false), nHeight(0) { }
+    Coin() : fCoinBase(false), nHeight(0), fBitAsset(false), fBitAssetControl(false), isPreconf(false), isPegin(false), nAssetID(0)  { }
+
 
     bool IsCoinBase() const {
         return fCoinBase;
+    }
+
+    bool IsBitAsset() const {
+        return fBitAsset;
+    }
+
+    bool IsBitAssetController() const {
+        return fBitAssetControl;
+    }
+
+    bool isPreconfCoin() const {
+        return isPreconf;
+    }
+
+    bool isPeginCoin() const {
+        return isPegin;
+    }
+
+    uint32_t GetAssetID() const {
+        return nAssetID;
     }
 
     template<typename Stream>
@@ -64,6 +107,11 @@ public:
         uint32_t code = nHeight * uint32_t{2} + fCoinBase;
         ::Serialize(s, VARINT(code));
         ::Serialize(s, Using<TxOutCompression>(out));
+        ::Serialize(s, fBitAsset);
+        ::Serialize(s, fBitAssetControl);
+        ::Serialize(s, isPreconf);
+        ::Serialize(s, isPegin);
+        ::Serialize(s, nAssetID);
     }
 
     template<typename Stream>
@@ -73,6 +121,11 @@ public:
         nHeight = code >> 1;
         fCoinBase = code & 1;
         ::Unserialize(s, Using<TxOutCompression>(out));
+        ::Unserialize(s, fBitAsset);
+        ::Unserialize(s, fBitAssetControl);
+        ::Unserialize(s, isPreconf);
+        ::Unserialize(s, isPegin);
+        ::Unserialize(s, nAssetID);
     }
 
     /** Either this coin never existed (see e.g. coinEmpty in coins.cpp), or it

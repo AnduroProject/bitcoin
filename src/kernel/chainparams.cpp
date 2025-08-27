@@ -37,7 +37,7 @@ auto consteval_ctor(auto&& input) { return input; }
 #define consteval_ctor(input) (input)
 #endif
 
-static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
+static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, std::string currentKeys)
 {
     CMutableTransaction txNew;
     txNew.version = 1;
@@ -55,6 +55,8 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
     genesis.hashPrevBlock.SetNull();
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
+    genesis.currentIndex=1;
+    genesis.currentKeys=currentKeys;
     return genesis;
 }
 
@@ -122,6 +124,8 @@ public:
         consensus.fStrictChainId = true;
         consensus.nLegacyBlocksBefore = 0;
 
+        consensus.currentKeys = "7b2263757272656e745f61646472657373223a22636331706b3935717070756e38677a6737777664667874676d616e6e67383661757836743661686b33326d34653736747278677966383373687a356c7638222c22616c6c5f6b657973223a5b22303361313037366139326366306431373661633734646432346535323732393137633232613366363062383765616230346236643365306462613838663036336136222c22303262303861643439393430363235633366323663313534636237373438663634623439623965383064333438386433303336646333656434323239353537656562222c22303236666163346633313066366564313765376465333434316166383537613365663361633862303665383339623535383865383434646538643332343137383363225d7d";
+
         /**
          * The message start string is designed to be unlikely to occur in normal data.
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
@@ -136,7 +140,7 @@ public:
         m_assumed_blockchain_size = 720;
         m_assumed_chain_state_size = 14;
 
-        genesis = CreateGenesisBlock(1231006505, 2083236893, 0X186DF311, 1, 0 * COIN);
+        genesis = CreateGenesisBlock(1231006505, 2083236893, 0X186DF311, 1, 0 * COIN, consensus.currentKeys);
         consensus.hashGenesisBlock = genesis.GetHash();
 
         // Note that of those which support the service bits prefix, most only support a subset of
@@ -144,9 +148,9 @@ public:
         // This is fine at runtime as we'll fall back to using them as an addrfetch if they don't support the
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
-        vSeeds.emplace_back("seed4.coordinate.mara.technology."); // Coordinate
-        vSeeds.emplace_back("seed5.coordinate.mara.technology."); // Coordinate
-        vSeeds.emplace_back("seed6.coordinate.mara.technology."); // Coordinate
+        vSeeds.emplace_back("seed1.coordinate.mara.technology."); // Coordinate
+        vSeeds.emplace_back("seed2.coordinate.mara.technology."); // Coordinate
+        vSeeds.emplace_back("seed3.coordinate.mara.technology."); // Coordinate
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,0);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,5);
@@ -219,6 +223,8 @@ public:
         consensus.fStrictChainId = true;
         consensus.nLegacyBlocksBefore = 0;
 
+        consensus.currentKeys = "7b2263757272656e745f61646472657373223a22746331713833756666786e707778713678366364777a7136346568383366653439703270657867656c3434796a716d6366617a773863677176333468616a222c22616c6c5f6b657973223a5b22303233383330313566643462356636383237306563363537343565326138303631386361303439333765643733393037633462613563326236356339366234373966222c22303331633633313236313831656236343065343263346264333132313831636632383366306561373639383936396538303434376136353137623264353961313931222c22303235333836393635633963323231313966616466373536333931396163626561653362366364656639353539356430366664663332353961613834303832366539225d7d";
+
         pchMessageStart[0] = 0xb9;
         pchMessageStart[1] = 0xbe;
         pchMessageStart[2] = 0xb9;
@@ -228,15 +234,15 @@ public:
         m_assumed_blockchain_size = 200;
         m_assumed_chain_state_size = 19;
 
-        genesis = CreateGenesisBlock(1296688602, 414098458, 0x1d00ffff, 1, 0 * COIN);
+        genesis = CreateGenesisBlock(1296688602, 414098458, 0x1d00ffff, 1, 0 * COIN, consensus.currentKeys);
         consensus.hashGenesisBlock = genesis.GetHash();
     
         vFixedSeeds.clear();
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("seed1.mara.technology."); // Coordinate
-        vSeeds.emplace_back("seed2.mara.technology."); // Coordinate
-        vSeeds.emplace_back("seed3.mara.technology."); // Coordinatenet.achownodes.xyz."); // Ava Chow, only supports x1, x5, x9, x49, x809, x849, xd, x400, x404, x408, x448, xc08, xc48, x40c
+        vSeeds.emplace_back("seed4.mara.technology."); // Coordinate
+        vSeeds.emplace_back("seed5.mara.technology."); // Coordinate
+        vSeeds.emplace_back("seed6.mara.technology."); // Coordinatenet.achownodes.xyz."); // Ava Chow, only supports x1, x5, x9, x49, x809, x849, xd, x400, x404, x408, x448, xc08, xc48, x40c
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
@@ -308,8 +314,9 @@ public:
         consensus.nAuxpowChainId = 0x2222;
         consensus.nAuxpowStartHeight = 0;
         consensus.fStrictChainId = true;
-
         consensus.nLegacyBlocksBefore = 0;
+
+        consensus.currentKeys = "7b2263757272656e745f61646472657373223a22746331713833756666786e707778713678366364777a7136346568383366653439703270657867656c3434796a716d6366617a773863677176333468616a222c22616c6c5f6b657973223a5b22303233383330313566643462356636383237306563363537343565326138303631386361303439333765643733393037633462613563326236356339366234373966222c22303331633633313236313831656236343065343263346264333132313831636632383366306561373639383936396538303434376136353137623264353961313931222c22303235333836393635633963323231313966616466373536333931396163626561653362366364656639353539356430366664663332353961613834303832366539225d7d";
 
         pchMessageStart[0] = 0x1f;
         pchMessageStart[1] = 0x16;
@@ -328,12 +335,16 @@ public:
                 393743547,
                 0x1d00ffff,
                 1,
-                0 * COIN);
+                0 * COIN,  consensus.currentKeys);
         consensus.hashGenesisBlock = genesis.GetHash();
 
         vFixedSeeds.clear();
         vSeeds.clear();
 
+        // nodes with support for servicebits filtering should be at the top
+        vSeeds.emplace_back("seed7.mara.technology."); // Coordinate
+        vSeeds.emplace_back("seed8.mara.technology."); // Coordinate
+        vSeeds.emplace_back("seed9.mara.technology."); // Coordinatenet.achownodes.
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
@@ -442,6 +453,8 @@ public:
         consensus.fStrictChainId = true;
         consensus.nLegacyBlocksBefore = 0;
 
+        consensus.currentKeys = "7b22616c6c5f6b657973223a5b22303361313037366139326366306431373661633734646432346535323732393137633232613366363062383765616230346236643365306462613838663036336136222c22303262303861643439393430363235633366323663313534636237373438663634623439623965383064333438386433303336646333656434323239353537656562222c22303236666163346633313066366564313765376465333434316166383537613365663361633862303665383339623535383865383434646538643332343137383363225d2c2263757272656e745f61646472657373223a22746331706b3935717070756e38677a6737777664667874676d616e6e67383661757836743661686b33326d34653736747278677966383373713733673533227d";
+
         // message start is defined as the first 4 bytes of the sha256d of the block script
         HashWriter h{};
         h << consensus.signet_challenge;
@@ -451,7 +464,7 @@ public:
         nDefaultPort = 38333;
         nPruneAfterHeight = 1000;
 
-        genesis = CreateGenesisBlock(1598918400, 52613770, 0x1e0377ae, 1, 0 * COIN);
+        genesis = CreateGenesisBlock(1598918400, 52613770, 0x1e0377ae, 1, 0 * COIN, consensus.currentKeys);
         consensus.hashGenesisBlock = genesis.GetHash();
 
         m_assumeutxo_data = {
@@ -525,6 +538,8 @@ public:
         consensus.fStrictChainId = true;
         consensus.nLegacyBlocksBefore = 0;
 
+        consensus.currentKeys = "7b2263757272656e745f61646472657373223a22636372743171646b786664776433687536336d3772663770647961726b616839687a7a646b723571686a38377932777a707436776e647a376373787234613966222c22616c6c5f6b657973223a5b22303365303539663634353330353133363838653761623365376632643766643532656561643063663236376232393536656231376235646362646435353862393865222c22303231396461373239323433373938353831343137386164643937383735616139303433623939646539656432663539326337616237656536393762386136643635222c22303362366135353966306331643331636338383130653264303334343931393732666132336439333237313834316438396363383238303931653034366538313533225d7d";
+
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
         pchMessageStart[2] = 0xb5;
@@ -560,7 +575,7 @@ public:
             consensus.vDeployments[deployment_pos].min_activation_height = version_bits_params.min_activation_height;
         }
 
-        genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 50 * COIN, consensus.currentKeys);
         consensus.hashGenesisBlock = genesis.GetHash();
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.

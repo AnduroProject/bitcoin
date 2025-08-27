@@ -135,6 +135,7 @@ using node::KernelNotifications;
 using node::LoadChainstate;
 using node::LoadMempool;
 using node::MempoolPath;
+using node::MempoolPath;
 using node::NodeContext;
 using node::ShouldPersistMempool;
 using node::VerifyLoadedChainstate;
@@ -293,6 +294,7 @@ void Shutdown(NodeContext& node)
     /// module was initialized.
     util::ThreadRename("shutoff");
     if (node.mempool) node.mempool->AddTransactionsUpdated(1);
+    if (node.preconfmempool) node.preconfmempool->AddTransactionsUpdated(1);
 
     StopHTTPRPC();
     StopREST();
@@ -323,6 +325,7 @@ void Shutdown(NodeContext& node)
 
     if (node.mempool && node.mempool->GetLoadTried() && ShouldPersistMempool(*node.args)) {
         DumpMempool(*node.mempool, MempoolPath(*node.args));
+         DumpMempool(*node.preconfmempool, PreConfMempoolPath(*node.args));
     }
 
     // Drop transactions we were still watching, record fee estimations and unregister
@@ -386,6 +389,7 @@ void Shutdown(NodeContext& node)
         node.validation_signals->UnregisterAllValidationInterfaces();
     }
     node.mempool.reset();
+    node.preconfmempool.reset();
     node.fee_estimator.reset();
     node.chainman.reset();
     node.validation_signals.reset();
@@ -692,6 +696,15 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     hidden_args.emplace_back("-daemon");
     hidden_args.emplace_back("-daemonwait");
 #endif
+
+    argsman.AddArg("-assetprune", "Reduce storage requirements by enabling asset pruning (deleting) of asset.", ArgsManager::ALLOW_ANY, OptionsCategory::COORDINATE);
+    argsman.AddArg("-validatepegin", "Validate peg-in claims. An RPC connection will be attempted to the trusted mainchain daemon using the `mainchain*` settings below", ArgsManager::ALLOW_ANY, OptionsCategory::COORDINATE);
+    argsman.AddArg("-mainchainrpchost=<host>", "The address which the daemon will try to connect to the trusted mainchain daemon to validate peg-ins, if enabled. (default: 127.0.0.1)", ArgsManager::ALLOW_ANY, OptionsCategory::COORDINATE);
+    argsman.AddArg("-mainchainrpcport=<n>","The port which the daemon will try to connect to the trusted mainchain daemon to validate peg-ins, if enabled", ArgsManager::ALLOW_ANY, OptionsCategory::COORDINATE);
+    argsman.AddArg("-mainchainrpcuser=<user>", "The rpc username that the daemon will use to connect to the trusted mainchain daemon to validate peg-ins, if enabled. (default: cookie auth)", ArgsManager::ALLOW_ANY | ArgsManager::SENSITIVE, OptionsCategory::COORDINATE);
+    argsman.AddArg("-mainchainrpcpassword=<pwd>", "The rpc password which the daemon will use to connect to the trusted mainchain daemon to validate peg-ins, if enabled. (default: cookie auth)", ArgsManager::ALLOW_ANY | ArgsManager::SENSITIVE, OptionsCategory::COORDINATE);
+    argsman.AddArg("-mainchainrpctimeout=<n>", "Timeout in seconds during mainchain RPC requests, or 0 for no timeout", ArgsManager::ALLOW_ANY, OptionsCategory::COORDINATE);
+
 
     // Add the hidden options
     argsman.AddHiddenArgs(hidden_args);
@@ -1165,6 +1178,57 @@ bool AppInitLockDirectories()
     return true;
 }
 
+bool MainchainRPCCheck() {
+    // Check for working and valid rpc
+    // Retry until a non-RPC_IN_WARMUP result
+    while (true) {
+        try {
+            UniValue params(UniValue::VARR);
+            UniValue reply = CallMainChainRPC("getnetworkinfo", params);
+            UniValue error = reply["error"];
+            if (!error.isNull()) {
+                // On the first call, it's possible to node is still in
+                // warmup; in that case, just wait and retry.
+                if (error["code"].getInt<int>() == RPC_IN_WARMUP) {
+                    UninterruptibleSleep(std::chrono::milliseconds{1000});
+                    continue;
+                }
+                else {
+                    LogPrintf("ERROR: Mainchain daemon RPC check returned 'error' response.\n");
+                    return false;
+                }
+            }
+            UniValue result = reply["result"];
+            if (!result.isObject() || !result.get_obj()["version"].isNum() ||
+                    result.get_obj()["version"].getInt<int>() < MIN_MAINCHAIN_NODE_VERSION) {
+                LogPrintf("ERROR: Parent chain daemon too old; need Bitcoin Core version 0.16.3 or newer.\n");
+                return false;
+            }
+
+            params.push_back(UniValue(0));
+            reply = CallMainChainRPC("getblockhash", params);
+            error = reply["error"];
+            if (!error.isNull()) {
+                LogPrintf("ERROR: Mainchain daemon RPC check returned 'error' response.\n");
+                return false;
+            }
+            result = reply["result"];
+            if (!result.isStr() || result.get_str() != Params().ParentGenesisBlockHash().GetHex()) {
+                LogPrintf("ERROR: Invalid parent genesis block hash response via RPC. Contacting wrong parent daemon?\n");
+                return false;
+            }
+
+        } catch (const std::runtime_error& re) {
+            LogPrintf("ERROR: Failure connecting to mainchain daemon RPC: %s\n", std::string(re.what()));
+            return false;
+        }
+
+        // Success
+        return true;
+    }
+
+}
+
 bool AppInitInterfaces(NodeContext& node)
 {
     node.chain = node.init->makeChain();
@@ -1248,10 +1312,21 @@ static ChainstateLoadResult InitAndLoadChainstate(
     Assert(ApplyArgsManOptions(args, chainparams, mempool_opts)); // no error can happen, already checked in AppInitParameterInteraction
     bilingual_str mempool_error;
     Assert(!node.mempool); // Was reset above
+    Assert(!node.preconfmempool); // Was reset above
     node.mempool = std::make_unique<CTxMemPool>(mempool_opts, mempool_error);
+
+
     if (!mempool_error.empty()) {
         return {ChainstateLoadStatus::FAILURE_FATAL, mempool_error};
     }
+    mempool_opts.is_preconf = true;
+    mempool_opts.limits.ancestor_count = 0;
+    mempool_opts.limits.descendant_count = 0;
+    node.preconfmempool = std::make_unique<CTxMemPool>(mempool_opts, mempool_error);
+    if (!mempool_error.empty()) {
+        return {ChainstateLoadStatus::FAILURE_FATAL, mempool_error};
+    }
+
     LogInfo("* Using %.1f MiB for in-memory UTXO set (plus up to %.1f MiB of unused mempool space)",
             cache_sizes.coins * (1.0 / 1024 / 1024),
             mempool_opts.max_size_bytes * (1.0 / 1024 / 1024));
@@ -1312,8 +1387,10 @@ static ChainstateLoadResult InitAndLoadChainstate(
     };
     node::ChainstateLoadOptions options;
     options.mempool = Assert(node.mempool.get());
+    options.preconfmempool = Assert(node.preconfmempool.get());
     options.wipe_chainstate_db = do_reindex || do_reindex_chainstate;
     options.prune = chainman.m_blockman.IsPruneMode();
+    options.asset_prune = args.GetIntArg("-assetprune", false);
     options.check_blocks = args.GetIntArg("-checkblocks", DEFAULT_CHECKBLOCKS);
     options.check_level = args.GetIntArg("-checklevel", DEFAULT_CHECKLEVEL);
     options.require_full_verification = args.IsArgSet("-checkblocks") || args.IsArgSet("-checklevel");
@@ -2117,6 +2194,14 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     // that the RPC's view of the best block is valid and consistent with
     // ChainstateManager's active tip.
     SetRPCWarmupFinished();
+
+    if (gArgs.GetBoolArg("-validatepegin", false)) {
+        uiInterface.InitMessage(_("Awaiting mainchain RPC warmup").translated);
+        if (!MainchainRPCCheck()) {
+            const std::string err_msg = "ERROR: coordinate is set to verify pegins but cannot get a valid response from the mainchain daemon. Please check debug.log for more information.\n\nIf you haven't setup a bitcoind please get the latest stable version from https://bitcoincore.org/en/download/ or if you do not need to validate pegins set in your coordinate configuration validatepegin=0";
+            return InitError(strprintf(Untranslated(err_msg)));
+        }
+    }
 
     uiInterface.InitMessage(_("Done loading"));
 

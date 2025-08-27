@@ -119,6 +119,7 @@ protected:
      * Called on a background thread.
      */
     virtual void BlockConnected(ChainstateRole role, const std::shared_ptr<const CBlock> &block, const CBlockIndex *pindex) {}
+    virtual void SignedBlockConnected(const SignedBlock &block) {}
     /**
      * Notifies listeners of a block being disconnected
      * Provides the block that was disconnected.

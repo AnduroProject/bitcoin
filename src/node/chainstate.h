@@ -22,11 +22,13 @@ namespace node {
 
 struct ChainstateLoadOptions {
     CTxMemPool* mempool{nullptr};
+    CTxMemPool* preconfmempool{nullptr};
     bool coins_db_in_memory{false};
     // Whether to wipe the chainstate database when loading it. If set, this
     // will cause the chainstate database to be rebuilt starting from genesis.
     bool wipe_chainstate_db{false};
     bool prune{false};
+    bool asset_prune{false};
     //! Setting require_full_verification to true will require all checks at
     //! check_level (below) to succeed for loading to succeed. Setting it to
     //! false will skip checks if cache is not big enough to run them, so may be

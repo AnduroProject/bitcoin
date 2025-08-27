@@ -77,6 +77,15 @@
 #include <tuple>
 #include <utility>
 
+#include <coordinate/anduro_deposit.h>
+#include <coordinate/coordinate_mempool_entry.h>
+#include <coordinate/coordinate_preconf.h>
+#include <coordinate/signed_block.h>
+#include <coordinate/invalid_tx.h>
+#include <coordinate/signed_txindex.h>
+#include <coordinate/coordinate_address.h>
+#include <anduro_validator.h>
+
 using kernel::CCoinsStats;
 using kernel::CoinStatsHashType;
 using kernel::ComputeUTXOStats;
@@ -705,7 +714,13 @@ private:
     {
         AssertLockHeld(::cs_main);
         AssertLockHeld(m_pool.cs);
-        CAmount mempoolRejectFee = m_pool.GetMinFee().GetFee(package_size);
+        CAmount mempoolRejectFee;
+        if(m_pool.is_preconf) {
+            const CAmount& preconfMinFee = getPreConfMinFee();
+            mempoolRejectFee = m_pool.GetMinFee().GetPreConfFee(package_size, preconfMinFee);
+        } else {
+           mempoolRejectFee = m_pool.GetMinFee().GetFee(package_size);
+        }
         if (mempoolRejectFee > 0 && package_fee < mempoolRejectFee) {
             return state.Invalid(TxValidationResult::TX_RECONSIDERABLE, "mempool min fee not met", strprintf("%d < %d", package_fee, mempoolRejectFee));
         }
@@ -800,7 +815,44 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     // Alias what we need out of ws
     TxValidationState& state = ws.m_state;
 
-    if (!CheckTransaction(tx, state)) {
+    int coordinateOutputs = 0;
+    if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+
+        if (tx.vout.size() < 2) {
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "Invalid CoordinateAsset creation - vout too small");
+        }
+
+        if(tx.payloadData.compare("") == 0 || tx.payload.ToString().compare(prepareMessageHash(tx.payloadData).ToString()) != 0) {
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "transaction payload missing");
+        }
+
+        // validate asset precision
+        if((tx.assetType == 0 && (tx.precision < 1 || tx.precision > 8)) || (tx.assetType != 0 && tx.precision != 0)) {
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "Invalid CoordinateAsset Asset Precision");
+        }
+        coordinateOutputs = 2;
+    } else if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.nVersion == TRANSACTION_PRECONF_VERSION) {
+        if(tx.nVersion == TRANSACTION_PRECONF_VERSION) {
+            if (tx.vout.size() <= 1) {
+                return state.Invalid(TxValidationResult::TX_CONSENSUS, "Preconf transaction atleast have 2 output");
+            }
+        }
+        coordinateOutputs = getAssetOutputCount(tx,m_active_chainstate);
+    } 
+
+    if((m_pool.is_preconf && tx.nVersion != TRANSACTION_PRECONF_VERSION) || (!m_pool.is_preconf && tx.nVersion == TRANSACTION_PRECONF_VERSION)) {
+        return state.Invalid(TxValidationResult::TX_CONSENSUS, "transaction version not supported");
+    }
+
+    uint32_t nIDLast = 0;
+    m_active_chainstate.passettree->GetLastAssetID(nIDLast);
+    if(nIDLast > UINT32_MAX){
+        LogPrintf("asset id maxium count reached");
+        return false;
+    }
+
+
+    if (!CheckTransaction(tx, state, coordinateOutputs)) {
         return false; // state filled in by CheckTransaction
     }
 
@@ -834,12 +886,41 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         return state.Invalid(TxValidationResult::TX_CONFLICT, "txn-same-nonwitness-data-in-mempool");
     }
 
+        // Remove transaction from mempool if same inputs spent in preconf transaction
+    if(m_pool.is_preconf) {
+        CTxMemPool& pool{*m_active_chainstate.GetMempool()};
+        LOCK(pool.cs);
+        for(const CTxIn &txin : tx.vin) {
+            const CTransaction* ptxConflicting = pool.GetConflictTx(txin.prevout);
+            if(ptxConflicting) {
+                pool.removeRecursive(*ptxConflicting, MemPoolRemovalReason::CONFLICT);
+            }
+        }
+     }
+     
+    // check the transaction inputs already spent in preconf transaction
+    if(!m_pool.is_preconf) {
+        CTxMemPool& preconf_pool{*m_active_chainstate.GetPreConfMempool()};
+        LOCK(preconf_pool.cs);
+        for (const CTxIn &txin : tx.vin) {
+            const CTransaction* ptxConflicting = preconf_pool.GetConflictTx(txin.prevout);
+            if (ptxConflicting) {
+               return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "transaction already exist in preconf pool");
+            }
+        }
+    } else {
+        if(getPreConfMinFee() > tx.vout[0].nValue) {
+            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "fee quoted was every low compared with reserve");
+        }
+    }
+
+
     // Check for conflicts with in-memory transactions
     for (const CTxIn &txin : tx.vin)
     {
         const CTransaction* ptxConflicting = m_pool.GetConflictTx(txin.prevout);
         if (ptxConflicting) {
-            if (!args.m_allow_replacement) {
+            if (!args.m_allow_replacement || m_pool.is_preconf) {
                 // Transaction conflicts with a mempool tx, but we're not allowing replacements in this context.
                 return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "bip125-replacement-disallowed");
             }
@@ -848,6 +929,8 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     }
 
     m_view.SetBackend(m_viewmempool);
+
+    m_active_chainstate.UpdatedCoinsTip(m_view,m_active_chainstate.m_chain.Height());
 
     const CCoinsViewCache& coins_cache = m_active_chainstate.CoinsTip();
     // do all inputs exist?
@@ -1294,6 +1377,8 @@ bool MemPoolAccept::ConsensusScriptChecks(const ATMPArgs& args, Workspace& ws)
     // There is a similar check in CreateNewBlock() to prevent creating
     // invalid blocks (using TestBlockValidity), however allowing such
     // transactions into the mempool can be exploited as a DoS attack.
+    CCoinsViewCache coins_tip(&m_active_chainstate.CoinsTip());
+    m_active_chainstate.UpdatedCoinsTip(coins_tip,m_active_chainstate.m_chain.Height());
     unsigned int currentBlockScriptVerifyFlags{GetBlockScriptFlags(*m_active_chainstate.m_chain.Tip(), m_active_chainstate.m_chainman)};
     if (!CheckInputsFromMempoolAndCache(tx, state, m_view, m_pool, currentBlockScriptVerifyFlags,
                                         ws.m_precomputed_txdata, m_active_chainstate.CoinsTip(), GetValidationCache())) {
@@ -1426,6 +1511,9 @@ bool MemPoolAccept::SubmitPackage(const ATMPArgs& args, std::vector<Workspace>& 
                                                        IsCurrentForFeeEstimation(m_active_chainstate),
                                                        m_pool.HasNoInputsOf(tx));
         m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.GetAndIncrementSequence());
+        if(ws.m_ptx->nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || ws.m_ptx->nVersion == TRANSACTION_PRECONF_VERSION) {
+            includeMempoolAsset(*ws.m_ptx, m_active_chainstate);
+        }
     }
     return all_submitted;
 }
@@ -1508,8 +1596,15 @@ MempoolAcceptResult MemPoolAccept::AcceptSingleTransaction(const CTransactionRef
                                                        args.m_bypass_limits, args.m_package_submission,
                                                        IsCurrentForFeeEstimation(m_active_chainstate),
                                                        m_pool.HasNoInputsOf(tx));
-        m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.GetAndIncrementSequence());
+        m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.is_preconf ? 0 : m_pool.GetAndIncrementSequence());
+        // adding asset coin info to back track child transaction in checkTransaction Function
+        if(tx_info->nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx_info->nVersion == TRANSACTION_PRECONF_VERSION || tx_info->nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+            LogPrintf("new asset utxo cache added in custom struct \n");
+            includeMempoolAsset(*tx_info, m_active_chainstate);
+        }
     }
+
+
 
     if (!m_subpackage.m_replaced_transactions.empty()) {
         LogDebug(BCLog::MEMPOOL, "replaced %u mempool transactions with 1 new transaction for %s additional fees, %d delta bytes\n",
@@ -1862,12 +1957,16 @@ PackageMempoolAcceptResult MemPoolAccept::AcceptPackage(const Package& package, 
 } // anon namespace
 
 MempoolAcceptResult AcceptToMemoryPool(Chainstate& active_chainstate, const CTransactionRef& tx,
-                                       int64_t accept_time, bool bypass_limits, bool test_accept)
+                                       int64_t accept_time, bool bypass_limits, bool test_accept, bool is_preconf)
 {
     AssertLockHeld(::cs_main);
     const CChainParams& chainparams{active_chainstate.m_chainman.GetParams()};
-    assert(active_chainstate.GetMempool() != nullptr);
-    CTxMemPool& pool{*active_chainstate.GetMempool()};
+    if(is_preconf) {
+        assert(active_chainstate.GetPreConfMempool() != nullptr);
+    } else {
+       assert(active_chainstate.GetMempool() != nullptr);
+    }
+    CTxMemPool& pool{is_preconf ? *active_chainstate.GetPreConfMempool() : *active_chainstate.GetMempool()};
 
     std::vector<COutPoint> coins_to_uncache;
     auto args = MemPoolAccept::ATMPArgs::SingleAccept(chainparams, accept_time, bypass_limits, coins_to_uncache, test_accept);
@@ -1988,6 +2087,9 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
+    if(Params().GetChainType() != ChainType::REGTEST) {
+        return 0;
+    }
     int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
     // Force block reward to zero when right shift is undefined.
     if (halvings >= 64)
@@ -2011,10 +2113,12 @@ void CoinsViews::InitCache()
 
 Chainstate::Chainstate(
     CTxMemPool* mempool,
+    CTxMemPool* preconfmempool,
     BlockManager& blockman,
     ChainstateManager& chainman,
     std::optional<uint256> from_snapshot_blockhash)
     : m_mempool(mempool),
+      m_preconf_mempool(preconfmempool),
       m_blockman(blockman),
       m_chainman(chainman),
       m_from_snapshot_blockhash(from_snapshot_blockhash) {}
@@ -2055,6 +2159,32 @@ void Chainstate::InitCoinsCache(size_t cache_size_bytes)
     assert(m_coins_views != nullptr);
     m_coinstip_cache_size_bytes = cache_size_bytes;
     m_coins_views->InitCache();
+}
+
+void Chainstate::InitAssetCache()
+{
+    AssertLockHeld(::cs_main);
+    passettree = std::make_unique<CoordinateAssetDB>(DBParams{
+            .path = m_chainman.m_options.datadir / "blocks" / "assets",
+            .cache_bytes = 1 << 21,
+            .memory_only = false,
+            .wipe_data = false,
+            .obfuscate = true,
+            .options = m_chainman.m_options.coins_db}
+    );
+}
+
+void Chainstate::InitSignedBlockCache()
+{
+    AssertLockHeld(::cs_main);
+    psignedblocktree = std::make_unique<SignedBlocksDB>(DBParams{
+            .path = m_chainman.m_options.datadir / "blocks" / "signedblocks",
+            .cache_bytes = 1 << 21,
+            .memory_only = false,
+            .wipe_data = false,
+            .obfuscate = true,
+            .options = m_chainman.m_options.coins_db}
+    );
 }
 
 // Note that though this is marked const, we may end up modifying `m_cached_finished_ibd`, which
@@ -2146,19 +2276,44 @@ void Chainstate::InvalidBlockFound(CBlockIndex* pindex, const BlockValidationSta
     }
 }
 
-void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txundo, int nHeight)
+void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txundo, int nHeight,  CAmount& amountAssetInOut, int& nControlNOut, uint32_t& nAssetIDOut, uint32_t nNewAssetIDIn, CAmount& preconfRefund)
 {
+    amountAssetInOut = CAmount(0); // Track asset inputs
+    nControlNOut = -1; // Track asset controller outputs
+    nAssetIDOut = 0; // Track asset ID
     // mark inputs spent
-    if (!tx.IsCoinBase()) {
+    if (!tx.IsCoinBase() && tx.nVersion != TRANSACTION_PEGIN_VERSION) {
         txundo.vprevout.reserve(tx.vin.size());
-        for (const CTxIn &txin : tx.vin) {
+        for (size_t x = 0; x < tx.vin.size(); x++) {
+            const CTxIn &txin = tx.vin[x];
             txundo.vprevout.emplace_back();
-            bool is_spent = inputs.SpendCoin(txin.prevout, &txundo.vprevout.back());
-            assert(is_spent);
+            bool fBitAsset = false;
+            bool fBitAssetControl = false;
+            bool isPreconf = false;
+            uint32_t nAssetID = 0;
+            bool is_spent = inputs.SpendCoin(txin.prevout, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &txundo.vprevout.back());
+            
+            if(tx.nVersion == TRANSACTION_PRECONF_VERSION && !is_spent) {
+               return;
+            } else {
+               assert(is_spent);
+            }
+            
+            // Update nAssetIDOut if SpendCoin returns a non-zero asset ID
+            if (nAssetID)
+                nAssetIDOut = nAssetID;
+
+            if (fBitAsset && !fBitAssetControl)
+                amountAssetInOut += txundo.vprevout.back().out.nValue;
+
+            if (fBitAssetControl)
+                nControlNOut = x;
+
         }
     }
+
     // add outputs
-    AddCoins(inputs, tx, nHeight);
+    AddCoins(inputs, tx, nHeight, preconfRefund, nAssetIDOut, amountAssetInOut, nControlNOut, nNewAssetIDIn);
 }
 
 std::optional<std::pair<ScriptError, std::string>> CScriptCheck::operator()() {
@@ -2381,7 +2536,11 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
             if (!tx.vout[o].scriptPubKey.IsUnspendable()) {
                 COutPoint out(hash, o);
                 Coin coin;
-                bool is_spent = view.SpendCoin(out, &coin);
+                bool fBitAsset = false;
+                bool fBitAssetControl = false;
+                bool isPreconf = false;
+                uint32_t nAssetID = 0;
+                bool is_spent = view.SpendCoin(out, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &coin);
                 if (!is_spent || tx.vout[o] != coin.out || pindex->nHeight != coin.nHeight || is_coinbase != coin.fCoinBase) {
                     if (!is_bip30_exception) {
                         fClean = false; // transaction output mismatch
@@ -2659,6 +2818,12 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     std::optional<CCheckQueueControl<CScriptCheck>> control;
     if (auto& queue = m_chainman.GetCheckQueue(); queue.HasThreads() && fScriptChecks) control.emplace(queue);
 
+    bool verifyPreCommitmentCheck = verifyPreCommitment(m_chainman,block, pindex->nHeight);
+    if (!verifyPreCommitmentCheck) {
+         return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "ConnectBlock(): Anduro witness failed");
+    }
+
+
     std::vector<PrecomputedTransactionData> txsdata(block.vtx.size());
 
     std::vector<int> prevheights;
@@ -2666,23 +2831,122 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     int nInputs = 0;
     int64_t nSigOpsCost = 0;
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
+    std::vector<CoordinateAsset> vAsset;
+    std::vector<ReconciliationInvalidTx> invaidTx;
+
+    //validate signed block before it get included in mined block
+    std::vector<uint256> includedSignedBlock;
+    for (const SignedBlock& finalizedSignedBlock : block.preconfBlock) {
+        if (!checkSignedBlock(finalizedSignedBlock, m_chainman)) {
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "ConnectBlock(): Invalid signed block");
+        } else {
+            for (unsigned int i = 0; i < finalizedSignedBlock.vtx.size(); i++) {
+                CTransactionRef ptx = finalizedSignedBlock.vtx[i];
+                const CTransaction &tx = *ptx;
+                CTxUndo undoDummy;
+                CAmount amountAssetIn = CAmount(0);
+                int nControlN = -1;
+                uint32_t nAssetID = 0;
+                CAmount refund = getRefundForPreconfTx(tx,finalizedSignedBlock.currentFee,view);
+                UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+            }
+            includedSignedBlock.push_back(finalizedSignedBlock.GetHash());
+        }
+    }
+    
+    if(includedSignedBlock.size() > 0) {
+        for (SignedBlock& finalizedSignedBlock : getFinalizedSignedBlocks()) {
+            if(std::find(includedSignedBlock.begin(), includedSignedBlock.end(), finalizedSignedBlock.GetHash()) == includedSignedBlock.end()){
+                for (unsigned int i = 0; i < finalizedSignedBlock.vtx.size(); i++) {
+                    CTransactionRef ptx = finalizedSignedBlock.vtx[i];
+                    const CTransaction &tx = *ptx;
+                    CTxUndo undoDummy;
+                    CAmount amountAssetIn = CAmount(0);
+                    int nControlN = -1;
+                    uint32_t nAssetID = 0;
+                    CAmount refund = getRefundForPreconfTx(tx,finalizedSignedBlock.currentFee,view);
+                    UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+                }
+            }
+        }
+    } else {
+        UpdatedCoinsTip(view,pindex->nHeight);
+    }
+
+    if(block.reconciliationBlock.tx.size() > 0) {
+        if(!validateReconciliationBlock(m_chainman, block.reconciliationBlock)) {
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "ConnectBlock(): Reconciliation block not available in previous block");
+        }
+    }
+
+    for (unsigned int i = 0; i < block.pegins.size(); i++)
+    {
+        const CTransaction &tx = *(block.pegins[i]);
+        if (tx.nVersion != TRANSACTION_PEGIN_VERSION) {
+            return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid pegin transaction version");
+        }
+        CAmount txfee = 0;
+        TxValidationState tx_state;
+        if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee)) {
+            state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+                        tx_state.GetRejectReason(), tx_state.GetDebugMessage());
+            return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), state.ToString());
+        }
+        nFees += txfee;
+        if(view.isPeginSpent(tx.vin[0].prevout)) {
+            return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Pegin already processed");
+        }
+        if(!isPeginFeeValid(tx)) {
+            return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Pegin fee is invalid");
+        }
+
+        if (!MoneyRange(nFees)) {
+            LogPrintf("ERROR: %s: accumulated fee in the block out of range.\n", __func__);
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-accumulated-fee-outofrange");
+        }
+
+        CTxUndo undoDummy;
+        CAmount amountAssetIn = CAmount(0);
+        int nControlN = -1;
+        uint32_t nAssetID = 0;
+        CAmount refund = CAmount(0);
+        UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+    }
+
+
+    blockundo.vtxundo.reserve(block.vtx.size() - 1);
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
         if (!state.IsValid()) break;
         const CTransaction &tx = *(block.vtx[i]);
-
+        bool isValidTx = true;
         nInputs += tx.vin.size();
 
         if (!tx.IsCoinBase())
         {
+            if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && !m_chainman.ActiveChainstate().isAssetPrune) {
+                if(tx.payloadData.compare("") == 0 || tx.payload.ToString().compare(prepareMessageHash(tx.payloadData).ToString()) != 0) {
+                    return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): transaction payload missing");
+                }
+            }
+            if (!AreCoordinateTransactionStandard(tx,view)) {
+                LogPrintf("Invalid transaction standard \n");
+                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid transaction standard");
+            }
             CAmount txfee = 0;
             TxValidationState tx_state;
-            if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee)) {
-                // Any transaction validation failure in ConnectBlock is a block consensus failure
-                state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
-                              tx_state.GetRejectReason(),
-                              tx_state.GetDebugMessage() + " in transaction " + tx.GetHash().ToString());
-                break;
+            if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee, true)) {
+                if(state.GetRejectReason().compare("bad-txns-coins-not-exist") == 0) {
+                    ReconciliationInvalidTx invalidTxObj;
+                    invalidTxObj.pos = i;
+                    invalidTxObj.txHash = tx.GetHash();
+                    invaidTx.push_back(invalidTxObj);
+                    isValidTx = false;
+                } else {
+                    state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+                                tx_state.GetRejectReason(), tx_state.GetDebugMessage());
+                    return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), state.ToString());
+                }
             }
             nFees += txfee;
             if (!MoneyRange(nFees)) {
@@ -2738,11 +3002,103 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             }
         }
 
+                if(!isValidTx) {
+             continue;
+        }
+
+        // New asset created - set asset ID # and update CoordinateAssetDB
+        uint32_t nNewAssetID = 0;
+        if (tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+            if (tx.vout.size() < 2) {
+                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - vout too small");
+            }
+
+            uint32_t nIDLast = 0;
+            uint32_t nAssetID = 0;
+            CoordinateAsset asset;
+            passettree->GetLastAssetID(nIDLast);
+
+            if(nIDLast>UINT32_MAX) {
+               return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Maxium asset count reacheds");
+            }
+            nIDLast = nIDLast + 1;
+
+            // validate asset precision
+            if((tx.assetType == 0 && (tx.precision < 1 || tx.precision > 8)) || (tx.assetType != 0 && tx.precision != 0)) {
+                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset Asset Precision");
+            }
+
+            // addtional mint for tokens
+            if (tx.assetType == 0) {
+                if (tx.vin.size() == 0) {
+                    return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - no input spciefied");
+                }
+                bool fBitAsset = false;
+                bool fBitAssetControl = false;
+                Coin coin;
+                // check first input is asset controller
+                view.getAssetCoin(tx.vin[0].prevout,fBitAsset,fBitAssetControl,nAssetID, &coin);
+                if(fBitAssetControl) {
+                   nIDLast = nAssetID;
+                   passettree->GetAsset(nIDLast,asset);
+                }
+            }
+
+            // additional mint not available for current minting
+            if(nAssetID == 0) {
+                asset.nID = nIDLast;
+                asset.assetType = tx.assetType;
+                asset.precision = tx.precision;
+                asset.strTicker = tx.ticker;
+                asset.strHeadline = tx.headline;
+                asset.payload = tx.payload;
+                asset.txid = tx.GetHash();
+                asset.nSupply = tx.vout[1].nValue;
+
+                CTxDestination ownerDest;
+                if (!ExtractDestination(tx.vout[1].scriptPubKey, ownerDest)) {
+                    return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - owner destination invalid");
+                }
+                asset.strOwner = EncodeDestination(ownerDest);
+
+
+                CTxDestination controllerDest;
+                if (ExtractDestination(tx.vout[0].scriptPubKey, controllerDest)) {
+                    asset.strController = EncodeDestination(controllerDest);
+                } else if (tx.vout[0].scriptPubKey.size() && tx.vout[0].scriptPubKey[0] == OP_RETURN) {
+                    asset.strController = "OP_RETURN";
+                } else {
+                    return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - controller destination invalid");
+                }
+
+                // Update latest CoordinateAsset ID #
+                if (!fJustCheck && !passettree->WriteLastAssetID(asset.nID)) {
+                    return error("%s: Failed to update last CoordinateAsset ID #!\n", __func__);
+                }
+
+            } else {
+                asset.nSupply =  asset.nSupply + tx.vout[1].nValue;
+            }
+
+            vAsset.push_back(asset);
+
+            // Copy new asset ID, we will pass it to CoinDB when we UpdateCoins
+            nNewAssetID = asset.nID;
+        }
+
+        if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+            removeMempoolAsset(tx);
+        }
+
         CTxUndo undoDummy;
         if (i > 0) {
             blockundo.vtxundo.emplace_back();
         }
-        UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight);
+        CAmount amountAssetIn = CAmount(0);
+        int nControlN = -1;
+        uint32_t nAssetID = 0;
+        CAmount preconfCurrentFee = CAmount(0);
+        UpdateCoins(tx, view, (i == 0 || tx.nVersion == TRANSACTION_PEGIN_VERSION) ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight, amountAssetIn, nControlN, nAssetID, nNewAssetID, preconfCurrentFee);
     }
     const auto time_3{SteadyClock::now()};
     m_chainman.time_connect += time_3 - time_2;
@@ -2752,11 +3108,28 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
              Ticks<SecondsDouble>(m_chainman.time_connect),
              Ticks<MillisecondsDouble>(m_chainman.time_connect) / m_chainman.num_blocks_total);
 
-    CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, params.GetConsensus());
-    if (block.vtx[0]->GetValueOut() > blockReward && state.IsValid()) {
-        state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cb-amount",
-                      strprintf("coinbase pays too much (actual=%d vs limit=%d)", block.vtx[0]->GetValueOut(), blockReward));
+    CAmount blockReward = GetBlockSubsidy(pindex->nHeight, params.GetConsensus());
+    if(block.vtx[0]->vout.size()>0) {
+        CAmount totalAmount = block.vtx[0]->vout[0].nValue;
+        if (totalAmount > blockReward) {
+           LogPrintf("ERROR: ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)\n", totalAmount, blockReward);
+           return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cb-amount");
+        }
+        // if(m_chainman.GetParams().GetChainType() != ChainType::REGTEST) {
+            CAmount totalPreconfFee = getPreconfFeeForBlock(m_chainman, pindex->nHeight);
+            CAmount minerFee = getFeeForBlock(m_chainman, pindex->nHeight);
+
+            if(minerFee > 0) {
+                minerFee = minerFee + std::ceil(totalPreconfFee * 0.8);
+                CAmount totalMinerAmount = block.vtx[0]->vout[block.vtx[0]->vout.size()-3].nValue;
+                if (totalMinerAmount > minerFee) {
+                    LogPrintf("ERROR: ConnectBlock(): coinbase pays too much(actual=%d vs limit=%d)\n", totalAmount, totalMinerAmount);
+                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-cb-amount");
+                }
+            }
+
     }
+
     if (control) {
         auto parallel_result = control->Complete();
         if (parallel_result.has_value() && state.IsValid()) {
@@ -2814,8 +3187,167 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         Ticks<std::chrono::nanoseconds>(time_5 - time_start)
     );
 
+        // Write asset objects to db
+    if (vAsset.size()) {
+        if (!passettree->WriteCoordinateAssets(vAsset))
+            return state.Error("Failed to write CoordinateAsset index!");
+    }
+
+    if(invaidTx.size() > 0) {
+        std::vector<InvalidTx> invalidTxs;
+        InvalidTx invalidData;
+        invalidData.invalidTxs = invaidTx;
+        invalidData.nHeight = pindex->nHeight;
+        invalidTxs.push_back(invalidData);
+        psignedblocktree->WriteInvalidTx(invalidTxs);
+    }
+
+    if(block.preconfBlock.size() > 0) {
+        std::vector<uint256> signedBlockHashes;
+        uint64_t presignedHeight = 0;
+        for (const SignedBlock& finalizedSignedBlock : block.preconfBlock) {
+            presignedHeight = finalizedSignedBlock.nHeight;
+            signedBlockHashes.push_back(finalizedSignedBlock.GetHash());
+
+        }
+        psignedblocktree->WriteSignedBlockHash(signedBlockHashes,block.GetHash());
+        removePreConfFinalizedBlock(presignedHeight);
+    }
+
+    for (const SignedBlock& preconfBlockItem : block.preconfBlock) {
+        for (unsigned int i = 0; i < preconfBlockItem.vtx.size(); i++) {
+            CTransactionRef ptx = preconfBlockItem.vtx[i];
+            SignedTxindex signTxIndex;
+            signTxIndex.signedBlockHash = preconfBlockItem.GetHash();
+            signTxIndex.blockIndex = pindex->nHeight;
+            signTxIndex.pos = i;
+            psignedblocktree->WriteTxPosition(signTxIndex,ptx->GetHash());
+        }
+    }
+
+    for (unsigned int i = 0; i < block.pegins.size(); i++) {
+        CTransactionRef ptx = block.pegins[i];
+        SignedTxindex signTxIndex;
+        signTxIndex.blockIndex = pindex->nHeight;
+        signTxIndex.pos = i;
+        psignedblocktree->WriteTxPosition(signTxIndex,ptx->GetHash());
+    }
+
+    resetCommitment(pindex->nHeight, m_chainman);
+
+    if(pindex->nHeight > 5) {
+        psignedblocktree->DeleteInvalidTx(pindex->nHeight - 5);
+    }
+
+
     return true;
 }
+
+CCoinsViewCache& Chainstate::UpdatedCoinsTip(CCoinsViewCache& view, int blockHeight) {
+    for (SignedBlock& finalizedSignedBlock : getFinalizedSignedBlocks()) {
+        for (unsigned int i = 0; i < finalizedSignedBlock.vtx.size(); i++) {
+            CTransactionRef ptx = finalizedSignedBlock.vtx[i];
+            const CTransaction &tx = *ptx;
+            CTxUndo undoDummy;
+            CAmount amountAssetIn = CAmount(0);
+            int nControlN = -1;
+            uint32_t nAssetID = 0;
+            CAmount refund = getRefundForPreconfTx(tx,finalizedSignedBlock.currentFee,view);
+            UpdateCoins(tx, view, undoDummy, blockHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+        }
+    }
+
+    return view;
+}
+
+bool Chainstate::ConnectSignedBlock(const SignedBlock& block) {
+    LogPrintf("start adding new signed block............. \n");
+    AssertLockHeld(cs_main);
+    CCoinsViewCache view(&CoinsTip());
+
+    UpdatedCoinsTip(view,m_chainman.ActiveHeight());
+
+    CAmount nFees = 0;
+    BlockValidationState state;
+    CBlockUndo blockundo;
+    blockundo.vtxundo.reserve(block.vtx.size()-1);
+
+    std::vector<PrecomputedTransactionData> txsdata(block.vtx.size());
+    for (unsigned int i = 0; i < block.vtx.size(); i++) {
+        CTransactionRef ptx = block.vtx[i];
+        const CTransaction &tx = *ptx;
+        if(i != 0) {
+
+            if (!AreCoordinateTransactionStandard(tx,view)) {
+                LogPrintf("Invalid transaction standard \n");
+                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid transaction standard");
+            }
+
+            // valiate has coins
+            for (size_t o = 0; o < ptx->vout.size(); o++) {
+                if (view.HaveCoin(COutPoint(ptx->GetHash(), o))) {
+                    LogPrintf("ERROR: ConnectBlock(): tried to overwrite transaction\n");
+                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-BIP30");
+                }
+            }
+
+            if (tx.vout.size() <= 1) {
+                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): transaction atleast have 2 output");
+            }
+
+            CAmount txfee = 0;
+            TxValidationState tx_state;
+            if (!Consensus::CheckTxInputs(tx, tx_state, view, block.blockIndex, txfee)) {
+                // Any transaction validation failure in ConnectBlock is a block consensus failure
+                state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+                            tx_state.GetRejectReason(), tx_state.GetDebugMessage());
+                return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), state.ToString());
+            }
+
+            nFees += txfee;
+
+            if (!MoneyRange(nFees)) {
+                LogPrintf("ERROR: %s: accumulated fee in the block out of range.\n", __func__);
+                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-accumulated-fee-outofrange");
+            }
+
+            if (!CheckInputScripts(tx, tx_state, view, 0, true, false, txsdata[i])) {
+                // Any transaction validation failure in ConnectBlock is a block consensus failure
+                state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+                                tx_state.GetRejectReason(), tx_state.GetDebugMessage());
+                return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
+                    tx.GetHash().ToString(), state.ToString());
+            }
+
+            removeMempoolAsset(tx);
+        }
+
+        CTxUndo undoDummy;
+        if (i > 0) {
+            blockundo.vtxundo.push_back(CTxUndo());
+        }
+
+        CAmount amountAssetIn = CAmount(0);
+        int nControlN = -1;
+        uint32_t nAssetID = 0;
+        CAmount refund = getRefundForPreconfTx(tx,block.currentFee,view);
+        UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), m_chainman.ActiveHeight(), amountAssetIn, nControlN, nAssetID, 0, refund);
+    }
+
+    psignedblocktree->WriteLastSignedBlockID(block.nHeight);
+    psignedblocktree->WriteLastSignedBlockHash(block.GetHash());
+    removePreConfWitness();
+    if(m_preconf_mempool) {
+       LOCK(m_preconf_mempool->cs);
+        m_preconf_mempool->removeForPreconfBlock(block.vtx);
+        m_preconf_mempool->PreconfExpire(block.nHeight);
+    }
+
+    GetMainSignals().SignBlockConnected(block);
+
+    return true;
+}
+
 
 CoinsCacheSizeState Chainstate::GetCoinsCacheSizeState()
 {
@@ -2864,6 +3396,9 @@ bool Chainstate::FlushStateToDisk(
 
     try {
     {
+        if(this->isAssetPrune) {
+            m_blockman.FindFilesToAssetPrune(*this, m_chainman);
+        }
         bool fFlushForPrune = false;
 
         CoinsCacheSizeState cache_state = GetCoinsCacheSizeState();
@@ -4632,17 +5167,33 @@ bool ChainstateManager::ProcessNewBlock(const std::shared_ptr<const CBlock>& blo
     return true;
 }
 
-MempoolAcceptResult ChainstateManager::ProcessTransaction(const CTransactionRef& tx, bool test_accept)
+MempoolAcceptResult ChainstateManager::ProcessTransaction(const CTransactionRef& tx, bool test_accept, bool is_preconf)
 {
     AssertLockHeld(cs_main);
     Chainstate& active_chainstate = ActiveChainstate();
-    if (!active_chainstate.GetMempool()) {
-        TxValidationState state;
-        state.Invalid(TxValidationResult::TX_NO_MEMPOOL, "no-mempool");
-        return MempoolAcceptResult::Failure(state);
+    if(is_preconf) {
+        if (!active_chainstate.GetPreConfMempool()) {
+            TxValidationState state;
+            state.Invalid(TxValidationResult::TX_NO_MEMPOOL, "no-mempool");
+            return MempoolAcceptResult::Failure(state);
+        }
+    } else {
+        if (!active_chainstate.GetMempool()) {
+            TxValidationState state;
+            state.Invalid(TxValidationResult::TX_NO_MEMPOOL, "no-mempool");
+            return MempoolAcceptResult::Failure(state);
+        }
     }
-    auto result = AcceptToMemoryPool(active_chainstate, tx, GetTime(), /*bypass_limits=*/ false, test_accept);
-    active_chainstate.GetMempool()->check(active_chainstate.CoinsTip(), active_chainstate.m_chain.Height() + 1);
+
+    auto result = AcceptToMemoryPool(active_chainstate, tx, GetTime(), /*bypass_limits=*/ false, test_accept, is_preconf);
+    
+    CCoinsViewCache view(&active_chainstate.CoinsTip());
+    active_chainstate.UpdatedCoinsTip(view,active_chainstate.m_chain.Height() + 1);
+    if(is_preconf) {
+       active_chainstate.GetPreConfMempool()->check(view, active_chainstate.m_chain.Height() + 1);
+    } else {
+       active_chainstate.GetMempool()->check(view, active_chainstate.m_chain.Height() + 1);
+    }
     return result;
 }
 
@@ -4929,14 +5480,68 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
         return false;
     }
 
-    for (const CTransactionRef& tx : block.vtx) {
+    for (const SignedBlock& finalizedSignedBlock : block.preconfBlock) {
+        for (size_t x = 0; x < finalizedSignedBlock.vtx.size(); x++) {
+            CAmount amountAssetIn = CAmount(0);
+            int nControlN = -1;
+            const CTransactionRef &tx = finalizedSignedBlock.vtx[x];
+            CAmount refund = getRefundForPreconfTx(*tx,finalizedSignedBlock.currentFee,inputs);
+
+            if (!tx->IsCoinBase()) {
+                for (const CTxIn &txin : tx->vin) {
+                    bool fBitAsset = false;
+                    bool fBitAssetControl = false;
+                    bool isPreconf = false;
+                    uint32_t nAssetID = 0;
+                    Coin coin;
+                    inputs.SpendCoin(txin.prevout,fBitAsset, fBitAssetControl, isPreconf, nAssetID,  &coin);
+                    if (fBitAsset)
+                        amountAssetIn += coin.out.nValue;
+                    if (fBitAssetControl)
+                        nControlN = x;
+
+                }
+            }
+            // Pass check = true as every addition may be an overwrite.
+            AddCoins(inputs, *tx, pindex->nHeight, refund, amountAssetIn, nControlN, true);
+        }
+    }
+
+
+
+    for (unsigned int i = 0; i < block.pegins.size(); i++)
+    {
+        const CTransactionRef &tx = block.pegins[i];
+        CTxUndo undoDummy;
+        CAmount amountAssetIn = CAmount(0);
+        int nControlN = -1;
+        CAmount refund = CAmount(0);
+        AddCoins(inputs, *tx, pindex->nHeight, refund, amountAssetIn, nControlN, true);
+    }
+
+    for (size_t x = 0; x < block.vtx.size(); x++) {
+        CAmount amountAssetIn = CAmount(0);
+        CAmount preconfRefund = CAmount(0);
+        int nControlN = -1;
+        const CTransactionRef &tx = block.vtx[x];
         if (!tx->IsCoinBase()) {
             for (const CTxIn &txin : tx->vin) {
-                inputs.SpendCoin(txin.prevout);
+                bool fBitAsset = false;
+                bool fBitAssetControl = false;
+                bool isPreconf = false;
+                uint32_t nAssetID = 0;
+                Coin coin;
+                inputs.SpendCoin(txin.prevout,fBitAsset, fBitAssetControl, isPreconf, nAssetID,  &coin);
+
+                if (fBitAsset)
+                    amountAssetIn += coin.out.nValue;
+                if (fBitAssetControl)
+                    nControlN = x;
+
             }
         }
         // Pass check = true as every addition may be an overwrite.
-        AddCoins(inputs, *tx, pindex->nHeight, true);
+        AddCoins(inputs, *tx, pindex->nHeight, preconfRefund, amountAssetIn, nControlN, true);
     }
     return true;
 }
@@ -5710,13 +6315,13 @@ std::vector<Chainstate*> ChainstateManager::GetAll()
     return out;
 }
 
-Chainstate& ChainstateManager::InitializeChainstate(CTxMemPool* mempool)
+Chainstate& ChainstateManager::InitializeChainstate(CTxMemPool* mempool, CTxMemPool* preconfmempool)
 {
     AssertLockHeld(::cs_main);
     assert(!m_ibd_chainstate);
     assert(!m_active_chainstate);
 
-    m_ibd_chainstate = std::make_unique<Chainstate>(mempool, m_blockman, *this);
+    m_ibd_chainstate = std::make_unique<Chainstate>(mempool, preconfmempool, m_blockman, *this);
     m_active_chainstate = m_ibd_chainstate.get();
     return *m_active_chainstate;
 }

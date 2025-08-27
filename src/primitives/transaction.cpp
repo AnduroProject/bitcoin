@@ -64,11 +64,13 @@ std::string CTxOut::ToString() const
 }
 
 CMutableTransaction::CMutableTransaction() : version{CTransaction::CURRENT_VERSION}, nLockTime{0} {}
-CMutableTransaction::CMutableTransaction(const CTransaction& tx) : vin(tx.vin), vout(tx.vout), version{tx.version}, nLockTime{tx.nLockTime} {}
+CMutableTransaction::CMutableTransaction(const CTransaction& tx) : vin(tx.vin), vout(tx.vout), version{tx.version}, nLockTime{tx.nLockTime}, assetType(tx.assetType), precision(tx.precision), ticker(tx.ticker), headline(tx.headline), payload(tx.payload), payloadData(tx.payloadData) {}
 
 Txid CMutableTransaction::GetHash() const
 {
-    return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(*this)).GetHash());
+    CMutableTransaction tx(*this);
+    tx.payloadData = "";
+    return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(tx)).GetHash());
 }
 
 bool CTransaction::ComputeHasWitness() const
@@ -80,7 +82,9 @@ bool CTransaction::ComputeHasWitness() const
 
 Txid CTransaction::ComputeHash() const
 {
-    return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(*this)).GetHash());
+    CTransaction tx(*this);
+    tx.payloadData = "";
+    return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(tx)).GetHash());
 }
 
 Wtxid CTransaction::ComputeWitnessHash() const
@@ -88,8 +92,9 @@ Wtxid CTransaction::ComputeWitnessHash() const
     if (!HasWitness()) {
         return Wtxid::FromUint256(hash.ToUint256());
     }
-
-    return Wtxid::FromUint256((HashWriter{} << TX_WITH_WITNESS(*this)).GetHash());
+    CTransaction tx(*this);
+    tx.payloadData = "";
+    return Wtxid::FromUint256((HashWriter{} << TX_WITH_WITNESS(tx)).GetHash());
 }
 
 CTransaction::CTransaction(const CMutableTransaction& tx) : vin(tx.vin), vout(tx.vout), version{tx.version}, nLockTime{tx.nLockTime}, m_has_witness{ComputeHasWitness()}, hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
@@ -97,13 +102,21 @@ CTransaction::CTransaction(CMutableTransaction&& tx) : vin(std::move(tx.vin)), v
 
 CAmount CTransaction::GetValueOut() const
 {
-    CAmount nValueOut = 0;
-    for (const auto& tx_out : vout) {
-        if (!MoneyRange(tx_out.nValue) || !MoneyRange(nValueOut + tx_out.nValue))
-            throw std::runtime_error(std::string(__func__) + ": value out of range");
-        nValueOut += tx_out.nValue;
+    std::vector<CTxOut>::const_iterator it;
+    if (nVersion == TRANSACTION_PRECONF_VERSION) {
+        it = vout.begin() + 1;
+    } else if (nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        it = vout.begin() + 2;
+    } else {
+        it = vout.begin();
     }
-    assert(MoneyRange(nValueOut));
+     
+    CAmount nValueOut = 0;
+    for (; it != vout.end(); it++) {
+        if (!MoneyRange(it->nValue))
+            throw std::runtime_error(std::string(__func__) + ": value out of range");
+        nValueOut += it->nValue;
+    }
     return nValueOut;
 }
 

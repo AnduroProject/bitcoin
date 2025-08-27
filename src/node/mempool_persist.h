@@ -26,7 +26,7 @@ struct ImportMempoolOptions {
 /** Import the file and attempt to add its contents to the mempool. */
 bool LoadMempool(CTxMemPool& pool, const fs::path& load_path,
                  Chainstate& active_chainstate,
-                 ImportMempoolOptions&& opts);
+                 ImportMempoolOptions&& opts, bool is_preconf=false);
 
 } // namespace node
 

@@ -89,6 +89,8 @@ static constexpr auto FEELER_SLEEP_WINDOW{1s};
 /** Frequency to attempt extra connections to reachable networks we're not connected to yet **/
 static constexpr auto EXTRA_NETWORK_PEER_INTERVAL{5min};
 
+static constexpr int SIGNED_BLOCK_INTERVAL = 60;
+
 /** Used to pass flags to the Bind() function */
 enum BindFlags {
     BF_NONE         = 0,
@@ -910,7 +912,7 @@ namespace {
  * Only message types that are actually implemented in this codebase need to be listed, as other
  * messages get ignored anyway - whether we know how to decode them or not.
  */
-const std::array<std::string, 33> V2_MESSAGE_IDS = {
+const std::array<std::string, 38> V2_MESSAGE_IDS = {
     "", // 12 bytes follow encoding the message type like in V1
     NetMsgType::ADDR,
     NetMsgType::BLOCK,
@@ -927,12 +929,17 @@ const std::array<std::string, 33> V2_MESSAGE_IDS = {
     NetMsgType::HEADERS,
     NetMsgType::INV,
     NetMsgType::MEMPOOL,
+    NetMsgType::PREBLOCKSIGNREQUEST,
+    NetMsgType::PREBLOCKSIGNREPONSE,
+    NetMsgType::PRECONFFINALIZEPUSH,
+    NetMsgType::PRECONFSIGNATUREPUSH,
     NetMsgType::MERKLEBLOCK,
     NetMsgType::NOTFOUND,
     NetMsgType::PING,
     NetMsgType::PONG,
     NetMsgType::SENDCMPCT,
     NetMsgType::TX,
+    NetMsgType::PRETX,
     NetMsgType::GETCFILTERS,
     NetMsgType::CFILTER,
     NetMsgType::GETCFHEADERS,
@@ -3054,6 +3061,12 @@ void CConnman::ThreadMessageHandler()
                 if (flagInterruptMsgProc)
                     return;
             }
+        }
+
+        int delta = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        if(delta % SIGNED_BLOCK_INTERVAL == 0 && lastSignedBlock != delta) {
+            lastSignedBlock = delta;
+            m_msgproc->NewSignedBlockTimer(delta);
         }
 
         WAIT_LOCK(mutexMsgProc, lock);

@@ -98,19 +98,30 @@ bool IsStandard(const CScript& scriptPubKey, TxoutType& whichType)
 
 bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_datacarrier_bytes, bool permit_bare_multisig, const CFeeRate& dust_relay_fee, std::string& reason)
 {
-    if (tx.version > TX_MAX_STANDARD_VERSION || tx.version < 1) {
-        reason = "version";
-        return false;
+    if (tx.nVersion != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.nVersion != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.nVersion != TRANSACTION_PRECONF_VERSION && tx.nVersion != TRANSACTION_PEGIN_VERSION) {
+        if (tx.nVersion > TX_MAX_STANDARD_VERSION || tx.nVersion < 1) {
+            reason = "version";
+            return false;
+        }
     }
+
 
     // Extremely large transactions with lots of inputs can cost the network
     // almost as much to process as they cost the sender in fees, because
     // computing signature hashes is O(ninputs*txsize). Limiting transactions
     // to MAX_STANDARD_TX_WEIGHT mitigates CPU exhaustion attacks.
-    unsigned int sz = GetTransactionWeight(tx);
-    if (sz > MAX_STANDARD_TX_WEIGHT) {
-        reason = "tx-size";
-        return false;
+   if (tx.nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        unsigned int sz = GetTransactionWeight(tx);
+        if (sz > MAX_STANDARD_TX_WEIGHT_ASSET) {
+            reason = "tx-size";
+            return false;
+        }
+    } else {
+        unsigned int sz = GetTransactionWeight(tx);
+        if (sz > MAX_STANDARD_TX_WEIGHT) {
+            reason = "tx-size";
+            return false;
+        }
     }
 
     for (const CTxIn& txin : tx.vin)
@@ -156,12 +167,104 @@ bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_dat
 
     // Only MAX_DUST_OUTPUTS_PER_TX dust is permitted(on otherwise valid ephemeral dust)
     if (GetDust(tx, dust_relay_fee).size() > MAX_DUST_OUTPUTS_PER_TX) {
-        reason = "dust";
-        return false;
+        if (tx.nVersion != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.nVersion != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.nVersion != TRANSACTION_PRECONF_VERSION) {
+            reason = "dust";
+            return false;
+        }
     }
 
     return true;
 }
+
+bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& mapInputs) {
+    if(tx.nVersion == TRANSACTION_PEGIN_VERSION) {
+        return true;
+    }
+    LogPrintf("transaction version is %i \n", tx.nVersion);
+    CAmount amountAssetInOut = CAmount(0); 
+    uint32_t currentAssetID = 0;
+    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+        bool fBitAsset = false;
+        bool fBitAssetControl = false;
+        uint32_t nAssetID = 0;
+        Coin coin;
+        CAmount coinValue = 0;
+
+        CoordinateMempoolEntry assetMempoolObj;
+        bool is_mempool_asset = getMempoolAsset(tx.vin[i].prevout.hash,tx.vin[i].prevout.n, &assetMempoolObj);
+        if(is_mempool_asset) {
+            fBitAsset = true;
+            fBitAssetControl = false;
+            nAssetID = assetMempoolObj.assetID;
+            coinValue = assetMempoolObj.nValue;
+        } else {
+            // check input is unspent
+            bool is_asset = mapInputs.getAssetCoin(tx.vin[i].prevout,fBitAsset,fBitAssetControl,nAssetID, &coin);
+            if(!is_asset) {
+                LogPrintf("Invalid inputs \n");
+                return false;
+            } else {
+                coinValue = coin.out.nValue;
+            }
+        }
+
+
+        if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.nVersion == TRANSACTION_PRECONF_VERSION ) {
+            // check first input is asset
+            if(fBitAssetControl) {
+                LogPrintf("Asset controller value not accepted \n");
+                return false;
+            }
+
+            if(fBitAsset) {
+                if(i == 0) {
+                    // check first index asset id
+                    currentAssetID = nAssetID;
+                } else {
+                    // prevent to include multiple asset id
+                    if(currentAssetID != nAssetID) {
+                        LogPrintf(" Multiple asset is detected and it is invalid \n");
+                        return false;
+                    }
+                }
+                amountAssetInOut = amountAssetInOut +  coinValue;
+            }
+    
+        }
+
+        if (tx.nVersion == 2 && fBitAsset) {
+            LogPrintf("Asset inputs not accepted in standard transaction \n");
+            return false;
+        }
+    }
+
+    if(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && amountAssetInOut == 0) {
+        LogPrintf("Asset inputs missing \n");
+        return false;
+    }
+
+    if(amountAssetInOut > 0 && !(tx.nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.nVersion == TRANSACTION_PRECONF_VERSION)) {
+        LogPrintf("Invalid transaction hold asset inptu \n");
+    }
+    
+    if(amountAssetInOut > 0) {
+        CAmount amountAssetOut = CAmount(0); 
+        size_t startValue = tx.nVersion == TRANSACTION_PRECONF_VERSION ? 1 : 0;
+        for (unsigned int i = startValue; i < tx.vout.size(); i++) {
+            if(amountAssetOut == amountAssetInOut) {
+                break;
+            }
+            amountAssetOut = amountAssetOut + tx.vout[i].nValue;
+        }
+        // check asset full spent on output
+        if(amountAssetOut != amountAssetInOut) {
+            LogPrintf("Enough asset not included in output \n");
+            return false;
+        }
+    }
+    return true;
+}
+
 
 /**
  * Check the total number of non-witness sigops across the whole transaction, as per BIP54.
