@@ -89,6 +89,7 @@ private:
     const int64_t sigOpCost;        //!< Total sigop cost
     CAmount m_modified_fee;         //!< Used for determining the priority of the transaction for mining in a block
     mutable LockPoints lockPoints;  //!< Track the height and time at which tx was final
+    const uint64_t expireSignedHeight; //!< Chain signed height when entering the mempool
 
     // Information about descendants of this transaction that are in the
     // mempool; if we remove this transaction we must remove all of these
@@ -109,7 +110,7 @@ public:
     CTxMemPoolEntry(const CTransactionRef& tx, CAmount fee,
                     int64_t time, unsigned int entry_height, uint64_t entry_sequence,
                     bool spends_coinbase,
-                    int64_t sigops_cost, LockPoints lp)
+                    int64_t sigops_cost, LockPoints lp, uint64_t expire_signed_height = 0)
         : tx{tx},
           nFee{fee},
           nTxWeight{GetTransactionWeight(*tx)},
@@ -121,6 +122,7 @@ public:
           sigOpCost{sigops_cost},
           m_modified_fee{nFee},
           lockPoints{lp},
+        expireSignedHeight{expire_signed_height},
           nSizeWithDescendants{GetTxSize()},
           nModFeesWithDescendants{nFee},
           nSizeWithAncestors{GetTxSize()},
@@ -142,6 +144,7 @@ public:
         return GetVirtualTransactionSize(nTxWeight, sigOpCost, ::nBytesPerSigOp);
     }
     int32_t GetTxWeight() const { return nTxWeight; }
+    uint64_t GetExpiredHeight() const { return expireSignedHeight; }
     std::chrono::seconds GetTime() const { return std::chrono::seconds{nTime}; }
     unsigned int GetHeight() const { return entryHeight; }
     uint64_t GetSequence() const { return entry_sequence; }

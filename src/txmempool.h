@@ -136,6 +136,15 @@ public:
     }
 };
 
+class CompareTxMemPoolEntryByExpiryHeight
+{
+public:
+    bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b) const
+    {
+        return a.GetExpiredHeight() < b.GetExpiredHeight();
+    }
+};
+
 class CompareTxMemPoolEntryByEntryTime
 {
 public:
@@ -834,7 +843,7 @@ public:
 
         using TxHandle = CTxMemPool::txiter;
 
-        TxHandle StageAddition(const CTransactionRef& tx, const CAmount fee, int64_t time, unsigned int entry_height, uint64_t entry_sequence, bool spends_coinbase, int64_t sigops_cost, LockPoints lp);
+        TxHandle StageAddition(const CTransactionRef& tx, const CAmount fee, int64_t time, unsigned int entry_height, uint64_t entry_sequence, bool spends_coinbase, int64_t sigops_cost, LockPoints lp, int64_t expire_signed_height);
         void StageRemoval(CTxMemPool::txiter it) { m_to_remove.insert(it); }
 
         const CTxMemPool::setEntries& GetRemovals() const { return m_to_remove; }
