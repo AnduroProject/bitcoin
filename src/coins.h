@@ -59,8 +59,8 @@ public:
 
 
     //! construct a Coin from a CTxOut and height/coinbase information.
-    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn, bool fBitAssetControlIn, bool isPreconfIn, bool isPeginIn, uint32_t nAssetIDIn) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
-    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn, bool fBitAssetControlIn, bool isPreconfIn, bool isPeginIn, uint32_t nAssetIDIn) : out(outIn), fCoinBase(fCoinBaseIn),nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
+    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn = false, bool fBitAssetControlIn = false, bool isPreconfIn = false, bool isPeginIn = false, uint32_t nAssetIDIn = 0) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
+    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn = false, bool fBitAssetControlIn = false, bool isPreconfIn = false, bool isPeginIn = false, uint32_t nAssetIDIn = 0) : out(outIn), fCoinBase(fCoinBaseIn),nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
 
     void Clear() {
         out.SetNull();

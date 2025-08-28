@@ -122,7 +122,7 @@ public:
           sigOpCost{sigops_cost},
           m_modified_fee{nFee},
           lockPoints{lp},
-        expireSignedHeight{expire_signed_height},
+          expireSignedHeight{expire_signed_height},
           nSizeWithDescendants{GetTxSize()},
           nModFeesWithDescendants{nFee},
           nSizeWithAncestors{GetTxSize()},
