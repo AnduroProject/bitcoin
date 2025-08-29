@@ -1,6 +1,6 @@
 
 #include <coordinate/anduro_deposit.h>
-#include <anduro_validator.h>
+#include <coordinate/anduro_validator.h>
 #include <chainparams.h>
 #include <coordinate/coordinate_preconf.h>
 #include <core_io.h>
@@ -438,7 +438,7 @@ static RPCHelpMan getpreconftxrefund() {
                     if(!signedTxIndex.signedBlockHash.IsNull()) {
                         CChain& active_chain = chainman.ActiveChain();
                         CBlock block;
-                        if (chainman.m_blockman.ReadBlockFromDisk(block, *active_chain[signedTxIndex.blockIndex])) {
+                        if (chainman.m_blockman.ReadBlock(block, *active_chain[signedTxIndex.blockIndex])) {
                             for (const SignedBlock& preconfBlockItem : block.preconfBlock) {
                                 if(preconfBlockItem.GetHash() == signedTxIndex.signedBlockHash) {
                                     mined_tx = preconfBlockItem.vtx[signedTxIndex.pos];

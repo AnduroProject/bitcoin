@@ -84,7 +84,7 @@
 #include <coordinate/invalid_tx.h>
 #include <coordinate/signed_txindex.h>
 #include <coordinate/coordinate_address.h>
-#include <anduro_validator.h>
+#include <coordinate/anduro_validator.h>
 
 using kernel::CCoinsStats;
 using kernel::CoinStatsHashType;

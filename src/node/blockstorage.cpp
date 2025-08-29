@@ -406,7 +406,7 @@ void BlockManager::FindFilesToAssetPrune(
         lastAsssetPrune = lastAsssetPrune + 1;
         CBlock block;
         bool isRequireUpdate = false;
-        if (!chainman.m_blockman.ReadBlockFromDisk(block, *CHECK_NONFATAL(active_chain[lastAsssetPrune]))) {
+        if (!chainman.m_blockman.ReadBlock(block, *CHECK_NONFATAL(active_chain[lastAsssetPrune]))) {
                 LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[lastAsssetPrune])->GetBlockHash().ToString());
         }
         const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(block.GetHash());

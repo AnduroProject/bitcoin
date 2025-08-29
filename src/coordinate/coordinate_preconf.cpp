@@ -3,7 +3,7 @@
 #include <logging.h>
 #include <univalue.h>
 #include <node/blockstorage.h>
-#include <anduro_validator.h>
+#include <coordinate/anduro_validator.h>
 #include <validation.h>
 #include <consensus/merkle.h>
 #include <coordinate/invalid_tx.h>
@@ -35,7 +35,7 @@ CoordinatePreConfBlock getNextPreConfSigList(ChainstateManager& chainman) {
     }
 
     CBlock block;
-    if (!chainman.m_blockman.ReadBlockFromDisk(block, *CHECK_NONFATAL(active_chain[blockindex]))) {
+    if (!chainman.m_blockman.ReadBlock(block, *CHECK_NONFATAL(active_chain[blockindex]))) {
         LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[blockindex])->GetBlockHash().ToString());
         CoordinatePreConfBlock result;
         return result;
@@ -152,7 +152,7 @@ bool includePreConfSigWitness(std::vector<CoordinatePreConfSig> preconf, Chainst
     
     // get block to find the eligible anduro keys to be signed on presigned block
     CBlock block;
-    if (!chainman.m_blockman.ReadBlockFromDisk(block, *CHECK_NONFATAL(active_chain[blockindex]))) {
+    if (!chainman.m_blockman.ReadBlock(block, *CHECK_NONFATAL(active_chain[blockindex]))) {
         LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[blockindex])->GetBlockHash().ToString());
     }
 
@@ -422,7 +422,7 @@ bool checkSignedBlock(const SignedBlock& block, ChainstateManager& chainman) {
     }
     // get block to find the eligible anduro keys to be signed on presigned block
     CBlock minedblock;
-    if (!chainman.m_blockman.ReadBlockFromDisk(minedblock, *CHECK_NONFATAL(active_chain[blockindex]))) {
+    if (!chainman.m_blockman.ReadBlock(minedblock, *CHECK_NONFATAL(active_chain[blockindex]))) {
         removePreConfWitness();
         LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[blockindex])->GetBlockHash().ToString());
         return false;
@@ -457,7 +457,7 @@ bool validateReconciliationBlock(ChainstateManager& chainman, ReconciliationBloc
 
     int currentHeight = lastHeight - 3;
     CBlock prevblock;
-    if (!chainman.m_blockman.ReadBlockFromDisk(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
+    if (!chainman.m_blockman.ReadBlock(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
         return false;
     } 
 
@@ -570,7 +570,7 @@ ReconciliationBlock getReconsiledBlock(ChainstateManager& chainman) {
         return block;
     }
     CBlock prevblock;
-    if (!chainman.m_blockman.ReadBlockFromDisk(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
+    if (!chainman.m_blockman.ReadBlock(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
         return block;
     } 
 
@@ -601,7 +601,7 @@ CAmount getPreconfFeeForBlock(ChainstateManager& chainman, int blockHeight) {
     int currentHeight = blockHeight - 3;
 
     CBlock prevblock;
-    if (!chainman.m_blockman.ReadBlockFromDisk(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
+    if (!chainman.m_blockman.ReadBlock(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
         return 0;
     } 
 
@@ -643,7 +643,7 @@ CAmount getFeeForBlock(ChainstateManager& chainman, int blockHeight) {
     int currentHeight = blockHeight - 3;
 
     CBlock prevblock;
-    if (!chainman.m_blockman.ReadBlockFromDisk(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
+    if (!chainman.m_blockman.ReadBlock(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
         return 0;
     } 
 
@@ -734,7 +734,7 @@ CScript getMinerScript(ChainstateManager& chainman, int blockHeight) {
     if(currentHeight < 0) { 
          return scriptPubKey;
     }
-    if (!chainman.m_blockman.ReadBlockFromDisk(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
+    if (!chainman.m_blockman.ReadBlock(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
         return scriptPubKey;
     } 
     return prevblock.vtx[0]->vout[0].scriptPubKey;
@@ -750,7 +750,7 @@ CScript getFederationScript(ChainstateManager& chainman, int blockHeight) {
     }
 
     CBlock prevblock;
-    if (!chainman.m_blockman.ReadBlockFromDisk(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
+    if (!chainman.m_blockman.ReadBlock(prevblock, *CHECK_NONFATAL(active_chain[currentHeight]))) {
         return scriptPubKey;
     } 
     std::vector<unsigned char> wData(ParseHex(prevblock.currentKeys));

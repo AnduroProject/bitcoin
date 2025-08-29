@@ -98,7 +98,7 @@ static RPCHelpMan gettxoutproof()
             }
 
             CBlock block;
-            if (!chainman.m_blockman.ReadBlockFromDisk(block, *pblockindex)) {
+            if (!chainman.m_blockman.ReadBlock(block, *pblockindex)) {
                 throw JSONRPCError(RPC_INTERNAL_ERROR, "Can't read block from disk");
             }
 
@@ -166,7 +166,7 @@ static RPCHelpMan verifytxoutproof()
             LogPrintf("no matches found 4\n");
 
             CBlock finalblock;
-            if (!chainman.m_blockman.ReadBlockFromDisk(finalblock, *CHECK_NONFATAL(active_chain[(pindex->nHeight + 4)]))) {
+            if (!chainman.m_blockman.ReadBlock(finalblock, *CHECK_NONFATAL(active_chain[(pindex->nHeight + 4)]))) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Finalized Block not found in chain");
             } 
 
