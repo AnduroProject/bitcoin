@@ -17,7 +17,7 @@
 #include <key_io.h>
 #include <primitives/transaction.h>
 #include <logging.h>
-#include <util/message.h>
+#include <common/signmessage.h>
 
 /**
  *  This is call is used to receive or prepare anduro precommitment signature data along with anduro deposit and withdrawal address

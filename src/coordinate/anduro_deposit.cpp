@@ -9,8 +9,8 @@
 #include <node/blockstorage.h>
 #include <rpc/util.h>
 #include <rpc/client.h>
-#include <anduro_deposit.h>
-#include <anduro_validator.h>
+#include <coordinate/anduro_deposit.h>
+#include <coordinate/anduro_validator.h>
 #include <coordinate/coordinate_pegin.h>
 
 using node::BlockManager;

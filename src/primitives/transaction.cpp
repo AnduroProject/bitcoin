@@ -97,15 +97,15 @@ Wtxid CTransaction::ComputeWitnessHash() const
     return Wtxid::FromUint256((HashWriter{} << TX_WITH_WITNESS(tx)).GetHash());
 }
 
-CTransaction::CTransaction(const CMutableTransaction& tx) : vin(tx.vin), vout(tx.vout), version{tx.version}, nLockTime{tx.nLockTime}, m_has_witness{ComputeHasWitness()}, hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
-CTransaction::CTransaction(CMutableTransaction&& tx) : vin(std::move(tx.vin)), vout(std::move(tx.vout)), version{tx.version}, nLockTime{tx.nLockTime}, m_has_witness{ComputeHasWitness()}, hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
+CTransaction::CTransaction(const CMutableTransaction& tx) : vin(tx.vin), vout(tx.vout), version{tx.version}, assetType(tx.assetType), precision(tx.precision), ticker(tx.ticker), headline(tx.headline), payload(tx.payload), payloadData(tx.payloadData), nLockTime{tx.nLockTime}, m_has_witness{ComputeHasWitness()}, hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
+CTransaction::CTransaction(CMutableTransaction&& tx) : vin(std::move(tx.vin)), vout(std::move(tx.vout)), version{tx.version}, assetType(tx.assetType), precision(tx.precision), ticker(tx.ticker), headline(tx.headline), payload(tx.payload), payloadData(tx.payloadData), nLockTime{tx.nLockTime}, m_has_witness{ComputeHasWitness()}, hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
 
 CAmount CTransaction::GetValueOut() const
 {
     std::vector<CTxOut>::const_iterator it;
-    if (nVersion == TRANSACTION_PRECONF_VERSION) {
+    if (version == TRANSACTION_PRECONF_VERSION) {
         it = vout.begin() + 1;
-    } else if (nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+    } else if (version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
         it = vout.begin() + 2;
     } else {
         it = vout.begin();

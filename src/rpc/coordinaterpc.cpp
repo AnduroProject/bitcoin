@@ -6,7 +6,7 @@
 #include <key_io.h>
 #include <rpc/auxpow_miner.h>
 #include <core_io.h>
-#include <anduro_deposit.h>
+#include <coordinate/anduro_deposit.h>
 #include <coordinate/coordinate_mempool_entry.h>
 #include <coordinate/coordinate_pegin.h>
 #include <anduro_validator.h>

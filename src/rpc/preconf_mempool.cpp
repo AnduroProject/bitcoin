@@ -1,5 +1,5 @@
 
-#include <anduro_deposit.h>
+#include <coordinate/anduro_deposit.h>
 #include <anduro_validator.h>
 #include <chainparams.h>
 #include <coordinate/coordinate_preconf.h>

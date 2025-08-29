@@ -115,6 +115,8 @@ public:
  */
 struct CBlockLocator
 {
+    static constexpr int DUMMY_VERSION = 70016;
+    
     std::vector<uint256> vHave;
 
     CBlockLocator() {}
@@ -123,9 +125,8 @@ struct CBlockLocator
 
     SERIALIZE_METHODS(CBlockLocator, obj)
     {
-        int nVersion = s.GetVersion();
-        if (!(s.GetType() & SER_GETHASH))
-            READWRITE(nVersion);
+        int nVersion = DUMMY_VERSION;
+        READWRITE(nVersion);
         READWRITE(obj.vHave);
     }
 
