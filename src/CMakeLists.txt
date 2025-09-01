@@ -114,7 +114,6 @@ add_library(bitcoin_consensus STATIC EXCLUDE_FROM_ALL
   primitives/transaction.cpp
   primitives/bitcoin/block.cpp
   primitives/bitcoin/transaction.cpp
-  primitives/bitcoin/merkleblock.cpp
   pubkey.cpp
   script/interpreter.cpp
   script/script.cpp
@@ -175,6 +174,7 @@ add_library(bitcoin_common STATIC EXCLUDE_FROM_ALL
   key.cpp
   key_io.cpp
   merkleblock.cpp
+  primitives/bitcoin/merkleblock.cpp
   musig.cpp
   net_permissions.cpp
   net_types.cpp

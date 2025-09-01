@@ -10,7 +10,7 @@
 #include <rpc/coordinaterpc.h>
 
 CTxOut getPeginAmount(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress) {
-    Sidechain::Bitcoin::CTransactionRef pegtx;
+    CTransactionRef pegtx;
     CDataStream pegtx_stream(bitcoinTx, SER_NETWORK, PROTOCOL_VERSION);
     pegtx_stream >> pegtx;
     bool isOutputAvailable = false;
@@ -87,7 +87,7 @@ std::string ExtractOpReturnScript(const CScript& script) {
 }
 
 CTxIn buildPeginTxInput(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress, CTxOut txOut) {
-    Sidechain::Bitcoin::CTransactionRef pegtx;
+    CTransactionRef pegtx;
     CDataStream pegtx_stream(bitcoinTx, SER_NETWORK, PROTOCOL_VERSION);
     pegtx_stream >> pegtx;
 
@@ -296,7 +296,7 @@ bool IsValidPeginWitness(const CScriptWitness& pegin_witness, const COutPoint& p
         return false;
     }
 
-    Sidechain::Bitcoin::CTransactionRef pegtx;
+    CTransactionRef pegtx;
     if (!CheckPeginTx(stack[3], pegtx, prevout, value, claimAddress, federationAddress)) {
         err_msg = "Peg-in tx is invalid.";
         return false;

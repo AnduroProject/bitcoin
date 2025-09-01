@@ -24,6 +24,9 @@
 #include <utility>
 #include <vector>
 
+namespace Sidechain {
+namespace Bitcoin {
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
 {
@@ -423,4 +426,6 @@ struct CMutableTransaction
 typedef std::shared_ptr<const CTransaction> CTransactionRef;
 template <typename Tx> static inline CTransactionRef MakeTransactionRef(Tx&& txIn) { return std::make_shared<const CTransaction>(std::forward<Tx>(txIn)); }
 
+}
+}
 #endif // BITCOIN_PRIMITIVES_TRANSACTION_H

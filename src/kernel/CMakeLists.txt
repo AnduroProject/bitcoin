@@ -45,6 +45,8 @@ add_library(bitcoinkernel
   ../pow.cpp
   ../primitives/block.cpp
   ../primitives/transaction.cpp
+  ../primitives/bitcoin/block.cpp
+  ../primitives/bitcoin/transaction.cpp
   ../pubkey.cpp
   ../random.cpp
   ../randomenv.cpp
