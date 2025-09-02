@@ -247,7 +247,7 @@ static RPCHelpMan getpreconflist()
                                 voteItem.pushKV("reserve", 0);
                                 voteItem.pushKV("vsize", 0);
                             } else {
-                                TxMempoolInfo info = preconf_pool.info(GenTxid::Txid(coordinatePreConfSig.txids[i]));
+                                TxMempoolInfo info = preconf_pool.info(Txid::FromUint256(coordinatePreConfSig.txids[i]));
                                 if(info.tx) {
                                     voteItem.pushKV("txid",  coordinatePreConfSig.txids[i].ToString());
                                     voteItem.pushKV("reserve", info.tx->vout[0].nValue);

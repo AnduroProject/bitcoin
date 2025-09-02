@@ -1984,6 +1984,11 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
             LoadMempool(*pool, ShouldPersistMempool(args) ? MempoolPath(args) : fs::path{}, chainman.ActiveChainstate(), {});
             pool->SetLoadTried(!chainman.m_interrupt);
         }
+
+        if (auto* pool{chainman.ActiveChainstate().GetPreConfMempool()}) {
+            LoadMempool(*pool, ShouldPersistMempool(args) ? PreConfMempoolPath(args) : fs::path{}, chainman.ActiveChainstate(), {});
+            pool->SetLoadTried(!chainman.m_interrupt);
+        }
     });
 
     /*

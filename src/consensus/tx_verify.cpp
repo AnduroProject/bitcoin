@@ -183,7 +183,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, 
         const CAmount value_out = tx.GetValueOut();
         const std::vector<std::vector<unsigned char> >& stack = tx.vin[0].scriptWitness.stack;
 
-        CDataStream stream(stack[2], SER_NETWORK, PROTOCOL_VERSION);
+        DataStream stream(stack[2]);
         CAmount value;
         try {
             stream >> value;

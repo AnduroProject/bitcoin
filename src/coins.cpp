@@ -8,6 +8,7 @@
 #include <logging.h>
 #include <random.h>
 #include <util/trace.h>
+#include <streams.h>
 
 TRACEPOINT_SEMAPHORE(utxocache, add);
 TRACEPOINT_SEMAPHORE(utxocache, spent);
@@ -122,7 +123,7 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction &tx, int nHeight, const
 
     if(tx.version == TRANSACTION_PEGIN_VERSION) {
         const std::vector<std::vector<unsigned char> >& stack = tx.vin[0].scriptWitness.stack;
-        CDataStream stream(stack[2], SER_NETWORK, PROTOCOL_VERSION);
+        DataStream stream(stack[2]);
         CAmount value;
         stream >> value;
         cache.AddCoin(tx.vin[0].prevout, Coin(CTxOut(value, CScript(stack[0].begin(), stack[0].end())), nHeight, fCoinbase, false, false, false, true, 0), false);
@@ -181,7 +182,7 @@ bool CCoinsViewCache::SpendCoin(const COutPoint &outpoint, bool& fBitAsset, bool
     isPreconf = it->second.coin.isPreconf;
     nAssetID = it->second.coin.nAssetID;
     cachedCoinsUsage -= it->second.coin.DynamicMemoryUsage();
-    TRACE5(utxocache, spent,
+    TRACEPOINT(utxocache, spent,
            outpoint.hash.data(),
            (uint32_t)outpoint.n,
            (uint32_t)it->second.coin.nHeight,
@@ -190,10 +191,10 @@ bool CCoinsViewCache::SpendCoin(const COutPoint &outpoint, bool& fBitAsset, bool
     if (moveout) {
         *moveout = std::move(it->second.coin);
     }
-    if (it->second.flags & CCoinsCacheEntry::FRESH) {
+    if (it->second.IsFresh()) {
         cacheCoins.erase(it);
     } else {
-        it->second.flags |= CCoinsCacheEntry::DIRTY;
+        CCoinsCacheEntry::SetDirty(*it, m_sentinel);
         it->second.coin.Clear();
     }
     return true;

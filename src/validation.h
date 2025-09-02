@@ -664,6 +664,12 @@ public:
         return m_mempool;
     }
 
+    CTxMemPool* GetPreConfMempool()
+    {
+        return m_preconf_mempool;
+    }
+
+
     //! @returns A reference to a wrapped view of the in-memory UTXO set that
     //!     handles disk read errors gracefully.
     CCoinsViewErrorCatcher& CoinsErrorCatcher() EXCLUSIVE_LOCKS_REQUIRED(::cs_main)

@@ -10,6 +10,7 @@
 #include <coordinate/coordinate_pegin.h>
 #include <undo.h>
 #include <merkleblock.h>
+#include <util/transaction_identifier.h>
 
 using node::BlockManager;
 
@@ -162,7 +163,7 @@ bool includePreConfSigWitness(std::vector<CoordinatePreConfSig> preconf, Chainst
         for (size_t i = 0; i < coordinatePreConfSigItem.txids.size(); i++){
             UniValue message(UniValue::VOBJ);
             if(coordinatePreConfSigItem.txids[i] != uint256::ZERO) {
-                if(!preconf_pool.exists(GenTxid::Txid( coordinatePreConfSigItem.txids[i]))) {
+                if(!preconf_pool.exists(Txid::FromUint256(coordinatePreConfSigItem.txids[i]))) {
                     LogPrintf("preconf txid not avilable in mempool \n");
                     return false;
                 }
@@ -204,12 +205,12 @@ bool includePreConfBlockFromNetwork(std::vector<SignedBlock> newFinalizedSignedB
         });
         if (it == finalizedSignedBlocks.end()) {
             if (!checkSignedBlock(newFinalizedSignedBlock, chainman)) {
-                LogPrint(BCLog::NET, "signed block validity failed from network\n");
+                LogPrintf("signed block validity failed from network\n");
                 continue;
             }
             LOCK(cs_main);
             if (!chainman.ActiveChainstate().ConnectSignedBlock(newFinalizedSignedBlock)) {
-                LogPrint(BCLog::NET, "signed block connect failed from network\n");
+                LogPrintf("signed block connect failed from network\n");
                 continue;
             }
             insertNewSignedBlock(newFinalizedSignedBlock);
@@ -366,7 +367,7 @@ std::unique_ptr<SignedBlock> CreateNewSignedBlock(ChainstateManager& chainman, u
 
 
     for (const uint256& hash : preconfList.txids) {
-        TxMempoolInfo info = preconf_pool.info(GenTxid::Txid(hash));
+        TxMempoolInfo info = preconf_pool.info(Txid::FromUint256(hash));
         if(!info.tx) {
            LogPrintf("Signed block invalid tx \n");
            return nullptr;
@@ -383,7 +384,7 @@ std::unique_ptr<SignedBlock> CreateNewSignedBlock(ChainstateManager& chainman, u
     coinBaseOuts.push_back(witnessMerkleOut);
 
     CMutableTransaction signedCoinbaseTx;
-    signedCoinbaseTx.nVersion = TRANSACTION_PRECONF_VERSION;
+    signedCoinbaseTx.version = TRANSACTION_PRECONF_VERSION;
     signedCoinbaseTx.vin.resize(1);
     signedCoinbaseTx.vin[0].prevout.SetNull();
     signedCoinbaseTx.vout.resize(coinBaseOuts.size());
@@ -649,7 +650,7 @@ CAmount getFeeForBlock(ChainstateManager& chainman, int blockHeight) {
 
 
     CBlockUndo blockUndo;
-    if(!chainman.m_blockman.UndoReadFromDisk(blockUndo, *active_chain[currentHeight])) {
+    if(!chainman.m_blockman.ReadBlockUndo(blockUndo, *active_chain[currentHeight])) {
        return 0;
     }
 
@@ -680,7 +681,7 @@ CAmount getFeeForBlock(ChainstateManager& chainman, int blockHeight) {
                 if (have_undo) {
                     const Coin& prev_coin = txundo->vprevout[ix];
                     const CTxOut& prev_txout = prev_coin.out;
-                    if(!(tx->nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && prev_coin.IsBitAssetController())) {
+                    if(!(tx->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && prev_coin.IsBitAssetController())) {
                         amt_total_in += prev_txout.nValue;
                     } 
                 }
@@ -688,11 +689,11 @@ CAmount getFeeForBlock(ChainstateManager& chainman, int blockHeight) {
 
             for (unsigned int ix = 0; ix < tx->vout.size(); ix++) {
                 const CTxOut& txout = tx->vout[ix];
-                if(tx->nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+                if(tx->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
                     if(ix > 1) {
                         amt_total_out += txout.nValue;
                     }
-                } else if(tx->nVersion == TRANSACTION_PRECONF_VERSION) {
+                } else if(tx->version == TRANSACTION_PRECONF_VERSION) {
                     if(ix > 0) {
                         amt_total_out += txout.nValue;
                     }
@@ -708,7 +709,7 @@ CAmount getFeeForBlock(ChainstateManager& chainman, int blockHeight) {
 
     for (size_t i = 0; i < prevblock.pegins.size(); ++i) {
         const std::vector<std::vector<unsigned char> >& stack = prevblock.pegins[i]->vin[0].scriptWitness.stack;
-        CDataStream stream(stack[2], SER_NETWORK, PROTOCOL_VERSION);
+        DataStream stream(stack[2]);
         CAmount value;
         stream >> value;
         const CTransaction& tx = *prevblock.pegins[i];

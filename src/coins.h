@@ -484,6 +484,13 @@ public:
     void EmplaceCoinInternalDANGER(COutPoint&& outpoint, Coin&& coin);
 
     /**
+     * Spend a coin. Pass moveto in order to get the deleted data.
+     * If no unspent output exists for the passed outpoint, this call
+     * has no effect.
+     */
+    bool SpendCoin(const COutPoint &outpoint, bool& fBitAsset, bool& fBitAssetControl, bool& isPreconf, uint32_t& nAssetID, Coin* moveto = nullptr);
+
+    /**
      * get asset coin. Pass moveto in order to get the deleted data.
      * If no unspent output exists for the passed outpoint, this call
      * has no effect.

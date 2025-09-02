@@ -1262,7 +1262,7 @@ bool PeerManagerImpl::BlockRequested(NodeId nodeid, const CBlockIndex& block, st
     RemoveBlockRequest(hash, nodeid);
 
     std::list<QueuedBlock>::iterator it = state->vBlocksInFlight.insert(state->vBlocksInFlight.end(),
-            {&block, std::unique_ptr<PartiallyDownloadedBlock>(pit ? new PartiallyDownloadedBlock(&m_mempool) : nullptr)});
+            {&block, std::unique_ptr<PartiallyDownloadedBlock>(pit ? new PartiallyDownloadedBlock(&m_mempool, &m_preconf_mempool) : nullptr)});
     if (state->vBlocksInFlight.size() == 1) {
         // We're starting a block download (batch) from this peer.
         state->m_downloading_since = GetTime<std::chrono::microseconds>();
@@ -1615,6 +1615,16 @@ void PeerManagerImpl::ReattemptInitialBroadcast(CScheduler& scheduler)
         }
     }
 
+    std::set<uint256> unbroadcast_preconf_txids = m_preconf_mempool.GetUnbroadcastTxs();
+    for (const auto& txid : unbroadcast_preconf_txids) {
+        CTransactionRef tx = m_preconf_mempool.get(txid);
+        if (tx != nullptr) {
+            RelayTransaction(txid, tx->GetWitnessHash());
+        } else {
+            m_preconf_mempool.RemoveUnbroadcastTx(txid, true);
+        }
+    }
+
     // Schedule next run for 10-15 minutes in the future.
     // We add randomness on every cycle to avoid the possibility of P2P fingerprinting.
     const auto delta = 10min + FastRandomContext().randrange<std::chrono::milliseconds>(5min);
@@ -1951,7 +1961,7 @@ PeerManagerImpl::PeerManagerImpl(CConnman& connman, AddrMan& addrman,
       m_banman(banman),
       m_chainman(chainman),
       m_mempool(pool),
-      m_mempool(preconfpool),
+      m_preconf_mempool(preconfpool),
       m_txdownloadman(node::TxDownloadOptions{pool, m_rng, opts.deterministic_rng}),
       m_warnings{warnings},
       m_opts{opts}
@@ -5970,6 +5980,10 @@ bool PeerManagerImpl::SendMessages(CNode* pto)
                         // Not in the mempool anymore? don't bother sending it.
                         auto txinfo = m_mempool.info(wtxid);
                         if (!txinfo.tx) {
+                            txinfo = m_preconf_mempool.info(wtxid);
+                            if (!txinfo.tx) {
+                                continue;
+                            }
                             continue;
                         }
                         // `TxRelay::m_tx_inventory_known_filter` contains either txids or wtxids

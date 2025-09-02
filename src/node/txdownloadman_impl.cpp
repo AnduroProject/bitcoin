@@ -143,7 +143,7 @@ bool TxDownloadManagerImpl::AlreadyHaveTx(const GenTxid& gtxid, bool include_rec
 
     if (RecentConfirmedTransactionsFilter().contains(hash)) return true;
 
-    return RecentRejectsFilter().contains(hash) || std::visit([&](const auto& id) { return m_opts.m_mempool.exists(id); }, gtxid);
+    return RecentRejectsFilter().contains(hash) || std::visit([&](const auto& id) { return m_opts.m_mempool.exists(id); }, gtxid) || std::visit([&](const auto& id) { return m_opts.m_preconf_mempool.exists(id); }, gtxid);
 }
 
 void TxDownloadManagerImpl::ConnectedPeer(NodeId nodeid, const TxDownloadConnectionInfo& info)
