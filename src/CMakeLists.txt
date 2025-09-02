@@ -109,6 +109,7 @@ add_library(bitcoin_consensus STATIC EXCLUDE_FROM_ALL
   consensus/merkle.cpp
   consensus/tx_check.cpp
   hash.cpp
+  coordinate/signed_block.cpp
   primitives/block.cpp
   primitives/pureheader.cpp
   primitives/transaction.cpp

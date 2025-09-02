@@ -71,11 +71,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  *     CTxOut(nValue=50.00000000, scriptPubKey=0x5F1DF16B2B704C8A578D0B)
  *   vMerkleTree: 4a5e1e
  */
-static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
+static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward, std::string currentKeys)
 {
     const char* pszTimestamp = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
     const CScript genesisOutputScript = CScript() << "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"_hex << OP_CHECKSIG;
-    return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
+    return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward, currentKeys);
 }
 
 /**
@@ -161,8 +161,6 @@ public:
         bech32_hrp = "cc";
         parent_bech32_hrp = "bc";
 
-        vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_main), std::end(chainparams_seed_main));
-
         fDefaultConsistencyChecks = false;
         m_is_mockable_chain = false;
 
@@ -175,8 +173,8 @@ public:
             0,
             0,
         };
-        parentGenesisBlockHash = uint256S("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
-        parentPowLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        parentGenesisBlockHash = uint256{"000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"};
+        parentPowLimit = uint256{"00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
     }
 };
 
@@ -256,8 +254,6 @@ public:
         bech32_hrp = "tc";
         parent_bech32_hrp = "tb";
 
-        vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_test), std::end(chainparams_seed_test));
-
         fDefaultConsistencyChecks = false;
         m_is_mockable_chain = false;
 
@@ -270,8 +266,8 @@ public:
             0,
             0,
         };
-        parentGenesisBlockHash = uint256S("00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043");
-        parentPowLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        parentGenesisBlockHash = uint256{"00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043"};
+        parentPowLimit = uint256{"00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
     }
 };
 
@@ -361,8 +357,6 @@ public:
         bech32_hrp = "tc";
         parent_bech32_hrp = "tb";
 
-        vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_testnet4), std::end(chainparams_seed_testnet4));
-
         fDefaultConsistencyChecks = false;
         m_is_mockable_chain = false;
 
@@ -375,8 +369,8 @@ public:
             0,
             0,
         };
-        parentGenesisBlockHash = uint256S("00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043");
-        parentPowLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        parentGenesisBlockHash = uint256{"00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043"};
+        parentPowLimit = uint256{"00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
     }
 };
 
@@ -393,7 +387,6 @@ public:
 
         if (!options.challenge) {
             bin = "512103ad5e0edad18cb1f0fc0d28a3d4f1f3e445640337489abb10404f2d1e086be430210359ef5021964fe22d6f8e05b2463c9540ce96883fe3b278760f048f5189f2e6c452ae"_hex_v_u8;
-            vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_signet), std::end(chainparams_seed_signet));
             vSeeds.emplace_back("seed.signet.bitcoin.sprovoost.nl.");
             vSeeds.emplace_back("seed.signet.achownodes.xyz."); // Ava Chow, only supports x1, x5, x9, x49, x809, x849, xd, x400, x404, x408, x448, xc08, xc48, x40c
 
@@ -496,8 +489,8 @@ public:
 
         fDefaultConsistencyChecks = false;
         m_is_mockable_chain = false;
-        parentGenesisBlockHash = uint256S("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
-        parentPowLimit = uint256S("00000377ae000000000000000000000000000000000000000000000000000000");
+        parentGenesisBlockHash = uint256{"000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"};
+        parentPowLimit = uint256{"00000377ae000000000000000000000000000000000000000000000000000000"};
     }
 };
 
@@ -587,7 +580,7 @@ public:
             consensus.vDeployments[deployment_pos].min_activation_height = version_bits_params.min_activation_height;
         }
 
-        genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 50 * COIN, consensus.currentKeys);
+        genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 0 * COIN, consensus.currentKeys);
         consensus.hashGenesisBlock = genesis.GetHash();
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
@@ -617,8 +610,8 @@ public:
         bech32_hrp = "ccrt";
         parent_bech32_hrp = "bcrt";
 
-        parentGenesisBlockHash = uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
-        parentPowLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        parentGenesisBlockHash = uint256{"0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"};
+        parentPowLimit = uint256{"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
     }
 };
 

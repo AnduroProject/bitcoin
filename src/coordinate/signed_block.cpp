@@ -4,5 +4,5 @@
 
 uint256 SignedBlockHeader::GetHash() const
 {
-    return (CHashWriter{PROTOCOL_VERSION} << *this).GetHash();
+    return (HashWriter{} << *this).GetHash();
 }

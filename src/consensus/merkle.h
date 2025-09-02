@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <primitives/block.h>
+#include <coordinate/signed_block.h>
 #include <uint256.h>
 
 uint256 ComputeMerkleRoot(std::vector<uint256> hashes, bool* mutated = nullptr);

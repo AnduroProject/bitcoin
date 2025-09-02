@@ -18,10 +18,11 @@
 #include <script/solver.h>
 #include <serialize.h>
 #include <span.h>
-
+#include <logging.h>
 #include <algorithm>
 #include <cstddef>
 #include <vector>
+#include <coordinate/coordinate_mempool_entry.h>
 
 CAmount GetDustThreshold(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 {
