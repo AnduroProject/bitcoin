@@ -497,6 +497,8 @@ public:
      */
     bool getAssetCoin(const COutPoint &outpoint, bool& fBitAsset, bool& fBitAssetControl, uint32_t& nAssetID, Coin* moveto = nullptr);
 
+     bool isPeginSpent(const COutPoint &outpoint) const;
+     
     /**
      * Push the modifications applied to this cache to its base and wipe local state.
      * Failure to call this method or Sync() before destruction will cause the changes

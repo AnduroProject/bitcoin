@@ -13,6 +13,8 @@
 #include <script/interpreter.h>
 #include <util/check.h>
 #include <util/moneystr.h>
+#include <logging.h>
+#include <coordinate/coordinate_pegin.h>
 
 bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime)
 {

@@ -223,6 +223,15 @@ const Coin& CCoinsViewCache::AccessCoin(const COutPoint &outpoint) const {
     }
 }
 
+bool CCoinsViewCache::isPeginSpent(const COutPoint &outpoint) const {
+    CCoinsMap::const_iterator it = FetchCoin(outpoint);
+    if(it == cacheCoins.end()) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
 bool CCoinsViewCache::HaveCoin(const COutPoint &outpoint) const {
     CCoinsMap::const_iterator it = FetchCoin(outpoint);
     return (it != cacheCoins.end() && !it->second.coin.IsSpent());

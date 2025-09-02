@@ -135,7 +135,7 @@ using node::KernelNotifications;
 using node::LoadChainstate;
 using node::LoadMempool;
 using node::MempoolPath;
-using node::MempoolPath;
+using node::PreConfMempoolPath;
 using node::NodeContext;
 using node::ShouldPersistMempool;
 using node::VerifyLoadedChainstate;
