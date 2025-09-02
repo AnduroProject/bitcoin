@@ -21,9 +21,15 @@ std::string EncodeExtKey(const CExtKey& extkey);
 CExtPubKey DecodeExtPubKey(const std::string& str);
 std::string EncodeExtPubKey(const CExtPubKey& extpubkey);
 
+std::string ParentEncodeDestination(const CTxDestination& dest);
 std::string EncodeDestination(const CTxDestination& dest);
 CTxDestination DecodeDestination(const std::string& str);
 CTxDestination DecodeDestination(const std::string& str, std::string& error_msg, std::vector<int>* error_locations = nullptr);
+
+CTxDestination ParentDecodeDestination(const std::string& str);
+CTxDestination ParentDecodeDestination(const std::string& str, std::string& error_msg, std::vector<int>* error_locations = nullptr);
+
+
 bool IsValidDestinationString(const std::string& str);
 bool IsValidDestinationString(const std::string& str, const CChainParams& params);
 

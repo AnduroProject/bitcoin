@@ -11,8 +11,8 @@
 
 CTxOut getPeginAmount(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress) {
     CTransactionRef pegtx;
-    CDataStream pegtx_stream(bitcoinTx, SER_NETWORK, PROTOCOL_VERSION);
-    pegtx_stream >> pegtx;
+    DataStream pegtx_stream(bitcoinTx);
+    pegtx_stream >> TX_WITH_WITNESS(pegtx);
     bool isOutputAvailable = false;
     CAmount value = 0;
     for (size_t i = 0; i < pegtx->vout.size(); i++) {
@@ -88,11 +88,11 @@ std::string ExtractOpReturnScript(const CScript& script) {
 
 CTxIn buildPeginTxInput(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress, CTxOut txOut) {
     CTransactionRef pegtx;
-    CDataStream pegtx_stream(bitcoinTx, SER_NETWORK, PROTOCOL_VERSION);
-    pegtx_stream >> pegtx;
+    DataStream pegtx_stream(bitcoinTx);
+    pegtx_stream >> TX_WITH_WITNESS(pegtx);
 
     Sidechain::Bitcoin::CMerkleBlock merkle_block;
-    CDataStream merkle_block_stream(bitcoinTxProof, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
+    DataStream merkle_block_stream(bitcoinTxProof);
     merkle_block_stream >> merkle_block;
 
     uint32_t index = 0;
@@ -118,7 +118,7 @@ CTxIn buildPeginTxInput(const std::vector<unsigned char>& bitcoinTx, const std::
     stack.push_back(std::vector<unsigned char>(txOut.scriptPubKey.begin(), txOut.scriptPubKey.end()));
 
     std::vector<unsigned char> value_bytes;
-    CVectorWriter ss_val(PROTOCOL_VERSION, value_bytes, 0);
+    VectorWriter ss_val(value_bytes, 0);
     try {
         ss_val << txOut.nValue;
     } catch (...) {
@@ -127,14 +127,14 @@ CTxIn buildPeginTxInput(const std::vector<unsigned char>& bitcoinTx, const std::
     stack.push_back(value_bytes);
 
     // Strip witness data for proof inclusion since only TXID-covered fields matters
-    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
-    ss_tx << pegtx;
+    DataStream ss_tx;
+    ss_tx << TX_WITH_WITNESS(pegtx);
     const auto* ss_tx_ptr = UCharCast(ss_tx.data());
     std::vector<unsigned char> tx_data_stripped(ss_tx_ptr, ss_tx_ptr + ss_tx.size());
     stack.push_back(tx_data_stripped);
 
     // Serialize merkle block
-    CDataStream ss_txout_proof(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
+    DataStream ss_txout_proof;
     ss_txout_proof << merkle_block;
     const auto* ss_txout_ptr = UCharCast(ss_txout_proof.data());
     std::vector<unsigned char> txout_proof_bytes(ss_txout_ptr, ss_txout_ptr + ss_txout_proof.size());
@@ -154,7 +154,7 @@ static bool GetBlockAndTxFromMerkleBlock(uint256& block_hash, uint256& tx_hash, 
     try {
         std::vector<uint256> tx_hashes;
         std::vector<unsigned int> tx_indices;
-        CDataStream merkle_block_stream(merkle_block_raw, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
+        DataStream merkle_block_stream(merkle_block_raw);
         merkle_block_stream >> merkle_block;
         block_hash = merkle_block.header.GetHash();
 
@@ -177,8 +177,8 @@ template<typename T>
 static bool CheckPeginTx(const std::vector<unsigned char>& tx_data, T& pegtx, const COutPoint& prevout, CAmount peginValue, std::string claimAddress, std::string federationAddress)
 {
     try {
-        CDataStream pegtx_stream(tx_data, SER_NETWORK, PROTOCOL_VERSION);
-        pegtx_stream >> pegtx;
+        DataStream pegtx_stream;
+        pegtx_stream >> TX_WITH_WITNESS(pegtx);
         if (!pegtx_stream.empty()) {
             return false;
         }
@@ -266,7 +266,7 @@ bool IsValidPeginWitness(const CScriptWitness& pegin_witness, const COutPoint& p
         return false;
     }
 
-    CDataStream stream(stack[2], SER_NETWORK, PROTOCOL_VERSION);
+    DataStream stream(stack[2]);
     CAmount value;
     try {
         stream >> value;
@@ -365,7 +365,7 @@ bool IsConfirmedBitcoinBlock(const uint256& hash, const int nMinConfirmationDept
 
 bool isPeginFeeValid(const CTransaction& tx) {
     const std::vector<std::vector<unsigned char> >& stack = tx.vin[0].scriptWitness.stack;
-    CDataStream stream(stack[2], SER_NETWORK, PROTOCOL_VERSION);
+    DataStream stream(stack[2]);
     CAmount value;
     stream >> value;
     CAmount fee = GetVirtualTransactionSize(tx) * PEGIN_FEE;

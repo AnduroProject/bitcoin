@@ -105,7 +105,11 @@ public:
     const std::vector<std::string>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     const std::string& Bech32HRP() const { return bech32_hrp; }
+    const std::string& ParentBech32HRP() const { return parent_bech32_hrp; }
     const std::vector<uint8_t>& FixedSeeds() const { return vFixedSeeds; }
+
+    const uint256& ParentGenesisBlockHash() const { return parentGenesisBlockHash; }
+    const uint256& ParentPowList() const { return parentPowLimit; }
 
     std::optional<AssumeutxoData> AssumeutxoForHeight(int height) const
     {
@@ -163,6 +167,7 @@ protected:
     std::vector<std::string> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     std::string bech32_hrp;
+    std::string parent_bech32_hrp;
     ChainType m_chain_type;
     CBlock genesis;
     std::vector<uint8_t> vFixedSeeds;
@@ -170,6 +175,8 @@ protected:
     bool m_is_mockable_chain;
     std::vector<AssumeutxoData> m_assumeutxo_data;
     ChainTxData chainTxData;
+    uint256 parentGenesisBlockHash;
+    uint256 parentPowLimit;
 };
 
 std::optional<ChainType> GetNetworkForMagic(const MessageStartChars& pchMessageStart);

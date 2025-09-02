@@ -424,6 +424,8 @@ arith_uint256 CalculateClaimedHeadersWork(std::span<const CBlockHeader> headers)
  */
 bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params);
 
+bool CheckParentProofOfWork(uint256 hash, unsigned int nBits);
+
 enum class VerifyDBResult {
     SUCCESS,
     CORRUPTED_BLOCK_DB,

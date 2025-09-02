@@ -81,6 +81,69 @@ public:
     std::string operator()(const PubKeyDestination& pk) const { return {}; }
 };
 
+class ParentDestinationEncoder
+{
+private:
+    const CChainParams& m_params;
+
+public:
+    explicit ParentDestinationEncoder(const CChainParams& params) : m_params(params) {}
+
+    std::string operator()(const PKHash& id) const
+    {
+        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);
+        data.insert(data.end(), id.begin(), id.end());
+        return EncodeBase58Check(data);
+    }
+
+    std::string operator()(const ScriptHash& id) const
+    {
+        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
+        data.insert(data.end(), id.begin(), id.end());
+        return EncodeBase58Check(data);
+    }
+
+    std::string operator()(const WitnessV0KeyHash& id) const
+    {
+        std::vector<unsigned char> data = {0};
+        data.reserve(33);
+        ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, id.begin(), id.end());
+        return bech32::Encode(bech32::Encoding::BECH32, m_params.ParentBech32HRP(), data);
+    }
+
+    std::string operator()(const WitnessV0ScriptHash& id) const
+    {
+        std::vector<unsigned char> data = {0};
+        data.reserve(53);
+        ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, id.begin(), id.end());
+        return bech32::Encode(bech32::Encoding::BECH32, m_params.ParentBech32HRP(), data);
+    }
+
+    std::string operator()(const WitnessV1Taproot& tap) const
+    {
+        std::vector<unsigned char> data = {1};
+        data.reserve(53);
+        ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, tap.begin(), tap.end());
+        return bech32::Encode(bech32::Encoding::BECH32M, m_params.ParentBech32HRP(), data);
+    }
+
+    std::string operator()(const WitnessUnknown& id) const
+    {
+        const std::vector<unsigned char>& program = id.GetWitnessProgram();
+        if (id.GetWitnessVersion() < 1 || id.GetWitnessVersion() > 16 || program.size() < 2 || program.size() > 40) {
+            return {};
+        }
+        std::vector<unsigned char> data = {(unsigned char)id.GetWitnessVersion()};
+        data.reserve(1 + (program.size() * 8 + 4) / 5);
+        ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, program.begin(), program.end());
+        return bech32::Encode(bech32::Encoding::BECH32M, m_params.ParentBech32HRP(), data);
+    }
+
+    std::string operator()(const CNoDestination& no) const { return {}; }
+    std::string operator()(const PubKeyDestination& pk) const { return {}; }
+};
+
+
 CTxDestination DecodeDestination(const std::string& str, const CChainParams& params, std::string& error_str, std::vector<int>* error_locations)
 {
     std::vector<unsigned char> data;
@@ -296,6 +359,11 @@ std::string EncodeDestination(const CTxDestination& dest)
     return std::visit(DestinationEncoder(Params()), dest);
 }
 
+std::string ParentEncodeDestination(const CTxDestination& dest)
+{
+    return std::visit(ParentDestinationEncoder(Params()), dest);
+}
+
 CTxDestination DecodeDestination(const std::string& str, std::string& error_msg, std::vector<int>* error_locations)
 {
     return DecodeDestination(str, Params(), error_msg, error_locations);
@@ -305,6 +373,17 @@ CTxDestination DecodeDestination(const std::string& str)
 {
     std::string error_msg;
     return DecodeDestination(str, error_msg);
+}
+
+CTxDestination ParentDecodeDestination(const std::string& str, std::string& error_msg, std::vector<int>* error_locations)
+{
+    return ParentDecodeDestination(str, Params(), error_msg, error_locations);
+}
+
+CTxDestination ParentDecodeDestination(const std::string& str)
+{
+    std::string error_msg;
+    return ParentDecodeDestination(str, error_msg);
 }
 
 bool IsValidDestinationString(const std::string& str, const CChainParams& params)
