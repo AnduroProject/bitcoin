@@ -411,7 +411,7 @@ void BlockManager::FindFilesToAssetPrune(
         }
         const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(block.GetHash());
         for (size_t i = 0; i < block.vtx.size(); i++) {
-            if(block.vtx[i]->nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && block.vtx[i]->assetType == 2) {
+            if(block.vtx[i]->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && block.vtx[i]->assetType == 2) {
                 block.vtx[i]->payloadData = "";
                 isRequireUpdate = true;
             }
@@ -426,6 +426,20 @@ void BlockManager::FindFilesToAssetPrune(
     }
       chain.passettree->WriteLastAssetPruneHeight(lastAsssetPrune);
 }
+
+bool BlockManager::UpdateBlockToDisk(const CBlock& block, FlatFilePos& pos) const
+{
+    // Open history file to append
+    AutoFile fileout{OpenBlockFile(pos)};
+    if (fileout.IsNull()) {
+        return error("WriteBlockToDisk: OpenBlockFile failed");
+    }
+
+    fileout << block;
+
+    return true;
+}
+
 
 void BlockManager::UpdatePruneLock(const std::string& name, const PruneLockInfo& lock_info) {
     AssertLockHeld(::cs_main);

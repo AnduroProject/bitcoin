@@ -137,6 +137,7 @@ public:
         pchMessageStart[3] = 0xd8;
         nDefaultPort = 8337;
         nPruneAfterHeight = 100000;
+        nAssetPruneAfterHeight = 300000;
         m_assumed_blockchain_size = 720;
         m_assumed_chain_state_size = 14;
 
@@ -232,6 +233,7 @@ public:
         pchMessageStart[3] = 0xd8;
         nDefaultPort = 18333;
         nPruneAfterHeight = 1000;
+        nAssetPruneAfterHeight = 3000;
         m_assumed_blockchain_size = 200;
         m_assumed_chain_state_size = 19;
 
@@ -326,6 +328,7 @@ public:
         pchMessageStart[3] = 0x28;
         nDefaultPort = 48333;
         nPruneAfterHeight = 1000;
+        nAssetPruneAfterHeight = 3000;
         m_assumed_blockchain_size = 11;
         m_assumed_chain_state_size = 1;
 
@@ -465,6 +468,7 @@ public:
 
         nDefaultPort = 38333;
         nPruneAfterHeight = 1000;
+        nAssetPruneAfterHeight = 3000;
 
         genesis = CreateGenesisBlock(1598918400, 52613770, 0x1e0377ae, 1, 0 * COIN, consensus.currentKeys);
         consensus.hashGenesisBlock = genesis.GetHash();
@@ -551,6 +555,7 @@ public:
         pchMessageStart[3] = 0xda;
         nDefaultPort = 18444;
         nPruneAfterHeight = opts.fastprune ? 100 : 1000;
+        nAssetPruneAfterHeight = 3000;
         m_assumed_blockchain_size = 0;
         m_assumed_chain_state_size = 0;
 

@@ -4858,7 +4858,7 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
 
     if (msg_type == NetMsgType::PRECONFFINALIZEPUSH && !m_chainman.IsInitialBlockDownload()) {
         std::vector<SignedBlock> vData;
-        vRecv >> vData;
+        vRecv >> TX_WITH_WITNESS(vData);
         includePreConfBlockFromNetwork(vData,m_chainman);
         return;
     }
@@ -5410,7 +5410,7 @@ void PeerManagerImpl::MaybeSendPeg(CNode& node_to, Peer& peer, std::chrono::micr
 
         std::vector<SignedBlock> preconfBlock = getUnBroadcastedPreConfSignedBlock();
         if(preconfBlock.size() > 0) {
-            MakeAndPushMessage(node_to, NetMsgType::PRECONFFINALIZEPUSH, preconfBlock);
+           //  MakeAndPushMessage(node_to, NetMsgType::PRECONFFINALIZEPUSH, preconfBlock);
             for (SignedBlock& coordinatePreConfBlockItem : preconfBlock) {
                 updateBroadcastedSignedBlock(coordinatePreConfBlockItem,peer.m_id);
             }
