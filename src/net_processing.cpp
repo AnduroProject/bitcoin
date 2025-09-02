@@ -519,7 +519,7 @@ class PeerManagerImpl final : public PeerManager
 public:
     PeerManagerImpl(CConnman& connman, AddrMan& addrman,
                     BanMan* banman, ChainstateManager& chainman,
-                    CTxMemPool& pool, node::Warnings& warnings, Options opts);
+                    CTxMemPool& pool, CTxMemPool& preconfpool, node::Warnings& warnings, Options opts);
 
     /** Overridden from CValidationInterface. */
     void ActiveTipChange(const CBlockIndex& new_tip, bool) override
@@ -1619,7 +1619,7 @@ void PeerManagerImpl::ReattemptInitialBroadcast(CScheduler& scheduler)
     for (const auto& txid : unbroadcast_preconf_txids) {
         CTransactionRef tx = m_preconf_mempool.get(txid);
         if (tx != nullptr) {
-            RelayTransaction(txid, tx->GetWitnessHash());
+            RelayTransaction(Txid::FromUint256(txid), tx->GetWitnessHash());
         } else {
             m_preconf_mempool.RemoveUnbroadcastTx(txid, true);
         }
@@ -2325,6 +2325,11 @@ void PeerManagerImpl::ProcessGetBlockData(CNode& pfrom, Peer& peer, const CInv& 
             pfrom.fDisconnect = true;
             return;
         }
+
+        if(m_chainman.ActiveChainstate().isAssetPrune && m_chainman.ActiveChainstate().passettree->getAssetMinedBlock(pindex->GetBlockHash())) {
+           return;
+        }
+
         // Pruned nodes may have deleted the block, so check whether
         // it's available before trying to send.
         if (!(pindex->nStatus & BLOCK_HAVE_DATA)) {
@@ -2454,11 +2459,16 @@ CTransactionRef PeerManagerImpl::FindTxForGetData(const Peer::TxRelay& tx_relay,
 
 CTransactionRef PeerManagerImpl::FindPreConfTxForGetData(const Peer::TxRelay& tx_relay, const GenTxid& gtxid)
 {
-    // If a tx was in the mempool prior to the last INV for this peer, permit the request.
-    auto txinfo = m_preconf_mempool.info(gtxid);
+    auto txinfo{std::visit(
+        [&](const auto& id) EXCLUSIVE_LOCKS_REQUIRED(NetEventsInterface::g_msgproc_mutex) {
+            return m_preconf_mempool.info_for_relay(id, tx_relay.m_last_inv_sequence);
+        },
+        gtxid)};
+
     if (txinfo.tx) {
         return std::move(txinfo.tx);
     }
+
     return {};
 }
 
@@ -4176,7 +4186,7 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             }
 
             if(m_chainman.ActiveChainstate().isAssetPrune && m_chainman.ActiveChainstate().passettree->getAssetMinedBlock(pindex->GetBlockHash())) {
-                LogPrint(BCLog::NET, "Node enabled with asset prune option");
+                LogPrintf("Node enabled with asset prune option \n");
                 break;
             }
 
@@ -4831,7 +4841,7 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         while(incr<3) {
             std::vector<AnduroPreCommitment> pending_commitments = listPendingCommitment(currentHeight + incr);
             if(pending_commitments.size()>0) {
-                m_connman.PushMessage(&pfrom, msgMaker.Make(NetMsgType::PREBLOCKSIGNREPONSE, pending_commitments));
+                MakeAndPushMessage(pfrom, NetMsgType::PREBLOCKSIGNREPONSE, pending_commitments);
             }
             incr = incr + 1;
         }
@@ -5385,16 +5395,14 @@ void PeerManagerImpl::MaybeSendPeg(CNode& node_to, Peer& peer, std::chrono::micr
         std::vector<AnduroPreCommitment> pending_commitments = listPendingCommitment(currentHeight);
         // Every 5 second node will check and request if no presigned block data exist
         if (pending_commitments.size() == 0) {
-            const CNetMsgMaker msgMaker(node_to.GetCommonVersion());
-            m_connman.PushMessage(&node_to, msgMaker.Make(NetMsgType::PREBLOCKSIGNREQUEST, currentHeight));
+            MakeAndPushMessage(node_to, NetMsgType::PREBLOCKSIGNREQUEST, currentHeight);
         }
     }
     if (current_time - peer.m_last_pre_conf_req_timestamp > PRE_CONF_CHECK_TIME) {
         peer.m_last_pre_conf_req_timestamp = current_time;
         std::vector<CoordinatePreConfSig> preconfList = getUnBroadcastedPreConfSig();
         if(preconfList.size() > 0) {
-            const CNetMsgMaker msgMaker(node_to.GetCommonVersion());
-            m_connman.PushMessage(&node_to, msgMaker.Make(NetMsgType::PRECONFSIGNATUREPUSH, preconfList));
+            MakeAndPushMessage(node_to, NetMsgType::PRECONFSIGNATUREPUSH, preconfList);
             for (CoordinatePreConfSig& coordinatePreConfSigItem : preconfList) {
                 updateBroadcastedPreConf(coordinatePreConfSigItem,peer.m_id);
             }
@@ -5402,8 +5410,7 @@ void PeerManagerImpl::MaybeSendPeg(CNode& node_to, Peer& peer, std::chrono::micr
 
         std::vector<SignedBlock> preconfBlock = getUnBroadcastedPreConfSignedBlock();
         if(preconfBlock.size() > 0) {
-            const CNetMsgMaker msgMaker(node_to.GetCommonVersion());
-            m_connman.PushMessage(&node_to, msgMaker.Make(NetMsgType::PRECONFFINALIZEPUSH, preconfBlock));
+            MakeAndPushMessage(node_to, NetMsgType::PRECONFFINALIZEPUSH, preconfBlock);
             for (SignedBlock& coordinatePreConfBlockItem : preconfBlock) {
                 updateBroadcastedSignedBlock(coordinatePreConfBlockItem,peer.m_id);
             }
@@ -5610,21 +5617,21 @@ void PeerManagerImpl::NewSignedBlockTimer(uint32_t nTime)
 {
     std::unique_ptr<SignedBlock> pblocktemplate(CreateNewSignedBlock(m_chainman,nTime));
     if (!pblocktemplate.get()) {
-        LogPrint(BCLog::NET, "Couldn't create new signed block \n");
+        LogPrintf("Couldn't create new signed block \n");
         return;
     }
 
     const SignedBlock& block = *pblocktemplate.get();
 
     if (!checkSignedBlock(block, m_chainman)) {
-        LogPrint(BCLog::NET, "signed block validity failed \n");
+        LogPrintf("signed block validity failed \n");
         return;
     }
     LOCK(cs_main);
     if(m_chainman.ActiveChainstate().ConnectSignedBlock(block)) {
         insertNewSignedBlock(block);
     } else {
-        LogPrint(BCLog::NET, "new signed block creation failed \n");
+        LogPrintf("new signed block creation failed \n");
     }
 }
 

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <util/strencodings.h>
 #include "pubkey.h"
-#include <secp256k1_schnorrsig.h>
 #include <key_io.h>
 
 /**

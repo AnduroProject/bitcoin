@@ -99,6 +99,8 @@ bool FatalError(kernel::Notifications& notifications, BlockValidationState& stat
 /** Prune block files up to a given height */
 void PruneBlockFilesManual(Chainstate& active_chainstate, int nManualPruneHeight);
 
+static const int MIN_MAINCHAIN_NODE_VERSION = 160300; // 0.16.3
+
 /**
 * Validation result for a transaction evaluated by MemPoolAccept (single or package).
 * Here are the expected fields and properties of a result depending on its ResultType, applicable to
@@ -570,6 +572,8 @@ public:
 
     std::unique_ptr<SignedBlocksDB> psignedblocktree;
 
+    bool isAssetPrune;
+    
     //! Reference to a BlockManager instance which itself is shared across all
     //! Chainstate instances.
     node::BlockManager& m_blockman;

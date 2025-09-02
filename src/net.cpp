@@ -3035,7 +3035,7 @@ Mutex NetEventsInterface::g_msgproc_mutex;
 void CConnman::ThreadMessageHandler()
 {
     LOCK(NetEventsInterface::g_msgproc_mutex);
-
+    int lastSignedBlock = 0;
     while (!flagInterruptMsgProc)
     {
         bool fMoreWork = false;

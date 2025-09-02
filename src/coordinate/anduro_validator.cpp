@@ -4,6 +4,7 @@
 #include <outputtype.h>
 #include <rpc/util.h>
 #include <cmath>
+#include <secp256k1_schnorrsig.h>
 /**
  * Validate presigned signature
  */
