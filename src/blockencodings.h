@@ -143,7 +143,7 @@ public:
     using IsBlockMutatedFn = std::function<bool(const CBlock&, bool)>;
     IsBlockMutatedFn m_check_block_mutated_mock{nullptr};
 
-    explicit PartiallyDownloadedBlock(CTxMemPool* poolIn, CTxMemPool* preconfPoolIn) : pool(poolIn), preconfpool(preconfPoolIn) {}
+    explicit PartiallyDownloadedBlock(CTxMemPool* poolIn, CTxMemPool* preconfPoolIn = nullptr) : pool(poolIn), preconfpool(preconfPoolIn) {}
 
     // extra_txn is a list of extra orphan/conflicted/etc transactions to look at
     ReadStatus InitData(const CBlockHeaderAndShortTxIDs& cmpctblock, const std::vector<CTransactionRef>& extra_txn);

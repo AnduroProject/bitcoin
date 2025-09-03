@@ -83,7 +83,7 @@
 #include <coordinate/signed_block.h>
 #include <coordinate/invalid_tx.h>
 #include <coordinate/signed_txindex.h>
-#include <coordinate/coordinate_address.h>
+#include <coordinate/coordinate_pegin.h>
 #include <coordinate/anduro_validator.h>
 
 using kernel::CCoinsStats;
@@ -1515,7 +1515,7 @@ bool MemPoolAccept::SubmitPackage(const ATMPArgs& args, std::vector<Workspace>& 
                                                        IsCurrentForFeeEstimation(m_active_chainstate),
                                                        m_pool.HasNoInputsOf(tx));
         m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.GetAndIncrementSequence());
-        if(ws.m_ptx->nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || ws.m_ptx->nVersion == TRANSACTION_PRECONF_VERSION) {
+        if(ws.m_ptx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || ws.m_ptx->version == TRANSACTION_PRECONF_VERSION) {
             includeMempoolAsset(*ws.m_ptx, m_active_chainstate);
         }
     }
@@ -1602,9 +1602,9 @@ MempoolAcceptResult MemPoolAccept::AcceptSingleTransaction(const CTransactionRef
                                                        m_pool.HasNoInputsOf(tx));
         m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.is_preconf ? 0 : m_pool.GetAndIncrementSequence());
         // adding asset coin info to back track child transaction in checkTransaction Function
-        if(tx_info->nVersion == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx_info->nVersion == TRANSACTION_PRECONF_VERSION || tx_info->nVersion == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        if(tx_info.info.m_tx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx_info.info.m_tx->version == TRANSACTION_PRECONF_VERSION || tx_info.info.m_tx->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
             LogPrintf("new asset utxo cache added in custom struct \n");
-            includeMempoolAsset(*tx_info, m_active_chainstate);
+            includeMempoolAsset(*tx_info.info.m_tx, m_active_chainstate);
         }
     }
 
@@ -2912,9 +2912,10 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         CAmount txfee = 0;
         TxValidationState tx_state;
         if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee)) {
-            state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+            // state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
+            //             tx_state.GetRejectReason(), tx_state.GetDebugMessage());
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
                         tx_state.GetRejectReason(), tx_state.GetDebugMessage());
-            return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), state.ToString());
         }
         nFees += txfee;
         if(view.isPeginSpent(tx.vin[0].prevout)) {
@@ -2969,7 +2970,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                 } else {
                     state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
                                 tx_state.GetRejectReason(), tx_state.GetDebugMessage());
-                    return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), state.ToString());
+                    return state.Error(strprintf("Consensus::CheckTxInputs: %s, %s", tx.GetHash().ToString(), state.ToString()));
                 }
             }
             nFees += txfee;
@@ -3097,7 +3098,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
                 // Update latest CoordinateAsset ID #
                 if (!fJustCheck && !passettree->WriteLastAssetID(asset.nID)) {
-                    return error("%s: Failed to update last CoordinateAsset ID #!\n", __func__);
+                    return state.Error("Failed to update last CoordinateAsset ID #!\n");
                 }
 
             } else {
@@ -3325,7 +3326,7 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block) {
                 // Any transaction validation failure in ConnectBlock is a block consensus failure
                 state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
                             tx_state.GetRejectReason(), tx_state.GetDebugMessage());
-                return error("%s: Consensus::CheckTxInputs: %s, %s", __func__, tx.GetHash().ToString(), state.ToString());
+                return state.Error(strprintf("Consensus::CheckTxInputs: %s, %s", tx.GetHash().ToString(), state.ToString()));
             }
 
             nFees += txfee;
@@ -3335,12 +3336,12 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block) {
                 return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-accumulated-fee-outofrange");
             }
 
-            if (!CheckInputScripts(tx, tx_state, view, 0, true, false, txsdata[i])) {
+            if (!CheckInputScripts(tx, tx_state, view, 0, true, false, txsdata[i], m_chainman.m_validation_cache)) {
                 // Any transaction validation failure in ConnectBlock is a block consensus failure
                 state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
                                 tx_state.GetRejectReason(), tx_state.GetDebugMessage());
-                return error("ConnectBlock(): CheckInputScripts on %s failed with %s",
-                    tx.GetHash().ToString(), state.ToString());
+                return state.Error(strprintf("ConnectBlock(): CheckInputScripts on %s failed with %s",
+                    tx.GetHash().ToString(), state.ToString()));
             }
 
             removeMempoolAsset(tx);
@@ -3367,7 +3368,7 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block) {
         m_preconf_mempool->PreconfExpire(block.nHeight);
     }
 
-    GetMainSignals().SignBlockConnected(block);
+    m_chainman.m_options.signals->SignBlockConnected(block);
 
     return true;
 }
@@ -6469,7 +6470,7 @@ util::Result<CBlockIndex*> ChainstateManager::ActivateSnapshot(
 
     auto snapshot_chainstate = WITH_LOCK(::cs_main,
         return std::make_unique<Chainstate>(
-            /*mempool=*/nullptr, m_blockman, *this, base_blockhash));
+            /*mempool=*/nullptr, nullptr, m_blockman, *this, base_blockhash));
 
     {
         LOCK(::cs_main);
@@ -7021,7 +7022,7 @@ Chainstate& ChainstateManager::ActivateExistingSnapshot(uint256 base_blockhash)
 {
     assert(!m_snapshot_chainstate);
     m_snapshot_chainstate =
-        std::make_unique<Chainstate>(nullptr, m_blockman, *this, base_blockhash);
+        std::make_unique<Chainstate>(nullptr, nullptr, m_blockman, *this, base_blockhash);
     LogInfo("[snapshot] switching active chainstate to %s", m_snapshot_chainstate->ToString());
 
     // Mempool is empty at this point because we're still in IBD.

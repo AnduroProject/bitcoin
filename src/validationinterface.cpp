@@ -217,7 +217,7 @@ void ValidationSignals::BlockConnected(ChainstateRole role, const std::shared_pt
                           pindex->nHeight);
 }
 
-void CMainSignals::SignBlockConnected(const SignedBlock &pblock) {
+void ValidationSignals::SignBlockConnected(const SignedBlock &pblock) {
     auto event = [pblock, this] {
         m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.SignedBlockConnected(pblock); });
     };

@@ -1053,7 +1053,7 @@ std::optional<Coin> CCoinsViewMemPool::GetCoin(const COutPoint& outpoint) const
     CTransactionRef ptx = mempool.get(outpoint.hash);
     if (ptx) {
         if (outpoint.n < ptx->vout.size()) {
-                coin = Coin(ptx->vout[outpoint.n], MEMPOOL_HEIGHT, false, false, false, false, false, 0);
+            Coin coin(ptx->vout[outpoint.n], MEMPOOL_HEIGHT, false, false, false, false, false, 0);
             m_non_base_coins.emplace(outpoint);
             return coin;
         }
@@ -1436,7 +1436,7 @@ util::Result<std::pair<std::vector<FeeFrac>, std::vector<FeeFrac>>> CTxMemPool::
     return std::make_pair(old_chunks, new_chunks);
 }
 
-CTxMemPool::ChangeSet::TxHandle CTxMemPool::ChangeSet::StageAddition(const CTransactionRef& tx, const CAmount fee, int64_t time, unsigned int entry_height, uint64_t entry_sequence, bool spends_coinbase, int64_t sigops_cost, LockPoints lp, uint64_t expire_signed_height = 0)
+CTxMemPool::ChangeSet::TxHandle CTxMemPool::ChangeSet::StageAddition(const CTransactionRef& tx, const CAmount fee, int64_t time, unsigned int entry_height, uint64_t entry_sequence, bool spends_coinbase, int64_t sigops_cost, LockPoints lp, uint64_t expire_signed_height)
 {
     LOCK(m_pool->cs);
     Assume(m_to_add.find(tx->GetHash()) == m_to_add.end());

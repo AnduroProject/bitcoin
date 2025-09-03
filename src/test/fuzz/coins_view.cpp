@@ -93,7 +93,11 @@ void TestCoinsView(FuzzedDataProvider& fuzzed_data_provider, CCoinsView& backend
             },
             [&] {
                 Coin move_to;
-                (void)coins_view_cache.SpendCoin(random_out_point, fuzzed_data_provider.ConsumeBool() ? &move_to : nullptr);
+                bool fBitAsset = false;
+                bool fBitAssetControl = false;
+                bool isPreconf = false;
+                uint32_t nAssetID = 0;
+                (void)coins_view_cache.SpendCoin(random_out_point, fBitAsset, fBitAssetControl, isPreconf, nAssetID, fuzzed_data_provider.ConsumeBool() ? &move_to : nullptr);
             },
             [&] {
                 coins_view_cache.Uncache(random_out_point);

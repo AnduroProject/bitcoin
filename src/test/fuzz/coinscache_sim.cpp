@@ -341,7 +341,11 @@ FUZZ_TARGET(coinscache_sim)
             [&]() { // SpendCoin (moveto = nullptr)
                 uint32_t outpointidx = provider.ConsumeIntegralInRange<uint32_t>(0, NUM_OUTPOINTS - 1);
                 // Invoke on real caches.
-                caches.back()->SpendCoin(data.outpoints[outpointidx], nullptr);
+                bool fBitAsset = false;
+                bool fBitAssetControl = false;
+                bool isPreconf = false;
+                uint32_t nAssetID = 0;
+                caches.back()->SpendCoin(data.outpoints[outpointidx], fBitAsset, fBitAssetControl, isPreconf, nAssetID, nullptr);
                 // Apply to simulation data.
                 sim_caches[caches.size()].entry[outpointidx].entrytype = EntryType::SPENT;
             },
@@ -352,7 +356,11 @@ FUZZ_TARGET(coinscache_sim)
                 auto sim = lookup(outpointidx);
                 // Invoke on real caches.
                 Coin realcoin;
-                caches.back()->SpendCoin(data.outpoints[outpointidx], &realcoin);
+                bool fBitAsset = false;
+                bool fBitAssetControl = false;
+                bool isPreconf = false;
+                uint32_t nAssetID = 0;
+                caches.back()->SpendCoin(data.outpoints[outpointidx], fBitAsset, fBitAssetControl, isPreconf, nAssetID, &realcoin);
                 // Apply to simulation data.
                 sim_caches[caches.size()].entry[outpointidx].entrytype = EntryType::SPENT;
                 // Compare *moveto with the value expected based on simulation data.
