@@ -430,12 +430,13 @@ void BlockManager::FindFilesToAssetPrune(
 bool BlockManager::UpdateBlockToDisk(const CBlock& block, FlatFilePos& pos) const
 {
     // Open history file to append
-    AutoFile fileout{OpenBlockFile(pos)};
+    AutoFile fileout{OpenBlockFile(pos, true)};
     if (fileout.IsNull()) {
-        return error("WriteBlockToDisk: OpenBlockFile failed");
+        LogPrintf("WriteBlockToDisk: OpenBlockFile failed \n");
+        return false;
     }
 
-    fileout << block;
+    fileout << TX_WITH_WITNESS(block);
 
     return true;
 }

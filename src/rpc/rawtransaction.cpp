@@ -370,7 +370,7 @@ static RPCHelpMan getrawtransaction()
                 LOCK(cs_main);
                 CChain& active_chain = chainman.ActiveChain();
                 CBlock block;
-                if (chainman.m_blockman.ReadBlockFromDisk(block, *active_chain[signedTxIndex.blockIndex])) {
+                if (chainman.m_blockman.ReadBlock(block, *active_chain[signedTxIndex.blockIndex])) {
                     if(signedTxIndex.signedBlockHash.IsNull()) {
                         mined_tx = block.pegins[signedTxIndex.pos];
                         hash_block = block.GetHash();
@@ -480,12 +480,13 @@ static RPCHelpMan createrawtransaction()
     if (!request.params[4].isNull()) {
         const UniValue& assetParams = request.params[4];
         if (assetParams.isObject()) {
-            rawTx.nVersion = 10;
+            rawTx.version = 10;
             rawTx.assetType = assetParams["assettype"].getInt<int>();
             rawTx.precision = assetParams["precision"].getInt<int>();
             rawTx.ticker = assetParams["ticker"].get_str();
             rawTx.headline = assetParams["headline"].get_str();
-            rawTx.payload = uint256S(assetParams["payload"].get_str());
+            auto payload{uint256::FromHex(assetParams["payload"].get_str())};
+            rawTx.payload = *payload;
             rawTx.payloadData = assetParams["payloaddata"].get_str();
         }
     }

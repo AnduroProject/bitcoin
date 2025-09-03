@@ -1962,7 +1962,7 @@ PeerManagerImpl::PeerManagerImpl(CConnman& connman, AddrMan& addrman,
       m_chainman(chainman),
       m_mempool(pool),
       m_preconf_mempool(preconfpool),
-      m_txdownloadman(node::TxDownloadOptions{pool, m_rng, opts.deterministic_rng}),
+      m_txdownloadman(node::TxDownloadOptions{pool, preconfpool, m_rng, opts.deterministic_rng}),
       m_warnings{warnings},
       m_opts{opts}
 {

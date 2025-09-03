@@ -5,7 +5,8 @@
 #include <coordinate/coordinate_preconf.h>
 #include <core_io.h>
 #include <kernel/mempool_entry.h>
-#include <kernel/mempool_persist.h>
+#include <node/mempool_persist.h>
+#include <node/types.h>
 #include <node/blockstorage.h>
 #include <node/mempool_persist_args.h>
 #include <policy/rbf.h>
@@ -25,6 +26,7 @@
 using node::BlockManager;
 using node::DEFAULT_MAX_RAW_TX_FEE_RATE;
 using node::NodeContext;
+using node::TransactionError;
 
 static RPCHelpMan sendpreconftransaction()
 {
@@ -67,7 +69,7 @@ static RPCHelpMan sendpreconftransaction()
             NodeContext& node = EnsureAnyNodeContext(request.context);
             const CTransaction& ptx = *tx;
 
-            if (ptx.nVersion != TRANSACTION_PRECONF_VERSION) {
+            if (ptx.version != TRANSACTION_PRECONF_VERSION) {
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "asset data missing to submit in mempool");
             }
 
@@ -129,10 +131,13 @@ static RPCHelpMan sendpreconflist()
 
             uint32_t finalized = 0;
             if(!request.params[2].isNull()) {
-                if(!ParseUInt32(request.params[2].get_str(),&finalized)) {
+                const auto finalizedValue{ToIntegral<uint32_t>(request.params[2].get_str())};
+                
+                if(!finalizedValue) {
                     throw JSONRPCError (RPC_CLIENT_IN_INITIAL_DOWNLOAD,
                                     "Error converting block height.");
                 }
+                finalized = finalizedValue.value();
             }
             const UniValue& req_params = request.params[0].get_array();
             if (req_params.size() == 0) {
@@ -155,7 +160,8 @@ static RPCHelpMan sendpreconflist()
                 std::string receivedTx = fedParams.find_value("txid").get_str();
                
                 if (receivedTx.compare("") != 0) {
-                    preconfObj.txids.push_back(uint256S(receivedTx));
+                    auto tx_hash{uint256::FromHex(receivedTx)};
+                    preconfObj.txids.push_back(*tx_hash);
                 } else {
                     preconfObj.txids.push_back(uint256::ZERO);
                 }
@@ -228,10 +234,12 @@ static RPCHelpMan getpreconflist()
 
             uint32_t nHeight = 0;
             if (!request.params[0].isNull()) {
-                if(!ParseUInt32(request.params[0].get_str(), &nHeight)) {
+                const auto nHeightValue{ToIntegral<uint32_t>(request.params[0].get_str())};
+                if(!nHeightValue) {
                     throw JSONRPCError (RPC_CLIENT_IN_INITIAL_DOWNLOAD,
                                     "Error converting block height.");
                 }
+                nHeight = nHeightValue.value();
             }
 
             UniValue result(UniValue::VOBJ);
@@ -325,7 +333,7 @@ static RPCHelpMan getfinalizedsignedblocks() {
                 for (size_t i = 0; i < block.vtx.size(); ++i) {
                     const CTransactionRef& tx = block.vtx.at(i);
                     UniValue objTx(UniValue::VOBJ);
-                    TxToUniv(*tx, /*block_hash=*/uint256(), /*entry=*/objTx, /*include_hex=*/true, 1);
+                    TxToUniv(*tx, /*block_hash=*/uint256(), /*entry=*/objTx, /*include_hex=*/true);
                     txs.push_back(objTx);
                 }
 
@@ -411,8 +419,6 @@ static RPCHelpMan getpreconftxrefund() {
             chainman.ActiveChainstate().UpdatedCoinsTip(view,chainman.ActiveChainstate().m_chain.Height());
 
 
-            const CBlockIndex* blockindex = nullptr;
-            uint256 hash_block;
             UniValue result(UniValue::VARR);  
             for (unsigned int idx = 0; idx < req_params.size(); idx++) {
                 const UniValue& params = req_params[idx].get_obj();

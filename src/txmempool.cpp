@@ -413,7 +413,8 @@ static CTxMemPool::Options&& Flatten(CTxMemPool::Options&& opts, bilingual_str& 
 }
 
 CTxMemPool::CTxMemPool(Options opts, bilingual_str& error)
-    : m_opts{Flatten(std::move(opts), error)}
+    : is_preconf{opts.is_preconf}, m_opts{Flatten(std::move(opts), error)}
+    
 {
 }
 

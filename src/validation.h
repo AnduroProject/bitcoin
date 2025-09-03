@@ -612,6 +612,14 @@ public:
     //! is verified).
     void InitCoinsCache(size_t cache_size_bytes) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 
+    //! Initialize the in-memory coins cache (to be done after the health of the on-disk database
+    //! is verified).
+    void InitAssetCache() EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+
+    //! Initialize the in-memory coins cache (to be done after the health of the on-disk database
+    //! is verified).
+    void InitSignedBlockCache() EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+
     //! @returns whether or not the CoinsViews object has been fully initialized and we can
     //!          safely flush this object to disk.
     bool CanFlushToDisk() const EXCLUSIVE_LOCKS_REQUIRED(::cs_main)
@@ -654,6 +662,10 @@ public:
         Assert(m_coins_views);
         return *Assert(m_coins_views->m_cacheview);
     }
+
+    CCoinsViewCache& UpdatedCoinsTip(CCoinsViewCache& view, int blockHeight) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+
+
 
     //! @returns A reference to the on-disk UTXO set database.
     CCoinsViewDB& CoinsDB() EXCLUSIVE_LOCKS_REQUIRED(::cs_main)
@@ -1277,7 +1289,7 @@ public:
      * @param[in]  tx              The transaction to submit for mempool acceptance.
      * @param[in]  test_accept     When true, run validation checks but don't submit to mempool.
      */
-    [[nodiscard]] MempoolAcceptResult ProcessTransaction(const CTransactionRef& tx, bool test_accept=false)
+    [[nodiscard]] MempoolAcceptResult ProcessTransaction(const CTransactionRef& tx, bool test_accept=false, bool is_preconf=false)
         EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
     //! Load the block tree and coins database from disk, initializing state if we're running with -reindex

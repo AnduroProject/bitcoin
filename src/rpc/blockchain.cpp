@@ -223,7 +223,7 @@ UniValue blockToJSON(BlockManager& blockman, const CBlock& block, const CBlockIn
         for (size_t i = 0; i < signedBlock.vtx.size(); ++i) {
             const CTransactionRef& tx = signedBlock.vtx.at(i);
             UniValue objTx(UniValue::VOBJ);
-            TxToUniv(*tx, /*block_hash=*/uint256(), /*entry=*/objTx, /*include_hex=*/true, 1);
+            TxToUniv(*tx, /*block_hash=*/uint256(), /*entry=*/objTx, /*include_hex=*/true);
             txs.push_back(objTx);
         }
         result.pushKV("tx", txs);
@@ -243,7 +243,7 @@ UniValue blockToJSON(BlockManager& blockman, const CBlock& block, const CBlockIn
     for (size_t i = 0; i < block.pegins.size(); ++i) {
         const CTransactionRef& tx =  block.pegins.at(i);
         UniValue objTx(UniValue::VOBJ);
-        TxToUniv(*tx, /*block_hash=*/uint256(), /*entry=*/objTx, /*include_hex=*/true, 1);
+        TxToUniv(*tx, /*block_hash=*/uint256(), /*entry=*/objTx, /*include_hex=*/true);
         pegins.push_back(objTx);
     }
     result.pushKV("pegins", pegins);

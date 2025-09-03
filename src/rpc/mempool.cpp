@@ -30,6 +30,10 @@
 
 #include <utility>
 
+#include <coordinate/anduro_deposit.h>
+#include <coordinate/anduro_validator.h>
+#include <coordinate/coordinate_mempool_entry.h>
+
 using node::DumpMempool;
 
 using node::DEFAULT_MAX_BURN_AMOUNT;
