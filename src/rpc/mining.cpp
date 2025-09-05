@@ -170,12 +170,10 @@ static UniValue generateBlocks(ChainstateManager& chainman, Mining& miner, const
     while (nGenerate > 0 && !chainman.m_interrupt) {
         std::unique_ptr<BlockTemplate> block_template(miner.createNewBlock({ .coinbase_output_script = coinbase_output_script }));
         CHECK_NONFATAL(block_template);
-
         std::shared_ptr<const CBlock> block_out;
         if (!GenerateBlock(chainman, block_template->getBlock(), nMaxTries, block_out, /*process_new_block=*/true)) {
             break;
         }
-
         if (block_out) {
             --nGenerate;
             blockHashes.push_back(block_out->GetHash().GetHex());

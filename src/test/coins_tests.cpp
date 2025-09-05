@@ -24,7 +24,7 @@
 using namespace util::hex_literals;
 
 int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out);
-void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txundo, int nHeight);
+void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, uint32_t& nAssetIDOut, uint32_t nNewAssetIDIn, CAmount& refund);
 
 namespace
 {
@@ -433,7 +433,12 @@ BOOST_FIXTURE_TEST_CASE(updatecoins_simulation_test, UpdateTest)
 
             // Call UpdateCoins on the top cache
             CTxUndo undo;
-            UpdateCoins(CTransaction{tx}, *(stack.back()), undo, height);
+            CAmount amountAssetIn = CAmount(0);
+            int nControlN = -1;
+            uint32_t nAssetID = 0;
+            uint32_t nNewAssetID = 0;
+            CAmount refund = CAmount(0);
+            UpdateCoins(CTransaction{tx}, *(stack.back()), undo, height, amountAssetIn, nControlN, nAssetID, nNewAssetID, refund);
 
             // Update the utxo set for future spends
             utxoset.insert(outpoint);

@@ -138,9 +138,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
     nHeight = pindexPrev->nHeight + 1;
 
     const int32_t nChainId = chainparams.GetConsensus ().nAuxpowChainId;
-    pblock->SetBaseVersion(4, nChainId);
+    const int32_t nVersion = 4;
+    pblock->SetBaseVersion(nVersion, nChainId);
 
-  //  pblock->nVersion = m_chainstate.m_chainman.m_versionbitscache.ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+    // pblock->nVersion = m_chainstate.m_chainman.m_versionbitscache.ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (chainparams.MineBlocksOnDemand()) {
@@ -173,16 +174,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
         }
     }
 
-        pblock->reconciliationBlock = getReconsiledBlock(m_chainstate.m_chainman);
-    std::vector<SignedBlock> nextPreconfs = getFinalizedSignedBlocks();
-    for (size_t i = 0; i < nextPreconfs.size(); i++) {
-        pblock->preconfBlock.push_back(nextPreconfs[i]);
-    }
 
     int resize = 2;
     CMutableTransaction coinbaseTx;
     std::vector<AnduroPreCommitment> pending_commitments = listPendingCommitment(nHeight);
-    // if(Params().GetChainType() != ChainType::REGTEST) {
+    if(Params().GetChainType() != ChainType::REGTEST) {
         // get next block presigned data
         LogPrintf("commitment queue count %i\n", pending_commitments.size());
         // prevent to get block template if not presigned signature available for next block
@@ -212,25 +208,24 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
             pblock->currentKeys = getCurrentKeys(m_chainstate.m_chainman);
             pblock->currentIndex = getCurrentIndex(m_chainstate.m_chainman);
         }
-    // } else {
-    //     pblock->currentKeys = getCurrentKeys(m_chainstate.m_chainman);
-    //     pblock->currentIndex = getCurrentIndex(m_chainstate.m_chainman);
-    // }
+    } else {
+        pblock->currentKeys = getCurrentKeys(m_chainstate.m_chainman);
+        pblock->currentIndex = getCurrentIndex(m_chainstate.m_chainman);
+    }
 
-
-    // Create coinbase transaction.
     coinbaseTx.vin.resize(1);
     coinbaseTx.vin[0].prevout.SetNull();
     coinbaseTx.vin[0].nSequence = CTxIn::MAX_SEQUENCE_NONFINAL; // Make sure timelock is enforced.
-    coinbaseTx.vout.resize(1);
+    coinbaseTx.vout.resize(resize);
     coinbaseTx.vout[0].scriptPubKey = m_options.coinbase_output_script;
-    coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+    coinbaseTx.vout[0].nValue = GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+    coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
 
     int oIncr = 1;
     coinbaseTx.vout[oIncr].scriptPubKey = getMinerScript(m_chainstate.m_chainman, nHeight);
     coinbaseTx.vout[oIncr].nValue = minerFee;
 
-    // if(Params().GetChainType() != ChainType::REGTEST) {
+    if(Params().GetChainType() != ChainType::REGTEST) {
         // including anduro signature information
         std::string preCommitmentWitness = "";
         if(nHeight > 2) {
@@ -240,14 +235,13 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
         std::vector<unsigned char> data = ParseHex(preCommitmentWitness);
         CTxOut out(0, CScript() << OP_RETURN << data);
         coinbaseTx.vout[oIncr] = out;
-    // }
+    }
 
-    coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
+
     Assert(nHeight > 0);
     coinbaseTx.nLockTime = static_cast<uint32_t>(nHeight - 1);
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vchCoinbaseCommitment = m_chainstate.m_chainman.GenerateCoinbaseCommitment(*pblock, pindexPrev);
-
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
 
     // Fill in header
@@ -270,7 +264,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
 
     return std::move(pblocktemplate);
 }
-
 void BlockAssembler::onlyUnconfirmed(CTxMemPool::setEntries& testSet)
 {
     for (CTxMemPool::setEntries::iterator iit = testSet.begin(); iit != testSet.end(); ) {

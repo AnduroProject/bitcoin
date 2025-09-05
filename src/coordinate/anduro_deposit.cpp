@@ -76,8 +76,9 @@ bool isPreCommitmentValid(std::vector<AnduroPreCommitment> commitments, Chainsta
       }
       // get block to find the eligible anduro keys to be signed on precommitment block
       CBlock block;
-      if (!chainman.m_blockman.ReadBlock(block, *CHECK_NONFATAL(active_chain[blockindex]))) {
-         LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[blockindex])->GetBlockHash().ToString());
+      if (!chainman.m_blockman.ReadBlock(block, *active_chain[blockindex])) {
+         LogPrintf("Error reading block from disk at index %d\n", active_chain[blockindex]->GetBlockHash().ToString());
+         return false;
       }
       isValid = validateAnduroSignature(commitment.witness,block.GetHash().ToString(),block.currentKeys);
       saveAddressInRegistry(chainman.ActiveChainstate(),commitment.depositAddress);
@@ -132,9 +133,9 @@ std::string getCurrentKeys(ChainstateManager& chainman) {
    int block_index = chainman.ActiveChain().Height();
    CChain& active_chain = chainman.ActiveChain();
    CBlock block;
-   if (!chainman.m_blockman.ReadBlock(block, *CHECK_NONFATAL(active_chain[block_index]))) {
+   if (!chainman.m_blockman.ReadBlock(block, *active_chain[block_index])) {
         // Log the disk read error to the user.
-        LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[block_index])->GetBlockHash().ToString());
+        LogPrintf("Error reading block from disk at index %d\n", active_chain[block_index]->GetBlockHash().ToString());
    }
    return block.currentKeys;
 }
@@ -147,9 +148,9 @@ int32_t getCurrentIndex(ChainstateManager& chainman) {
    int blockindex = chainman.ActiveChain().Height();
    CChain& active_chain = chainman.ActiveChain();
    CBlock block;
-   if (!chainman.m_blockman.ReadBlock(block, *CHECK_NONFATAL(active_chain[blockindex]))) {
+   if (!chainman.m_blockman.ReadBlock(block, *active_chain[blockindex])) {
         // Log the disk read error to the user.
-        LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[blockindex])->GetBlockHash().ToString());
+        LogPrintf("Error reading block from disk at index %d\n", active_chain[blockindex]->GetBlockHash().ToString());
    }
    return block.currentIndex;
 }
@@ -197,7 +198,7 @@ bool verifyPreCommitment(ChainstateManager& chainman, const CBlock& block, int c
 
    // check for current keys for anduro
    CBlock prevblock;
-   if (!chainman.m_blockman.ReadBlock(prevblock, *CHECK_NONFATAL(active_chain[currentHeight - 3]))) {
+   if (!chainman.m_blockman.ReadBlock(prevblock, *active_chain[currentHeight - 3])) {
       return false;
    }
 
