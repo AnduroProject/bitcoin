@@ -170,7 +170,6 @@ BOOST_AUTO_TEST_CASE(blockfilters_json_test)
 
         BlockFilter computed_filter_basic(BlockFilterType::BASIC, block, block_undo);
         BOOST_CHECK(computed_filter_basic.GetFilter().GetEncoded() == filter_basic);
-
         uint256 computed_header_basic = computed_filter_basic.ComputeHeader(prev_filter_header_basic);
         BOOST_CHECK(computed_header_basic == filter_header_basic);
     }
