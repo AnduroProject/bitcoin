@@ -5410,7 +5410,7 @@ void PeerManagerImpl::MaybeSendPeg(CNode& node_to, Peer& peer, std::chrono::micr
 
         std::vector<SignedBlock> preconfBlock = getUnBroadcastedPreConfSignedBlock();
         if(preconfBlock.size() > 0) {
-           //  MakeAndPushMessage(node_to, NetMsgType::PRECONFFINALIZEPUSH, preconfBlock);
+            MakeAndPushMessage(node_to, NetMsgType::PRECONFFINALIZEPUSH, TX_WITH_WITNESS(preconfBlock));
             for (SignedBlock& coordinatePreConfBlockItem : preconfBlock) {
                 updateBroadcastedSignedBlock(coordinatePreConfBlockItem,peer.m_id);
             }
