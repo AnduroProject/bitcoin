@@ -35,6 +35,7 @@ static RPCHelpMan gettxoutproof()
                 },
             },
             {"blockhash", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "If specified, looks for txid in the block with this hash"},
+            {"type", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "0 - normal transaction \n 1 - signedblock transaction \n 2 - pegin transaction"  },
         },
         RPCResult{
             RPCResult::Type::STR, "data", "A string that is a serialized, hex-encoded data for the proof."
@@ -44,6 +45,7 @@ static RPCHelpMan gettxoutproof()
         {
             std::set<Txid> setTxids;
             UniValue txids = request.params[0].get_array();
+            int transaction_type = request.params[2].isNull() ? 0 : request.params[2].getInt<int>();
             if (txids.empty()) {
                 throw JSONRPCError(RPC_INVALID_PARAMETER, "Parameter 'txids' cannot be empty");
             }
@@ -54,9 +56,52 @@ static RPCHelpMan gettxoutproof()
                 }
             }
 
+            if((transaction_type == 1 || transaction_type == 2) && request.params[1].isNull()) {
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Parameter 'block hash' required for signed block and pegin");
+            }
+
             const CBlockIndex* pblockindex = nullptr;
             uint256 hashBlock;
             ChainstateManager& chainman = EnsureAnyChainman(request.context);
+            
+            if(transaction_type == 1 || transaction_type == 2) {
+                SignedTxindex signedTxIndex;
+                for (const auto& tx : setTxids) {
+                    chainman.ActiveChainstate().psignedblocktree->getTxPosition(tx,signedTxIndex);
+                    if(signedTxIndex.pos == -1) {
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid signed block hash");
+                    }
+                }
+
+                LOCK(cs_main);
+                CChain& active_chain = chainman.ActiveChain();
+                CBlock block;
+                if (!chainman.m_blockman.ReadBlock(block, *active_chain[signedTxIndex.blockIndex])) {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, "block not found");
+                }
+
+                std::vector<CTransactionRef> vtx;
+                if(transaction_type == 1) {
+                    SignedBlock signed_block;
+                    for (const SignedBlock& preconfBlockItem : block.preconfBlock) {
+                        if(preconfBlockItem.GetHash() == signedTxIndex.signedBlockHash) {
+                            signed_block = preconfBlockItem;
+                            break;
+                        }
+                    }
+                    vtx = signed_block.vtx;
+                } else {
+                    vtx = block.pegins;
+                }
+
+
+                DataStream ssMB{};
+                CMerkleBlock mb(block, vtx, setTxids);
+                ssMB << mb;
+                std::string strHex = HexStr(ssMB);
+                return strHex;
+            }
+
             if (!request.params[1].isNull()) {
                 LOCK(cs_main);
                 hashBlock = ParseHashV(request.params[1], "blockhash");
@@ -120,6 +165,7 @@ static RPCHelpMan gettxoutproof()
         },
     };
 }
+
 
 static RPCHelpMan verifytxoutproof()
 {

@@ -147,6 +147,9 @@ public:
     // Create from a CBlock, matching the txids in the set
     CMerkleBlock(const CBlock& block, const std::set<Txid>& txids) : CMerkleBlock{block, nullptr, &txids} {}
 
+        // Create from a CBlock, matching the txids in the set
+    CMerkleBlock(const CBlock& block, std::vector<CTransactionRef> vtx, const std::set<Txid>& txids) : CMerkleBlock{block, vtx, nullptr, &txids} {}
+
     CMerkleBlock() = default;
 
     SERIALIZE_METHODS(CMerkleBlock, obj) { READWRITE(obj.header, obj.txn); }
@@ -154,6 +157,8 @@ public:
 private:
     // Combined constructor to consolidate code
     CMerkleBlock(const CBlock& block, CBloomFilter* filter, const std::set<Txid>* txids);
+    CMerkleBlock(const CBlock& block, std::vector<CTransactionRef> vtx, CBloomFilter* filter, const std::set<Txid>* txids);
+    
 };
 
 #endif // BITCOIN_MERKLEBLOCK_H
