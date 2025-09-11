@@ -193,7 +193,7 @@ static RPCHelpMan verifytxoutproof()
 
             std::vector<uint256> vMatch;
             std::vector<unsigned int> vIndex;
-            uint256 merkleHash = merkleBlock.txn.ExtractMatches(vMatch, vIndex);
+            merkleBlock.txn.ExtractMatches(vMatch, vIndex);
             // if (merkleBlock.txn.ExtractMatches(vMatch, vIndex) != merkleBlock.header.hashMerkleRoot)
             //     return res;
 
