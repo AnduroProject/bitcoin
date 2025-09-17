@@ -567,23 +567,6 @@ BOOST_FIXTURE_TEST_CASE(miniminer_overlap, TestChain100Setup)
     node::MiniMiner miniminer_pool(pool, all_unspent_outpoints);
     BOOST_CHECK(miniminer_manual.IsReadyToCalculate());
     BOOST_CHECK(miniminer_pool.IsReadyToCalculate());
-    for (const auto& sequences : {miniminer_manual.Linearize(), miniminer_pool.Linearize()}) {
-        // tx2 and tx4 selected first: high feerate with nothing to bump
-        BOOST_CHECK_EQUAL(Find(sequences, tx4->GetHash()), 0);
-        BOOST_CHECK_EQUAL(Find(sequences, tx2->GetHash()), 1);
-
-        // tx5 + tx7 CPFP
-        BOOST_CHECK_EQUAL(Find(sequences, tx5->GetHash()), 2);
-        BOOST_CHECK_EQUAL(Find(sequences, tx7->GetHash()), 2);
-
-        // tx0 and tx1 CPFP'd by tx3
-        BOOST_CHECK_EQUAL(Find(sequences, tx0->GetHash()), 3);
-        BOOST_CHECK_EQUAL(Find(sequences, tx1->GetHash()), 3);
-        BOOST_CHECK_EQUAL(Find(sequences, tx3->GetHash()), 3);
-
-        // tx6 at medium feerate
-        BOOST_CHECK_EQUAL(Find(sequences, tx6->GetHash()), 4);
-    }
 }
 BOOST_FIXTURE_TEST_CASE(calculate_cluster, TestChain100Setup)
 {

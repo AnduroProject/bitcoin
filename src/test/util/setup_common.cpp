@@ -370,7 +370,7 @@ TestChain100Setup::TestChain100Setup(
         LOCK(::cs_main);
         assert(
             m_node.chainman->ActiveChain().Tip()->GetBlockHash().ToString() ==
-            "0c8c5f79505775a0f6aed6aca2350718ceb9c6f2c878667864d5c7a6d8ffa2a6");
+            "d45b359bdea3c889ae05ca0c7ba939addc874bdf4e841e825e91a7228cbc8cfb");
     }
 }
 
@@ -393,14 +393,14 @@ CBlock TestChain100Setup::CreateBlock(
     BlockAssembler::Options options;
     options.coinbase_output_script = scriptPubKey;
     CBlock block = BlockAssembler{chainstate, nullptr, options}.CreateNewBlock()->block;
-
+    auto& miningHeader = CAuxPow::initAuxPow(block);
     Assert(block.vtx.size() == 1);
     for (const CMutableTransaction& tx : txns) {
         block.vtx.push_back(MakeTransactionRef(tx));
     }
     RegenerateCommitments(block, *Assert(m_node.chainman));
 
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, m_node.chainman->GetConsensus())) ++block.nNonce;
+    while (!CheckProofOfWork(miningHeader.GetHash(), block.nBits, m_node.chainman->GetConsensus())) ++miningHeader.nNonce;
 
     return block;
 }

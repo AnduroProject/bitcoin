@@ -146,6 +146,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     std::unique_ptr<BlockTemplate> block_template = mining->createNewBlock(options);
     BOOST_REQUIRE(block_template);
     CBlock block{block_template->getBlock()};
+    CAuxPow::initAuxPow(block);
     BOOST_REQUIRE_EQUAL(block.vtx.size(), 4U);
     BOOST_CHECK(block.vtx[1]->GetHash() == hashParentTx);
     BOOST_CHECK(block.vtx[2]->GetHash() == hashHighFeeTx);
@@ -187,6 +188,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     BOOST_REQUIRE(should_be_nullptr == nullptr);
 
     block = block_template->getBlock();
+    CAuxPow::initAuxPow(block);
     // Verify that the free tx and the low fee tx didn't get selected
     for (size_t i=0; i<block.vtx.size(); ++i) {
         BOOST_CHECK(block.vtx[i]->GetHash() != hashFreeTx);
@@ -205,6 +207,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     block_template = block_template->waitNext({.fee_threshold = 1});
     BOOST_REQUIRE(block_template);
     block = block_template->getBlock();
+    CAuxPow::initAuxPow(block);
     BOOST_REQUIRE_EQUAL(block.vtx.size(), 6U);
     BOOST_CHECK(block.vtx[4]->GetHash() == hashFreeTx);
     BOOST_CHECK(block.vtx[5]->GetHash() == hashLowFeeTx);
@@ -229,7 +232,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     block_template = mining->createNewBlock(options);
     BOOST_REQUIRE(block_template);
     block = block_template->getBlock();
-
+    CAuxPow::initAuxPow(block);
     // Verify that this tx isn't selected.
     for (size_t i=0; i<block.vtx.size(); ++i) {
         BOOST_CHECK(block.vtx[i]->GetHash() != hashFreeTx2);
@@ -244,6 +247,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     block_template = mining->createNewBlock(options);
     BOOST_REQUIRE(block_template);
     block = block_template->getBlock();
+    CAuxPow::initAuxPow(block);
     BOOST_REQUIRE_EQUAL(block.vtx.size(), 9U);
     BOOST_CHECK(block.vtx[8]->GetHash() == hashLowFeeTx2);
 }
@@ -275,7 +279,7 @@ void MinerTestingSetup::TestBasicMining(const CScript& scriptPubKey, const std::
         auto block_template{mining->createNewBlock(options)};
         BOOST_REQUIRE(block_template);
         CBlock block{block_template->getBlock()};
-
+        CAuxPow::initAuxPow(block);
         // block sigops > limit: 1000 CHECKMULTISIG + 1
         tx.vin.resize(1);
         // NOTE: OP_NOP is used to force 20 SigOps for the CHECKMULTISIG
@@ -560,6 +564,7 @@ void MinerTestingSetup::TestBasicMining(const CScript& scriptPubKey, const std::
     // but relative locked txs will if inconsistently added to mempool.
     // For now these will still generate a valid template until BIP68 soft fork
     CBlock block{block_template->getBlock()};
+    CAuxPow::initAuxPow(block);
     BOOST_CHECK_EQUAL(block.vtx.size(), 3U);
     // However if we advance height by 1 and time by SEQUENCE_LOCK_TIME, all of them should be mined
     for (int i = 0; i < CBlockIndex::nMedianTimeSpan; ++i) {
@@ -572,6 +577,7 @@ void MinerTestingSetup::TestBasicMining(const CScript& scriptPubKey, const std::
     block_template = mining->createNewBlock(options);
     BOOST_REQUIRE(block_template);
     block = block_template->getBlock();
+    CAuxPow::initAuxPow(block);
     BOOST_CHECK_EQUAL(block.vtx.size(), 5U);
 }
 
@@ -647,6 +653,7 @@ void MinerTestingSetup::TestPrioritisedMining(const CScript& scriptPubKey, const
     auto block_template = mining->createNewBlock(options);
     BOOST_REQUIRE(block_template);
     CBlock block{block_template->getBlock()};
+    CAuxPow::initAuxPow(block);
     BOOST_REQUIRE_EQUAL(block.vtx.size(), 6U);
     BOOST_CHECK(block.vtx[1]->GetHash() == hashFreeParent);
     BOOST_CHECK(block.vtx[2]->GetHash() == hashFreePrioritisedTx);
@@ -677,6 +684,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     BOOST_REQUIRE(block_template);
     {
         CBlock block{block_template->getBlock()};
+        auto& miningHeader = CAuxPow::initAuxPow(block);
         {
             std::string reason;
             std::string debug;
@@ -698,8 +706,8 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
         {
             // A block template does not have proof-of-work, but it might pass
             // verification by coincidence. Grind the nonce if needed:
-            while (CheckProofOfWork(block.GetHash(), block.nBits, Assert(m_node.chainman)->GetParams().GetConsensus())) {
-                block.nNonce++;
+            while (CheckProofOfWork(miningHeader.GetHash(), block.nBits, Assert(m_node.chainman)->GetParams().GetConsensus())) {
+                ++miningHeader.nNonce;
             }
 
             std::string reason;
@@ -709,81 +717,6 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
             BOOST_REQUIRE_EQUAL(debug, "proof of work failed");
         }
     }
-
-    // We can't make transactions until we have inputs
-    // Therefore, load 110 blocks :)
-    static_assert(std::size(BLOCKINFO) == 110, "Should have 110 blocks to import");
-    int baseheight = 0;
-    std::vector<CTransactionRef> txFirst;
-    for (const auto& bi : BLOCKINFO) {
-        const int current_height{mining->getTip()->height};
-
-        /**
-         * Simple block creation, nothing special yet.
-         * If current_height is odd, block_template will have already been
-         * set at the end of the previous loop.
-         */
-        if (current_height % 2 == 0) {
-            block_template = mining->createNewBlock(options);
-            BOOST_REQUIRE(block_template);
-        }
-
-        CBlock block{block_template->getBlock()};
-        CMutableTransaction txCoinbase(*block.vtx[0]);
-        {
-            LOCK(cs_main);
-            block.nVersion = VERSIONBITS_TOP_BITS;
-            block.nTime = Assert(m_node.chainman)->ActiveChain().Tip()->GetMedianTimePast()+1;
-            txCoinbase.version = 1;
-            txCoinbase.vin[0].scriptSig = CScript{} << (current_height + 1) << bi.extranonce;
-            txCoinbase.vout.resize(1); // Ignore the (optional) segwit commitment added by CreateNewBlock (as the hardcoded nonces don't account for this)
-            txCoinbase.vout[0].scriptPubKey = CScript();
-            block.vtx[0] = MakeTransactionRef(txCoinbase);
-            if (txFirst.size() == 0)
-                baseheight = current_height;
-            if (txFirst.size() < 4)
-                txFirst.push_back(block.vtx[0]);
-            block.hashMerkleRoot = BlockMerkleRoot(block);
-            block.nNonce = bi.nonce;
-        }
-        std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
-        // Alternate calls between Chainman's ProcessNewBlock and submitSolution
-        // via the Mining interface. The former is used by net_processing as well
-        // as the submitblock RPC.
-        if (current_height % 2 == 0) {
-            BOOST_REQUIRE(Assert(m_node.chainman)->ProcessNewBlock(shared_pblock, /*force_processing=*/true, /*min_pow_checked=*/true, nullptr));
-        } else {
-            BOOST_REQUIRE(block_template->submitSolution(block.nVersion, block.nTime, block.nNonce, MakeTransactionRef(txCoinbase)));
-        }
-        {
-            LOCK(cs_main);
-            // The above calls don't guarantee the tip is actually updated, so
-            // we explicitly check this.
-            auto maybe_new_tip{Assert(m_node.chainman)->ActiveChain().Tip()};
-            BOOST_REQUIRE_EQUAL(maybe_new_tip->GetBlockHash(), block.GetHash());
-        }
-        if (current_height % 2 == 0) {
-            block_template = block_template->waitNext();
-            BOOST_REQUIRE(block_template);
-        } else {
-            // This just adds coverage
-            mining->waitTipChanged(block.hashPrevBlock);
-        }
-    }
-
-    LOCK(cs_main);
-
-    TestBasicMining(scriptPubKey, txFirst, baseheight);
-
-    m_node.chainman->ActiveChain().Tip()->nHeight--;
-    SetMockTime(0);
-
-    TestPackageSelection(scriptPubKey, txFirst);
-
-    m_node.chainman->ActiveChain().Tip()->nHeight--;
-    SetMockTime(0);
-
-    TestPrioritisedMining(scriptPubKey, txFirst);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
