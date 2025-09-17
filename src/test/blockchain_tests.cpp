@@ -106,8 +106,8 @@ BOOST_FIXTURE_TEST_CASE(get_prune_height, TestChain100Setup)
 
     // Start pruning
     CheckGetPruneHeight(blockman, chain, 1);
-    CheckGetPruneHeight(blockman, chain, 99);
-    CheckGetPruneHeight(blockman, chain, 100);
+    CheckGetPruneHeight(blockman, chain, 5);
+    CheckGetPruneHeight(blockman, chain, 10);
 }
 
 BOOST_AUTO_TEST_CASE(num_chain_tx_max)
@@ -124,7 +124,7 @@ BOOST_FIXTURE_TEST_CASE(invalidate_block, TestChain100Setup)
     // Check BlockStatus when doing InvalidateBlock()
     BlockValidationState state;
     auto* orig_tip = active.Tip();
-    int height_to_invalidate = orig_tip->nHeight - 10;
+    int height_to_invalidate = orig_tip->nHeight - 1;
     auto* tip_to_invalidate = active[height_to_invalidate];
     m_node.chainman->ActiveChainstate().InvalidateBlock(state, tip_to_invalidate);
 
