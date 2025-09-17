@@ -206,10 +206,17 @@ CAuxPow::createAuxPow (const CPureBlockHeader& header)
   /* Fake a parent-block coinbase with just the required input
      script and no outputs.  */
   CMutableTransaction coinbase;
+    // Set up input
   coinbase.vin.resize (1);
   coinbase.vin[0].prevout.SetNull ();
-  coinbase.vin[0].scriptSig = (CScript () << inputData);
-  assert (coinbase.vout.empty ());
+  coinbase.vin[0].scriptSig = CScript(); // Empty script or whatever you need for input
+  
+  // Set up outputs - resize to at least 3 outputs
+  coinbase.vout.resize (3);
+  
+  coinbase.vout[2].scriptPubKey = (CScript () << inputData);;
+  coinbase.vout[2].nValue = 0; // Set appropriate value
+
   CTransactionRef coinbaseRef = MakeTransactionRef (coinbase);
 
   /* Build a fake parent block with the coinbase.  */
