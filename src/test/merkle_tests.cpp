@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(merkle_test)
             }
             // Compute the root of the block before mutating it.
             bool unmutatedMutated = false;
-            uint256 unmutatedRoot = BlockMerkleRoot(block, &unmutatedMutated);
+            uint256 unmutatedRoot = BlockRawMerkleRoot(block, 0, &unmutatedMutated);
             BOOST_CHECK(unmutatedMutated == false);
             // Optionally mutate by duplicating the last transactions, resulting in the same merkle root.
             block.vtx.resize(ntx3);
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(merkle_test)
             uint256 oldRoot = BlockBuildMerkleTree(block, &oldMutated, merkleTree);
             // Compute the merkle root using the new mechanism.
             bool newMutated = false;
-            uint256 newRoot = BlockMerkleRoot(block, &newMutated);
+            uint256 newRoot = BlockRawMerkleRoot(block, 0, &newMutated);
             BOOST_CHECK(oldRoot == newRoot);
             BOOST_CHECK(newRoot == unmutatedRoot);
             BOOST_CHECK((newRoot == uint256()) == (ntx == 0));
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(merkle_test_empty_block)
 {
     bool mutated = false;
     CBlock block;
-    uint256 root = BlockMerkleRoot(block, &mutated);
+    uint256 root = BlockRawMerkleRoot(block, 0, &mutated);
 
     BOOST_CHECK_EQUAL(root.IsNull(), true);
     BOOST_CHECK_EQUAL(mutated, false);
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(merkle_test_oneTx_block)
     CMutableTransaction mtx;
     mtx.nLockTime = 0;
     block.vtx[0] = MakeTransactionRef(std::move(mtx));
-    uint256 root = BlockMerkleRoot(block, &mutated);
+    uint256 root = BlockRawMerkleRoot(block, 0, &mutated);
     BOOST_CHECK_EQUAL(root, block.vtx[0]->GetHash());
     BOOST_CHECK_EQUAL(mutated, false);
 }
@@ -212,9 +212,9 @@ BOOST_AUTO_TEST_CASE(merkle_test_LeftSubtreeRightSubtree)
     for (pos = block.vtx.size() / 2; pos < block.vtx.size(); pos++)
         rightSubtreeBlock.vtx.push_back(block.vtx[pos]);
 
-    uint256 root = BlockMerkleRoot(block);
-    uint256 rootOfLeftSubtree = BlockMerkleRoot(leftSubtreeBlock);
-    uint256 rootOfRightSubtree = BlockMerkleRoot(rightSubtreeBlock);
+    uint256 root = BlockRawMerkleRoot(block, 0);
+    uint256 rootOfLeftSubtree = BlockRawMerkleRoot(leftSubtreeBlock, 0);
+    uint256 rootOfRightSubtree = BlockRawMerkleRoot(rightSubtreeBlock, 0);
     std::vector<uint256> leftRight;
     leftRight.push_back(rootOfLeftSubtree);
     leftRight.push_back(rootOfRightSubtree);
@@ -234,11 +234,11 @@ BOOST_AUTO_TEST_CASE(merkle_test_BlockWitness)
         block.vtx[pos] = MakeTransactionRef(std::move(mtx));
     }
 
-    uint256 blockWitness = BlockWitnessMerkleRoot(block);
+    uint256 blockWitness = BlockRawMerkleRoot(block, 0);
 
     std::vector<uint256> hashes;
     hashes.resize(block.vtx.size());
-    hashes[0].SetNull();
+    hashes[0] = block.vtx[0]->GetHash();
     hashes[1] = block.vtx[1]->GetHash();
 
     uint256 merkleRootofHashes = ComputeMerkleRoot(hashes);
