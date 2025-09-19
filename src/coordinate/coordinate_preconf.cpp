@@ -731,16 +731,12 @@ CScript getMinerScript(ChainstateManager& chainman, int blockHeight) {
     int currentHeight = blockHeight - 3;
     CScript scriptPubKey;
     CBlock prevblock;
-
     if(currentHeight < 0) { 
-         LogPrintf("getMinerScript 1 \n");
          return scriptPubKey;
     }
     if (!chainman.m_blockman.ReadBlock(prevblock, *active_chain[currentHeight])) {
-        LogPrintf("getMinerScript 2 \n");
         return scriptPubKey;
     } 
-    LogPrintf("getMinerScript 3 %s \n", prevblock.ToString());
     return prevblock.vtx[0]->vout[0].scriptPubKey;
 }
 

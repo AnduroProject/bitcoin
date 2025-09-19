@@ -167,9 +167,9 @@ bool isAnduroValidationActive() {
  */
 bool verifyPreCommitment(ChainstateManager& chainman, const CBlock& block, int currentHeight) {
    // need this line uncommented for running unit test case
-   // if(chainman.GetParams().GetChainType() == ChainType::REGTEST) {
-   //    return true;
-   // }
+   if(chainman.GetParams().GetChainType() == ChainType::REGTEST) {
+      return true;
+   }
    LOCK(cs_main);
    if(currentHeight < 3) {
       LogPrintf("verifyCommitment: gensis block ignored");

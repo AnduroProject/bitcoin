@@ -7,6 +7,7 @@
 #include <consensus/amount.h>
 #include <primitives/transaction.h>
 #include <consensus/validation.h>
+#include <logging.h>
 
 bool CheckTransaction(const CTransaction& tx, TxValidationState& state, int coordinateOutputs)
 {

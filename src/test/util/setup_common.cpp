@@ -241,7 +241,13 @@ ChainTestingSetup::ChainTestingSetup(const ChainType chainType, TestOpts opts)
     }
 
     bilingual_str error{};
+
     m_node.mempool = std::make_unique<CTxMemPool>(MemPoolOptionsForTest(m_node), error);
+    CTxMemPool::Options mempool_opts = MemPoolOptionsForTest(m_node);
+    mempool_opts.is_preconf = true;
+    mempool_opts.limits.ancestor_count = 0;
+    mempool_opts.limits.descendant_count = 0;
+    m_node.preconfmempool = std::make_unique<CTxMemPool>(mempool_opts, error);
     Assert(error.empty());
     m_node.warnings = std::make_unique<node::Warnings>();
 
@@ -370,7 +376,7 @@ TestChain100Setup::TestChain100Setup(
         LOCK(::cs_main);
         assert(
             m_node.chainman->ActiveChain().Tip()->GetBlockHash().ToString() ==
-            "d45b359bdea3c889ae05ca0c7ba939addc874bdf4e841e825e91a7228cbc8cfb");
+            "fe56f6334b8b5060eec94c7f93bc4f5e559f350915d3758e69843df2c2a0fa1a");
     }
 }
 
@@ -380,7 +386,7 @@ void TestChain100Setup::mineBlocks(int num_blocks)
     for (int i = 0; i < num_blocks; i++) {
         std::vector<CMutableTransaction> noTxns;
         CBlock b = CreateAndProcessBlock(noTxns, scriptPubKey);
-        SetMockTime(GetTime() + 1);
+        SetMockTime(GetTime() + 10);
         m_coinbase_txns.push_back(b.vtx[0]);
     }
 }

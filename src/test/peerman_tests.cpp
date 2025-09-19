@@ -8,7 +8,6 @@
 #include <pow.h>
 #include <test/util/setup_common.h>
 #include <validation.h>
-
 #include <boost/test/unit_test.hpp>
 
 BOOST_FIXTURE_TEST_SUITE(peerman_tests, RegTestingSetup)
@@ -21,7 +20,8 @@ static void mineBlock(const node::NodeContext& node, std::chrono::seconds block_
     auto curr_time = GetTime<std::chrono::seconds>();
     SetMockTime(block_time); // update time so the block is created with it
     CBlock block = node::BlockAssembler{node.chainman->ActiveChainstate(), nullptr, {}}.CreateNewBlock()->block;
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, node.chainman->GetConsensus())) ++block.nNonce;
+    auto& miningHeader = CAuxPow::initAuxPow(block);
+    while (!CheckProofOfWork(miningHeader.GetHash(), block.nBits, node.chainman->GetConsensus())) ++miningHeader.nNonce;
     block.fChecked = true; // little speedup
     SetMockTime(curr_time); // process block at current time
     Assert(node.chainman->ProcessNewBlock(std::make_shared<const CBlock>(block), /*force_processing=*/true, /*min_pow_checked=*/true, nullptr));
