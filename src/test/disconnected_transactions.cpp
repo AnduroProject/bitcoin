@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_CASE(disconnectpool_memory_limits)
     // transactions would realistically be in a block together, they just need distinct txids and
     // uniform size for this test to work.
     std::vector<CTransactionRef> block_vtx(m_coinbase_txns);
-    BOOST_CHECK_EQUAL(block_vtx.size(), 10);
+    BOOST_CHECK_EQUAL(block_vtx.size(), 100);
 
     // Roughly estimate sizes to sanity check that DisconnectedBlockTransactions::DynamicMemoryUsage
     // is within an expected range.
