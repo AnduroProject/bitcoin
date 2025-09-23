@@ -50,7 +50,7 @@ void sanity_check_snapshot()
     // Create a temporary chainstate manager to connect the chain to.
     const auto tmp_setup{MakeNoLogFileContext<TestingSetup>(ChainType::REGTEST, TestOpts{.setup_net = false})};
     const auto& node{tmp_setup->m_node};
-    for (auto& block: *g_chain) {
+    for (auto& block : *g_chain) {
         ProcessBlock(node, block);
     }
 

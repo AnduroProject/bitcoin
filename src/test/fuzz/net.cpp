@@ -35,11 +35,11 @@ FUZZ_TARGET(net, .init = initialize_net)
     CNode node{ConsumeNode(fuzzed_data_provider)};
     node.SetCommonVersion(fuzzed_data_provider.ConsumeIntegral<int>());
     if (const auto service_opt =
-            ConsumeDeserializable<CService>(fuzzed_data_provider, ConsumeDeserializationParams<CNetAddr::SerParams>(fuzzed_data_provider)))
-    {
+            ConsumeDeserializable<CService>(fuzzed_data_provider, ConsumeDeserializationParams<CNetAddr::SerParams>(fuzzed_data_provider))) {
         node.SetAddrLocal(*service_opt);
     }
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000)
+    {
         CallOneOf(
             fuzzed_data_provider,
             [&] {
@@ -87,7 +87,8 @@ FUZZ_TARGET(local_address, .init = initialize_net)
         LOCK(g_maplocalhost_mutex);
         mapLocalHost.clear();
     }
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000)
+    {
         CallOneOf(
             fuzzed_data_provider,
             [&] {

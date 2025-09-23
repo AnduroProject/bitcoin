@@ -7,18 +7,19 @@
 #ifndef SECP256K1_MODULE_RECOVERY_EXHAUSTIVE_TESTS_H
 #define SECP256K1_MODULE_RECOVERY_EXHAUSTIVE_TESTS_H
 
-#include "main_impl.h"
 #include "../../../include/secp256k1_recovery.h"
+#include "main_impl.h"
 
-static void test_exhaustive_recovery_sign(const secp256k1_context *ctx, const secp256k1_ge *group) {
+static void test_exhaustive_recovery_sign(const secp256k1_context* ctx, const secp256k1_ge* group)
+{
     int i, j, k;
     uint64_t iter = 0;
 
     /* Loop */
-    for (i = 1; i < EXHAUSTIVE_TEST_ORDER; i++) {  /* message */
-        for (j = 1; j < EXHAUSTIVE_TEST_ORDER; j++) {  /* key */
+    for (i = 1; i < EXHAUSTIVE_TEST_ORDER; i++) {     /* message */
+        for (j = 1; j < EXHAUSTIVE_TEST_ORDER; j++) { /* key */
             if (skip_section(&iter)) continue;
-            for (k = 1; k < EXHAUSTIVE_TEST_ORDER; k++) {  /* nonce */
+            for (k = 1; k < EXHAUSTIVE_TEST_ORDER; k++) { /* nonce */
                 const int starting_k = k;
                 secp256k1_fe r_dot_y_normalized;
                 secp256k1_ecdsa_recoverable_signature rsig;
@@ -78,7 +79,8 @@ static void test_exhaustive_recovery_sign(const secp256k1_context *ctx, const se
     }
 }
 
-static void test_exhaustive_recovery_verify(const secp256k1_context *ctx, const secp256k1_ge *group) {
+static void test_exhaustive_recovery_verify(const secp256k1_context* ctx, const secp256k1_ge* group)
+{
     /* This is essentially a copy of test_exhaustive_verify, with recovery added */
     int s, r, msg, key;
     uint64_t iter = 0;
@@ -140,7 +142,8 @@ static void test_exhaustive_recovery_verify(const secp256k1_context *ctx, const 
     }
 }
 
-static void test_exhaustive_recovery(const secp256k1_context *ctx, const secp256k1_ge *group) {
+static void test_exhaustive_recovery(const secp256k1_context* ctx, const secp256k1_ge* group)
+{
     test_exhaustive_recovery_sign(ctx, group);
     test_exhaustive_recovery_verify(ctx, group);
 }

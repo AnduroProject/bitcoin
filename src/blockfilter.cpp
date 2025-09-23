@@ -25,8 +25,8 @@ static const std::map<BlockFilterType, std::string> g_filter_types = {
 uint64_t GCSFilter::HashToRange(const Element& element) const
 {
     uint64_t hash = CSipHasher(m_params.m_siphash_k0, m_params.m_siphash_k1)
-        .Write(element)
-        .Finalize();
+                        .Write(element)
+                        .Finalize();
     return FastRange64(hash, m_F);
 }
 
@@ -43,7 +43,8 @@ std::vector<uint64_t> GCSFilter::BuildHashedSet(const ElementSet& elements) cons
 
 GCSFilter::GCSFilter(const Params& params)
     : m_params(params), m_N(0), m_F(0), m_encoded{0}
-{}
+{
+}
 
 GCSFilter::GCSFilter(const Params& params, std::vector<unsigned char> encoded_filter, bool skip_decode_check)
     : m_params(params), m_encoded(std::move(encoded_filter))
@@ -151,7 +152,8 @@ const std::string& BlockFilterTypeName(BlockFilterType filter_type)
     return it != g_filter_types.end() ? it->second : unknown_retval;
 }
 
-bool BlockFilterTypeByName(const std::string& name, BlockFilterType& filter_type) {
+bool BlockFilterTypeByName(const std::string& name, BlockFilterType& filter_type)
+{
     for (const auto& entry : g_filter_types) {
         if (entry.second == name) {
             filter_type = entry.first;
@@ -167,10 +169,10 @@ const std::set<BlockFilterType>& AllBlockFilterTypes()
 
     static std::once_flag flag;
     std::call_once(flag, []() {
-            for (const auto& entry : g_filter_types) {
-                types.insert(entry.first);
-            }
-        });
+        for (const auto& entry : g_filter_types) {
+            types.insert(entry.first);
+        }
+    });
 
     return types;
 }

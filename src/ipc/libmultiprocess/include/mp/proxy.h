@@ -39,7 +39,8 @@ struct ProxyType;
 using CleanupList = std::list<std::function<void()>>;
 using CleanupIt = typename CleanupList::iterator;
 
-inline void CleanupRun(CleanupList& fns) {
+inline void CleanupRun(CleanupList& fns)
+{
     while (!fns.empty()) {
         auto fn = std::move(fns.front());
         fns.pop_front();
@@ -48,8 +49,7 @@ inline void CleanupRun(CleanupList& fns) {
 }
 
 //! Context data associated with proxy client and server classes.
-struct ProxyContext
-{
+struct ProxyContext {
     Connection* connection;
     CleanupList cleanup_fns;
 
@@ -117,8 +117,7 @@ class ProxyClientCustom : public ProxyClientBase<Interface, Impl>
 //! Base class for generated ProxyServer classes that implement capnp server
 //! methods and forward calls to a wrapped c++ implementation class.
 template <typename Interface_, typename Impl_>
-struct ProxyServerBase : public virtual Interface_::Server
-{
+struct ProxyServerBase : public virtual Interface_::Server {
 public:
     using Interface = Interface_;
     using Impl = Impl_;
@@ -165,8 +164,7 @@ public:
 //! to run before m_impl is destroyed, the specialization can override
 //! invokeDestroy and destructor methods to do that.
 template <typename Interface, typename Impl>
-struct ProxyServerCustom : public ProxyServerBase<Interface, Impl>
-{
+struct ProxyServerCustom : public ProxyServerBase<Interface, Impl> {
     using ProxyServerBase<Interface, Impl>::ProxyServerBase;
 };
 
@@ -192,8 +190,7 @@ struct FunctionTraits;
 //! template argument is a pointer-to-method type,
 //! decltype(&ClassName::methodName)
 template <class _Class, class _Result, class... _Params>
-struct FunctionTraits<_Result (_Class::*const)(_Params...)>
-{
+struct FunctionTraits<_Result (_Class::* const)(_Params...)> {
     using Params = TypeList<_Params...>;
     using Result = _Result;
     template <size_t N>
@@ -209,7 +206,10 @@ struct FunctionTraits<_Result (_Class::*const)(_Params...)>
     //! parameter number instead of a type as a template argument, so generated
     //! code calling this can be less repetitive and verbose.
     template <size_t N>
-    static decltype(auto) Fwd(Param<N>& arg) { return static_cast<Param<N>&&>(arg); }
+    static decltype(auto) Fwd(Param<N>& arg)
+    {
+        return static_cast<Param<N>&&>(arg);
+    }
 };
 
 //! Traits class for a proxy method, providing the same
@@ -227,8 +227,7 @@ struct FunctionTraits<_Result (_Class::*const)(_Params...)>
 //! ProxyClientBase. These methods don't have any C++ parameters or return
 //! types, so the trait information below reflects that.
 template <typename MethodParams, typename Enable = void>
-struct ProxyMethodTraits
-{
+struct ProxyMethodTraits {
     using Params = TypeList<>;
     using Result = void;
     using Fields = Params;
@@ -253,8 +252,7 @@ struct ProxyMethodTraits
 //! };
 template <typename MethodParams>
 struct ProxyMethodTraits<MethodParams, Require<decltype(ProxyMethod<MethodParams>::impl)>>
-    : public FunctionTraits<decltype(ProxyMethod<MethodParams>::impl)>
-{
+    : public FunctionTraits<decltype(ProxyMethod<MethodParams>::impl)> {
     template <typename ServerContext, typename... Args>
     static decltype(auto) invoke(ServerContext& server_context, Args&&... args)
     {
@@ -265,15 +263,13 @@ struct ProxyMethodTraits<MethodParams, Require<decltype(ProxyMethod<MethodParams
 //! Customizable (through template specialization) traits class used in generated ProxyClient implementations from
 //! proxy-codegen.cpp.
 template <typename MethodParams>
-struct ProxyClientMethodTraits : public ProxyMethodTraits<MethodParams>
-{
+struct ProxyClientMethodTraits : public ProxyMethodTraits<MethodParams> {
 };
 
 //! Customizable (through template specialization) traits class used in generated ProxyServer implementations from
 //! proxy-codegen.cpp.
 template <typename MethodParams>
-struct ProxyServerMethodTraits : public ProxyMethodTraits<MethodParams>
-{
+struct ProxyServerMethodTraits : public ProxyMethodTraits<MethodParams> {
 };
 
 static constexpr int FIELD_IN = 1;
@@ -284,8 +280,7 @@ static constexpr int FIELD_BOXED = 16;
 
 //! Accessor type holding flags that determine how to access a message field.
 template <typename Field, int flags>
-struct Accessor : public Field
-{
+struct Accessor : public Field {
     static const bool in = flags & FIELD_IN;
     static const bool out = flags & FIELD_OUT;
     static const bool optional = flags & FIELD_OPTIONAL;

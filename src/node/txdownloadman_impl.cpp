@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <node/txdownloadman_impl.h>
 #include <node/txdownloadman.h>
+#include <node/txdownloadman_impl.h>
 
 #include <chain.h>
 #include <consensus/validation.h>
@@ -14,9 +14,9 @@
 
 namespace node {
 // TxDownloadManager wrappers
-TxDownloadManager::TxDownloadManager(const TxDownloadOptions& options) :
-    m_impl{std::make_unique<TxDownloadManagerImpl>(options)}
-{}
+TxDownloadManager::TxDownloadManager(const TxDownloadOptions& options) : m_impl{std::make_unique<TxDownloadManagerImpl>(options)}
+{
+}
 TxDownloadManager::~TxDownloadManager() = default;
 
 void TxDownloadManager::ActiveTipChange()
@@ -164,7 +164,6 @@ void TxDownloadManagerImpl::DisconnectedPeer(NodeId nodeid)
         if (it->second.m_connection_info.m_wtxid_relay) m_num_wtxid_peers -= 1;
         m_peer_info.erase(it);
     }
-
 }
 
 bool TxDownloadManagerImpl::AddTxAnnouncement(NodeId peer, const GenTxid& gtxid, std::chrono::microseconds now)
@@ -493,8 +492,7 @@ node::RejectedTxTodo TxDownloadManagerImpl::MempoolRejectedTx(const CTransaction
     return RejectedTxTodo{
         .m_should_add_extra_compact_tx = add_extra_compact_tx,
         .m_unique_parents = std::move(unique_parents),
-        .m_package_to_validate = std::move(package_to_validate)
-    };
+        .m_package_to_validate = std::move(package_to_validate)};
 }
 
 void TxDownloadManagerImpl::MempoolRejectedPackage(const Package& package)

@@ -17,21 +17,21 @@ class Node;
 class Wallet;
 struct WalletTx;
 struct WalletTxStatus;
-}
+} // namespace interfaces
 
 /** UI model for transaction status. The transaction status is the part of a transaction that will change over time.
  */
 struct TransactionStatus {
     enum Status {
-        Confirmed,          /**< Have 6 or more confirmations (normal tx) or fully mature (mined tx) **/
+        Confirmed, /**< Have 6 or more confirmations (normal tx) or fully mature (mined tx) **/
         /// Normal (sent/received) transactions
-        Unconfirmed,        /**< Not yet mined into a block **/
-        Confirming,         /**< Confirmed, but waiting for the recommended number of confirmations **/
-        Conflicted,         /**< Conflicts with other transaction or mempool **/
-        Abandoned,          /**< Abandoned from the wallet **/
+        Unconfirmed, /**< Not yet mined into a block **/
+        Confirming,  /**< Confirmed, but waiting for the recommended number of confirmations **/
+        Conflicted,  /**< Conflicts with other transaction or mempool **/
+        Abandoned,   /**< Abandoned from the wallet **/
         /// Generated (mined) transactions
-        Immature,           /**< Mined but waiting for maturity */
-        NotAccepted         /**< Mined but not accepted */
+        Immature,   /**< Mined but waiting for maturity */
+        NotAccepted /**< Mined but not accepted */
     };
 
     /// Transaction counts towards available balance
@@ -62,8 +62,7 @@ struct TransactionStatus {
 class TransactionRecord
 {
 public:
-    enum Type
-    {
+    enum Type {
         Other,
         Generated,
         SendToAddress,
@@ -75,22 +74,19 @@ public:
     /** Number of confirmation recommended for accepting a transaction */
     static const int RecommendedNumConfirmations = 6;
 
-    TransactionRecord():
-            hash(), time(0), type(Other), debit(0), credit(0), idx(0)
+    TransactionRecord() : hash(), time(0), type(Other), debit(0), credit(0), idx(0)
     {
     }
 
-    TransactionRecord(Txid _hash, qint64 _time):
-            hash(_hash), time(_time), type(Other), debit(0),
-            credit(0), idx(0)
+    TransactionRecord(Txid _hash, qint64 _time) : hash(_hash), time(_time), type(Other), debit(0),
+                                                  credit(0), idx(0)
     {
     }
 
     TransactionRecord(Txid _hash, qint64 _time,
-                Type _type, const std::string &_address,
-                const CAmount& _debit, const CAmount& _credit):
-            hash(_hash), time(_time), type(_type), address(_address), debit(_debit), credit(_credit),
-            idx(0)
+                      Type _type, const std::string& _address,
+                      const CAmount& _debit, const CAmount& _credit) : hash(_hash), time(_time), type(_type), address(_address), debit(_debit), credit(_credit),
+                                                                       idx(0)
     {
     }
 

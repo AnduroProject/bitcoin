@@ -60,10 +60,10 @@ struct PackageToValidate {
     explicit PackageToValidate(const CTransactionRef& parent,
                                const CTransactionRef& child,
                                NodeId parent_sender,
-                               NodeId child_sender) :
-        m_txns{parent, child},
-        m_senders{parent_sender, child_sender}
-    {}
+                               NodeId child_sender) : m_txns{parent, child},
+                                                      m_senders{parent_sender, child_sender}
+    {
+    }
 
     // Move ctor
     PackageToValidate(PackageToValidate&& other) : m_txns{std::move(other.m_txns)}, m_senders{std::move(other.m_senders)} {}
@@ -71,13 +71,15 @@ struct PackageToValidate {
     PackageToValidate(const PackageToValidate& other) = default;
 
     // Move assignment
-    PackageToValidate& operator=(PackageToValidate&& other) {
+    PackageToValidate& operator=(PackageToValidate&& other)
+    {
         this->m_txns = std::move(other.m_txns);
         this->m_senders = std::move(other.m_senders);
         return *this;
     }
 
-    std::string ToString() const {
+    std::string ToString() const
+    {
         Assume(m_txns.size() == 2);
         return strprintf("parent %s (wtxid=%s, sender=%d) + child %s (wtxid=%s, sender=%d)",
                          m_txns.front()->GetHash().ToString(),
@@ -88,8 +90,7 @@ struct PackageToValidate {
                          m_senders.back());
     }
 };
-struct RejectedTxTodo
-{
+struct RejectedTxTodo {
     bool m_should_add_extra_compact_tx;
     std::vector<Txid> m_unique_parents;
     std::optional<PackageToValidate> m_package_to_validate;
@@ -115,7 +116,8 @@ struct RejectedTxTodo
  * This class is not thread-safe. Access must be synchronized using an
  * external mutex.
  */
-class TxDownloadManager {
+class TxDownloadManager
+{
     const std::unique_ptr<TxDownloadManagerImpl> m_impl;
 
 public:

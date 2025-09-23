@@ -63,8 +63,8 @@ static bool CheckFilterLookups(BlockFilterIndex& filter_index, const CBlockIndex
 }
 
 CBlock BuildChainTestingSetup::CreateBlock(const CBlockIndex* prev,
-    const std::vector<CMutableTransaction>& txns,
-    const CScript& scriptPubKey)
+                                           const std::vector<CMutableTransaction>& txns,
+                                           const CScript& scriptPubKey)
 {
     BlockAssembler::Options options;
     options.coinbase_output_script = scriptPubKey;
@@ -87,15 +87,16 @@ CBlock BuildChainTestingSetup::CreateBlock(const CBlockIndex* prev,
         block.hashMerkleRoot = BlockMerkleRoot(block);
     }
 
-    while (!CheckProofOfWork(miningHeader.GetHash(), block.nBits, m_node.chainman->GetConsensus())) ++miningHeader.nNonce;
+    while (!CheckProofOfWork(miningHeader.GetHash(), block.nBits, m_node.chainman->GetConsensus()))
+        ++miningHeader.nNonce;
 
     return block;
 }
 
 bool BuildChainTestingSetup::BuildChain(const CBlockIndex* pindex,
-    const CScript& coinbase_script_pub_key,
-    size_t length,
-    std::vector<std::shared_ptr<CBlock>>& chain)
+                                        const CScript& coinbase_script_pub_key,
+                                        size_t length,
+                                        std::vector<std::shared_ptr<CBlock>>& chain)
 {
     std::vector<CMutableTransaction> no_txns;
 
@@ -121,14 +122,14 @@ BOOST_FIXTURE_TEST_CASE(blockfilter_index_init_destroy, BasicTestingSetup)
     filter_index = GetBlockFilterIndex(BlockFilterType::BASIC);
     BOOST_CHECK(filter_index == nullptr);
 
-    BOOST_CHECK(InitBlockFilterIndex([&]{ return interfaces::MakeChain(m_node); }, BlockFilterType::BASIC, 1 << 20, true, false));
+    BOOST_CHECK(InitBlockFilterIndex([&] { return interfaces::MakeChain(m_node); }, BlockFilterType::BASIC, 1 << 20, true, false));
 
     filter_index = GetBlockFilterIndex(BlockFilterType::BASIC);
     BOOST_CHECK(filter_index != nullptr);
     BOOST_CHECK(filter_index->GetFilterType() == BlockFilterType::BASIC);
 
     // Initialize returns false if index already exists.
-    BOOST_CHECK(!InitBlockFilterIndex([&]{ return interfaces::MakeChain(m_node); }, BlockFilterType::BASIC, 1 << 20, true, false));
+    BOOST_CHECK(!InitBlockFilterIndex([&] { return interfaces::MakeChain(m_node); }, BlockFilterType::BASIC, 1 << 20, true, false));
 
     int iter_count = 0;
     ForEachBlockFilterIndex([&iter_count](BlockFilterIndex& _index) { iter_count++; });
@@ -143,7 +144,7 @@ BOOST_FIXTURE_TEST_CASE(blockfilter_index_init_destroy, BasicTestingSetup)
     BOOST_CHECK(filter_index == nullptr);
 
     // Reinitialize index.
-    BOOST_CHECK(InitBlockFilterIndex([&]{ return interfaces::MakeChain(m_node); }, BlockFilterType::BASIC, 1 << 20, true, false));
+    BOOST_CHECK(InitBlockFilterIndex([&] { return interfaces::MakeChain(m_node); }, BlockFilterType::BASIC, 1 << 20, true, false));
 
     DestroyAllBlockFilterIndexes();
 

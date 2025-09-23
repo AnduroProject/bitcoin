@@ -154,7 +154,7 @@ uint64_t TxReconciliationTracker::PreRegisterPeer(NodeId peer_id)
 }
 
 ReconciliationRegisterResult TxReconciliationTracker::RegisterPeer(NodeId peer_id, bool is_peer_inbound,
-                                                          uint32_t peer_recon_version, uint64_t remote_salt)
+                                                                   uint32_t peer_recon_version, uint64_t remote_salt)
 {
     return m_impl->RegisterPeer(peer_id, is_peer_inbound, peer_recon_version, remote_salt);
 }

@@ -7,14 +7,16 @@
 #ifndef SECP256K1_MODULE_ECDH_TESTS_H
 #define SECP256K1_MODULE_ECDH_TESTS_H
 
-static int ecdh_hash_function_test_xpassthru(unsigned char *output, const unsigned char *x, const unsigned char *y, void *data) {
+static int ecdh_hash_function_test_xpassthru(unsigned char* output, const unsigned char* x, const unsigned char* y, void* data)
+{
     (void)y;
     (void)data;
     memcpy(output, x, 32);
     return 1;
 }
 
-static int ecdh_hash_function_test_fail(unsigned char *output, const unsigned char *x, const unsigned char *y, void *data) {
+static int ecdh_hash_function_test_fail(unsigned char* output, const unsigned char* x, const unsigned char* y, void* data)
+{
     (void)output;
     (void)x;
     (void)y;
@@ -22,7 +24,8 @@ static int ecdh_hash_function_test_fail(unsigned char *output, const unsigned ch
     return 0;
 }
 
-static int ecdh_hash_function_custom(unsigned char *output, const unsigned char *x, const unsigned char *y, void *data) {
+static int ecdh_hash_function_custom(unsigned char* output, const unsigned char* x, const unsigned char* y, void* data)
+{
     (void)data;
     /* Save x and y as uncompressed public key */
     output[0] = 0x04;
@@ -31,10 +34,11 @@ static int ecdh_hash_function_custom(unsigned char *output, const unsigned char 
     return 1;
 }
 
-static void test_ecdh_api(void) {
+static void test_ecdh_api(void)
+{
     secp256k1_pubkey point;
     unsigned char res[32];
-    unsigned char s_one[32] = { 0 };
+    unsigned char s_one[32] = {0};
     s_one[31] = 1;
 
     CHECK(secp256k1_ec_pubkey_create(CTX, &point, s_one) == 1);
@@ -47,8 +51,9 @@ static void test_ecdh_api(void) {
     CHECK(secp256k1_ecdh(CTX, res, &point, s_one, NULL, NULL) == 1);
 }
 
-static void test_ecdh_generator_basepoint(void) {
-    unsigned char s_one[32] = { 0 };
+static void test_ecdh_generator_basepoint(void)
+{
+    unsigned char s_one[32] = {0};
     secp256k1_pubkey point[2];
     int i;
 
@@ -88,15 +93,15 @@ static void test_ecdh_generator_basepoint(void) {
     }
 }
 
-static void test_bad_scalar(void) {
-    unsigned char s_zero[32] = { 0 };
+static void test_bad_scalar(void)
+{
+    unsigned char s_zero[32] = {0};
     unsigned char s_overflow[32] = {
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
         0xba, 0xae, 0xdc, 0xe6, 0xaf, 0x48, 0xa0, 0x3b,
-        0xbf, 0xd2, 0x5e, 0x8c, 0xd0, 0x36, 0x41, 0x41
-    };
-    unsigned char s_rand[32] = { 0 };
+        0xbf, 0xd2, 0x5e, 0x8c, 0xd0, 0x36, 0x41, 0x41};
+    unsigned char s_rand[32] = {0};
     unsigned char output[32];
     secp256k1_scalar rand;
     secp256k1_pubkey point;
@@ -118,7 +123,8 @@ static void test_bad_scalar(void) {
 }
 
 /** Test that ECDH(sG, 1/s) == ECDH((1/s)G, s) == ECDH(G, 1) for a few random s. */
-static void test_result_basepoint(void) {
+static void test_result_basepoint(void)
+{
     secp256k1_pubkey point;
     secp256k1_scalar rand;
     unsigned char s[32];
@@ -128,7 +134,7 @@ static void test_result_basepoint(void) {
     unsigned char out_base[32];
     int i;
 
-    unsigned char s_one[32] = { 0 };
+    unsigned char s_one[32] = {0};
     s_one[31] = 1;
     CHECK(secp256k1_ec_pubkey_create(CTX, &point, s_one) == 1);
     CHECK(secp256k1_ecdh(CTX, out_base, &point, s_one, NULL, NULL) == 1);
@@ -149,16 +155,17 @@ static void test_result_basepoint(void) {
     }
 }
 
-static void test_ecdh_wycheproof(void) {
+static void test_ecdh_wycheproof(void)
+{
 #include "../../wycheproof/ecdh_secp256k1_test.h"
     int t;
     for (t = 0; t < SECP256K1_ECDH_WYCHEPROOF_NUMBER_TESTVECTORS; t++) {
         int parsed_ok;
         secp256k1_pubkey point;
-        const unsigned char *pk;
-        const unsigned char *sk;
-        const unsigned char *expected_shared_secret;
-        unsigned char output_ecdh[65] = { 0 };
+        const unsigned char* pk;
+        const unsigned char* sk;
+        const unsigned char* expected_shared_secret;
+        unsigned char output_ecdh[65] = {0};
 
         int expected_result;
 
@@ -182,7 +189,8 @@ static void test_ecdh_wycheproof(void) {
     }
 }
 
-static void run_ecdh_tests(void) {
+static void run_ecdh_tests(void)
+{
     test_ecdh_api();
     test_ecdh_generator_basepoint();
     test_bad_scalar();

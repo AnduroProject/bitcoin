@@ -22,12 +22,12 @@ uint256 g_block_hash;
 bool operator==(const CBlockFileInfo& a, const CBlockFileInfo& b)
 {
     return a.nBlocks == b.nBlocks &&
-        a.nSize == b.nSize &&
-        a.nUndoSize == b.nUndoSize &&
-        a.nHeightFirst == b.nHeightFirst &&
-        a.nHeightLast == b.nHeightLast &&
-        a.nTimeFirst == b.nTimeFirst &&
-        a.nTimeLast == b.nTimeLast;
+           a.nSize == b.nSize &&
+           a.nUndoSize == b.nUndoSize &&
+           a.nHeightFirst == b.nHeightFirst &&
+           a.nHeightLast == b.nHeightLast &&
+           a.nTimeFirst == b.nTimeFirst &&
+           a.nTimeLast == b.nTimeLast;
 }
 
 CBlockHeader ConsumeBlockHeader(FuzzedDataProvider& provider)
@@ -55,7 +55,7 @@ FUZZ_TARGET(block_index, .init = init_block_index)
 {
     FuzzedDataProvider fuzzed_data_provider{buffer.data(), buffer.size()};
     auto block_index = kernel::BlockTreeDB(DBParams{
-        .path = "", // Memory only.
+        .path = "",             // Memory only.
         .cache_bytes = 1 << 20, // 1MB.
         .memory_only = true,
     });
@@ -94,7 +94,7 @@ FUZZ_TARGET(block_index, .init = init_block_index)
     // We should be able to read every block file info we stored. Its value should correspond to
     // what we stored above.
     CBlockFileInfo info;
-    for (const auto& [n, file_info]: files_info) {
+    for (const auto& [n, file_info] : files_info) {
         assert(block_index.ReadBlockFileInfo(n, info));
         assert(info == *file_info);
     }

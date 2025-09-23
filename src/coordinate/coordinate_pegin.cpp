@@ -1,71 +1,75 @@
-#include <coordinate/coordinate_pegin.h>
 #include <common/args.h>
 #include <coordinate/coordinate_address.h>
-#include <primitives/bitcoin/transaction.h>
-#include <primitives/bitcoin/merkleblock.h>
+#include <coordinate/coordinate_pegin.h>
 #include <key_io.h>
 #include <logging.h>
-#include <util/strencodings.h>
-#include <univalue.h>
+#include <primitives/bitcoin/merkleblock.h>
+#include <primitives/bitcoin/transaction.h>
 #include <rpc/coordinaterpc.h>
+#include <univalue.h>
+#include <util/strencodings.h>
 
-CTxOut getPeginAmount(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress) {
+CTxOut getPeginAmount(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress)
+{
     CTransactionRef pegtx;
     DataStream pegtx_stream(bitcoinTx);
     pegtx_stream >> TX_WITH_WITNESS(pegtx);
     bool isOutputAvailable = false;
     CAmount value = 0;
     for (size_t i = 0; i < pegtx->vout.size(); i++) {
-      CTxDestination fedAddress;
-      ExtractDestination(pegtx->vout[i].scriptPubKey, fedAddress);
-      std::string fedAddressStr = ParentEncodeDestination(fedAddress);
-      if(depositAddress.compare(fedAddressStr) == 0) {
-        isOutputAvailable = true;
-        value = pegtx->vout[i].nValue;
-        break;
-      }
+        CTxDestination fedAddress;
+        ExtractDestination(pegtx->vout[i].scriptPubKey, fedAddress);
+        std::string fedAddressStr = ParentEncodeDestination(fedAddress);
+        if (depositAddress.compare(fedAddressStr) == 0) {
+            isOutputAvailable = true;
+            value = pegtx->vout[i].nValue;
+            break;
+        }
     }
 
-    if(!isOutputAvailable || value == 0) {
-      return CTxOut();
+    if (!isOutputAvailable || value == 0) {
+        return CTxOut();
     }
     std::string userAddressStr = "";
     for (size_t i = 0; i < pegtx->vout.size(); i++) {
-        if(pegtx->vout[i].scriptPubKey.IsUnspendable()) {
+        if (pegtx->vout[i].scriptPubKey.IsUnspendable()) {
             std::vector<unsigned char> wData(ParseHex(ExtractOpReturnScript(pegtx->vout[i].scriptPubKey)));
             std::string finalStr(wData.begin(), wData.end());
             if (IsValidDestination(DecodeDestination(finalStr))) {
-               userAddressStr = finalStr;
-               break;
-            } 
+                userAddressStr = finalStr;
+                break;
+            }
         }
     }
-    if(userAddressStr.compare("") == 0) {
-      LogPrintf("coordinate address is missing \n");
-      return CTxOut();
+    if (userAddressStr.compare("") == 0) {
+        LogPrintf("coordinate address is missing \n");
+        return CTxOut();
     }
     const CTxDestination coinbaseScript = DecodeDestination(userAddressStr);
     return CTxOut(value, GetScriptForDestination(coinbaseScript));
 }
 
-bool hasAddressInRegistry(Chainstate& m_active_chainstate, std::string depositAddress) {
+bool hasAddressInRegistry(Chainstate& m_active_chainstate, std::string depositAddress)
+{
     CoordinateAddress coordinateAddress;
-    m_active_chainstate.psignedblocktree->getDepositAddress(depositAddress,coordinateAddress);
-    if(coordinateAddress.currentIndex == -1) {
+    m_active_chainstate.psignedblocktree->getDepositAddress(depositAddress, coordinateAddress);
+    if (coordinateAddress.currentIndex == -1) {
         return false;
     }
     return true;
 }
 
-void saveAddressInRegistry(Chainstate& m_active_chainstate, std::string depositAddress) {
-    if(!hasAddressInRegistry(m_active_chainstate,depositAddress)) {
-      CoordinateAddress coordinateAddress;
-      coordinateAddress.currentIndex = 1;
-      m_active_chainstate.psignedblocktree->WriteDepositAddress(coordinateAddress, depositAddress);
+void saveAddressInRegistry(Chainstate& m_active_chainstate, std::string depositAddress)
+{
+    if (!hasAddressInRegistry(m_active_chainstate, depositAddress)) {
+        CoordinateAddress coordinateAddress;
+        coordinateAddress.currentIndex = 1;
+        m_active_chainstate.psignedblocktree->WriteDepositAddress(coordinateAddress, depositAddress);
     }
 }
 
-std::string ExtractOpReturnScript(const CScript& script) {
+std::string ExtractOpReturnScript(const CScript& script)
+{
     std::string str;
     opcodetype opcode;
     std::vector<unsigned char> vch;
@@ -79,14 +83,15 @@ std::string ExtractOpReturnScript(const CScript& script) {
             if (vch.size() <= static_cast<std::vector<unsigned char>::size_type>(4)) {
                 str += strprintf("%d", CScriptNum(vch, false).getint());
             } else {
-              str += HexStr(vch);
+                str += HexStr(vch);
             }
-        } 
+        }
     }
     return str;
 }
 
-CTxIn buildPeginTxInput(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress, CTxOut txOut) {
+CTxIn buildPeginTxInput(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress, CTxOut txOut)
+{
     CTransactionRef pegtx;
     DataStream pegtx_stream(bitcoinTx);
     pegtx_stream >> TX_WITH_WITNESS(pegtx);
@@ -98,13 +103,13 @@ CTxIn buildPeginTxInput(const std::vector<unsigned char>& bitcoinTx, const std::
     uint32_t index = 0;
 
     for (size_t i = 0; i < pegtx->vout.size(); i++) {
-      CTxDestination fedAddress;
-      ExtractDestination(pegtx->vout[i].scriptPubKey, fedAddress);
-      std::string fedAddressStr = ParentEncodeDestination(fedAddress);
-      if(depositAddress.compare(fedAddressStr) == 0) {
-        index = i;
-        break;
-      }
+        CTxDestination fedAddress;
+        ExtractDestination(pegtx->vout[i].scriptPubKey, fedAddress);
+        std::string fedAddressStr = ParentEncodeDestination(fedAddress);
+        if (depositAddress.compare(fedAddressStr) == 0) {
+            index = i;
+            break;
+        }
     }
 
     COutPoint prevOutput = COutPoint(pegtx->GetHash(), index);
@@ -144,11 +149,10 @@ CTxIn buildPeginTxInput(const std::vector<unsigned char>& bitcoinTx, const std::
     ctxIn.scriptWitness = pegin_witness;
 
     return ctxIn;
-
 }
 
 
-template<typename T>
+template <typename T>
 static bool GetBlockAndTxFromMerkleBlock(uint256& block_hash, uint256& tx_hash, unsigned int& tx_index, T& merkle_block, const std::vector<unsigned char>& merkle_block_raw)
 {
     try {
@@ -159,7 +163,7 @@ static bool GetBlockAndTxFromMerkleBlock(uint256& block_hash, uint256& tx_hash, 
         block_hash = merkle_block.header.GetHash();
 
         if (!merkle_block_stream.empty()) {
-           return false;
+            return false;
         }
         if (merkle_block.txn.ExtractMatches(tx_hashes, tx_indices) != merkle_block.header.hashMerkleRoot || tx_hashes.size() != 1) {
             return false;
@@ -173,7 +177,7 @@ static bool GetBlockAndTxFromMerkleBlock(uint256& block_hash, uint256& tx_hash, 
     return true;
 }
 
-template<typename T>
+template <typename T>
 static bool CheckPeginTx(const std::vector<unsigned char>& tx_data, T& pegtx, const COutPoint& prevout, CAmount peginValue, std::string claimAddress, std::string federationAddress)
 {
     try {
@@ -195,7 +199,7 @@ static bool CheckPeginTx(const std::vector<unsigned char>& tx_data, T& pegtx, co
 
     CAmount amount = pegtx->vout[prevout.n].nValue;
 
-    if(amount > peginValue) {
+    if (amount > peginValue) {
         return false;
     }
 
@@ -204,30 +208,29 @@ static bool CheckPeginTx(const std::vector<unsigned char>& tx_data, T& pegtx, co
     ExtractDestination(pegtx->vout[prevout.n].scriptPubKey, fedAddress);
     std::string fedAddressStr = ParentEncodeDestination(fedAddress);
 
-    if(federationAddress.compare(fedAddressStr) != 0) {
+    if (federationAddress.compare(fedAddressStr) != 0) {
         return false;
     }
 
     for (size_t i = 0; i < pegtx->vout.size(); i++) {
-        if(pegtx->vout[i].scriptPubKey.IsUnspendable()) {
+        if (pegtx->vout[i].scriptPubKey.IsUnspendable()) {
             std::vector<unsigned char> wData(ParseHex(ExtractOpReturnScript(pegtx->vout[i].scriptPubKey)));
             std::string finalStr(wData.begin(), wData.end());
             if (IsValidDestination(DecodeDestination(finalStr))) {
-                if(claimAddress.compare(finalStr) != 0) {
+                if (claimAddress.compare(finalStr) != 0) {
                     return false;
                 }
-           }
-           break;
+            }
+            break;
         }
     }
-    
+
     return true;
 }
 
 
-
-bool IsValidPeginWitness(const CScriptWitness& pegin_witness, const COutPoint& prevout, std::string& err_msg) {
-
+bool IsValidPeginWitness(const CScriptWitness& pegin_witness, const COutPoint& prevout, std::string& err_msg)
+{
     // Format on stack is as follows:
     // 1) federation address
     // 2) claim address
@@ -235,7 +238,7 @@ bool IsValidPeginWitness(const CScriptWitness& pegin_witness, const COutPoint& p
     // 4) serialized transaction - serialized bitcoin transaction
     // 5) txout proof - merkle proof connecting transaction to header
 
-    const std::vector<std::vector<unsigned char> >& stack = pegin_witness.stack;
+    const std::vector<std::vector<unsigned char>>& stack = pegin_witness.stack;
     // Must include all elements
     if (stack.size() != 5) {
         err_msg = "Not enough stack items.";
@@ -351,7 +354,7 @@ bool IsConfirmedBitcoinBlock(const uint256& hash, const int nMinConfirmationDept
             UniValue nTx = result.get_obj().find_value("nTx");
             if (!nTx.isNum() || nTx.getInt<int>() != nbTxs) {
                 LogPrintf("ERROR: Invalid number of transactions in merkle block for %s (got %s, need exactly %d)\n",
-                        hash.GetHex(), nTx.write(), nbTxs);
+                          hash.GetHex(), nTx.write(), nbTxs);
                 return false;
             }
         }
@@ -363,14 +366,15 @@ bool IsConfirmedBitcoinBlock(const uint256& hash, const int nMinConfirmationDept
 }
 
 
-bool isPeginFeeValid(const CTransaction& tx) {
-    const std::vector<std::vector<unsigned char> >& stack = tx.vin[0].scriptWitness.stack;
+bool isPeginFeeValid(const CTransaction& tx)
+{
+    const std::vector<std::vector<unsigned char>>& stack = tx.vin[0].scriptWitness.stack;
     DataStream stream(stack[2]);
     CAmount value;
     stream >> value;
     CAmount fee = GetVirtualTransactionSize(tx) * PEGIN_FEE;
 
-    if(tx.vout[0].nValue == (value - fee)) {
+    if (tx.vout[0].nValue == (value - fee)) {
         return true;
     }
     return false;

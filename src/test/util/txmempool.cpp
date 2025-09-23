@@ -72,14 +72,14 @@ std::optional<std::string> CheckPackageMempoolAcceptResult(const Package& txns,
         // Each subpackage is allowed MAX_REPLACEMENT_CANDIDATES replacements (only checking individually here)
         if (atmp_result.m_replaced_transactions.size() > MAX_REPLACEMENT_CANDIDATES) {
             return strprintf("tx %s result replaced too many transactions",
-                                wtxid.ToString());
+                             wtxid.ToString());
         }
 
         // Replacements can't happen for subpackages larger than 2
         if (!atmp_result.m_replaced_transactions.empty() &&
             atmp_result.m_wtxids_fee_calculations.has_value() && atmp_result.m_wtxids_fee_calculations.value().size() > 2) {
-             return strprintf("tx %s was part of a too-large package RBF subpackage",
-                                wtxid.ToString());
+            return strprintf("tx %s was part of a too-large package RBF subpackage",
+                             wtxid.ToString());
         }
 
         if (!atmp_result.m_replaced_transactions.empty() && mempool) {
@@ -109,14 +109,14 @@ std::optional<std::string> CheckPackageMempoolAcceptResult(const Package& txns,
         // m_effective_feerate and m_wtxids_fee_calculations should exist iff the result was valid
         // or if the failure was TX_RECONSIDERABLE
         const bool valid_or_reconsiderable{atmp_result.m_result_type == MempoolAcceptResult::ResultType::VALID ||
-                    atmp_result.m_state.GetResult() == TxValidationResult::TX_RECONSIDERABLE};
+                                           atmp_result.m_state.GetResult() == TxValidationResult::TX_RECONSIDERABLE};
         if (atmp_result.m_effective_feerate.has_value() != valid_or_reconsiderable) {
             return strprintf("tx %s result should %shave m_effective_feerate",
-                                    wtxid.ToString(), valid ? "" : "not ");
+                             wtxid.ToString(), valid ? "" : "not ");
         }
         if (atmp_result.m_wtxids_fee_calculations.has_value() != valid_or_reconsiderable) {
             return strprintf("tx %s result should %shave m_effective_feerate",
-                                    wtxid.ToString(), valid ? "" : "not ");
+                             wtxid.ToString(), valid ? "" : "not ");
         }
 
         if (mempool) {
@@ -174,7 +174,7 @@ void CheckMempoolEphemeralInvariants(const CTxMemPool& tx_pool)
         COutPoint dust_outpoint{tx_info.tx->GetHash(), dust_indexes[0]};
         Assert(std::any_of(only_child.vin.begin(), only_child.vin.end(), [&dust_outpoint](const CTxIn& txin) {
             return txin.prevout == dust_outpoint;
-            }));
+        }));
     }
 }
 
@@ -214,7 +214,7 @@ void AddToMempool(CTxMemPool& tx_pool, const CTxMemPoolEntry& entry)
     LOCK2(cs_main, tx_pool.cs);
     auto changeset = tx_pool.GetChangeSet();
     changeset->StageAddition(entry.GetSharedTx(), entry.GetFee(),
-            entry.GetTime().count(), entry.GetHeight(), entry.GetSequence(),
-            entry.GetSpendsCoinbase(), entry.GetSigOpCost(), entry.GetLockPoints());
+                             entry.GetTime().count(), entry.GetHeight(), entry.GetSequence(),
+                             entry.GetSpendsCoinbase(), entry.GetSigOpCost(), entry.GetLockPoints());
     changeset->Apply();
 }

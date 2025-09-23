@@ -79,8 +79,7 @@ unsigned int ParseScriptFlags(std::string strFlags)
     if (strFlags.empty() || strFlags == "NONE") return flags;
 
     std::vector<std::string> words = SplitString(strFlags, ',');
-    for (const std::string& word : words)
-    {
+    for (const std::string& word : words) {
         if (!mapFlagNames.count(word))
             BOOST_ERROR("Bad test: unknown verification flag '" << word << "'");
         flags |= mapFlagNames[word];
@@ -115,11 +114,11 @@ std::string FormatScriptFlags(unsigned int flags)
 }
 
 /*
-* Check that the input scripts of a transaction are valid/invalid as expected.
-*/
+ * Check that the input scripts of a transaction are valid/invalid as expected.
+ */
 bool CheckTxScripts(const CTransaction& tx, const std::map<COutPoint, CScript>& map_prevout_scriptPubKeys,
-    const std::map<COutPoint, int64_t>& map_prevout_values, unsigned int flags,
-    const PrecomputedTransactionData& txdata, const std::string& strTest, bool expect_valid)
+                    const std::map<COutPoint, int64_t>& map_prevout_values, unsigned int flags,
+                    const PrecomputedTransactionData& txdata, const std::string& strTest, bool expect_valid)
 {
     bool tx_valid = true;
     ScriptError err = expect_valid ? SCRIPT_ERR_UNKNOWN_ERROR : SCRIPT_ERR_OK;
@@ -128,7 +127,7 @@ bool CheckTxScripts(const CTransaction& tx, const std::map<COutPoint, CScript>& 
         const CAmount amount = map_prevout_values.count(input.prevout) ? map_prevout_values.at(input.prevout) : 0;
         try {
             tx_valid = VerifyScript(input.scriptSig, map_prevout_scriptPubKeys.at(input.prevout),
-                &input.scriptWitness, flags, TransactionSignatureChecker(&tx, i, amount, txdata, MissingDataBehavior::ASSERT_FAIL), &err);
+                                    &input.scriptWitness, flags, TransactionSignatureChecker(&tx, i, amount, txdata, MissingDataBehavior::ASSERT_FAIL), &err);
         } catch (...) {
             BOOST_ERROR("Bad test: " << strTest);
             return true; // The test format is bad and an error is thrown. Return true to silence further error.
@@ -201,10 +200,8 @@ BOOST_AUTO_TEST_CASE(tx_valid)
     for (unsigned int idx = 0; idx < tests.size(); idx++) {
         const UniValue& test = tests[idx];
         std::string strTest = test.write();
-        if (test[0].isArray())
-        {
-            if (test.size() != 3 || !test[1].isStr() || !test[2].isStr())
-            {
+        if (test[0].isArray()) {
+            if (test.size() != 3 || !test[1].isStr() || !test[2].isStr()) {
                 BOOST_ERROR("Bad test: " << strTest);
                 continue;
             }
@@ -220,20 +217,17 @@ BOOST_AUTO_TEST_CASE(tx_valid)
                     break;
                 }
                 const UniValue& vinput = input.get_array();
-                if (vinput.size() < 3 || vinput.size() > 4)
-                {
+                if (vinput.size() < 3 || vinput.size() > 4) {
                     fValid = false;
                     break;
                 }
                 COutPoint outpoint{Txid::FromHex(vinput[0].get_str()).value(), uint32_t(vinput[1].getInt<int>())};
                 mapprevOutScriptPubKeys[outpoint] = ParseScript(vinput[2].get_str());
-                if (vinput.size() >= 4)
-                {
+                if (vinput.size() >= 4) {
                     mapprevOutValues[outpoint] = vinput[3].getInt<int64_t>();
                 }
             }
-            if (!fValid)
-            {
+            if (!fValid) {
                 BOOST_ERROR("Bad test: " << strTest);
                 continue;
             }
@@ -292,7 +286,7 @@ BOOST_AUTO_TEST_CASE(tx_no_inputs)
 
 BOOST_AUTO_TEST_CASE(tx_oversized)
 {
-    auto createTransaction =[](size_t payloadSize) {
+    auto createTransaction = [](size_t payloadSize) {
         CMutableTransaction tx;
         tx.vin.resize(1);
         tx.vout.emplace_back(1, CScript() << OP_RETURN << std::vector<unsigned char>(payloadSize));
@@ -320,7 +314,7 @@ BOOST_AUTO_TEST_CASE(basic_transaction_tests)
 {
     // Random real transaction (e2769b09e784f32f62ef849763d4f45b98e07ba658647343b915ff832b110436)
     unsigned char ch[] = {0x01, 0x00, 0x00, 0x00, 0x01, 0x6b, 0xff, 0x7f, 0xcd, 0x4f, 0x85, 0x65, 0xef, 0x40, 0x6d, 0xd5, 0xd6, 0x3d, 0x4f, 0xf9, 0x4f, 0x31, 0x8f, 0xe8, 0x20, 0x27, 0xfd, 0x4d, 0xc4, 0x51, 0xb0, 0x44, 0x74, 0x01, 0x9f, 0x74, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x8c, 0x49, 0x30, 0x46, 0x02, 0x21, 0x00, 0xda, 0x0d, 0xc6, 0xae, 0xce, 0xfe, 0x1e, 0x06, 0xef, 0xdf, 0x05, 0x77, 0x37, 0x57, 0xde, 0xb1, 0x68, 0x82, 0x09, 0x30, 0xe3, 0xb0, 0xd0, 0x3f, 0x46, 0xf5, 0xfc, 0xf1, 0x50, 0xbf, 0x99, 0x0c, 0x02, 0x21, 0x00, 0xd2, 0x5b, 0x5c, 0x87, 0x04, 0x00, 0x76, 0xe4, 0xf2, 0x53, 0xf8, 0x26, 0x2e, 0x76, 0x3e, 0x2d, 0xd5, 0x1e, 0x7f, 0xf0, 0xbe, 0x15, 0x77, 0x27, 0xc4, 0xbc, 0x42, 0x80, 0x7f, 0x17, 0xbd, 0x39, 0x01, 0x41, 0x04, 0xe6, 0xc2, 0x6e, 0xf6, 0x7d, 0xc6, 0x10, 0xd2, 0xcd, 0x19, 0x24, 0x84, 0x78, 0x9a, 0x6c, 0xf9, 0xae, 0xa9, 0x93, 0x0b, 0x94, 0x4b, 0x7e, 0x2d, 0xb5, 0x34, 0x2b, 0x9d, 0x9e, 0x5b, 0x9f, 0xf7, 0x9a, 0xff, 0x9a, 0x2e, 0xe1, 0x97, 0x8d, 0xd7, 0xfd, 0x01, 0xdf, 0xc5, 0x22, 0xee, 0x02, 0x28, 0x3d, 0x3b, 0x06, 0xa9, 0xd0, 0x3a, 0xcf, 0x80, 0x96, 0x96, 0x8d, 0x7d, 0xbb, 0x0f, 0x91, 0x78, 0xff, 0xff, 0xff, 0xff, 0x02, 0x8b, 0xa7, 0x94, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x19, 0x76, 0xa9, 0x14, 0xba, 0xde, 0xec, 0xfd, 0xef, 0x05, 0x07, 0x24, 0x7f, 0xc8, 0xf7, 0x42, 0x41, 0xd7, 0x3b, 0xc0, 0x39, 0x97, 0x2d, 0x7b, 0x88, 0xac, 0x40, 0x94, 0xa8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x19, 0x76, 0xa9, 0x14, 0xc1, 0x09, 0x32, 0x48, 0x3f, 0xec, 0x93, 0xed, 0x51, 0xf5, 0xfe, 0x95, 0xe7, 0x25, 0x59, 0xf2, 0xcc, 0x70, 0x43, 0xf9, 0x88, 0xac, 0x00, 0x00, 0x00, 0x00, 0x00};
-    std::vector<unsigned char> vch(ch, ch + sizeof(ch) -1);
+    std::vector<unsigned char> vch(ch, ch + sizeof(ch) - 1);
     DataStream stream(vch);
     CMutableTransaction tx;
     stream >> TX_WITH_WITNESS(tx);
@@ -338,7 +332,7 @@ BOOST_AUTO_TEST_CASE(test_Get)
     CCoinsView coinsDummy;
     CCoinsViewCache coins(&coinsDummy);
     std::vector<CMutableTransaction> dummyTransactions =
-        SetupDummyInputs(keystore, coins, {11*CENT, 50*CENT, 21*CENT, 22*CENT});
+        SetupDummyInputs(keystore, coins, {11 * CENT, 50 * CENT, 21 * CENT, 22 * CENT});
 
     CMutableTransaction t1;
     t1.vin.resize(3);
@@ -352,7 +346,7 @@ BOOST_AUTO_TEST_CASE(test_Get)
     t1.vin[2].prevout.n = 1;
     t1.vin[2].scriptSig << std::vector<unsigned char>(65, 0) << std::vector<unsigned char>(33, 4);
     t1.vout.resize(2);
-    t1.vout[0].nValue = 90*CENT;
+    t1.vout[0].nValue = 90 * CENT;
     t1.vout[0].scriptPubKey << OP_1;
 
     BOOST_CHECK(AreInputsStandard(CTransaction(t1), coins));
@@ -451,7 +445,7 @@ BOOST_AUTO_TEST_CASE(test_big_witness_transaction)
     sigHashes.push_back(SIGHASH_ALL);
 
     // create a big transaction of 4500 inputs signed by the same key
-    for(uint32_t ij = 0; ij < 4500; ij++) {
+    for (uint32_t ij = 0; ij < 4500; ij++) {
         uint32_t i = mtx.vin.size();
         COutPoint outpoint(Txid::FromHex("0000000000000000000000000000000000000000000000000000000000000100").value(), i);
 
@@ -465,7 +459,7 @@ BOOST_AUTO_TEST_CASE(test_big_witness_transaction)
     }
 
     // sign all inputs
-    for(uint32_t i = 0; i < mtx.vin.size(); i++) {
+    for (uint32_t i = 0; i < mtx.vin.size(); i++) {
         SignatureData empty;
         bool hashSigned = SignSignature(keystore, scriptPubKey, mtx, i, 1000, sigHashes.at(i % sigHashes.size()), empty);
         assert(hashSigned);
@@ -481,7 +475,7 @@ BOOST_AUTO_TEST_CASE(test_big_witness_transaction)
     CCheckQueueControl<CScriptCheck> control(scriptcheckqueue);
 
     std::vector<Coin> coins;
-    for(uint32_t i = 0; i < mtx.vin.size(); i++) {
+    for (uint32_t i = 0; i < mtx.vin.size(); i++) {
         Coin coin;
         coin.nHeight = 1;
         coin.fCoinBase = false;
@@ -492,7 +486,7 @@ BOOST_AUTO_TEST_CASE(test_big_witness_transaction)
 
     SignatureCache signature_cache{DEFAULT_SIGNATURE_CACHE_BYTES};
 
-    for(uint32_t i = 0; i < mtx.vin.size(); i++) {
+    for (uint32_t i = 0; i < mtx.vin.size(); i++) {
         std::vector<CScriptCheck> vChecks;
         vChecks.emplace_back(coins[tx.vin[i].prevout.n].out, tx, signature_cache, i, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_WITNESS, false, &txdata);
         control.Add(std::move(vChecks));
@@ -695,7 +689,7 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     CCoinsView coinsDummy;
     CCoinsViewCache coins(&coinsDummy);
     std::vector<CMutableTransaction> dummyTransactions =
-        SetupDummyInputs(keystore, coins, {11*CENT, 50*CENT, 21*CENT, 22*CENT});
+        SetupDummyInputs(keystore, coins, {11 * CENT, 50 * CENT, 21 * CENT, 22 * CENT});
 
     CMutableTransaction t;
     t.vin.resize(1);
@@ -703,7 +697,7 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     t.vin[0].prevout.n = 1;
     t.vin[0].scriptSig << std::vector<unsigned char>(65, 0);
     t.vout.resize(1);
-    t.vout[0].nValue = 90*CENT;
+    t.vout[0].nValue = 90 * CENT;
     CKey key = GenerateRandomKey();
     t.vout[0].scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
 
@@ -817,7 +811,7 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
     const auto datacarrier_size = t.vout[0].scriptPubKey.size() + t.vout[1].scriptPubKey.size();
     CheckIsStandard(t); // Default max relay should never trigger
     CheckIsStandard(t, /*max_op_return_relay=*/datacarrier_size);
-    CheckIsNotStandard(t, "datacarrier", /*max_op_return_relay=*/datacarrier_size-1);
+    CheckIsNotStandard(t, "datacarrier", /*max_op_return_relay=*/datacarrier_size - 1);
 
     // Check large scriptSig (non-standard if size is >1650 bytes)
     t.vout.resize(1);
@@ -832,16 +826,16 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
 
     // Check scriptSig format (non-standard if there are any other ops than just PUSHs)
     t.vin[0].scriptSig = CScript()
-        << OP_TRUE << OP_0 << OP_1NEGATE << OP_16 // OP_n (single byte pushes: n = 1, 0, -1, 16)
-        << std::vector<unsigned char>(75, 0)      // OP_PUSHx [...x bytes...]
-        << std::vector<unsigned char>(235, 0)     // OP_PUSHDATA1 x [...x bytes...]
-        << std::vector<unsigned char>(1234, 0)    // OP_PUSHDATA2 x [...x bytes...]
-        << OP_9;
+                         << OP_TRUE << OP_0 << OP_1NEGATE << OP_16 // OP_n (single byte pushes: n = 1, 0, -1, 16)
+                         << std::vector<unsigned char>(75, 0)      // OP_PUSHx [...x bytes...]
+                         << std::vector<unsigned char>(235, 0)     // OP_PUSHDATA1 x [...x bytes...]
+                         << std::vector<unsigned char>(1234, 0)    // OP_PUSHDATA2 x [...x bytes...]
+                         << OP_9;
     CheckIsStandard(t);
 
-    const std::vector<unsigned char> non_push_ops = { // arbitrary set of non-push operations
-        OP_NOP, OP_VERIFY, OP_IF, OP_ROT, OP_3DUP, OP_SIZE, OP_EQUAL, OP_ADD, OP_SUB,
-        OP_HASH256, OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKLOCKTIMEVERIFY };
+    const std::vector<unsigned char> non_push_ops = {// arbitrary set of non-push operations
+                                                     OP_NOP, OP_VERIFY, OP_IF, OP_ROT, OP_3DUP, OP_SIZE, OP_EQUAL, OP_ADD, OP_SUB,
+                                                     OP_HASH256, OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKLOCKTIMEVERIFY};
 
     CScript::const_iterator pc = t.vin[0].scriptSig.begin();
     while (pc < t.vin[0].scriptSig.end()) {
@@ -865,7 +859,7 @@ BOOST_AUTO_TEST_CASE(test_IsStandard)
 
     // Check tx-size (non-standard if transaction weight is > MAX_STANDARD_TX_WEIGHT)
     t.vin.clear();
-    t.vin.resize(2438); // size per input (empty scriptSig): 41 bytes
+    t.vin.resize(2438);                                                                   // size per input (empty scriptSig): 41 bytes
     t.vout[0].scriptPubKey = CScript() << OP_RETURN << std::vector<unsigned char>(19, 0); // output size: 30 bytes
     // tx header:                12 bytes =>     48 weight units
     // 2438 inputs: 2438*41 = 99958 bytes => 399832 weight units
@@ -972,7 +966,8 @@ BOOST_AUTO_TEST_CASE(max_standard_legacy_sigops)
 
     // Create a pathological P2SH script padded with as many sigops as is standard.
     CScript max_sigops_redeem_script{CScript() << std::vector<unsigned char>{} << key.GetPubKey()};
-    for (unsigned i{0}; i < MAX_P2SH_SIGOPS - 1; ++i) max_sigops_redeem_script << OP_2DUP << OP_CHECKSIG << OP_DROP;
+    for (unsigned i{0}; i < MAX_P2SH_SIGOPS - 1; ++i)
+        max_sigops_redeem_script << OP_2DUP << OP_CHECKSIG << OP_DROP;
     max_sigops_redeem_script << OP_CHECKSIG << OP_NOT;
     const CScript max_sigops_p2sh{GetScriptForDestination(ScriptHash(max_sigops_redeem_script))};
 

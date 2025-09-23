@@ -361,7 +361,6 @@ BOOST_AUTO_TEST_CASE(addrman_tried_collisions)
 
         // Test: Add to tried without collision
         BOOST_CHECK(addrman->Good(CAddress(addr, NODE_NONE)));
-
     }
 
     // Test: Unable to add to tried table due to collision!
@@ -556,9 +555,10 @@ BOOST_AUTO_TEST_CASE(caddrinfo_get_new_bucket_legacy)
     buckets.clear();
     for (int j = 0; j < 4 * 255; j++) {
         AddrInfo infoj = AddrInfo(CAddress(
-                                        ResolveService(
-                                            ToString(250 + (j / 255)) + "." + ToString(j % 256) + ".1.1"), NODE_NONE),
-            ResolveIP("251.4.1.1"));
+                                      ResolveService(
+                                          ToString(250 + (j / 255)) + "." + ToString(j % 256) + ".1.1"),
+                                      NODE_NONE),
+                                  ResolveIP("251.4.1.1"));
         int bucket = infoj.GetNewBucket(nKey1, EMPTY_NETGROUPMAN);
         buckets.insert(bucket);
     }
@@ -687,9 +687,10 @@ BOOST_AUTO_TEST_CASE(caddrinfo_get_new_bucket)
     buckets.clear();
     for (int j = 0; j < 4 * 255; j++) {
         AddrInfo infoj = AddrInfo(CAddress(
-                                        ResolveService(
-                                            ToString(250 + (j / 255)) + "." + ToString(j % 256) + ".1.1"), NODE_NONE),
-            ResolveIP("251.4.1.1"));
+                                      ResolveService(
+                                          ToString(250 + (j / 255)) + "." + ToString(j % 256) + ".1.1"),
+                                      NODE_NONE),
+                                  ResolveIP("251.4.1.1"));
         int bucket = infoj.GetNewBucket(nKey1, ngm_asmap);
         buckets.insert(bucket);
     }
@@ -965,10 +966,10 @@ BOOST_AUTO_TEST_CASE(addrman_evictionworks)
     BOOST_CHECK_EQUAL(addrman->SelectTriedCollision().first.ToStringAddrPort(), "250.1.1.36:0");
 
     // Eviction is also successful if too much time has passed since last try
-    SetMockTime(GetTime() + 4 * 60 *60);
+    SetMockTime(GetTime() + 4 * 60 * 60);
     addrman->ResolveCollisions();
     BOOST_CHECK(addrman->SelectTriedCollision().first.ToStringAddrPort() == "[::]:0");
-    //Now 19 is in tried again, and 36 back to new
+    // Now 19 is in tried again, and 36 back to new
     AddressPosition addr_pos19{addrman->FindAddressEntry(CAddress(addr19, NODE_NONE)).value()};
     BOOST_CHECK(addr_pos19.tried);
     AddressPosition addr_pos36{addrman->FindAddressEntry(CAddress(addr, NODE_NONE)).value()};

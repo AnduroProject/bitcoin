@@ -1,16 +1,17 @@
-#include <coordinate/coordinate_mempool_entry.h>
 #include <coordinate/anduro_validator.h>
+#include <coordinate/coordinate_mempool_entry.h>
 
 std::vector<CoordinateMempoolEntry> coordinateMempoolEntry;
 
 /**
  * This is the function which used to get mempool asset information
  */
-bool getMempoolAsset(uint256 txid, uint32_t voutIn, CoordinateMempoolEntry* assetMempoolObj) {
-    auto it = std::find_if(coordinateMempoolEntry.begin(), coordinateMempoolEntry.end(), 
-                       [txid,voutIn] (const CoordinateMempoolEntry& d) { 
-                          return d.txid == txid && d.vout == (int32_t)voutIn; 
-                       });
+bool getMempoolAsset(uint256 txid, uint32_t voutIn, CoordinateMempoolEntry* assetMempoolObj)
+{
+    auto it = std::find_if(coordinateMempoolEntry.begin(), coordinateMempoolEntry.end(),
+                           [txid, voutIn](const CoordinateMempoolEntry& d) {
+                               return d.txid == txid && d.vout == (int32_t)voutIn;
+                           });
     if (it == coordinateMempoolEntry.end()) return false;
 
     *assetMempoolObj = std::move(*it);
@@ -20,25 +21,28 @@ bool getMempoolAsset(uint256 txid, uint32_t voutIn, CoordinateMempoolEntry* asse
 /**
  * This is the function which remove all asset transaction based on txid
  */
-void removeMempoolAsset(const CTransaction& tx) {
+void removeMempoolAsset(const CTransaction& tx)
+{
     uint256 txid = tx.GetHash();
     for (unsigned long i = 0; i < tx.vout.size(); i++) {
-        auto it = std::find_if(coordinateMempoolEntry.begin(), coordinateMempoolEntry.end(), 
-                       [txid, i] (const CoordinateMempoolEntry& d) { 
-                          return d.txid == txid && d.vout == (int32_t)i; ; 
-                       });
+        auto it = std::find_if(coordinateMempoolEntry.begin(), coordinateMempoolEntry.end(),
+                               [txid, i](const CoordinateMempoolEntry& d) {
+                                   return d.txid == txid && d.vout == (int32_t)i;
+                                   ;
+                               });
         if (it == coordinateMempoolEntry.end()) {
         } else {
-           int indexToRemove = it - coordinateMempoolEntry.begin() ;
-           coordinateMempoolEntry.erase(coordinateMempoolEntry.begin() + indexToRemove);
+            int indexToRemove = it - coordinateMempoolEntry.begin();
+            coordinateMempoolEntry.erase(coordinateMempoolEntry.begin() + indexToRemove);
         }
     }
 }
 /**
  * This is the function which include mempool asset
  */
-void includeMempoolAsset(const CTransaction& tx, Chainstate& m_active_chainstate) {
-    if(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+void includeMempoolAsset(const CTransaction& tx, Chainstate& m_active_chainstate)
+{
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
         CoordinateMempoolEntry assetMempoolObj;
         assetMempoolObj.assetID = UINT32_MAX;
         assetMempoolObj.txid = tx.GetHash();
@@ -49,12 +53,12 @@ void includeMempoolAsset(const CTransaction& tx, Chainstate& m_active_chainstate
     }
     uint32_t currentAssetID = 0;
     CAmount amountAssetIn = 0;
-    bool has_asset_amount = getAssetWithAmount(tx,m_active_chainstate,amountAssetIn, currentAssetID);
-    if(has_asset_amount) {
+    bool has_asset_amount = getAssetWithAmount(tx, m_active_chainstate, amountAssetIn, currentAssetID);
+    if (has_asset_amount) {
         CAmount amountAssetOut = 0;
         size_t startValue = tx.version == TRANSACTION_PRECONF_VERSION ? 1 : 0;
         for (unsigned long i = startValue; i < tx.vout.size(); i++) {
-            if(amountAssetOut == amountAssetIn) {
+            if (amountAssetOut == amountAssetIn) {
                 break;
             }
             CoordinateMempoolEntry assetMempoolObj;
@@ -70,35 +74,35 @@ void includeMempoolAsset(const CTransaction& tx, Chainstate& m_active_chainstate
 /**
  * This is the function which used to get asset total amount
  */
-bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate, CAmount& amountAssetIn, uint32_t& currentAssetID) {
+bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate, CAmount& amountAssetIn, uint32_t& currentAssetID)
+{
     CCoinsViewCache& mapInputs = m_active_chainstate.CoinsTip();
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
         uint32_t nAssetID = 0;
         bool fBitAsset = false;
         bool fBitAssetControl = false;
         CoordinateMempoolEntry assetMempoolObj;
-        bool is_mempool_asset = getMempoolAsset(tx.vin[i].prevout.hash,tx.vin[i].prevout.n, &assetMempoolObj);
+        bool is_mempool_asset = getMempoolAsset(tx.vin[i].prevout.hash, tx.vin[i].prevout.n, &assetMempoolObj);
         nAssetID = assetMempoolObj.assetID;
-        if(is_mempool_asset) {
+        if (is_mempool_asset) {
             amountAssetIn = amountAssetIn + assetMempoolObj.nValue;
         } else {
             Coin coin;
-            if(mapInputs.getAssetCoin(tx.vin[i].prevout,fBitAsset,fBitAssetControl,nAssetID, &coin)) {
-                if(fBitAssetControl) {
+            if (mapInputs.getAssetCoin(tx.vin[i].prevout, fBitAsset, fBitAssetControl, nAssetID, &coin)) {
+                if (fBitAssetControl) {
                     currentAssetID = 0;
                     break;
                 }
-                if(fBitAsset) {
+                if (fBitAsset) {
                     amountAssetIn = amountAssetIn + coin.out.nValue;
                 }
             }
-
         }
 
 
-        if(!nAssetID) {
-           break;
-        } 
+        if (!nAssetID) {
+            break;
+        }
         currentAssetID = nAssetID;
     }
 
@@ -106,22 +110,23 @@ bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate,
 }
 
 /**
- * This is the function which get asset ouput information for particular transaction 
+ * This is the function which get asset ouput information for particular transaction
  */
-int getAssetOutputCount(const CTransaction& tx, Chainstate& m_active_chainstate) {
-    if(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+int getAssetOutputCount(const CTransaction& tx, Chainstate& m_active_chainstate)
+{
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
         return 2;
     }
-    if(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION) {
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION) {
         uint32_t totalOutputs = 0;
         uint32_t currentAssetID = 0;
         CAmount amountAssetIn = 0;
-        bool has_asset_amount = getAssetWithAmount(tx,m_active_chainstate,amountAssetIn, currentAssetID);
-        if(has_asset_amount) {
+        bool has_asset_amount = getAssetWithAmount(tx, m_active_chainstate, amountAssetIn, currentAssetID);
+        if (has_asset_amount) {
             CAmount amountAssetOut = 0;
             size_t startValue = tx.version == TRANSACTION_PRECONF_VERSION ? 1 : 0;
             for (unsigned int i = startValue; i < tx.vout.size(); i++) {
-                if(amountAssetOut == amountAssetIn) {
+                if (amountAssetOut == amountAssetIn) {
                     break;
                 }
                 totalOutputs = totalOutputs + 1;
@@ -133,10 +138,11 @@ int getAssetOutputCount(const CTransaction& tx, Chainstate& m_active_chainstate)
 
     return 0;
 }
- 
+
 /**
  * This is the function which get mempool asset information through rpc
  */
-std::vector<CoordinateMempoolEntry> getMempoolAssets() {
-   return coordinateMempoolEntry;
+std::vector<CoordinateMempoolEntry> getMempoolAssets()
+{
+    return coordinateMempoolEntry;
 }

@@ -45,61 +45,72 @@ static const unsigned int MAX_VECTOR_ALLOCATE = 5000000;
  * deserializing it from s. If T contains const fields, this
  * is likely the only way to do so.
  */
-struct deserialize_type {};
-constexpr deserialize_type deserialize {};
+struct deserialize_type {
+};
+constexpr deserialize_type deserialize{};
 
 /*
  * Lowest-level serialization and conversion.
  */
-template<typename Stream> inline void ser_writedata8(Stream &s, uint8_t obj)
+template <typename Stream>
+inline void ser_writedata8(Stream& s, uint8_t obj)
 {
     s.write(std::as_bytes(std::span{&obj, 1}));
 }
-template<typename Stream> inline void ser_writedata16(Stream &s, uint16_t obj)
+template <typename Stream>
+inline void ser_writedata16(Stream& s, uint16_t obj)
 {
     obj = htole16_internal(obj);
     s.write(std::as_bytes(std::span{&obj, 1}));
 }
-template<typename Stream> inline void ser_writedata32(Stream &s, uint32_t obj)
+template <typename Stream>
+inline void ser_writedata32(Stream& s, uint32_t obj)
 {
     obj = htole32_internal(obj);
     s.write(std::as_bytes(std::span{&obj, 1}));
 }
-template<typename Stream> inline void ser_writedata32be(Stream &s, uint32_t obj)
+template <typename Stream>
+inline void ser_writedata32be(Stream& s, uint32_t obj)
 {
     obj = htobe32_internal(obj);
     s.write(std::as_bytes(std::span{&obj, 1}));
 }
-template<typename Stream> inline void ser_writedata64(Stream &s, uint64_t obj)
+template <typename Stream>
+inline void ser_writedata64(Stream& s, uint64_t obj)
 {
     obj = htole64_internal(obj);
     s.write(std::as_bytes(std::span{&obj, 1}));
 }
-template<typename Stream> inline uint8_t ser_readdata8(Stream &s)
+template <typename Stream>
+inline uint8_t ser_readdata8(Stream& s)
 {
     uint8_t obj;
     s.read(std::as_writable_bytes(std::span{&obj, 1}));
     return obj;
 }
-template<typename Stream> inline uint16_t ser_readdata16(Stream &s)
+template <typename Stream>
+inline uint16_t ser_readdata16(Stream& s)
 {
     uint16_t obj;
     s.read(std::as_writable_bytes(std::span{&obj, 1}));
     return le16toh_internal(obj);
 }
-template<typename Stream> inline uint32_t ser_readdata32(Stream &s)
+template <typename Stream>
+inline uint32_t ser_readdata32(Stream& s)
 {
     uint32_t obj;
     s.read(std::as_writable_bytes(std::span{&obj, 1}));
     return le32toh_internal(obj);
 }
-template<typename Stream> inline uint32_t ser_readdata32be(Stream &s)
+template <typename Stream>
+inline uint32_t ser_readdata32be(Stream& s)
 {
     uint32_t obj;
     s.read(std::as_writable_bytes(std::span{&obj, 1}));
     return be32toh_internal(obj);
 }
-template<typename Stream> inline uint64_t ser_readdata64(Stream &s)
+template <typename Stream>
+inline uint64_t ser_readdata64(Stream& s)
 {
     uint64_t obj;
     s.read(std::as_writable_bytes(std::span{&obj, 1}));
@@ -162,12 +173,18 @@ const Out& AsBase(const In& x)
  *   VARINT serialization. That FooFormatter can then be used in statements like
  *   READWRITE(Using<FooFormatter>(obj.bla)).
  */
-#define FORMATTER_METHODS(cls, obj) \
-    template<typename Stream> \
-    static void Ser(Stream& s, const cls& obj) { SerializationOps(obj, s, ActionSerialize{}); } \
-    template<typename Stream> \
-    static void Unser(Stream& s, cls& obj) { SerializationOps(obj, s, ActionUnserialize{}); } \
-    template<typename Stream, typename Type, typename Operation> \
+#define FORMATTER_METHODS(cls, obj)                               \
+    template <typename Stream>                                    \
+    static void Ser(Stream& s, const cls& obj)                    \
+    {                                                             \
+        SerializationOps(obj, s, ActionSerialize{});              \
+    }                                                             \
+    template <typename Stream>                                    \
+    static void Unser(Stream& s, cls& obj)                        \
+    {                                                             \
+        SerializationOps(obj, s, ActionUnserialize{});            \
+    }                                                             \
+    template <typename Stream, typename Type, typename Operation> \
     static void SerializationOps(Type& obj, Stream& s, Operation ser_action)
 
 /**
@@ -205,18 +222,18 @@ const Out& AsBase(const In& x)
  */
 #define SER_PARAMS(type) (s.template GetParams<type>())
 
-#define BASE_SERIALIZE_METHODS(cls)                                                                 \
-    template <typename Stream>                                                                      \
-    void Serialize(Stream& s) const                                                                 \
-    {                                                                                               \
-        static_assert(std::is_same_v<const cls&, decltype(*this)>, "Serialize type mismatch");      \
-        Ser(s, *this);                                                                              \
-    }                                                                                               \
-    template <typename Stream>                                                                      \
-    void Unserialize(Stream& s)                                                                     \
-    {                                                                                               \
-        static_assert(std::is_same_v<cls&, decltype(*this)>, "Unserialize type mismatch");          \
-        Unser(s, *this);                                                                            \
+#define BASE_SERIALIZE_METHODS(cls)                                                            \
+    template <typename Stream>                                                                 \
+    void Serialize(Stream& s) const                                                            \
+    {                                                                                          \
+        static_assert(std::is_same_v<const cls&, decltype(*this)>, "Serialize type mismatch"); \
+        Ser(s, *this);                                                                         \
+    }                                                                                          \
+    template <typename Stream>                                                                 \
+    void Unserialize(Stream& s)                                                                \
+    {                                                                                          \
+        static_assert(std::is_same_v<cls&, decltype(*this)>, "Unserialize type mismatch");     \
+        Unser(s, *this);                                                                       \
     }
 
 /**
@@ -237,7 +254,7 @@ const Out& AsBase(const In& x)
 // Typically int8_t and char are distinct types, but some systems may define int8_t
 // in terms of char. Forbid serialization of char in the typical case, but allow it if
 // it's the only way to describe an int8_t.
-template<class T>
+template <class T>
 concept CharNotInt8 = std::same_as<T, char> && !std::same_as<T, int8_t>;
 
 // clang-format off
@@ -287,33 +304,30 @@ template <typename Stream> void Unserialize(Stream& s, bool& a) { uint8_t f = se
  */
 constexpr inline unsigned int GetSizeOfCompactSize(uint64_t nSize)
 {
-    if (nSize < 253)             return sizeof(unsigned char);
-    else if (nSize <= std::numeric_limits<uint16_t>::max()) return sizeof(unsigned char) + sizeof(uint16_t);
-    else if (nSize <= std::numeric_limits<unsigned int>::max())  return sizeof(unsigned char) + sizeof(unsigned int);
-    else                         return sizeof(unsigned char) + sizeof(uint64_t);
+    if (nSize < 253)
+        return sizeof(unsigned char);
+    else if (nSize <= std::numeric_limits<uint16_t>::max())
+        return sizeof(unsigned char) + sizeof(uint16_t);
+    else if (nSize <= std::numeric_limits<unsigned int>::max())
+        return sizeof(unsigned char) + sizeof(unsigned int);
+    else
+        return sizeof(unsigned char) + sizeof(uint64_t);
 }
 
 inline void WriteCompactSize(SizeComputer& os, uint64_t nSize);
 
-template<typename Stream>
+template <typename Stream>
 void WriteCompactSize(Stream& os, uint64_t nSize)
 {
-    if (nSize < 253)
-    {
+    if (nSize < 253) {
         ser_writedata8(os, nSize);
-    }
-    else if (nSize <= std::numeric_limits<uint16_t>::max())
-    {
+    } else if (nSize <= std::numeric_limits<uint16_t>::max()) {
         ser_writedata8(os, 253);
         ser_writedata16(os, nSize);
-    }
-    else if (nSize <= std::numeric_limits<unsigned int>::max())
-    {
+    } else if (nSize <= std::numeric_limits<unsigned int>::max()) {
         ser_writedata8(os, 254);
         ser_writedata32(os, nSize);
-    }
-    else
-    {
+    } else {
         ser_writedata8(os, 255);
         ser_writedata64(os, nSize);
     }
@@ -326,29 +340,22 @@ void WriteCompactSize(Stream& os, uint64_t nSize)
  * As these are primarily used to encode the size of vector-like serializations, by default a range
  * check is performed. When used as a generic number encoding, range_check should be set to false.
  */
-template<typename Stream>
+template <typename Stream>
 uint64_t ReadCompactSize(Stream& is, bool range_check = true)
 {
     uint8_t chSize = ser_readdata8(is);
     uint64_t nSizeRet = 0;
-    if (chSize < 253)
-    {
+    if (chSize < 253) {
         nSizeRet = chSize;
-    }
-    else if (chSize == 253)
-    {
+    } else if (chSize == 253) {
         nSizeRet = ser_readdata16(is);
         if (nSizeRet < 253)
             throw std::ios_base::failure("non-canonical ReadCompactSize()");
-    }
-    else if (chSize == 254)
-    {
+    } else if (chSize == 254) {
         nSizeRet = ser_readdata32(is);
         if (nSizeRet < 0x10000u)
             throw std::ios_base::failure("non-canonical ReadCompactSize()");
-    }
-    else
-    {
+    } else {
         nSizeRet = ser_readdata64(is);
         if (nSizeRet < 0x100000000ULL)
             throw std::ios_base::failure("non-canonical ReadCompactSize()");
@@ -393,7 +400,8 @@ uint64_t ReadCompactSize(Stream& is, bool range_check = true)
  * negative numbers in a backwards compatible way, and additional modes could be
  * added to support different varint formats (e.g. zigzag encoding).
  */
-enum class VarIntMode { DEFAULT, NONNEGATIVE_SIGNED };
+enum class VarIntMode { DEFAULT,
+                        NONNEGATIVE_SIGNED };
 
 template <VarIntMode Mode, typename I>
 struct CheckVarIntMode {
@@ -404,12 +412,12 @@ struct CheckVarIntMode {
     }
 };
 
-template<VarIntMode Mode, typename I>
+template <VarIntMode Mode, typename I>
 inline unsigned int GetSizeOfVarInt(I n)
 {
     CheckVarIntMode<Mode, I>();
     int nRet = 0;
-    while(true) {
+    while (true) {
         nRet++;
         if (n <= 0x7F)
             break;
@@ -418,16 +426,16 @@ inline unsigned int GetSizeOfVarInt(I n)
     return nRet;
 }
 
-template<typename I>
+template <typename I>
 inline void WriteVarInt(SizeComputer& os, I n);
 
-template<typename Stream, VarIntMode Mode, typename I>
+template <typename Stream, VarIntMode Mode, typename I>
 void WriteVarInt(Stream& os, I n)
 {
     CheckVarIntMode<Mode, I>();
-    unsigned char tmp[(sizeof(n)*8+6)/7];
-    int len=0;
-    while(true) {
+    unsigned char tmp[(sizeof(n) * 8 + 6) / 7];
+    int len = 0;
+    while (true) {
         tmp[len] = (n & 0x7F) | (len ? 0x80 : 0x00);
         if (n <= 0x7F)
             break;
@@ -436,18 +444,18 @@ void WriteVarInt(Stream& os, I n)
     }
     do {
         ser_writedata8(os, tmp[len]);
-    } while(len--);
+    } while (len--);
 }
 
-template<typename Stream, VarIntMode Mode, typename I>
+template <typename Stream, VarIntMode Mode, typename I>
 I ReadVarInt(Stream& is)
 {
     CheckVarIntMode<Mode, I>();
     I n = 0;
-    while(true) {
+    while (true) {
         unsigned char chData = ser_readdata8(is);
         if (n > (std::numeric_limits<I>::max() >> 7)) {
-           throw std::ios_base::failure("ReadVarInt(): size too large");
+            throw std::ios_base::failure("ReadVarInt(): size too large");
         }
         n = (n << 7) | (chData & 0x7F);
         if (chData & 0x80) {
@@ -462,16 +470,26 @@ I ReadVarInt(Stream& is)
 }
 
 /** Simple wrapper class to serialize objects using a formatter; used by Using(). */
-template<typename Formatter, typename T>
+template <typename Formatter, typename T>
 class Wrapper
 {
     static_assert(std::is_lvalue_reference_v<T>, "Wrapper needs an lvalue reference type T");
+
 protected:
     T m_object;
+
 public:
     explicit Wrapper(T obj) : m_object(obj) {}
-    template<typename Stream> void Serialize(Stream &s) const { Formatter().Ser(s, m_object); }
-    template<typename Stream> void Unserialize(Stream &s) { Formatter().Unser(s, m_object); }
+    template <typename Stream>
+    void Serialize(Stream& s) const
+    {
+        Formatter().Ser(s, m_object);
+    }
+    template <typename Stream>
+    void Unserialize(Stream& s)
+    {
+        Formatter().Unser(s, m_object);
+    }
 };
 
 /** Cause serialization/deserialization of an object to be done using a specified formatter class.
@@ -484,26 +502,30 @@ public:
  * const during serialization, and non-const during deserialization, which maintains const
  * correctness.
  */
-template<typename Formatter, typename T>
-static inline Wrapper<Formatter, T&> Using(T&& t) { return Wrapper<Formatter, T&>(t); }
+template <typename Formatter, typename T>
+static inline Wrapper<Formatter, T&> Using(T&& t)
+{
+    return Wrapper<Formatter, T&>(t);
+}
 
 #define VARINT_MODE(obj, mode) Using<VarIntFormatter<mode>>(obj)
 #define VARINT(obj) Using<VarIntFormatter<VarIntMode::DEFAULT>>(obj)
 #define COMPACTSIZE(obj) Using<CompactSizeFormatter<true>>(obj)
-#define LIMITED_STRING(obj,n) Using<LimitedStringFormatter<n>>(obj)
+#define LIMITED_STRING(obj, n) Using<LimitedStringFormatter<n>>(obj)
 
 /** Serialization wrapper class for integers in VarInt format. */
-template<VarIntMode Mode>
-struct VarIntFormatter
-{
-    template<typename Stream, typename I> void Ser(Stream &s, I v)
+template <VarIntMode Mode>
+struct VarIntFormatter {
+    template <typename Stream, typename I>
+    void Ser(Stream& s, I v)
     {
-        WriteVarInt<Stream,Mode, std::remove_cv_t<I>>(s, v);
+        WriteVarInt<Stream, Mode, std::remove_cv_t<I>>(s, v);
     }
 
-    template<typename Stream, typename I> void Unser(Stream& s, I& v)
+    template <typename Stream, typename I>
+    void Unser(Stream& s, I& v)
     {
-        v = ReadVarInt<Stream,Mode, std::remove_cv_t<I>>(s);
+        v = ReadVarInt<Stream, Mode, std::remove_cv_t<I>>(s);
     }
 };
 
@@ -516,13 +538,13 @@ struct VarIntFormatter
  * to implement serializers that are compatible with existing formats, and
  * its use is not recommended for new data structures.
  */
-template<int Bytes, bool BigEndian = false>
-struct CustomUintFormatter
-{
+template <int Bytes, bool BigEndian = false>
+struct CustomUintFormatter {
     static_assert(Bytes > 0 && Bytes <= 8, "CustomUintFormatter Bytes out of range");
     static constexpr uint64_t MAX = 0xffffffffffffffff >> (8 * (8 - Bytes));
 
-    template <typename Stream, typename I> void Ser(Stream& s, I v)
+    template <typename Stream, typename I>
+    void Ser(Stream& s, I v)
     {
         if (v < 0 || v > MAX) throw std::ios_base::failure("CustomUintFormatter value out of range");
         if (BigEndian) {
@@ -534,7 +556,8 @@ struct CustomUintFormatter
         }
     }
 
-    template <typename Stream, typename I> void Unser(Stream& s, I& v)
+    template <typename Stream, typename I>
+    void Unser(Stream& s, I& v)
     {
         using U = typename std::conditional_t<std::is_enum_v<I>, std::underlying_type<I>, std::common_type<I>>::type;
         static_assert(std::numeric_limits<U>::max() >= MAX && std::numeric_limits<U>::min() <= 0, "Assigned type too small");
@@ -549,13 +572,13 @@ struct CustomUintFormatter
     }
 };
 
-template<int Bytes> using BigEndianFormatter = CustomUintFormatter<Bytes, true>;
+template <int Bytes>
+using BigEndianFormatter = CustomUintFormatter<Bytes, true>;
 
 /** Formatter for integers in CompactSize format. */
-template<bool RangeCheck>
-struct CompactSizeFormatter
-{
-    template<typename Stream, typename I>
+template <bool RangeCheck>
+struct CompactSizeFormatter {
+    template <typename Stream, typename I>
     void Unser(Stream& s, I& v)
     {
         uint64_t n = ReadCompactSize<Stream>(s, RangeCheck);
@@ -565,7 +588,7 @@ struct CompactSizeFormatter
         v = n;
     }
 
-    template<typename Stream, typename I>
+    template <typename Stream, typename I>
     void Ser(Stream& s, I v)
     {
         static_assert(std::is_unsigned_v<I>, "CompactSize only supported for unsigned integers");
@@ -602,19 +625,20 @@ class CompactSizeWriter
 {
 protected:
     uint64_t n;
-public:
-    explicit CompactSizeWriter(uint64_t n_in) : n(n_in) { }
 
-    template<typename Stream>
-    void Serialize(Stream &s) const {
+public:
+    explicit CompactSizeWriter(uint64_t n_in) : n(n_in) {}
+
+    template <typename Stream>
+    void Serialize(Stream& s) const
+    {
         WriteCompactSize<Stream>(s, n);
     }
 };
 
-template<size_t Limit>
-struct LimitedStringFormatter
-{
-    template<typename Stream>
+template <size_t Limit>
+struct LimitedStringFormatter {
+    template <typename Stream>
     void Unser(Stream& s, std::string& v)
     {
         size_t size = ReadCompactSize(s);
@@ -625,7 +649,7 @@ struct LimitedStringFormatter
         if (size != 0) s.read(MakeWritableByteSpan(v));
     }
 
-    template<typename Stream>
+    template <typename Stream>
     void Ser(Stream& s, const std::string& v)
     {
         s << v;
@@ -645,10 +669,9 @@ struct LimitedStringFormatter
  * V is not required to be an std::vector type. It works for any class that
  * exposes a value_type, size, reserve, emplace_back, back, and const iterators.
  */
-template<class Formatter>
-struct VectorFormatter
-{
-    template<typename Stream, typename V>
+template <class Formatter>
+struct VectorFormatter {
+    template <typename Stream, typename V>
     void Ser(Stream& s, const V& v)
     {
         Formatter formatter;
@@ -658,7 +681,7 @@ struct VectorFormatter
         }
     }
 
-    template<typename Stream, typename V>
+    template <typename Stream, typename V>
     void Unser(Stream& s, V& v)
     {
         Formatter formatter;
@@ -687,50 +710,66 @@ struct VectorFormatter
 /**
  *  string
  */
-template<typename Stream, typename C> void Serialize(Stream& os, const std::basic_string<C>& str);
-template<typename Stream, typename C> void Unserialize(Stream& is, std::basic_string<C>& str);
+template <typename Stream, typename C>
+void Serialize(Stream& os, const std::basic_string<C>& str);
+template <typename Stream, typename C>
+void Unserialize(Stream& is, std::basic_string<C>& str);
 
 /**
  * prevector
  */
-template<typename Stream, unsigned int N, typename T> inline void Serialize(Stream& os, const prevector<N, T>& v);
-template<typename Stream, unsigned int N, typename T> inline void Unserialize(Stream& is, prevector<N, T>& v);
+template <typename Stream, unsigned int N, typename T>
+inline void Serialize(Stream& os, const prevector<N, T>& v);
+template <typename Stream, unsigned int N, typename T>
+inline void Unserialize(Stream& is, prevector<N, T>& v);
 
 /**
  * vector
  */
-template<typename Stream, typename T, typename A> inline void Serialize(Stream& os, const std::vector<T, A>& v);
-template<typename Stream, typename T, typename A> inline void Unserialize(Stream& is, std::vector<T, A>& v);
+template <typename Stream, typename T, typename A>
+inline void Serialize(Stream& os, const std::vector<T, A>& v);
+template <typename Stream, typename T, typename A>
+inline void Unserialize(Stream& is, std::vector<T, A>& v);
 
 /**
  * pair
  */
-template<typename Stream, typename K, typename T> void Serialize(Stream& os, const std::pair<K, T>& item);
-template<typename Stream, typename K, typename T> void Unserialize(Stream& is, std::pair<K, T>& item);
+template <typename Stream, typename K, typename T>
+void Serialize(Stream& os, const std::pair<K, T>& item);
+template <typename Stream, typename K, typename T>
+void Unserialize(Stream& is, std::pair<K, T>& item);
 
 /**
  * map
  */
-template<typename Stream, typename K, typename T, typename Pred, typename A> void Serialize(Stream& os, const std::map<K, T, Pred, A>& m);
-template<typename Stream, typename K, typename T, typename Pred, typename A> void Unserialize(Stream& is, std::map<K, T, Pred, A>& m);
+template <typename Stream, typename K, typename T, typename Pred, typename A>
+void Serialize(Stream& os, const std::map<K, T, Pred, A>& m);
+template <typename Stream, typename K, typename T, typename Pred, typename A>
+void Unserialize(Stream& is, std::map<K, T, Pred, A>& m);
 
 /**
  * set
  */
-template<typename Stream, typename K, typename Pred, typename A> void Serialize(Stream& os, const std::set<K, Pred, A>& m);
-template<typename Stream, typename K, typename Pred, typename A> void Unserialize(Stream& is, std::set<K, Pred, A>& m);
+template <typename Stream, typename K, typename Pred, typename A>
+void Serialize(Stream& os, const std::set<K, Pred, A>& m);
+template <typename Stream, typename K, typename Pred, typename A>
+void Unserialize(Stream& is, std::set<K, Pred, A>& m);
 
 /**
  * shared_ptr
  */
-template<typename Stream, typename T> void Serialize(Stream& os, const std::shared_ptr<const T>& p);
-template<typename Stream, typename T> void Unserialize(Stream& os, std::shared_ptr<const T>& p);
+template <typename Stream, typename T>
+void Serialize(Stream& os, const std::shared_ptr<const T>& p);
+template <typename Stream, typename T>
+void Unserialize(Stream& os, std::shared_ptr<const T>& p);
 
 /**
  * unique_ptr
  */
-template<typename Stream, typename T> void Serialize(Stream& os, const std::unique_ptr<const T>& p);
-template<typename Stream, typename T> void Unserialize(Stream& os, std::unique_ptr<const T>& p);
+template <typename Stream, typename T>
+void Serialize(Stream& os, const std::unique_ptr<const T>& p);
+template <typename Stream, typename T>
+void Unserialize(Stream& os, std::unique_ptr<const T>& p);
 
 
 /**
@@ -759,23 +798,25 @@ void Unserialize(Stream& is, T&& a)
  * The vector/prevector serialization code passes this to VectorFormatter
  * to enable reusing that logic. It shouldn't be needed elsewhere.
  */
-struct DefaultFormatter
-{
-    template<typename Stream, typename T>
-    static void Ser(Stream& s, const T& t) { Serialize(s, t); }
+struct DefaultFormatter {
+    template <typename Stream, typename T>
+    static void Ser(Stream& s, const T& t)
+    {
+        Serialize(s, t);
+    }
 
-    template<typename Stream, typename T>
-    static void Unser(Stream& s, T& t) { Unserialize(s, t); }
+    template <typename Stream, typename T>
+    static void Unser(Stream& s, T& t)
+    {
+        Unserialize(s, t);
+    }
 };
-
-
-
 
 
 /**
  * string
  */
-template<typename Stream, typename C>
+template <typename Stream, typename C>
 void Serialize(Stream& os, const std::basic_string<C>& str)
 {
     WriteCompactSize(os, str.size());
@@ -783,7 +824,7 @@ void Serialize(Stream& os, const std::basic_string<C>& str)
         os.write(MakeByteSpan(str));
 }
 
-template<typename Stream, typename C>
+template <typename Stream, typename C>
 void Unserialize(Stream& is, std::basic_string<C>& str)
 {
     unsigned int nSize = ReadCompactSize(is);
@@ -791,7 +832,6 @@ void Unserialize(Stream& is, std::basic_string<C>& str)
     if (nSize != 0)
         is.read(MakeWritableByteSpan(str));
 }
-
 
 
 /**
@@ -875,14 +915,14 @@ void Unserialize(Stream& is, std::vector<T, A>& v)
 /**
  * pair
  */
-template<typename Stream, typename K, typename T>
+template <typename Stream, typename K, typename T>
 void Serialize(Stream& os, const std::pair<K, T>& item)
 {
     Serialize(os, item.first);
     Serialize(os, item.second);
 }
 
-template<typename Stream, typename K, typename T>
+template <typename Stream, typename K, typename T>
 void Unserialize(Stream& is, std::pair<K, T>& item)
 {
     Unserialize(is, item.first);
@@ -890,11 +930,10 @@ void Unserialize(Stream& is, std::pair<K, T>& item)
 }
 
 
-
 /**
  * map
  */
-template<typename Stream, typename K, typename T, typename Pred, typename A>
+template <typename Stream, typename K, typename T, typename Pred, typename A>
 void Serialize(Stream& os, const std::map<K, T, Pred, A>& m)
 {
     WriteCompactSize(os, m.size());
@@ -902,14 +941,13 @@ void Serialize(Stream& os, const std::map<K, T, Pred, A>& m)
         Serialize(os, entry);
 }
 
-template<typename Stream, typename K, typename T, typename Pred, typename A>
+template <typename Stream, typename K, typename T, typename Pred, typename A>
 void Unserialize(Stream& is, std::map<K, T, Pred, A>& m)
 {
     m.clear();
     unsigned int nSize = ReadCompactSize(is);
     typename std::map<K, T, Pred, A>::iterator mi = m.begin();
-    for (unsigned int i = 0; i < nSize; i++)
-    {
+    for (unsigned int i = 0; i < nSize; i++) {
         std::pair<K, T> item;
         Unserialize(is, item);
         mi = m.insert(mi, item);
@@ -917,11 +955,10 @@ void Unserialize(Stream& is, std::map<K, T, Pred, A>& m)
 }
 
 
-
 /**
  * set
  */
-template<typename Stream, typename K, typename Pred, typename A>
+template <typename Stream, typename K, typename Pred, typename A>
 void Serialize(Stream& os, const std::set<K, Pred, A>& m)
 {
     WriteCompactSize(os, m.size());
@@ -929,14 +966,13 @@ void Serialize(Stream& os, const std::set<K, Pred, A>& m)
         Serialize(os, (*it));
 }
 
-template<typename Stream, typename K, typename Pred, typename A>
+template <typename Stream, typename K, typename Pred, typename A>
 void Unserialize(Stream& is, std::set<K, Pred, A>& m)
 {
     m.clear();
     unsigned int nSize = ReadCompactSize(is);
     typename std::set<K, Pred, A>::iterator it = m.begin();
-    for (unsigned int i = 0; i < nSize; i++)
-    {
+    for (unsigned int i = 0; i < nSize; i++) {
         K key;
         Unserialize(is, key);
         it = m.insert(it, key);
@@ -944,34 +980,32 @@ void Unserialize(Stream& is, std::set<K, Pred, A>& m)
 }
 
 
-
 /**
  * unique_ptr
  */
-template<typename Stream, typename T> void
-Serialize(Stream& os, const std::unique_ptr<const T>& p)
+template <typename Stream, typename T>
+void Serialize(Stream& os, const std::unique_ptr<const T>& p)
 {
     Serialize(os, *p);
 }
 
-template<typename Stream, typename T>
+template <typename Stream, typename T>
 void Unserialize(Stream& is, std::unique_ptr<const T>& p)
 {
     p.reset(new T(deserialize, is));
 }
 
 
-
 /**
  * shared_ptr
  */
-template<typename Stream, typename T> void
-Serialize(Stream& os, const std::shared_ptr<const T>& p)
+template <typename Stream, typename T>
+void Serialize(Stream& os, const std::shared_ptr<const T>& p)
 {
     Serialize(os, *p);
 }
 
-template<typename Stream, typename T>
+template <typename Stream, typename T>
 void Unserialize(Stream& is, std::shared_ptr<const T>& p)
 {
     p = std::make_shared<const T>(deserialize, is);
@@ -999,18 +1033,18 @@ inline void UnserializeMany(Stream& s, Args&&... args)
 struct ActionSerialize {
     static constexpr bool ForRead() { return false; }
 
-    template<typename Stream, typename... Args>
+    template <typename Stream, typename... Args>
     static void SerReadWriteMany(Stream& s, const Args&... args)
     {
         ::SerializeMany(s, args...);
     }
 
-    template<typename Stream, typename Type, typename Fn>
+    template <typename Stream, typename Type, typename Fn>
     static void SerRead(Stream& s, Type&&, Fn&&)
     {
     }
 
-    template<typename Stream, typename Type, typename Fn>
+    template <typename Stream, typename Type, typename Fn>
     static void SerWrite(Stream& s, Type&& obj, Fn&& fn)
     {
         fn(s, std::forward<Type>(obj));
@@ -1019,19 +1053,19 @@ struct ActionSerialize {
 struct ActionUnserialize {
     static constexpr bool ForRead() { return true; }
 
-    template<typename Stream, typename... Args>
+    template <typename Stream, typename... Args>
     static void SerReadWriteMany(Stream& s, Args&&... args)
     {
         ::UnserializeMany(s, args...);
     }
 
-    template<typename Stream, typename Type, typename Fn>
+    template <typename Stream, typename Type, typename Fn>
     static void SerRead(Stream& s, Type&& obj, Fn&& fn)
     {
         fn(s, std::forward<Type>(obj));
     }
 
-    template<typename Stream, typename Type, typename Fn>
+    template <typename Stream, typename Type, typename Fn>
     static void SerWrite(Stream& s, Type&&, Fn&&)
     {
     }
@@ -1067,25 +1101,26 @@ public:
         this->nSize += _nSize;
     }
 
-    template<typename T>
+    template <typename T>
     SizeComputer& operator<<(const T& obj)
     {
         ::Serialize(*this, obj);
         return (*this);
     }
 
-    size_t size() const {
+    size_t size() const
+    {
         return nSize;
     }
 };
 
-template<typename I>
-inline void WriteVarInt(SizeComputer &s, I n)
+template <typename I>
+inline void WriteVarInt(SizeComputer& s, I n)
 {
     s.seek(GetSizeOfVarInt<I>(n));
 }
 
-inline void WriteCompactSize(SizeComputer &s, uint64_t nSize)
+inline void WriteCompactSize(SizeComputer& s, uint64_t nSize)
 {
     s.seek(GetSizeOfCompactSize(nSize));
 }
@@ -1097,7 +1132,7 @@ size_t GetSerializeSize(const T& t)
 }
 
 //! Check if type contains a stream by seeing if has a GetStream() method.
-template<typename T>
+template <typename T>
 concept ContainsStream = requires(T t) { t.GetStream(); };
 
 /** Wrapper that overrides the GetParams() function of a stream. */
@@ -1119,10 +1154,22 @@ public:
 
     template <typename NestedSubstream, typename Params1, typename Params2, typename... NestedParams>
     ParamsStream(NestedSubstream&& s, const Params1& params1 LIFETIMEBOUND, const Params2& params2 LIFETIMEBOUND, const NestedParams&... params LIFETIMEBOUND)
-        : ParamsStream{::ParamsStream{std::forward<NestedSubstream>(s), params2, params...}, params1} {}
+        : ParamsStream{::ParamsStream{std::forward<NestedSubstream>(s), params2, params...}, params1}
+    {
+    }
 
-    template <typename U> ParamsStream& operator<<(const U& obj) { ::Serialize(*this, obj); return *this; }
-    template <typename U> ParamsStream& operator>>(U&& obj) { ::Unserialize(*this, obj); return *this; }
+    template <typename U>
+    ParamsStream& operator<<(const U& obj)
+    {
+        ::Serialize(*this, obj);
+        return *this;
+    }
+    template <typename U>
+    ParamsStream& operator>>(U&& obj)
+    {
+        ::Unserialize(*this, obj);
+        return *this;
+    }
     void write(std::span<const std::byte> src) { GetStream().write(src); }
     void read(std::span<std::byte> dst) { GetStream().read(dst); }
     void ignore(size_t num) { GetStream().ignore(num); }
@@ -1172,8 +1219,7 @@ ParamsStream(Substream&&, const Params&) -> ParamsStream<Substream, Params>;
  * ParamsStream.
  */
 template <typename Substream, typename Params1, typename Params2, typename... Params>
-ParamsStream(Substream&& s, const Params1& params1, const Params2& params2, const Params&... params) ->
-    ParamsStream<decltype(ParamsStream{std::forward<Substream>(s), params2, params...}), Params1>;
+ParamsStream(Substream&& s, const Params1& params1, const Params2& params2, const Params&... params) -> ParamsStream<decltype(ParamsStream{std::forward<Substream>(s), params2, params...}), Params1>;
 
 /** Wrapper that serializes objects with the specified parameters. */
 template <typename Params, typename T>

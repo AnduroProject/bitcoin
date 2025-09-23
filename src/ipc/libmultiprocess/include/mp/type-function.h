@@ -22,10 +22,10 @@ public:
 
 template <typename Value, typename FnR, typename... FnParams, typename Output>
 void CustomBuildField(TypeList<std::function<FnR(FnParams...)>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Value& value,
-    Output&& output)
+                      Priority<1>,
+                      InvokeContext& invoke_context,
+                      Value& value,
+                      Output&& output)
 {
     if (value) {
         using Interface = typename decltype(output.get())::Calls;
@@ -39,20 +39,22 @@ void CustomBuildField(TypeList<std::function<FnR(FnParams...)>>,
 // It's equivalent c++14: [invoke_context](auto&& params) {
 // invoke_context->call(std::forward<decltype(params)>(params)...)
 template <typename InvokeContext>
-struct ProxyCallFn
-{
+struct ProxyCallFn {
     InvokeContext m_proxy;
 
     template <typename... CallParams>
-    decltype(auto) operator()(CallParams&&... params) { return this->m_proxy->call(std::forward<CallParams>(params)...); }
+    decltype(auto) operator()(CallParams&&... params)
+    {
+        return this->m_proxy->call(std::forward<CallParams>(params)...);
+    }
 };
 
 template <typename FnR, typename... FnParams, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<std::function<FnR(FnParams...)>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Input&& input,
-    ReadDest&& read_dest)
+                               Priority<1>,
+                               InvokeContext& invoke_context,
+                               Input&& input,
+                               ReadDest&& read_dest)
 {
     if (input.has()) {
         using Interface = typename Decay<decltype(input.get())>::Calls;

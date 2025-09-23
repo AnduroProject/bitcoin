@@ -44,8 +44,7 @@ using Action = std::pair<std::chrono::microseconds, std::function<void()>>;
  *
  * The Scenario below is used to fill this.
  */
-struct Runner
-{
+struct Runner {
     /** The TxRequestTracker being tested. */
     TxRequestTracker txrequest;
 
@@ -231,7 +230,7 @@ public:
             if (ok) {
                 ok = m_runner.txhashset.insert(ret).second;
             }
-        } while(!ok);
+        } while (!ok);
         return ret;
     }
 
@@ -251,7 +250,7 @@ public:
         do {
             ret = m_rng.randbits(63);
             ok = m_runner.peerset.insert(ret).second;
-        } while(!ok);
+        } while (!ok);
         return ret;
     }
 
@@ -391,8 +390,8 @@ void TxRequestTest::BuildBigPriorityTest(Scenario& scenario, int peers)
     // We will have N peers announce the same transaction.
     std::map<NodeId, bool> preferred;
     std::vector<NodeId> pref_peers, npref_peers;
-    int num_pref = m_rng.randrange(peers + 1) ; // Some preferred, ...
-    int num_npref = peers - num_pref; // some not preferred.
+    int num_pref = m_rng.randrange(peers + 1); // Some preferred, ...
+    int num_npref = peers - num_pref;          // some not preferred.
     for (int i = 0; i < num_pref; ++i) {
         pref_peers.push_back(scenario.NewPeer());
         preferred[pref_peers.back()] = true;
@@ -404,8 +403,10 @@ void TxRequestTest::BuildBigPriorityTest(Scenario& scenario, int peers)
     // Make a list of all peers, in order of intended request order (concatenation of pref_peers and npref_peers).
     std::vector<NodeId> request_order;
     request_order.reserve(num_pref + num_npref);
-    for (int i = 0; i < num_pref; ++i) request_order.push_back(pref_peers[i]);
-    for (int i = 0; i < num_npref; ++i) request_order.push_back(npref_peers[i]);
+    for (int i = 0; i < num_pref; ++i)
+        request_order.push_back(pref_peers[i]);
+    for (int i = 0; i < num_npref; ++i)
+        request_order.push_back(npref_peers[i]);
 
     // Determine the announcement order randomly.
     std::vector<NodeId> announce_order = request_order;
@@ -505,7 +506,7 @@ void TxRequestTest::BuildRequestOrderTest(Scenario& scenario, int config)
  *  hash being announced.
  *
  *  config is an integer in [0, 4) inclusive, and selects the variant of the test used.
-*/
+ */
 void TxRequestTest::BuildWtxidTest(Scenario& scenario, int config)
 {
     scenario.SetTestName(strprintf("Wtxid(config=%i)", config));
@@ -745,7 +746,7 @@ void TxRequestTest::TestInterleavedScenarios()
     BOOST_CHECK(runner.expired.empty());
 }
 
-}  // namespace
+} // namespace
 
 BOOST_FIXTURE_TEST_SUITE(txrequest_tests, TxRequestTest)
 

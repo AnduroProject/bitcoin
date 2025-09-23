@@ -7,7 +7,7 @@
 #include <primitives/transaction.h>
 #include <validation.h>
 
-static const CAmount PEGIN_FEE=10;
+static const CAmount PEGIN_FEE = 10;
 
 CTxOut getPeginAmount(const std::vector<unsigned char>& bitcoinTx, const std::vector<unsigned char>& bitcoinTxProof, std::string depositAddress);
 

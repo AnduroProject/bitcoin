@@ -23,7 +23,7 @@ static void import_descriptor(CWallet& wallet, const std::string& descriptor)
     AssertLockHeld(wallet.cs_wallet);
     FlatSigningProvider provider;
     std::string error;
-    auto descs = Parse(descriptor, provider, error, /* require_checksum=*/ false);
+    auto descs = Parse(descriptor, provider, error, /* require_checksum=*/false);
     assert(descs.size() == 1);
     auto& desc = descs.at(0);
     WalletDescriptor w_desc(std::move(desc), 0, 0, 10, 0);
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(parse_hd_keypath)
     BOOST_CHECK(ParseHDKeypath("42", keypath));
     BOOST_CHECK(!ParseHDKeypath("m42", keypath));
 
-    BOOST_CHECK(ParseHDKeypath("4294967295", keypath)); // 4294967295 == 0xFFFFFFFF (uint32_t max)
+    BOOST_CHECK(ParseHDKeypath("4294967295", keypath));  // 4294967295 == 0xFFFFFFFF (uint32_t max)
     BOOST_CHECK(!ParseHDKeypath("4294967296", keypath)); // 4294967296 == 0xFFFFFFFF (uint32_t max) + 1
 
     BOOST_CHECK(ParseHDKeypath("m", keypath));
@@ -147,10 +147,10 @@ BOOST_AUTO_TEST_CASE(parse_hd_keypath)
     BOOST_CHECK(ParseHDKeypath("m/1/", keypath));
     BOOST_CHECK(!ParseHDKeypath("m/1//", keypath));
 
-    BOOST_CHECK(ParseHDKeypath("m/0/4294967295", keypath)); // 4294967295 == 0xFFFFFFFF (uint32_t max)
+    BOOST_CHECK(ParseHDKeypath("m/0/4294967295", keypath));  // 4294967295 == 0xFFFFFFFF (uint32_t max)
     BOOST_CHECK(!ParseHDKeypath("m/0/4294967296", keypath)); // 4294967296 == 0xFFFFFFFF (uint32_t max) + 1
 
-    BOOST_CHECK(ParseHDKeypath("m/4294967295", keypath)); // 4294967295 == 0xFFFFFFFF (uint32_t max)
+    BOOST_CHECK(ParseHDKeypath("m/4294967295", keypath));  // 4294967295 == 0xFFFFFFFF (uint32_t max)
     BOOST_CHECK(!ParseHDKeypath("m/4294967296", keypath)); // 4294967296 == 0xFFFFFFFF (uint32_t max) + 1
 }
 

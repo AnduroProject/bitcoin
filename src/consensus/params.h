@@ -107,14 +107,14 @@ struct Params {
     /** Don't warn about unknown BIP 9 activations below this height.
      * This prevents us from warning about the CSV and segwit activations. */
     int MinBIP9WarningHeight;
-    std::array<BIP9Deployment,MAX_VERSION_BITS_DEPLOYMENTS> vDeployments;
+    std::array<BIP9Deployment, MAX_VERSION_BITS_DEPLOYMENTS> vDeployments;
     /** Proof of work parameters */
     uint256 powLimit;
     bool fPowAllowMinDifficultyBlocks;
     /**
-      * Enforce BIP94 timewarp attack mitigation. On testnet4 this also enforces
-      * the block storm mitigation.
-      */
+     * Enforce BIP94 timewarp attack mitigation. On testnet4 this also enforces
+     * the block storm mitigation.
+     */
     bool enforce_BIP94;
     bool fPowNoRetargeting;
     int64_t nPowTargetSpacing;
@@ -169,7 +169,7 @@ struct Params {
     {
         if (nLegacyBlocksBefore < 0)
             return true;
-        return static_cast<int> (nHeight) < nLegacyBlocksBefore;
+        return static_cast<int>(nHeight) < nLegacyBlocksBefore;
     }
 };
 

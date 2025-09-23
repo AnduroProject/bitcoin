@@ -30,37 +30,37 @@ class MiniMinerMempoolEntry
     const CAmount fee_individual;
     CAmount fee_with_ancestors;
 
-// This class must be constructed while holding mempool.cs. After construction, the object's
-// methods can be called without holding that lock.
+    // This class must be constructed while holding mempool.cs. After construction, the object's
+    // methods can be called without holding that lock.
 
 public:
     explicit MiniMinerMempoolEntry(const CTransactionRef& tx_in,
                                    int64_t vsize_self,
                                    int64_t vsize_ancestor,
                                    CAmount fee_self,
-                                   CAmount fee_ancestor):
-        tx{tx_in},
-        vsize_individual{vsize_self},
-        vsize_with_ancestors{vsize_ancestor},
-        fee_individual{fee_self},
-        fee_with_ancestors{fee_ancestor}
-    { }
+                                   CAmount fee_ancestor) : tx{tx_in},
+                                                           vsize_individual{vsize_self},
+                                                           vsize_with_ancestors{vsize_ancestor},
+                                                           fee_individual{fee_self},
+                                                           fee_with_ancestors{fee_ancestor}
+    {
+    }
 
     CAmount GetModifiedFee() const { return fee_individual; }
     CAmount GetModFeesWithAncestors() const { return fee_with_ancestors; }
     int64_t GetTxSize() const { return vsize_individual; }
     int64_t GetSizeWithAncestors() const { return vsize_with_ancestors; }
     const CTransaction& GetTx() const LIFETIMEBOUND { return *tx; }
-    void UpdateAncestorState(int64_t vsize_change, CAmount fee_change) {
+    void UpdateAncestorState(int64_t vsize_change, CAmount fee_change)
+    {
         vsize_with_ancestors += vsize_change;
         fee_with_ancestors += fee_change;
     }
 };
 
 // Comparator needed for std::set<MockEntryMap::iterator>
-struct IteratorComparator
-{
-    template<typename I>
+struct IteratorComparator {
+    template <typename I>
     bool operator()(const I& a, const I& b) const
     {
         return a->first < b->first;
@@ -134,7 +134,7 @@ public:
     /** Constructor that takes a list of outpoints that may or may not belong to transactions in the
      * mempool. Copies out information about the relevant transactions in the mempool into
      * MiniMinerMempoolEntrys.
-    */
+     */
     MiniMiner(const CTxMemPool& mempool, const std::vector<COutPoint>& outpoints);
 
     /** Constructor in which the MiniMinerMempoolEntry entries have been constructed manually.

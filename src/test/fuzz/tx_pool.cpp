@@ -143,10 +143,8 @@ std::unique_ptr<CTxMemPool> MakeMempool(FuzzedDataProvider& fuzzed_data_provider
 
 void CheckATMPInvariants(const MempoolAcceptResult& res, bool txid_in_mempool, bool wtxid_in_mempool)
 {
-
     switch (res.m_result_type) {
-    case MempoolAcceptResult::ResultType::VALID:
-    {
+    case MempoolAcceptResult::ResultType::VALID: {
         Assert(txid_in_mempool);
         Assert(wtxid_in_mempool);
         Assert(res.m_state.IsValid());
@@ -158,8 +156,7 @@ void CheckATMPInvariants(const MempoolAcceptResult& res, bool txid_in_mempool, b
         Assert(!res.m_other_wtxid);
         break;
     }
-    case MempoolAcceptResult::ResultType::INVALID:
-    {
+    case MempoolAcceptResult::ResultType::INVALID: {
         // It may be already in the mempool since in ATMP cases we don't set MEMPOOL_ENTRY or DIFFERENT_WITNESS
         Assert(!res.m_state.IsValid());
         Assert(res.m_state.IsInvalid());
@@ -174,14 +171,12 @@ void CheckATMPInvariants(const MempoolAcceptResult& res, bool txid_in_mempool, b
         Assert(!res.m_other_wtxid);
         break;
     }
-    case MempoolAcceptResult::ResultType::MEMPOOL_ENTRY:
-    {
+    case MempoolAcceptResult::ResultType::MEMPOOL_ENTRY: {
         // ATMP never sets this; only set in package settings
         Assert(false);
         break;
     }
-    case MempoolAcceptResult::ResultType::DIFFERENT_WITNESS:
-    {
+    case MempoolAcceptResult::ResultType::DIFFERENT_WITNESS: {
         // ATMP never sets this; only set in package settings
         Assert(false);
         break;
@@ -301,7 +296,7 @@ FUZZ_TARGET(tx_pool_standard, .init = initialize_tx_pool)
         // Make sure ProcessNewPackage on one transaction works.
         // The result is not guaranteed to be the same as what is returned by ATMP.
         const auto result_package = WITH_LOCK(::cs_main,
-                                    return ProcessNewPackage(chainstate, tx_pool, {tx}, true, /*client_maxfeerate=*/{}));
+                                              return ProcessNewPackage(chainstate, tx_pool, {tx}, true, /*client_maxfeerate=*/{}));
         // If something went wrong due to a package-specific policy, it might not return a
         // validation result for the transaction.
         if (result_package.m_state.GetResult() != PackageValidationResult::PCKG_POLICY) {
@@ -406,8 +401,8 @@ FUZZ_TARGET(tx_pool, .init = initialize_tx_pool)
         }
         if (fuzzed_data_provider.ConsumeBool()) {
             const auto txid = fuzzed_data_provider.ConsumeBool() ?
-                                   mut_tx.GetHash() :
-                                   PickValue(fuzzed_data_provider, txids);
+                                  mut_tx.GetHash() :
+                                  PickValue(fuzzed_data_provider, txids);
             const auto delta = fuzzed_data_provider.ConsumeIntegralInRange<CAmount>(-50 * COIN, +50 * COIN);
             tx_pool.PrioritiseTransaction(txid.ToUint256(), delta);
         }

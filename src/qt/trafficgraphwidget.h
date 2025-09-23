@@ -5,8 +5,8 @@
 #ifndef BITCOIN_QT_TRAFFICGRAPHWIDGET_H
 #define BITCOIN_QT_TRAFFICGRAPHWIDGET_H
 
-#include <QWidget>
 #include <QQueue>
+#include <QWidget>
 
 #include <chrono>
 
@@ -22,12 +22,12 @@ class TrafficGraphWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit TrafficGraphWidget(QWidget *parent = nullptr);
-    void setClientModel(ClientModel *model);
+    explicit TrafficGraphWidget(QWidget* parent = nullptr);
+    void setClientModel(ClientModel* model);
     std::chrono::minutes getGraphRange() const;
 
 protected:
-    void paintEvent(QPaintEvent *) override;
+    void paintEvent(QPaintEvent*) override;
 
 public Q_SLOTS:
     void updateRates();
@@ -35,7 +35,7 @@ public Q_SLOTS:
     void clear();
 
 private:
-    void paintPath(QPainterPath &path, QQueue<float> &samples);
+    void paintPath(QPainterPath& path, QQueue<float>& samples);
 
     QTimer* timer{nullptr};
     float fMax{0.0f};

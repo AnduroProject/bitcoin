@@ -74,41 +74,41 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
         vToCompute.pop_back();
 
         switch (state) {
-            case ThresholdState::DEFINED: {
-                if (pindexPrev->GetMedianTimePast() >= nTimeStart) {
-                    stateNext = ThresholdState::STARTED;
-                }
-                break;
+        case ThresholdState::DEFINED: {
+            if (pindexPrev->GetMedianTimePast() >= nTimeStart) {
+                stateNext = ThresholdState::STARTED;
             }
-            case ThresholdState::STARTED: {
-                // We need to count
-                const CBlockIndex* pindexCount = pindexPrev;
-                int count = 0;
-                for (int i = 0; i < nPeriod; i++) {
-                    if (Condition(pindexCount)) {
-                        count++;
-                    }
-                    pindexCount = pindexCount->pprev;
+            break;
+        }
+        case ThresholdState::STARTED: {
+            // We need to count
+            const CBlockIndex* pindexCount = pindexPrev;
+            int count = 0;
+            for (int i = 0; i < nPeriod; i++) {
+                if (Condition(pindexCount)) {
+                    count++;
                 }
-                if (count >= nThreshold) {
-                    stateNext = ThresholdState::LOCKED_IN;
-                } else if (pindexPrev->GetMedianTimePast() >= nTimeTimeout) {
-                    stateNext = ThresholdState::FAILED;
-                }
-                break;
+                pindexCount = pindexCount->pprev;
             }
-            case ThresholdState::LOCKED_IN: {
-                // Progresses into ACTIVE provided activation height will have been reached.
-                if (pindexPrev->nHeight + 1 >= min_activation_height) {
-                    stateNext = ThresholdState::ACTIVE;
-                }
-                break;
+            if (count >= nThreshold) {
+                stateNext = ThresholdState::LOCKED_IN;
+            } else if (pindexPrev->GetMedianTimePast() >= nTimeTimeout) {
+                stateNext = ThresholdState::FAILED;
             }
-            case ThresholdState::FAILED:
-            case ThresholdState::ACTIVE: {
-                // Nothing happens, these are terminal states.
-                break;
+            break;
+        }
+        case ThresholdState::LOCKED_IN: {
+            // Progresses into ACTIVE provided activation height will have been reached.
+            if (pindexPrev->nHeight + 1 >= min_activation_height) {
+                stateNext = ThresholdState::ACTIVE;
             }
+            break;
+        }
+        case ThresholdState::FAILED:
+        case ThresholdState::ACTIVE: {
+            // Nothing happens, these are terminal states.
+            break;
+        }
         }
         cache[pindexPrev] = state = stateNext;
     }
@@ -145,11 +145,11 @@ BIP9Stats AbstractThresholdConditionChecker::GetStateStatisticsFor(const CBlockI
             if (signalling_blocks) signalling_blocks->at(blocks_in_period) = true;
         }
         currentIndex = currentIndex->pprev;
-    } while(blocks_in_period > 0);
+    } while (blocks_in_period > 0);
 
     stats.elapsed = elapsed;
     stats.count = count;
-    stats.possible = (stats.period - stats.threshold ) >= (stats.elapsed - count);
+    stats.possible = (stats.period - stats.threshold) >= (stats.elapsed - count);
 
     return stats;
 }
@@ -235,7 +235,7 @@ BIP9GBTStatus VersionBitsCache::GBTStatus(const CBlockIndex& block_index, const 
         VersionBitsConditionChecker checker(params, pos);
         ThresholdState state = checker.GetStateFor(&block_index, m_caches[pos]);
         const VBDeploymentInfo& vbdepinfo = VersionBitsDeploymentInfo[pos];
-        BIP9GBTStatus::Info gbtinfo{.bit=params.vDeployments[pos].bit, .mask=checker.Mask(), .gbt_optional_rule=vbdepinfo.gbt_optional_rule};
+        BIP9GBTStatus::Info gbtinfo{.bit = params.vDeployments[pos].bit, .mask = checker.Mask(), .gbt_optional_rule = vbdepinfo.gbt_optional_rule};
 
         switch (state) {
         case DEFINED:
@@ -307,7 +307,7 @@ private:
 
 public:
     explicit WarningBitsConditionChecker(const CChainParams& chainparams, std::array<ThresholdConditionCache, Consensus::MAX_VERSION_BITS_DEPLOYMENTS>& caches, int bit)
-    : m_params{chainparams.GetConsensus()}, m_caches{caches}, m_bit(bit)
+        : m_params{chainparams.GetConsensus()}, m_caches{caches}, m_bit(bit)
     {
         if (chainparams.IsTestChain()) {
             period = chainparams.GetConsensus().DifficultyAdjustmentInterval();

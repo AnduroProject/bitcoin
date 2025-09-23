@@ -18,7 +18,7 @@
  * Larger values reduce the asymptotic memory usage overhead, at the cost of
  * needing larger up-front allocations. The default is 4096 bytes.
  */
-template<int BITS_PER_WORD = 4096 * 8>
+template <int BITS_PER_WORD = 4096 * 8>
 class bitdeque
 {
     // Internal definitions
@@ -27,11 +27,13 @@ class bitdeque
     static_assert(BITS_PER_WORD > 0);
 
     // Forward and friend declarations of iterator types.
-    template<bool Const> class Iterator;
-    template<bool Const> friend class Iterator;
+    template <bool Const>
+    class Iterator;
+    template <bool Const>
+    friend class Iterator;
 
     /** Iterator to a bitdeque element, const or not. */
-    template<bool Const>
+    template <bool Const>
     class Iterator
     {
         using deque_iterator = std::conditional_t<Const, typename deque_type::const_iterator, typename deque_type::iterator>;
@@ -57,8 +59,10 @@ class bitdeque
         Iterator(const Iterator&) = default;
 
         /** Conversion from non-const to const iterator. */
-        template<bool ConstArg = Const, typename = std::enable_if_t<Const && ConstArg>>
-        Iterator(const Iterator<false>& x) : m_it(x.m_it), m_bitpos(x.m_bitpos) {}
+        template <bool ConstArg = Const, typename = std::enable_if_t<Const && ConstArg>>
+        Iterator(const Iterator<false>& x) : m_it(x.m_it), m_bitpos(x.m_bitpos)
+        {
+        }
 
         Iterator& operator+=(difference_type dist)
         {
@@ -92,13 +96,51 @@ class bitdeque
 
         Iterator& operator=(const Iterator&) = default;
         Iterator& operator-=(difference_type dist) { return operator+=(-dist); }
-        Iterator& operator++() { ++m_bitpos; if (m_bitpos == BITS_PER_WORD) { m_bitpos = 0; ++m_it; }; return *this; }
-        Iterator operator++(int) { auto ret{*this}; operator++(); return ret; }
-        Iterator& operator--() { if (m_bitpos == 0) { m_bitpos = BITS_PER_WORD; --m_it; }; --m_bitpos; return *this; }
-        Iterator operator--(int) { auto ret{*this}; operator--(); return ret; }
-        friend Iterator operator+(Iterator x, difference_type dist) { x += dist; return x; }
-        friend Iterator operator+(difference_type dist, Iterator x) { x += dist; return x; }
-        friend Iterator operator-(Iterator x, difference_type dist) { x -= dist; return x; }
+        Iterator& operator++()
+        {
+            ++m_bitpos;
+            if (m_bitpos == BITS_PER_WORD) {
+                m_bitpos = 0;
+                ++m_it;
+            };
+            return *this;
+        }
+        Iterator operator++(int)
+        {
+            auto ret{*this};
+            operator++();
+            return ret;
+        }
+        Iterator& operator--()
+        {
+            if (m_bitpos == 0) {
+                m_bitpos = BITS_PER_WORD;
+                --m_it;
+            };
+            --m_bitpos;
+            return *this;
+        }
+        Iterator operator--(int)
+        {
+            auto ret{*this};
+            operator--();
+            return ret;
+        }
+        friend Iterator operator+(Iterator x, difference_type dist)
+        {
+            x += dist;
+            return x;
+        }
+        friend Iterator operator+(difference_type dist, Iterator x)
+        {
+            x += dist;
+            return x;
+        }
+        friend Iterator operator-(Iterator x, difference_type dist)
+        {
+            x -= dist;
+            return x;
+        }
         friend bool operator<(const Iterator& x, const Iterator& y) { return std::tie(x.m_it, x.m_bitpos) < std::tie(y.m_it, y.m_bitpos); }
         friend bool operator>(const Iterator& x, const Iterator& y) { return std::tie(x.m_it, x.m_bitpos) > std::tie(y.m_it, y.m_bitpos); }
         friend bool operator<=(const Iterator& x, const Iterator& y) { return std::tie(x.m_it, x.m_bitpos) <= std::tie(y.m_it, y.m_bitpos); }
@@ -219,7 +261,8 @@ public:
         m_pad_begin = 0;
         m_pad_end = 0;
         if (val) {
-            for (auto& elem : m_deque) elem.flip();
+            for (auto& elem : m_deque)
+                elem.flip();
         }
         if (count % BITS_PER_WORD) {
             erase_back(BITS_PER_WORD - (count % BITS_PER_WORD));
@@ -278,7 +321,7 @@ public:
     }
 
     /** Set the container equal to the bits in [first,last). */
-    template<typename It>
+    template <typename It>
     void assign(It first, It last)
     {
         size_type count = std::distance(first, last);
@@ -308,8 +351,11 @@ public:
     }
 
     /** Construct a container containing the bits in [first,last). */
-    template<typename It>
-    bitdeque(It first, It last) { assign(first, last); }
+    template <typename It>
+    bitdeque(It first, It last)
+    {
+        assign(first, last);
+    }
 
     /** Construct a container containing the bits in ilist. */
     bitdeque(std::initializer_list<bool> ilist) { assign(ilist); }
@@ -446,11 +492,12 @@ public:
         auto it_begin = begin() + before;
         auto it = it_begin;
         auto it_end = it + count;
-        while (it != it_end) *(it++) = val;
+        while (it != it_end)
+            *(it++) = val;
         return it_begin;
     }
 
-    template<typename It>
+    template <typename It>
     iterator insert(const_iterator pos, It first, It last)
     {
         size_type before = pos - cbegin();

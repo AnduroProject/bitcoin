@@ -15,7 +15,7 @@
 #include <type_traits>
 
 const std::string CURRENCY_UNIT = "CBTC"; // One formatted unit
-const std::string CURRENCY_ATOM = "sat"; // One indivisible minimum value unit
+const std::string CURRENCY_ATOM = "sat";  // One indivisible minimum value unit
 
 /* Used to determine type of fee estimation requested */
 enum class FeeEstimateMode {
@@ -37,9 +37,10 @@ private:
 
 public:
     /** Fee rate of 0 satoshis per kvB */
-    CFeeRate() : nSatoshisPerK(0) { }
-    template<std::integral I> // Disallow silent float -> int conversion
-    explicit CFeeRate(const I _nSatoshisPerK): nSatoshisPerK(_nSatoshisPerK) {
+    CFeeRate() : nSatoshisPerK(0) {}
+    template <std::integral I> // Disallow silent float -> int conversion
+    explicit CFeeRate(const I _nSatoshisPerK) : nSatoshisPerK(_nSatoshisPerK)
+    {
     }
 
     /**
@@ -68,7 +69,11 @@ public:
     friend bool operator<=(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK <= b.nSatoshisPerK; }
     friend bool operator>=(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK >= b.nSatoshisPerK; }
     friend bool operator!=(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK != b.nSatoshisPerK; }
-    CFeeRate& operator+=(const CFeeRate& a) { nSatoshisPerK += a.nSatoshisPerK; return *this; }
+    CFeeRate& operator+=(const CFeeRate& a)
+    {
+        nSatoshisPerK += a.nSatoshisPerK;
+        return *this;
+    }
     std::string ToString(const FeeEstimateMode& fee_estimate_mode = FeeEstimateMode::BTC_KVB) const;
     friend CFeeRate operator*(const CFeeRate& f, int a) { return CFeeRate(a * f.nSatoshisPerK); }
     friend CFeeRate operator*(int a, const CFeeRate& f) { return CFeeRate(a * f.nSatoshisPerK); }

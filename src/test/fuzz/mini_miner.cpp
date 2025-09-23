@@ -6,10 +6,10 @@
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
 #include <test/fuzz/util/mempool.h>
+#include <test/util/mining.h>
 #include <test/util/script.h>
 #include <test/util/setup_common.h>
 #include <test/util/txmempool.h>
-#include <test/util/mining.h>
 
 #include <node/miner.h>
 #include <node/mini_miner.h>
@@ -65,7 +65,7 @@ FUZZ_TARGET(mini_miner, .init = initialize_miner)
         }
         CTransactionRef tx = MakeTransactionRef(mtx);
         TestMemPoolEntryHelper entry;
-        const CAmount fee{ConsumeMoney(fuzzed_data_provider, /*max=*/MAX_MONEY/100000)};
+        const CAmount fee{ConsumeMoney(fuzzed_data_provider, /*max=*/MAX_MONEY / 100000)};
         assert(MoneyRange(fee));
         AddToMempool(pool, entry.Fee(fee).FromTx(tx));
 
@@ -79,7 +79,7 @@ FUZZ_TARGET(mini_miner, .init = initialize_miner)
         if (fuzzed_data_provider.ConsumeBool() && !tx->vout.empty()) {
             // Add outpoint from this tx (may or not be spent by a later tx)
             outpoints.emplace_back(tx->GetHash(),
-                                          (uint32_t)fuzzed_data_provider.ConsumeIntegralInRange<size_t>(0, tx->vout.size()));
+                                   (uint32_t)fuzzed_data_provider.ConsumeIntegralInRange<size_t>(0, tx->vout.size()));
         } else {
             // Add some random outpoint (will be interpreted as confirmed or not yet submitted
             // to mempool).
@@ -88,10 +88,9 @@ FUZZ_TARGET(mini_miner, .init = initialize_miner)
                 outpoints.push_back(*outpoint);
             }
         }
-
     }
 
-    const CFeeRate target_feerate{CFeeRate{ConsumeMoney(fuzzed_data_provider, /*max=*/MAX_MONEY/1000)}};
+    const CFeeRate target_feerate{CFeeRate{ConsumeMoney(fuzzed_data_provider, /*max=*/MAX_MONEY / 1000)}};
     std::optional<CAmount> total_bumpfee;
     CAmount sum_fees = 0;
     {
@@ -114,7 +113,7 @@ FUZZ_TARGET(mini_miner, .init = initialize_miner)
         assert(!mini_miner.IsReadyToCalculate());
     }
     // Overlapping ancestry across multiple outpoints can only reduce the total bump fee.
-    assert (sum_fees >= *total_bumpfee);
+    assert(sum_fees >= *total_bumpfee);
 }
 
 // Test that MiniMiner and BlockAssembler build the same block given the same transactions and constraints.
@@ -163,7 +162,7 @@ FUZZ_TARGET(mini_miner_selection, .init = initialize_miner)
         // block template reaches that, but the MiniMiner will keep going.
         if (pool.GetTotalTxSize() + GetVirtualTransactionSize(*tx) >= block_adjusted_max_weight) break;
         TestMemPoolEntryHelper entry;
-        const CAmount fee{ConsumeMoney(fuzzed_data_provider, /*max=*/MAX_MONEY/100000)};
+        const CAmount fee{ConsumeMoney(fuzzed_data_provider, /*max=*/MAX_MONEY / 100000)};
         assert(MoneyRange(fee));
         AddToMempool(pool, entry.Fee(fee).FromTx(tx));
         transactions.push_back(tx);
@@ -179,7 +178,7 @@ FUZZ_TARGET(mini_miner_selection, .init = initialize_miner)
             if (!pool.GetConflictTx(coin)) outpoints.push_back(coin);
         }
     }
-    const CFeeRate target_feerate{ConsumeMoney(fuzzed_data_provider, /*max=*/MAX_MONEY/100000)};
+    const CFeeRate target_feerate{ConsumeMoney(fuzzed_data_provider, /*max=*/MAX_MONEY / 100000)};
 
     node::BlockAssembler::Options miner_options;
     miner_options.blockMinFeeRate = target_feerate;

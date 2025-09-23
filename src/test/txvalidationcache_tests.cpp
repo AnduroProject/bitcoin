@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_SUITE(txvalidationcache_tests)
 // should fail.
 // Capture this interaction with the upgraded_nop argument: set it when evaluating
 // any script flag that is implemented as an upgraded NOP code.
-static void ValidateCheckInputsForAllFlags(const CTransaction &tx, uint32_t failing_flags, bool add_to_cache, CCoinsViewCache& active_coins_tip, ValidationCache& validation_cache) EXCLUSIVE_LOCKS_REQUIRED(::cs_main)
+static void ValidateCheckInputsForAllFlags(const CTransaction& tx, uint32_t failing_flags, bool add_to_cache, CCoinsViewCache& active_coins_tip, ValidationCache& validation_cache) EXCLUSIVE_LOCKS_REQUIRED(::cs_main)
 {
     PrecomputedTransactionData txdata;
 
@@ -49,7 +49,7 @@ static void ValidateCheckInputsForAllFlags(const CTransaction &tx, uint32_t fail
         TxValidationState state;
 
         // Randomly selects flag combinations
-        uint32_t test_flags = (uint32_t) insecure_rand.randrange((SCRIPT_VERIFY_END_MARKER - 1) << 1);
+        uint32_t test_flags = (uint32_t)insecure_rand.randrange((SCRIPT_VERIFY_END_MARKER - 1) << 1);
 
         // Filter out incompatible flag choices
         if ((test_flags & SCRIPT_VERIFY_CLEANSTACK)) {

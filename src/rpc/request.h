@@ -43,7 +43,7 @@ GenerateAuthCookieResult GenerateAuthCookie(const std::optional<fs::perms>& cook
                                             std::string& pass);
 
 /** Read the RPC authentication cookie from disk */
-bool GetAuthCookie(std::string *cookie_out);
+bool GetAuthCookie(std::string* cookie_out);
 /** Delete RPC authentication cookie from disk */
 void DeleteAuthCookie();
 /** Parse JSON-RPC batch reply into a vector */
@@ -55,7 +55,9 @@ public:
     std::optional<UniValue> id = UniValue::VNULL;
     std::string strMethod;
     UniValue params;
-    enum Mode { EXECUTE, GET_HELP, GET_ARGS } mode = EXECUTE;
+    enum Mode { EXECUTE,
+                GET_HELP,
+                GET_ARGS } mode = EXECUTE;
     std::string URI;
     std::string authUser;
     std::string peerAddr;

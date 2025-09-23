@@ -12,7 +12,8 @@ extern "C" __attribute__((weak)) void __gcov_reset(void);
 extern "C" __attribute__((weak)) void __llvm_profile_reset_counters(void) {}
 extern "C" __attribute__((weak)) void __gcov_reset(void) {}
 
-void ResetCoverageCounters() {
+void ResetCoverageCounters()
+{
     // These will call the real ones if available, or our dummies if not
     __llvm_profile_reset_counters();
     __gcov_reset();

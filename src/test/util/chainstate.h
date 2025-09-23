@@ -16,7 +16,7 @@
 
 #include <univalue.h>
 
-const auto NoMalleation = [](AutoFile& file, node::SnapshotMetadata& meta){};
+const auto NoMalleation = [](AutoFile& file, node::SnapshotMetadata& meta) {};
 
 /**
  * Create and activate a UTXO snapshot, optionally providing a function to
@@ -28,7 +28,7 @@ const auto NoMalleation = [](AutoFile& file, node::SnapshotMetadata& meta){};
  * conditions that would otherwise cause shutdowns based on the IBD chainstate going
  * past the snapshot it generated.
  */
-template<typename F = decltype(NoMalleation)>
+template <typename F = decltype(NoMalleation)>
 static bool
 CreateAndActivateUTXOSnapshot(
     TestingSetup* fixture,
@@ -74,7 +74,7 @@ CreateAndActivateUTXOSnapshot(
             // This is a stripped-down version of node::LoadChainstate which
             // preserves the block index.
             LOCK(::cs_main);
-            CBlockIndex *orig_tip = node.chainman->ActiveChainstate().m_chain.Tip();
+            CBlockIndex* orig_tip = node.chainman->ActiveChainstate().m_chain.Tip();
             uint256 gen_hash = node.chainman->ActiveChainstate().m_chain[0]->GetBlockHash();
             node.chainman->ResetChainstates();
             node.chainman->InitializeChainstate(node.mempool.get());
@@ -92,7 +92,7 @@ CreateAndActivateUTXOSnapshot(
             // never-having-downloaded them in the first place.
             // TODO: perhaps we could improve this by using pruning to delete
             // these blocks instead
-            CBlockIndex *pindex = orig_tip;
+            CBlockIndex* pindex = orig_tip;
             while (pindex && pindex != chain.m_chain.Tip()) {
                 // Remove all data and validity flags by just setting
                 // BLOCK_VALID_TREE. Also reset transaction counts and sequence

@@ -41,7 +41,7 @@ bool QRImageWidget::setQR(const QString& data, const QString& text)
         return false;
     }
 
-    QRcode *code = QRcode_encodeString(data.toUtf8().constData(), 0, QR_ECLEVEL_L, QR_MODE_8, 1);
+    QRcode* code = QRcode_encodeString(data.toUtf8().constData(), 0, QR_ECLEVEL_L, QR_MODE_8, 1);
 
     if (!code) {
         setText(tr("Error encoding URI into QR Code."));
@@ -50,7 +50,7 @@ bool QRImageWidget::setQR(const QString& data, const QString& text)
 
     QImage qrImage = QImage(code->width + 8, code->width + 8, QImage::Format_RGB32);
     qrImage.fill(0xffffff);
-    unsigned char *p = code->data;
+    unsigned char* p = code->data;
     for (int y = 0; y < code->width; ++y) {
         for (int x = 0; x < code->width; ++x) {
             qrImage.setPixel(x + 4, y + 4, ((*p & 1) ? 0x0 : 0xffffff));
@@ -99,14 +99,14 @@ QImage QRImageWidget::exportImage()
     return this->pixmap(Qt::ReturnByValue).toImage();
 }
 
-void QRImageWidget::mousePressEvent(QMouseEvent *event)
+void QRImageWidget::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton && GUIUtil::HasPixmap(this)) {
         event->accept();
-        QMimeData *mimeData = new QMimeData;
+        QMimeData* mimeData = new QMimeData;
         mimeData->setImageData(exportImage());
 
-        QDrag *drag = new QDrag(this);
+        QDrag* drag = new QDrag(this);
         drag->setMimeData(mimeData);
         drag->exec();
     } else {
@@ -123,8 +123,7 @@ void QRImageWidget::saveImage()
         /*: Expanded name of the PNG file format.
             See: https://en.wikipedia.org/wiki/Portable_Network_Graphics. */
         tr("PNG Image") + QLatin1String(" (*.png)"), nullptr);
-    if (!fn.isEmpty())
-    {
+    if (!fn.isEmpty()) {
         exportImage().save(fn);
     }
 }
@@ -136,7 +135,7 @@ void QRImageWidget::copyImage()
     QApplication::clipboard()->setImage(exportImage());
 }
 
-void QRImageWidget::contextMenuEvent(QContextMenuEvent *event)
+void QRImageWidget::contextMenuEvent(QContextMenuEvent* event)
 {
     if (!GUIUtil::HasPixmap(this))
         return;

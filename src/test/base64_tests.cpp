@@ -15,10 +15,9 @@ BOOST_AUTO_TEST_SUITE(base64_tests)
 
 BOOST_AUTO_TEST_CASE(base64_testvectors)
 {
-    static const std::string vstrIn[]  = {"","f","fo","foo","foob","fooba","foobar"};
-    static const std::string vstrOut[] = {"","Zg==","Zm8=","Zm9v","Zm9vYg==","Zm9vYmE=","Zm9vYmFy"};
-    for (unsigned int i=0; i<std::size(vstrIn); i++)
-    {
+    static const std::string vstrIn[] = {"", "f", "fo", "foo", "foob", "fooba", "foobar"};
+    static const std::string vstrOut[] = {"", "Zg==", "Zm8=", "Zm9v", "Zm9vYg==", "Zm9vYmE=", "Zm9vYmFy"};
+    for (unsigned int i = 0; i < std::size(vstrIn); i++) {
         std::string strEnc = EncodeBase64(vstrIn[i]);
         BOOST_CHECK_EQUAL(strEnc, vstrOut[i]);
         auto dec = DecodeBase64(strEnc);
@@ -52,8 +51,8 @@ BOOST_AUTO_TEST_CASE(base64_padding)
     // Valid size
     BOOST_CHECK(!DecodeBase64("===="));
     BOOST_CHECK(!DecodeBase64("a==="));
-    BOOST_CHECK( DecodeBase64("YQ=="));
-    BOOST_CHECK( DecodeBase64("YWE="));
+    BOOST_CHECK(DecodeBase64("YQ=="));
+    BOOST_CHECK(DecodeBase64("YWE="));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

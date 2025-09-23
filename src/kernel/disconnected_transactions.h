@@ -34,7 +34,8 @@ static const unsigned int MAX_DISCONNECTED_TX_POOL_BYTES{20'000'000};
  * of the list. After trimming, transactions can be re-added to the mempool from the back of the
  * list to the front without running into missing inputs.
  */
-class DisconnectedBlockTransactions {
+class DisconnectedBlockTransactions
+{
 private:
     /** Cached dynamic memory usage for the `CTransactionRef`s */
     uint64_t cachedInnerUsage = 0;

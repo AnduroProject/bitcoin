@@ -30,11 +30,11 @@ public:
     [[nodiscard]] bool WriteTxs(const std::vector<std::pair<uint256, CDiskTxPos>>& v_pos);
 };
 
-TxIndex::DB::DB(size_t n_cache_size, bool f_memory, bool f_wipe) :
-    BaseIndex::DB(gArgs.GetDataDirNet() / "indexes" / "txindex", n_cache_size, f_memory, f_wipe)
-{}
+TxIndex::DB::DB(size_t n_cache_size, bool f_memory, bool f_wipe) : BaseIndex::DB(gArgs.GetDataDirNet() / "indexes" / "txindex", n_cache_size, f_memory, f_wipe)
+{
+}
 
-bool TxIndex::DB::ReadTxPos(const uint256 &txid, CDiskTxPos& pos) const
+bool TxIndex::DB::ReadTxPos(const uint256& txid, CDiskTxPos& pos) const
 {
     return Read(std::make_pair(DB_TXINDEX, txid), pos);
 }
@@ -50,7 +50,8 @@ bool TxIndex::DB::WriteTxs(const std::vector<std::pair<uint256, CDiskTxPos>>& v_
 
 TxIndex::TxIndex(std::unique_ptr<interfaces::Chain> chain, size_t n_cache_size, bool f_memory, bool f_wipe)
     : BaseIndex(std::move(chain), "txindex"), m_db(std::make_unique<TxIndex::DB>(n_cache_size, f_memory, f_wipe))
-{}
+{
+}
 
 TxIndex::~TxIndex() = default;
 

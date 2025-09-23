@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-namespace wallet{
+namespace wallet {
 static void AddTx(CWallet& wallet)
 {
     CMutableTransaction mtx;

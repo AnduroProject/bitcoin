@@ -6,18 +6,17 @@
 #ifndef BITCOIN_FEDERAITON_H
 #define BITCOIN_FEDERAITON_H
 
-#include <iostream>
+#include <array>
+#include <common/signmessage.h>
 #include <cstdio>
 #include <iostream>
+#include <key_io.h>
+#include <logging.h>
 #include <memory>
+#include <primitives/transaction.h>
 #include <stdexcept>
 #include <string>
-#include <array>
 #include <validation.h>
-#include <key_io.h>
-#include <primitives/transaction.h>
-#include <logging.h>
-#include <common/signmessage.h>
 
 /**
  *  This is call is used to receive or prepare anduro precommitment signature data along with anduro deposit and withdrawal address
@@ -25,12 +24,12 @@
 class AnduroPreCommitment
 {
 public:
-    std::string witness;  /*!< precommitment signature information  */
-    int32_t block_height; /*!< block height where the precommitment signature belong to */
-    std::string nextKeys; /*!< next key going to be included in block header */
-    int32_t nextIndex; /*!< next derivation index going to be include in block header. This index is refer back by anduro and identify the  current derivation path to be signed*/
+    std::string witness;        /*!< precommitment signature information  */
+    int32_t block_height;       /*!< block height where the precommitment signature belong to */
+    std::string nextKeys;       /*!< next key going to be included in block header */
+    int32_t nextIndex;          /*!< next derivation index going to be include in block header. This index is refer back by anduro and identify the  current derivation path to be signed*/
     std::string depositAddress; /*!< hold current deposit address from bitcoin */
-    std::string burnAddress; /*!< hold current withdrawal address from sidechain */
+    std::string burnAddress;    /*!< hold current withdrawal address from sidechain */
 
     AnduroPreCommitment()
     {
@@ -45,7 +44,8 @@ public:
      * @param[in] depositAddressIn  hold current deposit address from bitcoin
      * @param[in] burnAddressIn     hold current withdrawal address from sidechain
      */
-    AnduroPreCommitment(std::string witnessesIn, int32_t blockHeightIn, int32_t nextIndexIn, std::string nextKeysIn, std::string depositAddressIn, std::string burnAddressIn) {
+    AnduroPreCommitment(std::string witnessesIn, int32_t blockHeightIn, int32_t nextIndexIn, std::string nextKeysIn, std::string depositAddressIn, std::string burnAddressIn)
+    {
         witness = witnessesIn;
         block_height = blockHeightIn;
         nextIndex = nextIndexIn;
@@ -54,7 +54,8 @@ public:
         burnAddress = burnAddressIn;
     }
 
-    SERIALIZE_METHODS(AnduroPreCommitment, obj) {
+    SERIALIZE_METHODS(AnduroPreCommitment, obj)
+    {
         READWRITE(obj.witness, obj.block_height, obj.nextKeys, obj.nextIndex, obj.depositAddress, obj.burnAddress);
     }
 

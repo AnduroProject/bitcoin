@@ -11,6 +11,7 @@
 #include <interfaces/mining.h>
 #include <node/miner.h>
 #include <policy/policy.h>
+#include <pow.h>
 #include <test/util/random.h>
 #include <test/util/txmempool.h>
 #include <txmempool.h>
@@ -22,7 +23,6 @@
 #include <util/translation.h>
 #include <validation.h>
 #include <versionbits.h>
-#include <pow.h>
 
 #include <test/util/setup_common.h>
 
@@ -73,25 +73,7 @@ static CFeeRate blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
 constexpr static struct {
     unsigned int extranonce;
     unsigned int nonce;
-} BLOCKINFO[]{{0, 3552706918},   {500, 37506755},   {1000, 948987788}, {400, 524762339},  {800, 258510074},  {300, 102309278},
-              {1300, 54365202},  {600, 1107740426}, {1000, 203094491}, {900, 391178848},  {800, 381177271},  {600, 87188412},
-              {0, 66522866},     {800, 874942736},  {1000, 89200838},  {400, 312638088},  {400, 66263693},   {500, 924648304},
-              {400, 369913599},  {500, 47630099},   {500, 115045364},  {100, 277026602},  {1100, 809621409}, {700, 155345322},
-              {800, 943579953},  {400, 28200730},   {900, 77200495},   {0, 105935488},    {400, 698721821},  {500, 111098863},
-              {1300, 445389594}, {500, 621849894},  {1400, 56010046},  {1100, 370669776}, {1200, 380301940}, {1200, 110654905},
-              {400, 213771024},  {1500, 120014726}, {1200, 835019014}, {1500, 624817237}, {900, 1404297},    {400, 189414558},
-              {400, 293178348},  {1100, 15393789},  {600, 396764180},  {800, 1387046371}, {800, 199368303},  {700, 111496662},
-              {100, 129759616},  {200, 536577982},  {500, 125881300},  {500, 101053391},  {1200, 471590548}, {900, 86957729},
-              {1200, 179604104}, {600, 68658642},   {1000, 203295701}, {500, 139615361},  {900, 233693412},  {300, 153225163},
-              {0, 27616254},     {1200, 9856191},   {100, 220392722},  {200, 66257599},   {1100, 145489641}, {1300, 37859442},
-              {400, 5816075},    {1200, 215752117}, {1400, 32361482},  {1400, 6529223},   {500, 143332977},  {800, 878392},
-              {700, 159290408},  {400, 123197595},  {700, 43988693},   {300, 304224916},  {700, 214771621},  {1100, 274148273},
-              {400, 285632418},  {1100, 923451065}, {600, 12818092},   {1200, 736282054}, {1000, 246683167}, {600, 92950402},
-              {1400, 29223405},  {1000, 841327192}, {700, 174301283},  {1400, 214009854}, {1000, 6989517},   {1200, 278226956},
-              {700, 540219613},  {400, 93663104},   {1100, 152345635}, {1500, 464194499}, {1300, 333850111}, {600, 258311263},
-              {600, 90173162},   {1000, 33590797},  {1500, 332866027}, {100, 204704427},  {1000, 463153545}, {800, 303244785},
-              {600, 88096214},   {0, 137477892},    {1200, 195514506}, {300, 704114595},  {900, 292087369},  {1400, 758684870},
-              {1300, 163493028}, {1200, 53151293}};
+} BLOCKINFO[]{{0, 3552706918}, {500, 37506755}, {1000, 948987788}, {400, 524762339}, {800, 258510074}, {300, 102309278}, {1300, 54365202}, {600, 1107740426}, {1000, 203094491}, {900, 391178848}, {800, 381177271}, {600, 87188412}, {0, 66522866}, {800, 874942736}, {1000, 89200838}, {400, 312638088}, {400, 66263693}, {500, 924648304}, {400, 369913599}, {500, 47630099}, {500, 115045364}, {100, 277026602}, {1100, 809621409}, {700, 155345322}, {800, 943579953}, {400, 28200730}, {900, 77200495}, {0, 105935488}, {400, 698721821}, {500, 111098863}, {1300, 445389594}, {500, 621849894}, {1400, 56010046}, {1100, 370669776}, {1200, 380301940}, {1200, 110654905}, {400, 213771024}, {1500, 120014726}, {1200, 835019014}, {1500, 624817237}, {900, 1404297}, {400, 189414558}, {400, 293178348}, {1100, 15393789}, {600, 396764180}, {800, 1387046371}, {800, 199368303}, {700, 111496662}, {100, 129759616}, {200, 536577982}, {500, 125881300}, {500, 101053391}, {1200, 471590548}, {900, 86957729}, {1200, 179604104}, {600, 68658642}, {1000, 203295701}, {500, 139615361}, {900, 233693412}, {300, 153225163}, {0, 27616254}, {1200, 9856191}, {100, 220392722}, {200, 66257599}, {1100, 145489641}, {1300, 37859442}, {400, 5816075}, {1200, 215752117}, {1400, 32361482}, {1400, 6529223}, {500, 143332977}, {800, 878392}, {700, 159290408}, {400, 123197595}, {700, 43988693}, {300, 304224916}, {700, 214771621}, {1100, 274148273}, {400, 285632418}, {1100, 923451065}, {600, 12818092}, {1200, 736282054}, {1000, 246683167}, {600, 92950402}, {1400, 29223405}, {1000, 841327192}, {700, 174301283}, {1400, 214009854}, {1000, 6989517}, {1200, 278226956}, {700, 540219613}, {400, 93663104}, {1100, 152345635}, {1500, 464194499}, {1300, 333850111}, {600, 258311263}, {600, 90173162}, {1000, 33590797}, {1500, 332866027}, {100, 204704427}, {1000, 463153545}, {800, 303244785}, {600, 88096214}, {0, 137477892}, {1200, 195514506}, {300, 704114595}, {900, 292087369}, {1400, 758684870}, {1300, 163493028}, {1200, 53151293}};
 
 static std::unique_ptr<CBlockIndex> CreateBlockIndex(int nHeight, CBlockIndex* active_chain_tip) EXCLUSIVE_LOCKS_REQUIRED(cs_main)
 {
@@ -176,7 +158,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
 
     // Calculate a fee on child transaction that will put the package just
     // below the block min tx fee (assuming 1 child tx of the same size).
-    CAmount feeToUse = blockMinFeeRate.GetFee(2*freeTxSize) - 1;
+    CAmount feeToUse = blockMinFeeRate.GetFee(2 * freeTxSize) - 1;
 
     tx.vin[0].prevout.hash = hashFreeTx;
     tx.vout[0].nValue = 5000000000LL - 1000 - 50000 - feeToUse;
@@ -190,7 +172,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     block = block_template->getBlock();
     CAuxPow::initAuxPow(block);
     // Verify that the free tx and the low fee tx didn't get selected
-    for (size_t i=0; i<block.vtx.size(); ++i) {
+    for (size_t i = 0; i < block.vtx.size(); ++i) {
         BOOST_CHECK(block.vtx[i]->GetHash() != hashFreeTx);
         BOOST_CHECK(block.vtx[i]->GetHash() != hashLowFeeTx);
     }
@@ -234,7 +216,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     block = block_template->getBlock();
     CAuxPow::initAuxPow(block);
     // Verify that this tx isn't selected.
-    for (size_t i=0; i<block.vtx.size(); ++i) {
+    for (size_t i = 0; i < block.vtx.size(); ++i) {
         BOOST_CHECK(block.vtx[i]->GetHash() != hashFreeTx2);
         BOOST_CHECK(block.vtx[i]->GetHash() != hashLowFeeTx2);
     }
@@ -481,13 +463,13 @@ void MinerTestingSetup::TestBasicMining(const CScript& scriptPubKey, const std::
     tx.vin[0].nSequence = m_node.chainman->ActiveChain().Tip()->nHeight + 1; // txFirst[0] is the 2nd block
     prevheights[0] = baseheight + 1;
     tx.vout.resize(1);
-    tx.vout[0].nValue = BLOCKSUBSIDY-HIGHFEE;
+    tx.vout[0].nValue = BLOCKSUBSIDY - HIGHFEE;
     tx.vout[0].scriptPubKey = CScript() << OP_1;
     tx.nLockTime = 0;
     hash = tx.GetHash();
     AddToMempool(tx_mempool, entry.Fee(HIGHFEE).Time(Now<NodeSeconds>()).SpendsCoinbase(true).FromTx(tx));
     BOOST_CHECK(CheckFinalTxAtTip(*Assert(m_node.chainman->ActiveChain().Tip()), CTransaction{tx})); // Locktime passes
-    BOOST_CHECK(!TestSequenceLocks(CTransaction{tx}, tx_mempool)); // Sequence locks fail
+    BOOST_CHECK(!TestSequenceLocks(CTransaction{tx}, tx_mempool));                                   // Sequence locks fail
 
     {
         CBlockIndex* active_chain_tip = m_node.chainman->ActiveChain().Tip();
@@ -496,12 +478,12 @@ void MinerTestingSetup::TestBasicMining(const CScript& scriptPubKey, const std::
 
     // relative time locked
     tx.vin[0].prevout.hash = txFirst[1]->GetHash();
-    tx.vin[0].nSequence = CTxIn::SEQUENCE_LOCKTIME_TYPE_FLAG | (((m_node.chainman->ActiveChain().Tip()->GetMedianTimePast()+1-m_node.chainman->ActiveChain()[1]->GetMedianTimePast()) >> CTxIn::SEQUENCE_LOCKTIME_GRANULARITY) + 1); // txFirst[1] is the 3rd block
+    tx.vin[0].nSequence = CTxIn::SEQUENCE_LOCKTIME_TYPE_FLAG | (((m_node.chainman->ActiveChain().Tip()->GetMedianTimePast() + 1 - m_node.chainman->ActiveChain()[1]->GetMedianTimePast()) >> CTxIn::SEQUENCE_LOCKTIME_GRANULARITY) + 1); // txFirst[1] is the 3rd block
     prevheights[0] = baseheight + 2;
     hash = tx.GetHash();
     AddToMempool(tx_mempool, entry.Time(Now<NodeSeconds>()).FromTx(tx));
     BOOST_CHECK(CheckFinalTxAtTip(*Assert(m_node.chainman->ActiveChain().Tip()), CTransaction{tx})); // Locktime passes
-    BOOST_CHECK(!TestSequenceLocks(CTransaction{tx}, tx_mempool)); // Sequence locks fail
+    BOOST_CHECK(!TestSequenceLocks(CTransaction{tx}, tx_mempool));                                   // Sequence locks fail
 
     const int SEQUENCE_LOCK_TIME = 512; // Sequence locks pass 512 seconds later
     for (int i = 0; i < CBlockIndex::nMedianTimeSpan; ++i)
@@ -523,8 +505,8 @@ void MinerTestingSetup::TestBasicMining(const CScript& scriptPubKey, const std::
     tx.nLockTime = m_node.chainman->ActiveChain().Tip()->nHeight + 1;
     hash = tx.GetHash();
     AddToMempool(tx_mempool, entry.Time(Now<NodeSeconds>()).FromTx(tx));
-    BOOST_CHECK(!CheckFinalTxAtTip(*Assert(m_node.chainman->ActiveChain().Tip()), CTransaction{tx})); // Locktime fails
-    BOOST_CHECK(TestSequenceLocks(CTransaction{tx}, tx_mempool)); // Sequence locks pass
+    BOOST_CHECK(!CheckFinalTxAtTip(*Assert(m_node.chainman->ActiveChain().Tip()), CTransaction{tx}));                                                       // Locktime fails
+    BOOST_CHECK(TestSequenceLocks(CTransaction{tx}, tx_mempool));                                                                                           // Sequence locks pass
     BOOST_CHECK(IsFinalTx(CTransaction(tx), m_node.chainman->ActiveChain().Tip()->nHeight + 2, m_node.chainman->ActiveChain().Tip()->GetMedianTimePast())); // Locktime passes on 2nd block
 
     // ensure tx is final for a specific case where there is no locktime and block height is zero
@@ -538,8 +520,8 @@ void MinerTestingSetup::TestBasicMining(const CScript& scriptPubKey, const std::
     prevheights[0] = baseheight + 4;
     hash = tx.GetHash();
     AddToMempool(tx_mempool, entry.Time(Now<NodeSeconds>()).FromTx(tx));
-    BOOST_CHECK(!CheckFinalTxAtTip(*Assert(m_node.chainman->ActiveChain().Tip()), CTransaction{tx})); // Locktime fails
-    BOOST_CHECK(TestSequenceLocks(CTransaction{tx}, tx_mempool)); // Sequence locks pass
+    BOOST_CHECK(!CheckFinalTxAtTip(*Assert(m_node.chainman->ActiveChain().Tip()), CTransaction{tx}));                                                           // Locktime fails
+    BOOST_CHECK(TestSequenceLocks(CTransaction{tx}, tx_mempool));                                                                                               // Sequence locks pass
     BOOST_CHECK(IsFinalTx(CTransaction(tx), m_node.chainman->ActiveChain().Tip()->nHeight + 2, m_node.chainman->ActiveChain().Tip()->GetMedianTimePast() + 1)); // Locktime passes 1 second later
 
     // mempool-dependent transactions (not added)
@@ -548,7 +530,7 @@ void MinerTestingSetup::TestBasicMining(const CScript& scriptPubKey, const std::
     tx.nLockTime = 0;
     tx.vin[0].nSequence = 0;
     BOOST_CHECK(CheckFinalTxAtTip(*Assert(m_node.chainman->ActiveChain().Tip()), CTransaction{tx})); // Locktime passes
-    BOOST_CHECK(TestSequenceLocks(CTransaction{tx}, tx_mempool)); // Sequence locks pass
+    BOOST_CHECK(TestSequenceLocks(CTransaction{tx}, tx_mempool));                                    // Sequence locks pass
     tx.vin[0].nSequence = 1;
     BOOST_CHECK(!TestSequenceLocks(CTransaction{tx}, tx_mempool)); // Sequence locks fail
     tx.vin[0].nSequence = CTxIn::SEQUENCE_LOCKTIME_TYPE_FLAG;
@@ -660,7 +642,7 @@ void MinerTestingSetup::TestPrioritisedMining(const CScript& scriptPubKey, const
     BOOST_CHECK(block.vtx[3]->GetHash() == hashParentTx);
     BOOST_CHECK(block.vtx[4]->GetHash() == hashPrioritsedChild);
     BOOST_CHECK(block.vtx[5]->GetHash() == hashFreeChild);
-    for (size_t i=0; i<block.vtx.size(); ++i) {
+    for (size_t i = 0; i < block.vtx.size(); ++i) {
         // The FreeParent and FreeChild's prioritisations should not impact the child.
         BOOST_CHECK(block.vtx[i]->GetHash() != hashFreeGrandchild);
         // De-prioritised transaction should not be included.

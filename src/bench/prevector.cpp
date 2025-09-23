@@ -12,8 +12,7 @@
 #include <type_traits>
 #include <vector>
 
-struct nontrivial_t
-{
+struct nontrivial_t {
     int x{-1};
     nontrivial_t() = default;
     SERIALIZE_METHODS(nontrivial_t, obj) { READWRITE(obj.x); }
@@ -111,16 +110,16 @@ static void PrevectorFillVectorIndirect(benchmark::Bench& bench)
     });
 }
 
-#define PREVECTOR_TEST(name)                                         \
-    static void Prevector##name##Nontrivial(benchmark::Bench& bench) \
-    {                                                                \
-        Prevector##name<nontrivial_t>(bench);                        \
-    }                                                                \
-    BENCHMARK(Prevector##name##Nontrivial, benchmark::PriorityLevel::HIGH);         \
-    static void Prevector##name##Trivial(benchmark::Bench& bench)    \
-    {                                                                \
-        Prevector##name<trivial_t>(bench);                           \
-    }                                                                \
+#define PREVECTOR_TEST(name)                                                \
+    static void Prevector##name##Nontrivial(benchmark::Bench& bench)        \
+    {                                                                       \
+        Prevector##name<nontrivial_t>(bench);                               \
+    }                                                                       \
+    BENCHMARK(Prevector##name##Nontrivial, benchmark::PriorityLevel::HIGH); \
+    static void Prevector##name##Trivial(benchmark::Bench& bench)           \
+    {                                                                       \
+        Prevector##name<trivial_t>(bench);                                  \
+    }                                                                       \
     BENCHMARK(Prevector##name##Trivial, benchmark::PriorityLevel::HIGH);
 
 PREVECTOR_TEST(Clear)

@@ -129,11 +129,11 @@ bool CoinStatsIndex::CustomAppend(const interfaces::BlockInfo& block)
         uint256 expected_block_hash{*Assert(block.prev_hash)};
         if (read_out.first != expected_block_hash) {
             LogWarning("previous block header belongs to unexpected block %s; expected %s",
-                      read_out.first.ToString(), expected_block_hash.ToString());
+                       read_out.first.ToString(), expected_block_hash.ToString());
 
             if (!m_db->Read(DBHashKey(expected_block_hash), read_out)) {
                 LogError("previous block header not found; expected %s",
-                          expected_block_hash.ToString());
+                         expected_block_hash.ToString());
                 return false;
             }
         }
@@ -152,7 +152,7 @@ bool CoinStatsIndex::CustomAppend(const interfaces::BlockInfo& block)
 
             for (uint32_t j = 0; j < tx->vout.size(); ++j) {
                 const CTxOut& out{tx->vout[j]};
-                Coin coin{out, block.height, tx->IsCoinBase(),false, false, false, false, 0};
+                Coin coin{out, block.height, tx->IsCoinBase(), false, false, false, false, 0};
                 COutPoint outpoint{tx->GetHash(), j};
 
                 // Skip unspendable coins
@@ -171,10 +171,10 @@ bool CoinStatsIndex::CustomAppend(const interfaces::BlockInfo& block)
                 }
 
                 ++m_transaction_output_count;
-                if(!coin.IsBitAsset()) {
-                   m_total_amount += coin.out.nValue;
+                if (!coin.IsBitAsset()) {
+                    m_total_amount += coin.out.nValue;
                 } else {
-                    if(!coin.IsBitAssetController()) {
+                    if (!coin.IsBitAssetController()) {
                         m_total_assets += coin.out.nValue;
                     }
                 }
@@ -194,10 +194,10 @@ bool CoinStatsIndex::CustomAppend(const interfaces::BlockInfo& block)
                     m_total_prevout_spent_amount += coin.out.nValue;
 
                     --m_transaction_output_count;
-                    if(!coin.IsBitAsset()) {
-                       m_total_amount -= coin.out.nValue;
+                    if (!coin.IsBitAsset()) {
+                        m_total_amount -= coin.out.nValue;
                     } else {
-                        if(!coin.IsBitAssetController()) {
+                        if (!coin.IsBitAssetController()) {
                             m_total_assets -= coin.out.nValue;
                         }
                     }
@@ -342,7 +342,7 @@ bool CoinStatsIndex::CustomInit(const std::optional<interfaces::BlockRef>& block
         // failure, and starting the index would cause further corruption.
         if (m_db->Exists(DB_MUHASH)) {
             LogError("Cannot read current %s state; index may be corrupted",
-                      GetName());
+                     GetName());
             return false;
         }
     }
@@ -351,7 +351,7 @@ bool CoinStatsIndex::CustomInit(const std::optional<interfaces::BlockRef>& block
         DBVal entry;
         if (!LookUpOne(*m_db, *block, entry)) {
             LogError("Cannot read current %s state; index may be corrupted",
-                      GetName());
+                     GetName());
             return false;
         }
 
@@ -359,7 +359,7 @@ bool CoinStatsIndex::CustomInit(const std::optional<interfaces::BlockRef>& block
         m_muhash.Finalize(out);
         if (entry.muhash != out) {
             LogError("Cannot read current %s state; index may be corrupted",
-                      GetName());
+                     GetName());
             return false;
         }
 
@@ -415,11 +415,11 @@ bool CoinStatsIndex::ReverseBlock(const interfaces::BlockInfo& block)
         uint256 expected_block_hash{*block.prev_hash};
         if (read_out.first != expected_block_hash) {
             LogWarning("previous block header belongs to unexpected block %s; expected %s",
-                      read_out.first.ToString(), expected_block_hash.ToString());
+                       read_out.first.ToString(), expected_block_hash.ToString());
 
             if (!m_db->Read(DBHashKey(expected_block_hash), read_out)) {
                 LogError("previous block header not found; expected %s",
-                          expected_block_hash.ToString());
+                         expected_block_hash.ToString());
                 return false;
             }
         }
@@ -434,7 +434,7 @@ bool CoinStatsIndex::ReverseBlock(const interfaces::BlockInfo& block)
         for (uint32_t j = 0; j < tx->vout.size(); ++j) {
             const CTxOut& out{tx->vout[j]};
             COutPoint outpoint{tx->GetHash(), j};
-            Coin coin{out, block.height, tx->IsCoinBase(),false, false, false, false, 0};
+            Coin coin{out, block.height, tx->IsCoinBase(), false, false, false, false, 0};
 
             // Skip unspendable coins
             if (coin.out.scriptPubKey.IsUnspendable()) {
@@ -452,11 +452,11 @@ bool CoinStatsIndex::ReverseBlock(const interfaces::BlockInfo& block)
             }
 
             --m_transaction_output_count;
-            if(!coin.IsBitAsset()) {
-               m_total_amount -= coin.out.nValue;
+            if (!coin.IsBitAsset()) {
+                m_total_amount -= coin.out.nValue;
             } else {
-                if(!coin.IsBitAssetController()) {
-                   m_total_assets -= coin.out.nValue;
+                if (!coin.IsBitAssetController()) {
+                    m_total_assets -= coin.out.nValue;
                 }
             }
             m_bogo_size -= GetBogoSize(coin.out.scriptPubKey);
@@ -475,12 +475,12 @@ bool CoinStatsIndex::ReverseBlock(const interfaces::BlockInfo& block)
                 m_total_prevout_spent_amount -= coin.out.nValue;
 
                 m_transaction_output_count++;
-                if(!coin.IsBitAsset()) {
-                   m_total_amount += coin.out.nValue;
+                if (!coin.IsBitAsset()) {
+                    m_total_amount += coin.out.nValue;
                 } else {
-                   if(!coin.IsBitAssetController()) {
+                    if (!coin.IsBitAssetController()) {
                         m_total_assets += coin.out.nValue;
-                   }
+                    }
                 }
                 m_bogo_size += GetBogoSize(coin.out.scriptPubKey);
             }

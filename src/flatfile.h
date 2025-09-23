@@ -11,8 +11,7 @@
 #include <serialize.h>
 #include <util/fs.h>
 
-struct FlatFilePos
-{
+struct FlatFilePos {
     int nFile{-1};
     unsigned int nPos{0};
 
@@ -20,16 +19,18 @@ struct FlatFilePos
 
     FlatFilePos() = default;
 
-    FlatFilePos(int nFileIn, unsigned int nPosIn) :
-        nFile(nFileIn),
-        nPos(nPosIn)
-    {}
+    FlatFilePos(int nFileIn, unsigned int nPosIn) : nFile(nFileIn),
+                                                    nPos(nPosIn)
+    {
+    }
 
-    friend bool operator==(const FlatFilePos &a, const FlatFilePos &b) {
+    friend bool operator==(const FlatFilePos& a, const FlatFilePos& b)
+    {
         return (a.nFile == b.nFile && a.nPos == b.nPos);
     }
 
-    friend bool operator!=(const FlatFilePos &a, const FlatFilePos &b) {
+    friend bool operator!=(const FlatFilePos& a, const FlatFilePos& b)
+    {
         return !(a == b);
     }
 

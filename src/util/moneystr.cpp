@@ -31,10 +31,10 @@ std::string FormatMoney(const CAmount n)
 
     // Right-trim excess zeros before the decimal point:
     int nTrim = 0;
-    for (int i = str.size()-1; (str[i] == '0' && IsDigit(str[i-2])); --i)
+    for (int i = str.size() - 1; (str[i] == '0' && IsDigit(str[i - 2])); --i)
         ++nTrim;
     if (nTrim)
-        str.erase(str.size()-nTrim, nTrim);
+        str.erase(str.size() - nTrim, nTrim);
 
     if (n < 0)
         str.insert(uint32_t{0}, 1, '-');
@@ -55,14 +55,11 @@ std::optional<CAmount> ParseMoney(const std::string& money_string)
     std::string strWhole;
     int64_t nUnits = 0;
     const char* p = str.c_str();
-    for (; *p; p++)
-    {
-        if (*p == '.')
-        {
+    for (; *p; p++) {
+        if (*p == '.') {
             p++;
             int64_t nMult = COIN / 10;
-            while (IsDigit(*p) && (nMult > 0))
-            {
+            while (IsDigit(*p) && (nMult > 0)) {
                 nUnits += nMult * (*p++ - '0');
                 nMult /= 10;
             }

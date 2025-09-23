@@ -172,9 +172,9 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
 
         // If the prefix of data matches either the script or pubkey prefix, the length must have been wrong
         if ((data.size() >= script_prefix.size() &&
-                std::equal(script_prefix.begin(), script_prefix.end(), data.begin())) ||
+             std::equal(script_prefix.begin(), script_prefix.end(), data.begin())) ||
             (data.size() >= pubkey_prefix.size() &&
-                std::equal(pubkey_prefix.begin(), pubkey_prefix.end(), data.begin()))) {
+             std::equal(pubkey_prefix.begin(), pubkey_prefix.end(), data.begin()))) {
             error_str = "Invalid length for Base58 address (P2PKH or P2SH)";
         } else {
             error_str = "Invalid or unsupported Base58-encoded address.";
@@ -214,7 +214,6 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
         // The rest of the symbols are converted witness program bytes.
         data.reserve(((dec.data.size() - 1) * 5) / 8);
         if (ConvertBits<5, 8, false>([&](unsigned char c) { data.push_back(c); }, dec.data.begin() + 1, dec.data.end())) {
-
             std::string_view byte_str{data.size() == 1 ? "byte" : "bytes"};
 
             if (version == 0) {
@@ -273,7 +272,6 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
 }
 
 
-
 CTxDestination ParentDecodeDestination(const std::string& str, const CChainParams& params, std::string& error_str, std::vector<int>* error_locations)
 {
     std::vector<unsigned char> data;
@@ -302,9 +300,9 @@ CTxDestination ParentDecodeDestination(const std::string& str, const CChainParam
 
         // If the prefix of data matches either the script or pubkey prefix, the length must have been wrong
         if ((data.size() >= script_prefix.size() &&
-                std::equal(script_prefix.begin(), script_prefix.end(), data.begin())) ||
+             std::equal(script_prefix.begin(), script_prefix.end(), data.begin())) ||
             (data.size() >= pubkey_prefix.size() &&
-                std::equal(pubkey_prefix.begin(), pubkey_prefix.end(), data.begin()))) {
+             std::equal(pubkey_prefix.begin(), pubkey_prefix.end(), data.begin()))) {
             error_str = "Invalid length for Base58 address (P2PKH or P2SH)";
         } else {
             error_str = "Invalid or unsupported Base58-encoded address.";
@@ -344,7 +342,6 @@ CTxDestination ParentDecodeDestination(const std::string& str, const CChainParam
         // The rest of the symbols are converted witness program bytes.
         data.reserve(((dec.data.size() - 1) * 5) / 8);
         if (ConvertBits<5, 8, false>([&](unsigned char c) { data.push_back(c); }, dec.data.begin() + 1, dec.data.end())) {
-
             std::string_view byte_str{data.size() == 1 ? "byte" : "bytes"};
 
             if (version == 0) {

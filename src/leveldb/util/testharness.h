@@ -5,10 +5,9 @@
 #ifndef STORAGE_LEVELDB_UTIL_TESTHARNESS_H_
 #define STORAGE_LEVELDB_UTIL_TESTHARNESS_H_
 
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <sstream>
 
 #include "leveldb/status.h"
 

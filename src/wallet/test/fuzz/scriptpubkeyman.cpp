@@ -57,7 +57,7 @@ void initialize_spkm()
  */
 static bool TooDeepDerivPath(std::string_view desc)
 {
-    const FuzzBufferType desc_buf{reinterpret_cast<const unsigned char *>(desc.data()), desc.size()};
+    const FuzzBufferType desc_buf{reinterpret_cast<const unsigned char*>(desc.data()), desc.size()};
     return HasDeepDerivPath(desc_buf);
 }
 
@@ -119,7 +119,8 @@ FUZZ_TARGET(scriptpubkeyman, .init = initialize_spkm)
     }
 
     bool good_data{true};
-    LIMITED_WHILE(good_data && fuzzed_data_provider.ConsumeBool(), 20) {
+    LIMITED_WHILE(good_data && fuzzed_data_provider.ConsumeBool(), 20)
+    {
         CallOneOf(
             fuzzed_data_provider,
             [&] {
@@ -191,12 +192,11 @@ FUZZ_TARGET(scriptpubkeyman, .init = initialize_spkm)
                 const PrecomputedTransactionData txdata{PrecomputePSBTData(psbt)};
                 std::optional<int> sighash_type{fuzzed_data_provider.ConsumeIntegralInRange<int>(0, 151)};
                 if (sighash_type == 151) sighash_type = std::nullopt;
-                auto sign  = fuzzed_data_provider.ConsumeBool();
+                auto sign = fuzzed_data_provider.ConsumeBool();
                 auto bip32derivs = fuzzed_data_provider.ConsumeBool();
                 auto finalize = fuzzed_data_provider.ConsumeBool();
                 (void)spk_manager->FillPSBT(psbt, txdata, sighash_type, sign, bip32derivs, nullptr, finalize);
-            }
-        );
+            });
     }
 
     std::string descriptor;

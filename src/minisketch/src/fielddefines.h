@@ -405,14 +405,14 @@ Default: All fields enabled
 #endif
 #endif
 
-#if !defined(ENABLE_FIELD_INT_2) && \
-    !defined(ENABLE_FIELD_INT_3) && \
-    !defined(ENABLE_FIELD_INT_4) && \
-    !defined(ENABLE_FIELD_INT_5) && \
-    !defined(ENABLE_FIELD_INT_6) && \
-    !defined(ENABLE_FIELD_INT_7) && \
-    !defined(ENABLE_FIELD_INT_8) && \
-    !defined(ENABLE_FIELD_INT_9) && \
+#if !defined(ENABLE_FIELD_INT_2) &&  \
+    !defined(ENABLE_FIELD_INT_3) &&  \
+    !defined(ENABLE_FIELD_INT_4) &&  \
+    !defined(ENABLE_FIELD_INT_5) &&  \
+    !defined(ENABLE_FIELD_INT_6) &&  \
+    !defined(ENABLE_FIELD_INT_7) &&  \
+    !defined(ENABLE_FIELD_INT_8) &&  \
+    !defined(ENABLE_FIELD_INT_9) &&  \
     !defined(ENABLE_FIELD_INT_10) && \
     !defined(ENABLE_FIELD_INT_11) && \
     !defined(ENABLE_FIELD_INT_12) && \
@@ -481,7 +481,7 @@ Default: All fields enabled
 #define ENABLE_FIELD_BYTES_INT_1
 #endif
 
-#if defined(ENABLE_FIELD_INT_9) || \
+#if defined(ENABLE_FIELD_INT_9) ||  \
     defined(ENABLE_FIELD_INT_10) || \
     defined(ENABLE_FIELD_INT_11) || \
     defined(ENABLE_FIELD_INT_12) || \

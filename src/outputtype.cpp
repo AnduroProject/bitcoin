@@ -72,12 +72,14 @@ CTxDestination AddAndGetDestinationForScript(FlatSigningProvider& keystore, cons
         }
     }
     case OutputType::BECH32M:
-    case OutputType::UNKNOWN: {} // This function should not be used for BECH32M or UNKNOWN, so let it assert
+    case OutputType::UNKNOWN: {
+    } // This function should not be used for BECH32M or UNKNOWN, so let it assert
     } // no default case, so the compiler can warn about missing cases
     assert(false);
 }
 
-std::optional<OutputType> OutputTypeFromDestination(const CTxDestination& dest) {
+std::optional<OutputType> OutputTypeFromDestination(const CTxDestination& dest)
+{
     if (std::holds_alternative<PKHash>(dest) ||
         std::holds_alternative<ScriptHash>(dest)) {
         return OutputType::LEGACY;

@@ -31,8 +31,9 @@ public:
     explicit SQLiteCursor() = default;
     explicit SQLiteCursor(std::vector<std::byte> start_range, std::vector<std::byte> end_range)
         : m_prefix_range_start(std::move(start_range)),
-        m_prefix_range_end(std::move(end_range))
-    {}
+          m_prefix_range_end(std::move(end_range))
+    {
+    }
     ~SQLiteCursor() override;
 
     Status Next(DataStream& key, DataStream& value) override;

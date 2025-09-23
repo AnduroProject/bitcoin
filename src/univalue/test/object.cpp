@@ -16,21 +16,23 @@
 
 #define BOOST_CHECK(expr) assert(expr)
 #define BOOST_CHECK_EQUAL(v1, v2) assert((v1) == (v2))
-#define BOOST_CHECK_THROW(stmt, excMatch) { \
-        try { \
-            (stmt); \
-            assert(0 && "No exception caught"); \
-        } catch (excMatch&) { \
-        } catch (...) { \
+#define BOOST_CHECK_THROW(stmt, excMatch)          \
+    {                                              \
+        try {                                      \
+            (stmt);                                \
+            assert(0 && "No exception caught");    \
+        } catch (excMatch&) {                      \
+        } catch (...) {                            \
             assert(0 && "Wrong exception caught"); \
-        } \
+        }                                          \
     }
-#define BOOST_CHECK_NO_THROW(stmt) { \
-        try { \
-            (stmt); \
-        } catch (...) { \
-            assert(0); \
-        } \
+#define BOOST_CHECK_NO_THROW(stmt) \
+    {                              \
+        try {                      \
+            (stmt);                \
+        } catch (...) {            \
+            assert(0);             \
+        }                          \
     }
 
 void univalue_constructor()
@@ -75,7 +77,7 @@ void univalue_constructor()
     BOOST_CHECK(v8.isStr());
     BOOST_CHECK_EQUAL(v8.getValStr(), "yawn");
 
-    const char *vcs = "zappa";
+    const char* vcs = "zappa";
     UniValue v9(vcs);
     BOOST_CHECK(v9.isStr());
     BOOST_CHECK_EQUAL(v9.getValStr(), "zappa");
@@ -217,7 +219,7 @@ void univalue_array()
     std::string vStr("zippy");
     arr.push_back(vStr);
 
-    const char *s = "pippy";
+    const char* s = "pippy";
     arr.push_back(s);
 
     std::vector<UniValue> vec;
@@ -375,15 +377,14 @@ void univalue_object()
 
     obj.pushKV("name", "foo bar");
 
-    std::map<std::string,UniValue> kv;
+    std::map<std::string, UniValue> kv;
     obj.getObjMap(kv);
     BOOST_CHECK_EQUAL(kv["age"].getValStr(), "43");
     BOOST_CHECK_EQUAL(kv["name"].getValStr(), "foo bar");
-
 }
 
-static const char *json1 =
-"[1.10000000,{\"key1\":\"str\\u0000\",\"key2\":800,\"key3\":{\"name\":\"martian http://test.com\"}}]";
+static const char* json1 =
+    "[1.10000000,{\"key1\":\"str\\u0000\",\"key2\":800,\"key3\":{\"name\":\"martian http://test.com\"}}]";
 
 void univalue_readwrite()
 {
@@ -423,7 +424,7 @@ void univalue_readwrite()
     BOOST_CHECK(v.read("1.0 ") && (v.get_real() == 1.0));
     BOOST_CHECK(v.read("0.00000000000000000000000000000000000001e+30 "));
 
-    BOOST_CHECK(!v.read(".19e-6")); //should fail, missing leading 0, therefore invalid JSON
+    BOOST_CHECK(!v.read(".19e-6")); // should fail, missing leading 0, therefore invalid JSON
     // Invalid, initial garbage
     BOOST_CHECK(!v.read("[1.0"));
     BOOST_CHECK(!v.read("a1.0"));

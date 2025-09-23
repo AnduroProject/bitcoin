@@ -10,18 +10,19 @@
 namespace bitcoin {
 
 // Warn about any thread_local variable with a non-trivial destructor.
-class NonTrivialThreadLocal final : public clang::tidy::ClangTidyCheck
-{
+class NonTrivialThreadLocal final : public clang::tidy::ClangTidyCheck {
 public:
-    NonTrivialThreadLocal(clang::StringRef Name, clang::tidy::ClangTidyContext* Context)
-        : clang::tidy::ClangTidyCheck(Name, Context) {}
+  NonTrivialThreadLocal(clang::StringRef Name,
+                        clang::tidy::ClangTidyContext *Context)
+      : clang::tidy::ClangTidyCheck(Name, Context) {}
 
-    bool isLanguageVersionSupported(const clang::LangOptions& LangOpts) const override
-    {
-        return LangOpts.CPlusPlus;
-    }
-    void registerMatchers(clang::ast_matchers::MatchFinder* Finder) override;
-    void check(const clang::ast_matchers::MatchFinder::MatchResult& Result) override;
+  bool isLanguageVersionSupported(
+      const clang::LangOptions &LangOpts) const override {
+    return LangOpts.CPlusPlus;
+  }
+  void registerMatchers(clang::ast_matchers::MatchFinder *Finder) override;
+  void
+  check(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
 } // namespace bitcoin

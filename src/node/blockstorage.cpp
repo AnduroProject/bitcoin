@@ -121,24 +121,24 @@ bool BlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, s
             if (pcursor->GetValue(diskindex)) {
                 // Construct block index object
                 CBlockIndex* pindexNew = insertBlockIndex(diskindex.ConstructBlockHash());
-                pindexNew->pprev          = insertBlockIndex(diskindex.hashPrev);
-                pindexNew->nHeight        = diskindex.nHeight;
-                pindexNew->nFile          = diskindex.nFile;
-                pindexNew->nDataPos       = diskindex.nDataPos;
-                pindexNew->nUndoPos       = diskindex.nUndoPos;
-                pindexNew->nVersion       = diskindex.nVersion;
+                pindexNew->pprev = insertBlockIndex(diskindex.hashPrev);
+                pindexNew->nHeight = diskindex.nHeight;
+                pindexNew->nFile = diskindex.nFile;
+                pindexNew->nDataPos = diskindex.nDataPos;
+                pindexNew->nUndoPos = diskindex.nUndoPos;
+                pindexNew->nVersion = diskindex.nVersion;
                 pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
-                pindexNew->nTime          = diskindex.nTime;
-                pindexNew->nBits          = diskindex.nBits;
-                pindexNew->nNonce         = diskindex.nNonce;
-                pindexNew->nStatus        = diskindex.nStatus;
-                pindexNew->nTx            = diskindex.nTx;
+                pindexNew->nTime = diskindex.nTime;
+                pindexNew->nBits = diskindex.nBits;
+                pindexNew->nNonce = diskindex.nNonce;
+                pindexNew->nStatus = diskindex.nStatus;
+                pindexNew->nTx = diskindex.nTx;
 
                 /* Bitcoin checks the PoW here.  We don't do this because
                    the CDiskBlockIndex does not contain the auxpow.
                    This check isn't important, since the data on disk should
                    already be valid and can be trusted.  */
-                   
+
                 pcursor->Next();
             } else {
                 LogError("%s: failed to read value\n", __func__);
@@ -299,7 +299,7 @@ void BlockManager::FindFilesToPruneManual(
         count++;
     }
     LogInfo("[%s] Prune (Manual): prune_height=%d removed %d blk/rev pairs",
-        chain.GetRole(), last_block_can_prune, count);
+            chain.GetRole(), last_block_can_prune, count);
 }
 
 void BlockManager::FindFilesToPrune(
@@ -339,7 +339,7 @@ void BlockManager::FindFilesToPrune(
         const auto chain_tip_height = chain.m_chain.Height();
         if (chainman.IsInitialBlockDownload() && target_sync_height > (uint64_t)chain_tip_height) {
             // Since this is only relevant during IBD, we assume blocks are at least 1 MB on average
-            static constexpr uint64_t average_block_size = 1000000;  /* 1 MB */
+            static constexpr uint64_t average_block_size = 1000000; /* 1 MB */
             const uint64_t remaining_blocks = target_sync_height - chain_tip_height;
             nBuffer += average_block_size * remaining_blocks;
         }
@@ -401,30 +401,29 @@ void BlockManager::FindFilesToAssetPrune(
     }
 
     CChain& active_chain = chainman.ActiveChain();
-    while (pruneHeight > lastAsssetPrune)
-    {
+    while (pruneHeight > lastAsssetPrune) {
         lastAsssetPrune = lastAsssetPrune + 1;
         CBlock block;
         bool isRequireUpdate = false;
         if (!chainman.m_blockman.ReadBlock(block, *CHECK_NONFATAL(active_chain[lastAsssetPrune]))) {
-                LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[lastAsssetPrune])->GetBlockHash().ToString());
+            LogPrintf("Error reading block from disk at index %d\n", CHECK_NONFATAL(active_chain[lastAsssetPrune])->GetBlockHash().ToString());
         }
         const CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(block.GetHash());
         for (size_t i = 0; i < block.vtx.size(); i++) {
-            if(block.vtx[i]->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && block.vtx[i]->assetType == 2) {
+            if (block.vtx[i]->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && block.vtx[i]->assetType == 2) {
                 block.vtx[i]->payloadData = "";
                 isRequireUpdate = true;
             }
         }
-        if(isRequireUpdate) {
+        if (isRequireUpdate) {
             FlatFilePos block_pos{WITH_LOCK(cs_main, return pindex->GetBlockPos())};
             if (!UpdateBlockToDisk(block, block_pos)) {
                 LogPrintf("asset prune block overwrite fails \n");
-            } 
+            }
             chain.passettree->WriteAssetMinedBlock(block.GetHash());
         }
     }
-      chain.passettree->WriteLastAssetPruneHeight(lastAsssetPrune);
+    chain.passettree->WriteLastAssetPruneHeight(lastAsssetPrune);
 }
 
 bool BlockManager::UpdateBlockToDisk(const CBlock& block, FlatFilePos& pos) const
@@ -442,7 +441,8 @@ bool BlockManager::UpdateBlockToDisk(const CBlock& block, FlatFilePos& pos) cons
 }
 
 
-void BlockManager::UpdatePruneLock(const std::string& name, const PruneLockInfo& lock_info) {
+void BlockManager::UpdatePruneLock(const std::string& name, const PruneLockInfo& lock_info)
+{
     AssertLockHeld(::cs_main);
     m_prune_locks[name] = lock_info;
 }
@@ -517,7 +517,7 @@ bool BlockManager::LoadBlockIndex(const std::optional<uint256>& snapshot_blockha
         if (pindex->nTx > 0) {
             if (pindex->pprev) {
                 if (m_snapshot_height && pindex->nHeight == *m_snapshot_height &&
-                        pindex->GetBlockHash() == *snapshot_blockhash) {
+                    pindex->GetBlockHash() == *snapshot_blockhash) {
                     // Should have been set above; don't disturb it with code below.
                     Assert(pindex->m_chain_tx_count > 0);
                 } else if (pindex->pprev->m_chain_tx_count > 0) {
@@ -693,8 +693,7 @@ void BlockManager::CleanupBlockRevFiles() const
         const std::string path = fs::PathToString(it->path().filename());
         if (fs::is_regular_file(*it) &&
             path.length() == 12 &&
-            path.ends_with(".dat"))
-        {
+            path.ends_with(".dat")) {
             if (path.starts_with("blk")) {
                 mapBlockFiles[path.substr(3, 5)] = it->path();
             } else if (path.starts_with("rev")) {
@@ -1066,7 +1065,7 @@ bool BlockManager::WriteBlockUndo(const CBlockUndo& blockundo, BlockValidationSt
 /* Generic implementation of block reading that can handle
    both a block and its header.  */
 
-template<typename T>
+template <typename T>
 bool ReadBlockOrHeader(T& block, const FlatFilePos& pos, const BlockManager& blockman, const std::optional<uint256>& expected_hash)
 {
     block.SetNull();
@@ -1108,7 +1107,7 @@ bool ReadBlockOrHeader(T& block, const FlatFilePos& pos, const BlockManager& blo
     return true;
 }
 
-template<typename T>
+template <typename T>
 bool ReadBlockOrHeader(T& block, const CBlockIndex& index, const BlockManager& blockman)
 {
     const FlatFilePos block_pos{WITH_LOCK(cs_main, return index.GetBlockPos())};
@@ -1155,13 +1154,13 @@ bool BlockManager::ReadRawBlock(std::vector<std::byte>& block, const FlatFilePos
 
         if (blk_start != GetParams().MessageStart()) {
             LogError("Block magic mismatch for %s: %s versus expected %s while reading raw block",
-                pos.ToString(), HexStr(blk_start), HexStr(GetParams().MessageStart()));
+                     pos.ToString(), HexStr(blk_start), HexStr(GetParams().MessageStart()));
             return false;
         }
 
         if (blk_size > MAX_SIZE) {
             LogError("Block data is larger than maximum deserialization size for %s: %s versus %s while reading raw block",
-                pos.ToString(), blk_size, MAX_SIZE);
+                     pos.ToString(), blk_size, MAX_SIZE);
             return false;
         }
 
@@ -1241,11 +1240,11 @@ static auto InitBlocksdirXorKey(const BlockManager::Options& opts)
         // Create initial or missing xor key file
         AutoFile xor_key_file{fsbridge::fopen(xor_key_path,
 #ifdef __MINGW64__
-            "wb" // Temporary workaround for https://github.com/bitcoin/bitcoin/issues/30210
+                                              "wb" // Temporary workaround for https://github.com/bitcoin/bitcoin/issues/30210
 #else
-            "wbx"
+                                              "wbx"
 #endif
-        )};
+                                              )};
         xor_key_file << obfuscation;
         if (xor_key_file.fclose() != 0) {
             throw std::runtime_error{strprintf("Error closing XOR key file %s: %s",
@@ -1366,16 +1365,18 @@ void ImportBlocks(ChainstateManager& chainman, std::span<const fs::path> import_
     // End scope of ImportingNow
 }
 
-std::ostream& operator<<(std::ostream& os, const BlockfileType& type) {
-    switch(type) {
-        case BlockfileType::NORMAL: os << "normal"; break;
-        case BlockfileType::ASSUMED: os << "assumed"; break;
-        default: os.setstate(std::ios_base::failbit);
+std::ostream& operator<<(std::ostream& os, const BlockfileType& type)
+{
+    switch (type) {
+    case BlockfileType::NORMAL: os << "normal"; break;
+    case BlockfileType::ASSUMED: os << "assumed"; break;
+    default: os.setstate(std::ios_base::failbit);
     }
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const BlockfileCursor& cursor) {
+std::ostream& operator<<(std::ostream& os, const BlockfileCursor& cursor)
+{
     os << strprintf("BlockfileCursor(file_num=%d, undo_height=%d)", cursor.file_num, cursor.undo_height);
     return os;
 }

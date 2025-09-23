@@ -21,7 +21,7 @@ std::vector<unsigned char> NetGroupManager::GetGroup(const CNetAddr& address) co
     // If non-empty asmap is supplied and the address is IPv4/IPv6,
     // return ASN to be used for bucketing.
     uint32_t asn = GetMappedAS(address);
-    if (asn != 0) { // Either asmap was empty, or address has non-asmappable net class (e.g. TOR).
+    if (asn != 0) {                 // Either asmap was empty, or address has non-asmappable net class (e.g. TOR).
         vchRet.push_back(NET_IPV6); // IPv4 and IPv6 with same ASN should be in the same bucket
         for (int i = 0; i < 4; i++) {
             vchRet.push_back((asn >> (8 * i)) & 0xFF);
@@ -111,7 +111,8 @@ uint32_t NetGroupManager::GetMappedAS(const CNetAddr& address) const
     return mapped_as;
 }
 
-void NetGroupManager::ASMapHealthCheck(const std::vector<CNetAddr>& clearnet_addrs) const {
+void NetGroupManager::ASMapHealthCheck(const std::vector<CNetAddr>& clearnet_addrs) const
+{
     std::set<uint32_t> clearnet_asns{};
     int unmapped_count{0};
 
@@ -127,6 +128,7 @@ void NetGroupManager::ASMapHealthCheck(const std::vector<CNetAddr>& clearnet_add
     LogPrintf("ASMap Health Check: %i clearnet peers are mapped to %i ASNs with %i peers being unmapped\n", clearnet_addrs.size(), clearnet_asns.size(), unmapped_count);
 }
 
-bool NetGroupManager::UsingASMap() const {
+bool NetGroupManager::UsingASMap() const
+{
     return m_asmap.size() > 0;
 }

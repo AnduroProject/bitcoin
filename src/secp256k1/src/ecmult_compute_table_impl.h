@@ -7,13 +7,14 @@
 #ifndef SECP256K1_ECMULT_COMPUTE_TABLE_IMPL_H
 #define SECP256K1_ECMULT_COMPUTE_TABLE_IMPL_H
 
-#include "ecmult_compute_table.h"
-#include "group_impl.h"
-#include "field_impl.h"
 #include "ecmult.h"
+#include "ecmult_compute_table.h"
+#include "field_impl.h"
+#include "group_impl.h"
 #include "util.h"
 
-static void secp256k1_ecmult_compute_table(secp256k1_ge_storage* table, int window_g, const secp256k1_gej* gen) {
+static void secp256k1_ecmult_compute_table(secp256k1_ge_storage* table, int window_g, const secp256k1_gej* gen)
+{
     secp256k1_gej gj;
     secp256k1_ge ge, dgen;
     int j;
@@ -34,7 +35,8 @@ static void secp256k1_ecmult_compute_table(secp256k1_ge_storage* table, int wind
 }
 
 /* Like secp256k1_ecmult_compute_table, but one for both gen and gen*2^128. */
-static void secp256k1_ecmult_compute_two_tables(secp256k1_ge_storage* table, secp256k1_ge_storage* table_128, int window_g, const secp256k1_ge* gen) {
+static void secp256k1_ecmult_compute_two_tables(secp256k1_ge_storage* table, secp256k1_ge_storage* table_128, int window_g, const secp256k1_ge* gen)
+{
     secp256k1_gej gj;
     int i;
 

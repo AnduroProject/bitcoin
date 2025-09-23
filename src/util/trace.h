@@ -35,12 +35,12 @@
 
 // A USDT tracepoint with one to twelve arguments. It's checked that the
 // tracepoint is active before preparing its arguments.
-#define TRACEPOINT(context, event, ...)                                         \
-    do {                                                                        \
-        if (TRACEPOINT_ACTIVE(context, event)) {                                \
-            STAP_PROBEV(context, event __VA_OPT__(, ) __VA_ARGS__);             \
-        }                                                                       \
-    } while(0)
+#define TRACEPOINT(context, event, ...)                             \
+    do {                                                            \
+        if (TRACEPOINT_ACTIVE(context, event)) {                    \
+            STAP_PROBEV(context, event __VA_OPT__(, ) __VA_ARGS__); \
+        }                                                           \
+    } while (0)
 
 #else
 

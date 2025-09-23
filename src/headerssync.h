@@ -43,7 +43,8 @@ struct CompressedHeader {
         auxpow = header.auxpow;
     }
 
-    CBlockHeader GetFullHeader(const uint256& hash_prev_block) {
+    CBlockHeader GetFullHeader(const uint256& hash_prev_block)
+    {
         CBlockHeader ret;
         ret.nVersion = nVersion;
         ret.hashPrevBlock = hash_prev_block;
@@ -102,7 +103,8 @@ struct CompressedHeader {
  * sync (temporary, per-peer storage).
  */
 
-class HeadersSyncState {
+class HeadersSyncState
+{
 public:
     ~HeadersSyncState() = default;
 
@@ -140,7 +142,7 @@ public:
      * minimum_required_work: amount of chain work required to accept the chain
      */
     HeadersSyncState(NodeId id, const Consensus::Params& consensus_params,
-            const CBlockIndex* chain_start, const arith_uint256& minimum_required_work);
+                     const CBlockIndex* chain_start, const arith_uint256& minimum_required_work);
 
     /** Result data structure for ProcessNextHeaders. */
     struct ProcessingResult {
@@ -170,7 +172,8 @@ public:
      *                       NextHeadersRequestLocator and send a getheaders message using it.
      */
     ProcessingResult ProcessNextHeaders(const std::vector<CBlockHeader>&
-            received_headers, bool full_headers_message);
+                                            received_headers,
+                                        bool full_headers_message);
 
     /** Issue the next GETHEADERS message to our peer.
      *

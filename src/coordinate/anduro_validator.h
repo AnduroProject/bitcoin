@@ -1,7 +1,7 @@
-#include <iostream>
-#include <util/strencodings.h>
 #include "pubkey.h"
+#include <iostream>
 #include <key_io.h>
+#include <util/strencodings.h>
 
 /**
  * This function check witness signature path available in authorized anduro keys
@@ -21,7 +21,7 @@ uint256 prepareMessageHashRev(std::string message);
  * @param[in] witnessHex  block witness which hold signature path and signature
  * @param[in] message  sha256 presigned block message
  * @param[in] prevWitnessHex anduro current keys
-*/
+ */
 bool validateAnduroSignature(std::string witnessHex, std::string message, std::string prevWitnessHex);
 
 /**
@@ -29,5 +29,5 @@ bool validateAnduroSignature(std::string witnessHex, std::string message, std::s
  * @param[in] signatureHex  block witness which hold signature path and signature
  * @param[in] messageIn  sha256 presigned block message
  * @param[in] prevWitnessHex anduro current keys
-*/
+ */
 bool validatePreconfSignature(std::string signatureHex, std::string messageIn, std::string prevWitnessHex);

@@ -105,12 +105,13 @@ using Priority = uint64_t;
  *
  * Higher priorities are selected first.
  */
-class PriorityComputer {
+class PriorityComputer
+{
     const uint64_t m_k0, m_k1;
+
 public:
-    explicit PriorityComputer(bool deterministic) :
-        m_k0{deterministic ? 0 : FastRandomContext().rand64()},
-        m_k1{deterministic ? 0 : FastRandomContext().rand64()} {}
+    explicit PriorityComputer(bool deterministic) : m_k0{deterministic ? 0 : FastRandomContext().rand64()},
+                                                    m_k1{deterministic ? 0 : FastRandomContext().rand64()} {}
 
     Priority operator()(const uint256& txhash, NodeId peer, bool preferred) const
     {
@@ -137,10 +138,10 @@ public:
 // * Looking up existing announcements by peer/txhash, by checking both (peer, false, txhash) and
 //   (peer, true, txhash).
 // * Finding all CANDIDATE_BEST announcements for a given peer in GetRequestable.
-struct ByPeer {};
+struct ByPeer {
+};
 using ByPeerView = std::tuple<NodeId, bool, const uint256&>;
-struct ByPeerViewExtractor
-{
+struct ByPeerViewExtractor {
     using result_type = ByPeerView;
     result_type operator()(const Announcement& ann) const
     {
@@ -158,10 +159,13 @@ struct ByPeerViewExtractor
 //   announcement exists for that txhash.
 // * Determining when no more non-COMPLETED announcements for a given txhash exist, so the COMPLETED ones can be
 //   deleted.
-struct ByTxHash {};
+struct ByTxHash {
+};
 using ByTxHashView = std::tuple<const uint256&, State, Priority>;
-class ByTxHashViewExtractor {
+class ByTxHashViewExtractor
+{
     const PriorityComputer& m_computer;
+
 public:
     explicit ByTxHashViewExtractor(const PriorityComputer& computer) : m_computer(computer) {}
     using result_type = ByTxHashView;
@@ -197,10 +201,10 @@ WaitState GetWaitState(const Announcement& ann)
 // * Finding CANDIDATE_DELAYED announcements whose reqtime has passed, and REQUESTED announcements whose expiry has
 //   passed.
 // * Finding CANDIDATE_READY/BEST announcements whose reqtime is in the future (when the clock time went backwards).
-struct ByTime {};
+struct ByTime {
+};
 using ByTimeView = std::pair<WaitState, std::chrono::microseconds>;
-struct ByTimeViewExtractor
-{
+struct ByTimeViewExtractor {
     using result_type = ByTimeView;
     result_type operator()(const Announcement& ann) const
     {
@@ -209,32 +213,29 @@ struct ByTimeViewExtractor
 };
 
 struct Announcement_Indices final : boost::multi_index::indexed_by<
-    boost::multi_index::ordered_unique<boost::multi_index::tag<ByPeer>, ByPeerViewExtractor>,
-    boost::multi_index::ordered_non_unique<boost::multi_index::tag<ByTxHash>, ByTxHashViewExtractor>,
-    boost::multi_index::ordered_non_unique<boost::multi_index::tag<ByTime>, ByTimeViewExtractor>
->
-{};
+                                        boost::multi_index::ordered_unique<boost::multi_index::tag<ByPeer>, ByPeerViewExtractor>,
+                                        boost::multi_index::ordered_non_unique<boost::multi_index::tag<ByTxHash>, ByTxHashViewExtractor>,
+                                        boost::multi_index::ordered_non_unique<boost::multi_index::tag<ByTime>, ByTimeViewExtractor>> {
+};
 
 /** Data type for the main data structure (Announcement objects with ByPeer/ByTxHash/ByTime indexes). */
 using Index = boost::multi_index_container<
     Announcement,
-    Announcement_Indices
->;
+    Announcement_Indices>;
 
 /** Helper type to simplify syntax of iterator types. */
-template<typename Tag>
+template <typename Tag>
 using Iter = typename Index::index<Tag>::type::iterator;
 
 /** Per-peer statistics object. */
 struct PeerInfo {
-    size_t m_total = 0; //!< Total number of announcements for this peer.
+    size_t m_total = 0;     //!< Total number of announcements for this peer.
     size_t m_completed = 0; //!< Number of COMPLETED announcements for this peer.
     size_t m_requested = 0; //!< Number of REQUESTED announcements for this peer.
 };
 
 /** Per-txhash statistics object. Only used for sanity checking. */
-struct TxHashInfo
-{
+struct TxHashInfo {
     //! Number of CANDIDATE_DELAYED announcements for this txhash.
     size_t m_candidate_delayed = 0;
     //! Number of CANDIDATE_READY announcements for this txhash.
@@ -295,10 +296,11 @@ std::map<uint256, TxHashInfo> ComputeTxHashInfo(const Index& index, const Priori
     return ret;
 }
 
-}  // namespace
+} // namespace
 
 /** Actual implementation for TxRequestTracker's data structure. */
-class TxRequestTracker::Impl {
+class TxRequestTracker::Impl
+{
     //! The current sequence number. Increases for every announcement. This is used to sort txhashes returned by
     //! GetRequestable in announcement order.
     SequenceNumber m_current_sequence{0};
@@ -364,7 +366,7 @@ public:
 
 private:
     //! Wrapper around Index::...::erase that keeps m_peerinfo up to date.
-    template<typename Tag>
+    template <typename Tag>
     Iter<Tag> Erase(Iter<Tag> it)
     {
         auto peerit = m_peerinfo.find(it->m_peer);
@@ -375,7 +377,7 @@ private:
     }
 
     //! Wrapper around Index::...::modify that keeps m_peerinfo up to date.
-    template<typename Tag, typename Modifier>
+    template <typename Tag, typename Modifier>
     void Modify(Iter<Tag> it, Modifier modifier)
     {
         auto peerit = m_peerinfo.find(it->m_peer);
@@ -394,7 +396,7 @@ private:
         assert(it != m_index.get<ByTxHash>().end());
         assert(it->GetState() == State::CANDIDATE_DELAYED);
         // Convert CANDIDATE_DELAYED to CANDIDATE_READY first.
-        Modify<ByTxHash>(it, [](Announcement& ann){ ann.SetState(State::CANDIDATE_READY); });
+        Modify<ByTxHash>(it, [](Announcement& ann) { ann.SetState(State::CANDIDATE_READY); });
         // The following code relies on the fact that the ByTxHash is sorted by txhash, and then by state (first
         // _DELAYED, then _READY, then _BEST/REQUESTED). Within the _READY announcements, the best one (highest
         // priority) comes last. Thus, if an existing _BEST exists for the same txhash that this announcement may
@@ -404,14 +406,14 @@ private:
             it_next->GetState() == State::COMPLETED) {
             // This is the new best CANDIDATE_READY, and there is no IsSelected() announcement for this txhash
             // already.
-            Modify<ByTxHash>(it, [](Announcement& ann){ ann.SetState(State::CANDIDATE_BEST); });
+            Modify<ByTxHash>(it, [](Announcement& ann) { ann.SetState(State::CANDIDATE_BEST); });
         } else if (it_next->GetState() == State::CANDIDATE_BEST) {
             Priority priority_old = m_computer(*it_next);
             Priority priority_new = m_computer(*it);
             if (priority_new > priority_old) {
                 // There is a CANDIDATE_BEST announcement already, but this one is better.
-                Modify<ByTxHash>(it_next, [](Announcement& ann){ ann.SetState(State::CANDIDATE_READY); });
-                Modify<ByTxHash>(it, [](Announcement& ann){ ann.SetState(State::CANDIDATE_BEST); });
+                Modify<ByTxHash>(it_next, [](Announcement& ann) { ann.SetState(State::CANDIDATE_READY); });
+                Modify<ByTxHash>(it, [](Announcement& ann) { ann.SetState(State::CANDIDATE_BEST); });
             }
         }
     }
@@ -428,10 +430,10 @@ private:
             // announcement in the ByTxHash index.
             if (it_prev->m_gtxid.ToUint256() == it->m_gtxid.ToUint256() && it_prev->GetState() == State::CANDIDATE_READY) {
                 // If one such CANDIDATE_READY exists (for this txhash), convert it to CANDIDATE_BEST.
-                Modify<ByTxHash>(it_prev, [](Announcement& ann){ ann.SetState(State::CANDIDATE_BEST); });
+                Modify<ByTxHash>(it_prev, [](Announcement& ann) { ann.SetState(State::CANDIDATE_BEST); });
             }
         }
-        Modify<ByTxHash>(it, [new_state](Announcement& ann){ ann.SetState(new_state); });
+        Modify<ByTxHash>(it, [new_state](Announcement& ann) { ann.SetState(new_state); });
     }
 
     //! Check if 'it' is the only announcement for a given txhash that isn't COMPLETED.
@@ -513,14 +515,14 @@ private:
     }
 
 public:
-    explicit Impl(bool deterministic) :
-        m_computer(deterministic),
-        // Explicitly initialize m_index as we need to pass a reference to m_computer to ByTxHashViewExtractor.
-        m_index(boost::make_tuple(
-            boost::make_tuple(ByPeerViewExtractor(), std::less<ByPeerView>()),
-            boost::make_tuple(ByTxHashViewExtractor(m_computer), std::less<ByTxHashView>()),
-            boost::make_tuple(ByTimeViewExtractor(), std::less<ByTimeView>())
-        )) {}
+    explicit Impl(bool deterministic) : m_computer(deterministic),
+                                        // Explicitly initialize m_index as we need to pass a reference to m_computer to ByTxHashViewExtractor.
+                                        m_index(boost::make_tuple(
+                                            boost::make_tuple(ByPeerViewExtractor(), std::less<ByPeerView>()),
+                                            boost::make_tuple(ByTxHashViewExtractor(m_computer), std::less<ByTxHashView>()),
+                                            boost::make_tuple(ByTimeViewExtractor(), std::less<ByTimeView>())))
+    {
+    }
 
     // Disable copying and assigning (a default copy won't work due the stateful ByTxHashViewExtractor).
     Impl(const Impl&) = delete;
@@ -545,7 +547,7 @@ public:
             //   belongs to a different peer but the same txhash as 'it'. This is covered by the first bulletpoint
             //   already, and we'll have set it_next to end().
             auto it_next = (std::next(it) == index.end() || std::next(it)->m_peer != peer) ? index.end() :
-                std::next(it);
+                                                                                             std::next(it);
             // If the announcement isn't already COMPLETED, first make it COMPLETED (which will mark other
             // CANDIDATEs as CANDIDATE_BEST, or delete all of a txhash's announcements if no non-COMPLETED ones are
             // left).
@@ -604,7 +606,7 @@ public:
         std::vector<const Announcement*> selected;
         auto it_peer = m_index.get<ByPeer>().lower_bound(ByPeerView{peer, true, uint256::ZERO});
         while (it_peer != m_index.get<ByPeer>().end() && it_peer->m_peer == peer &&
-            it_peer->GetState() == State::CANDIDATE_BEST) {
+               it_peer->GetState() == State::CANDIDATE_BEST) {
             selected.emplace_back(&*it_peer);
             ++it_peer;
         }
@@ -707,11 +709,9 @@ public:
         // Return Priority as a uint64_t as Priority is internal.
         return uint64_t{m_computer(txhash, peer, preferred)};
     }
-
 };
 
-TxRequestTracker::TxRequestTracker(bool deterministic) :
-    m_impl{std::make_unique<TxRequestTracker::Impl>(deterministic)} {}
+TxRequestTracker::TxRequestTracker(bool deterministic) : m_impl{std::make_unique<TxRequestTracker::Impl>(deterministic)} {}
 
 TxRequestTracker::~TxRequestTracker() = default;
 

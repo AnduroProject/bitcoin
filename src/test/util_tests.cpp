@@ -58,11 +58,13 @@ using util::SplitString;
 using util::TrimString;
 using util::TrimStringView;
 
-static const std::string STRING_WITH_EMBEDDED_NULL_CHAR{"1"s "\0" "1"s};
+static const std::string STRING_WITH_EMBEDDED_NULL_CHAR{"1"s
+                                                        "\0"
+                                                        "1"s};
 
 /* defined in logging.cpp */
 namespace BCLog {
-    std::string LogEscapeMessage(std::string_view str);
+std::string LogEscapeMessage(std::string_view str);
 }
 
 BOOST_FIXTURE_TEST_SUITE(util_tests, BasicTestingSetup)
@@ -72,7 +74,7 @@ class NoCopyOrMove
 {
 public:
     int i;
-    explicit NoCopyOrMove(int i) : i{i} { }
+    explicit NoCopyOrMove(int i) : i{i} {}
 
     NoCopyOrMove() = delete;
     NoCopyOrMove(const NoCopyOrMove&) = delete;
@@ -127,7 +129,7 @@ BOOST_AUTO_TEST_CASE(util_criticalsection)
         break;
 
         BOOST_ERROR("break was swallowed!");
-    } while(0);
+    } while (0);
 
     do {
         TRY_LOCK(cs, lockTest);
@@ -137,7 +139,7 @@ BOOST_AUTO_TEST_CASE(util_criticalsection)
         }
 
         BOOST_ERROR("break was swallowed!");
-    } while(0);
+    } while (0);
 }
 
 constexpr char HEX_PARSE_INPUT[] = "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f";
@@ -146,8 +148,7 @@ constexpr uint8_t HEX_PARSE_OUTPUT[] = {
     0x10, 0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, 0x09, 0xa6, 0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, 0xde,
     0xb6, 0x49, 0xf6, 0xbc, 0x3f, 0x4c, 0xef, 0x38, 0xc4, 0xf3, 0x55, 0x04, 0xe5, 0x1e, 0xc1, 0x12,
     0xde, 0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57, 0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d,
-    0x5f
-};
+    0x5f};
 static_assert((sizeof(HEX_PARSE_INPUT) - 1) == 2 * sizeof(HEX_PARSE_OUTPUT));
 BOOST_AUTO_TEST_CASE(parse_hex)
 {
@@ -155,18 +156,18 @@ BOOST_AUTO_TEST_CASE(parse_hex)
 
     // Basic test vector
     std::vector<unsigned char> expected(std::begin(HEX_PARSE_OUTPUT), std::end(HEX_PARSE_OUTPUT));
-    constexpr std::array<std::byte, 65> hex_literal_array{operator""_hex<util::detail::Hex(HEX_PARSE_INPUT)>()};
+    constexpr std::array<std::byte, 65> hex_literal_array{operator""_hex < util::detail::Hex(HEX_PARSE_INPUT)>()};
     auto hex_literal_span{MakeUCharSpan(hex_literal_array)};
     BOOST_CHECK_EQUAL_COLLECTIONS(hex_literal_span.begin(), hex_literal_span.end(), expected.begin(), expected.end());
 
-    const std::vector<std::byte> hex_literal_vector{operator""_hex_v<util::detail::Hex(HEX_PARSE_INPUT)>()};
+    const std::vector<std::byte> hex_literal_vector{operator""_hex_v < util::detail::Hex(HEX_PARSE_INPUT)>()};
     auto hex_literal_vec_span = MakeUCharSpan(hex_literal_vector);
     BOOST_CHECK_EQUAL_COLLECTIONS(hex_literal_vec_span.begin(), hex_literal_vec_span.end(), expected.begin(), expected.end());
 
-    constexpr std::array<uint8_t, 65> hex_literal_array_uint8{operator""_hex_u8<util::detail::Hex(HEX_PARSE_INPUT)>()};
+    constexpr std::array<uint8_t, 65> hex_literal_array_uint8{operator""_hex_u8 < util::detail::Hex(HEX_PARSE_INPUT)>()};
     BOOST_CHECK_EQUAL_COLLECTIONS(hex_literal_array_uint8.begin(), hex_literal_array_uint8.end(), expected.begin(), expected.end());
 
-    result = operator""_hex_v_u8<util::detail::Hex(HEX_PARSE_INPUT)>();
+    result = operator""_hex_v_u8 < util::detail::Hex(HEX_PARSE_INPUT)>();
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 
     result = ParseHex(HEX_PARSE_INPUT);
@@ -252,7 +253,7 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
 
     {
         auto input = std::string();
-        for (size_t i=0; i<256; ++i) {
+        for (size_t i = 0; i < 256; ++i) {
             input.push_back(static_cast<char>(i));
         }
 
@@ -264,7 +265,7 @@ BOOST_AUTO_TEST_CASE(util_HexStr)
             auto lower = hexmap.find(hex[i * 2 + 1]);
             BOOST_TEST_REQUIRE(upper != std::string_view::npos);
             BOOST_TEST_REQUIRE(lower != std::string_view::npos);
-            BOOST_TEST_REQUIRE(i == upper*16 + lower);
+            BOOST_TEST_REQUIRE(i == upper * 16 + lower);
         }
     }
 }
@@ -388,26 +389,26 @@ BOOST_AUTO_TEST_CASE(util_FormatISO8601Date)
 BOOST_AUTO_TEST_CASE(util_FormatMoney)
 {
     BOOST_CHECK_EQUAL(FormatMoney(0), "0.00");
-    BOOST_CHECK_EQUAL(FormatMoney((COIN/10000)*123456789), "12345.6789");
+    BOOST_CHECK_EQUAL(FormatMoney((COIN / 10000) * 123456789), "12345.6789");
     BOOST_CHECK_EQUAL(FormatMoney(-COIN), "-1.00");
 
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*100000000), "100000000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*10000000), "10000000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*1000000), "1000000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*100000), "100000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*10000), "10000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*1000), "1000.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*100), "100.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN*10), "10.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 100000000), "100000000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 10000000), "10000000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 1000000), "1000000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 100000), "100000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 10000), "10000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 1000), "1000.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 100), "100.00");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN * 10), "10.00");
     BOOST_CHECK_EQUAL(FormatMoney(COIN), "1.00");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/10), "0.10");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/100), "0.01");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/1000), "0.001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/10000), "0.0001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/100000), "0.00001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/1000000), "0.000001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/10000000), "0.0000001");
-    BOOST_CHECK_EQUAL(FormatMoney(COIN/100000000), "0.00000001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 10), "0.10");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 100), "0.01");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 1000), "0.001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 10000), "0.0001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 100000), "0.00001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 1000000), "0.000001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 10000000), "0.0000001");
+    BOOST_CHECK_EQUAL(FormatMoney(COIN / 100000000), "0.00000001");
 
     BOOST_CHECK_EQUAL(FormatMoney(std::numeric_limits<CAmount>::max()), "92233720368.54775807");
     BOOST_CHECK_EQUAL(FormatMoney(std::numeric_limits<CAmount>::max() - 1), "92233720368.54775806");
@@ -429,31 +430,31 @@ BOOST_AUTO_TEST_CASE(util_ParseMoney)
     BOOST_CHECK_EQUAL(ParseMoney(".6789").value(), 6789'0000);
     BOOST_CHECK_EQUAL(ParseMoney("12345.").value(), COIN * 12345);
 
-    BOOST_CHECK_EQUAL(ParseMoney("12345.6789").value(), (COIN/10000)*123456789);
+    BOOST_CHECK_EQUAL(ParseMoney("12345.6789").value(), (COIN / 10000) * 123456789);
 
-    BOOST_CHECK_EQUAL(ParseMoney("10000000.00").value(), COIN*10000000);
-    BOOST_CHECK_EQUAL(ParseMoney("1000000.00").value(), COIN*1000000);
-    BOOST_CHECK_EQUAL(ParseMoney("100000.00").value(), COIN*100000);
-    BOOST_CHECK_EQUAL(ParseMoney("10000.00").value(), COIN*10000);
-    BOOST_CHECK_EQUAL(ParseMoney("1000.00").value(), COIN*1000);
-    BOOST_CHECK_EQUAL(ParseMoney("100.00").value(), COIN*100);
-    BOOST_CHECK_EQUAL(ParseMoney("10.00").value(), COIN*10);
+    BOOST_CHECK_EQUAL(ParseMoney("10000000.00").value(), COIN * 10000000);
+    BOOST_CHECK_EQUAL(ParseMoney("1000000.00").value(), COIN * 1000000);
+    BOOST_CHECK_EQUAL(ParseMoney("100000.00").value(), COIN * 100000);
+    BOOST_CHECK_EQUAL(ParseMoney("10000.00").value(), COIN * 10000);
+    BOOST_CHECK_EQUAL(ParseMoney("1000.00").value(), COIN * 1000);
+    BOOST_CHECK_EQUAL(ParseMoney("100.00").value(), COIN * 100);
+    BOOST_CHECK_EQUAL(ParseMoney("10.00").value(), COIN * 10);
     BOOST_CHECK_EQUAL(ParseMoney("1.00").value(), COIN);
     BOOST_CHECK_EQUAL(ParseMoney("1").value(), COIN);
     BOOST_CHECK_EQUAL(ParseMoney("   1").value(), COIN);
     BOOST_CHECK_EQUAL(ParseMoney("1   ").value(), COIN);
     BOOST_CHECK_EQUAL(ParseMoney("  1 ").value(), COIN);
-    BOOST_CHECK_EQUAL(ParseMoney("0.1").value(), COIN/10);
-    BOOST_CHECK_EQUAL(ParseMoney("0.01").value(), COIN/100);
-    BOOST_CHECK_EQUAL(ParseMoney("0.001").value(), COIN/1000);
-    BOOST_CHECK_EQUAL(ParseMoney("0.0001").value(), COIN/10000);
-    BOOST_CHECK_EQUAL(ParseMoney("0.00001").value(), COIN/100000);
-    BOOST_CHECK_EQUAL(ParseMoney("0.000001").value(), COIN/1000000);
-    BOOST_CHECK_EQUAL(ParseMoney("0.0000001").value(), COIN/10000000);
-    BOOST_CHECK_EQUAL(ParseMoney("0.00000001").value(), COIN/100000000);
-    BOOST_CHECK_EQUAL(ParseMoney(" 0.00000001 ").value(), COIN/100000000);
-    BOOST_CHECK_EQUAL(ParseMoney("0.00000001 ").value(), COIN/100000000);
-    BOOST_CHECK_EQUAL(ParseMoney(" 0.00000001").value(), COIN/100000000);
+    BOOST_CHECK_EQUAL(ParseMoney("0.1").value(), COIN / 10);
+    BOOST_CHECK_EQUAL(ParseMoney("0.01").value(), COIN / 100);
+    BOOST_CHECK_EQUAL(ParseMoney("0.001").value(), COIN / 1000);
+    BOOST_CHECK_EQUAL(ParseMoney("0.0001").value(), COIN / 10000);
+    BOOST_CHECK_EQUAL(ParseMoney("0.00001").value(), COIN / 100000);
+    BOOST_CHECK_EQUAL(ParseMoney("0.000001").value(), COIN / 1000000);
+    BOOST_CHECK_EQUAL(ParseMoney("0.0000001").value(), COIN / 10000000);
+    BOOST_CHECK_EQUAL(ParseMoney("0.00000001").value(), COIN / 100000000);
+    BOOST_CHECK_EQUAL(ParseMoney(" 0.00000001 ").value(), COIN / 100000000);
+    BOOST_CHECK_EQUAL(ParseMoney("0.00000001 ").value(), COIN / 100000000);
+    BOOST_CHECK_EQUAL(ParseMoney(" 0.00000001").value(), COIN / 100000000);
 
     // Parsing amount that cannot be represented should fail
     BOOST_CHECK(!ParseMoney("100000000.00"));
@@ -507,25 +508,25 @@ BOOST_AUTO_TEST_CASE(util_IsHex)
 BOOST_AUTO_TEST_CASE(util_seed_insecure_rand)
 {
     SeedRandomForTest(SeedRand::ZEROS);
-    for (int mod=2;mod<11;mod++)
-    {
+    for (int mod = 2; mod < 11; mod++) {
         int mask = 1;
         // Really rough binomial confidence approximation.
-        int err = 30*10000./mod*sqrt((1./mod*(1-1./mod))/10000.);
-        //mask is 2^ceil(log2(mod))-1
-        while(mask<mod-1)mask=(mask<<1)+1;
+        int err = 30 * 10000. / mod * sqrt((1. / mod * (1 - 1. / mod)) / 10000.);
+        // mask is 2^ceil(log2(mod))-1
+        while (mask < mod - 1)
+            mask = (mask << 1) + 1;
 
         int count = 0;
-        //How often does it get a zero from the uniform range [0,mod)?
+        // How often does it get a zero from the uniform range [0,mod)?
         for (int i = 0; i < 10000; i++) {
             uint32_t rval;
-            do{
-                rval=m_rng.rand32()&mask;
-            }while(rval>=(uint32_t)mod);
-            count += rval==0;
+            do {
+                rval = m_rng.rand32() & mask;
+            } while (rval >= (uint32_t)mod);
+            count += rval == 0;
         }
-        BOOST_CHECK(count<=10000/mod+err);
-        BOOST_CHECK(count>=10000/mod-err);
+        BOOST_CHECK(count <= 10000 / mod + err);
+        BOOST_CHECK(count >= 10000 / mod - err);
     }
 }
 
@@ -546,23 +547,23 @@ BOOST_AUTO_TEST_CASE(util_TimingResistantEqual)
 #define E "check_postfix"
 BOOST_AUTO_TEST_CASE(strprintf_numbers)
 {
-    int64_t s64t = -9223372036854775807LL; /* signed 64 bit test value */
+    int64_t s64t = -9223372036854775807LL;   /* signed 64 bit test value */
     uint64_t u64t = 18446744073709551615ULL; /* unsigned 64 bit test value */
-    BOOST_CHECK(strprintf("%s %d %s", B, s64t, E) == B" -9223372036854775807 " E);
-    BOOST_CHECK(strprintf("%s %u %s", B, u64t, E) == B" 18446744073709551615 " E);
-    BOOST_CHECK(strprintf("%s %x %s", B, u64t, E) == B" ffffffffffffffff " E);
+    BOOST_CHECK(strprintf("%s %d %s", B, s64t, E) == B " -9223372036854775807 " E);
+    BOOST_CHECK(strprintf("%s %u %s", B, u64t, E) == B " 18446744073709551615 " E);
+    BOOST_CHECK(strprintf("%s %x %s", B, u64t, E) == B " ffffffffffffffff " E);
 
-    size_t st = 12345678; /* unsigned size_t test value */
+    size_t st = 12345678;    /* unsigned size_t test value */
     ssize_t sst = -12345678; /* signed size_t test value */
-    BOOST_CHECK(strprintf("%s %d %s", B, sst, E) == B" -12345678 " E);
-    BOOST_CHECK(strprintf("%s %u %s", B, st, E) == B" 12345678 " E);
-    BOOST_CHECK(strprintf("%s %x %s", B, st, E) == B" bc614e " E);
+    BOOST_CHECK(strprintf("%s %d %s", B, sst, E) == B " -12345678 " E);
+    BOOST_CHECK(strprintf("%s %u %s", B, st, E) == B " 12345678 " E);
+    BOOST_CHECK(strprintf("%s %x %s", B, st, E) == B " bc614e " E);
 
-    ptrdiff_t pt = 87654321; /* positive ptrdiff_t test value */
+    ptrdiff_t pt = 87654321;   /* positive ptrdiff_t test value */
     ptrdiff_t spt = -87654321; /* negative ptrdiff_t test value */
-    BOOST_CHECK(strprintf("%s %d %s", B, spt, E) == B" -87654321 " E);
-    BOOST_CHECK(strprintf("%s %u %s", B, pt, E) == B" 87654321 " E);
-    BOOST_CHECK(strprintf("%s %x %s", B, pt, E) == B" 5397fb1 " E);
+    BOOST_CHECK(strprintf("%s %d %s", B, spt, E) == B " -87654321 " E);
+    BOOST_CHECK(strprintf("%s %u %s", B, pt, E) == B " 87654321 " E);
+    BOOST_CHECK(strprintf("%s %x %s", B, pt, E) == B " 5397fb1 " E);
 }
 #undef B
 #undef E
@@ -869,9 +870,9 @@ BOOST_AUTO_TEST_CASE(test_FormatSubVersion)
     std::vector<std::string> comments2;
     comments2.emplace_back("comment1");
     comments2.push_back(SanitizeString(std::string("Comment2; .,_?@-; !\"#$%&'()*+/<=>[]\\^`{|}~"), SAFE_CHARS_UA_COMMENT)); // Semicolon is discouraged but not forbidden by BIP-0014
-    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, std::vector<std::string>()),std::string("/Test:9.99.0/"));
-    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments),std::string("/Test:9.99.0(comment1)/"));
-    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments2),std::string("/Test:9.99.0(comment1; Comment2; .,_?@-; )/"));
+    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, std::vector<std::string>()), std::string("/Test:9.99.0/"));
+    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments), std::string("/Test:9.99.0(comment1)/"));
+    BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments2), std::string("/Test:9.99.0(comment1; Comment2; .,_?@-; )/"));
 }
 
 BOOST_AUTO_TEST_CASE(test_ParseFixedPoint)
@@ -1345,8 +1346,7 @@ BOOST_AUTO_TEST_CASE(test_LogEscapeMessage)
 
 namespace {
 
-struct Tracker
-{
+struct Tracker {
     //! Points to the original object (possibly itself) we moved/copied from
     const Tracker* origin;
     //! How many copies where involved between the original object and this one (moves are not counted)
@@ -1365,7 +1365,7 @@ struct Tracker
     }
 };
 
-}
+} // namespace
 
 BOOST_AUTO_TEST_CASE(test_tracked_vector)
 {
@@ -1452,8 +1452,7 @@ BOOST_AUTO_TEST_CASE(message_sign)
         0xD9, 0x7F, 0x51, 0x08, 0xF1, 0x1C, 0xDA, 0x6E,
         0xEE, 0xBA, 0xAA, 0x42, 0x0F, 0xEF, 0x07, 0x26,
         0xB1, 0xF8, 0x98, 0x06, 0x0B, 0x98, 0x48, 0x9F,
-        0xA3, 0x09, 0x84, 0x63, 0xC0, 0x03, 0x28, 0x66
-    };
+        0xA3, 0x09, 0x84, 0x63, 0xC0, 0x03, 0x28, 0x66};
 
     const std::string message = "Trust no one";
 
@@ -1464,18 +1463,18 @@ BOOST_AUTO_TEST_CASE(message_sign)
     std::string generated_signature;
 
     BOOST_REQUIRE_MESSAGE(!privkey.IsValid(),
-        "Confirm the private key is invalid");
+                          "Confirm the private key is invalid");
 
     BOOST_CHECK_MESSAGE(!MessageSign(privkey, message, generated_signature),
-        "Sign with an invalid private key");
+                        "Sign with an invalid private key");
 
     privkey.Set(privkey_bytes.begin(), privkey_bytes.end(), true);
 
     BOOST_REQUIRE_MESSAGE(privkey.IsValid(),
-        "Confirm the private key is valid");
+                          "Confirm the private key is valid");
 
     BOOST_CHECK_MESSAGE(MessageSign(privkey, message, generated_signature),
-        "Sign with a valid private key");
+                        "Sign with a valid private key");
 
     BOOST_CHECK_EQUAL(expected_signature, generated_signature);
 }

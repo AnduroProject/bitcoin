@@ -1,21 +1,23 @@
-#include <iostream>
-#include <uint256.h>
-#include <serialize.h>
 #include <consensus/amount.h>
+#include <iostream>
 #include <primitives/transaction.h>
+#include <serialize.h>
+#include <uint256.h>
 #include <validation.h>
 
 
-template<typename Stream, typename CoordinateMempoolEntryType>
-inline void UnserializeCoordinateMempoolEntry(CoordinateMempoolEntryType& assetData, Stream& s) {
+template <typename Stream, typename CoordinateMempoolEntryType>
+inline void UnserializeCoordinateMempoolEntry(CoordinateMempoolEntryType& assetData, Stream& s)
+{
     s >> assetData.assetID;
     s >> assetData.txid;
     s >> assetData.vout;
     s >> assetData.nValue;
 }
 
-template<typename Stream, typename CoordinateMempoolEntryType>
-inline void SerializeCoordinateMempoolEntry(const CoordinateMempoolEntryType& assetData, Stream& s) {
+template <typename Stream, typename CoordinateMempoolEntryType>
+inline void SerializeCoordinateMempoolEntry(const CoordinateMempoolEntryType& assetData, Stream& s)
+{
     s << assetData.assetID;
     s << assetData.txid;
     s << assetData.vout;
@@ -25,26 +27,30 @@ inline void SerializeCoordinateMempoolEntry(const CoordinateMempoolEntryType& as
 struct CoordinateMempoolEntry {
 public:
     uint32_t assetID; /*!< Asset unique number */
-    uint256 txid; /*!< Asset Mempool txid*/
-    int32_t vout; /*!< Asset Mempool Transaction vout*/
-    CAmount nValue; /*!< Asset Mempool Transaction value*/
+    uint256 txid;     /*!< Asset Mempool txid*/
+    int32_t vout;     /*!< Asset Mempool Transaction vout*/
+    CAmount nValue;   /*!< Asset Mempool Transaction value*/
 
     template <typename Stream>
-    inline void Serialize(Stream& s) const {
+    inline void Serialize(Stream& s) const
+    {
         SerializeCoordinateMempoolEntry(*this, s);
     }
 
     template <typename Stream>
-    inline void Unserialize(Stream& s) {
+    inline void Unserialize(Stream& s)
+    {
         UnserializeCoordinateMempoolEntry(*this, s);
     }
 
     template <typename Stream>
-    CoordinateMempoolEntry(deserialize_type, Stream& s) {
+    CoordinateMempoolEntry(deserialize_type, Stream& s)
+    {
         Unserialize(s);
     }
 
-    CoordinateMempoolEntry() {
+    CoordinateMempoolEntry()
+    {
         SetNull();
     }
 

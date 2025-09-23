@@ -120,7 +120,7 @@ std::optional<int64_t> ParseISO8601DateTime(std::string_view str)
 struct timeval MillisToTimeval(int64_t nTimeout)
 {
     struct timeval timeout;
-    timeout.tv_sec  = nTimeout / 1000;
+    timeout.tv_sec = nTimeout / 1000;
     timeout.tv_usec = (nTimeout % 1000) * 1000;
     return timeout;
 }

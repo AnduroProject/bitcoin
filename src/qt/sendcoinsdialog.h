@@ -23,7 +23,7 @@ class CCoinControl;
 } // namespace wallet
 
 namespace Ui {
-    class SendCoinsDialog;
+class SendCoinsDialog;
 }
 
 QT_BEGIN_NAMESPACE
@@ -36,19 +36,19 @@ class SendCoinsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
+    explicit SendCoinsDialog(const PlatformStyle* platformStyle, QWidget* parent = nullptr);
     ~SendCoinsDialog();
 
-    void setClientModel(ClientModel *clientModel);
-    void setModel(WalletModel *model);
+    void setClientModel(ClientModel* clientModel);
+    void setModel(WalletModel* model);
 
     /** Set up the tab chain manually, as Qt messes up the tab chain by default in some cases (issue https://bugreports.qt-project.org/browse/QTBUG-10907).
      */
-    QWidget *setupTabChain(QWidget *prev);
+    QWidget* setupTabChain(QWidget* prev);
 
-    void setAddress(const QString &address);
-    void pasteEntry(const SendCoinsRecipient &rv);
-    bool handlePaymentRequest(const SendCoinsRecipient &recipient);
+    void setAddress(const QString& address);
+    void pasteEntry(const SendCoinsRecipient& rv);
+    bool handlePaymentRequest(const SendCoinsRecipient& recipient);
 
     // Only used for testing-purposes
     wallet::CCoinControl* getCoinControl() { return m_coin_control.get(); }
@@ -57,7 +57,7 @@ public Q_SLOTS:
     void clear();
     void reject() override;
     void accept() override;
-    SendCoinsEntry *addEntry();
+    SendCoinsEntry* addEntry();
     void updateTabsAndLabels();
     void setBalance(const interfaces::WalletBalances& balances);
 
@@ -65,21 +65,21 @@ Q_SIGNALS:
     void coinsSent(const Txid& txid);
 
 private:
-    Ui::SendCoinsDialog *ui;
+    Ui::SendCoinsDialog* ui;
     ClientModel* clientModel{nullptr};
     WalletModel* model{nullptr};
     std::unique_ptr<wallet::CCoinControl> m_coin_control;
     std::unique_ptr<WalletModelTransaction> m_current_transaction;
     bool fNewRecipientAllowed{true};
     bool fFeeMinimized{true};
-    const PlatformStyle *platformStyle;
+    const PlatformStyle* platformStyle;
 
     // Copy PSBT to clipboard and offer to save it.
     void presentPSBT(PartiallySignedTransaction& psbt);
     // Process WalletModel::SendCoinsReturn and generate a pair consisting
     // of a message and message flags for use in Q_EMIT message().
     // Additional parameter msgArg can be used via .arg(msgArg).
-    void processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg = QString());
+    void processSendCoinsReturn(const WalletModel::SendCoinsReturn& sendCoinsReturn, const QString& msgArg = QString());
     void minimizeFeeSection(bool fMinimize);
     // Format confirmation message
     bool PrepareSendText(QString& question_string, QString& informative_text, QString& detailed_text);
@@ -109,7 +109,7 @@ private Q_SLOTS:
 #else
     void coinControlChangeChecked(int);
 #endif
-    void coinControlChangeEdited(const QString &);
+    void coinControlChangeEdited(const QString&);
     void coinControlUpdateLabels();
     void coinControlClipboardQuantity();
     void coinControlClipboardAmount();
@@ -123,11 +123,11 @@ private Q_SLOTS:
 
 Q_SIGNALS:
     // Fired when a message should be reported to the user
-    void message(const QString &title, const QString &message, unsigned int style);
+    void message(const QString& title, const QString& message, unsigned int style);
 };
 
 
-#define SEND_CONFIRM_DELAY   3
+#define SEND_CONFIRM_DELAY 3
 
 class SendConfirmationDialog : public QMessageBox
 {
@@ -144,8 +144,8 @@ private Q_SLOTS:
     void updateButtons();
 
 private:
-    QAbstractButton *yesButton;
-    QAbstractButton *m_psbt_button;
+    QAbstractButton* yesButton;
+    QAbstractButton* m_psbt_button;
     QTimer countDownTimer;
     int secDelay;
     QString confirmButtonText{tr("Send")};

@@ -32,14 +32,14 @@
 #define PROXY_DECL "mp/proxy.h"
 #define PROXY_TYPES "mp/proxy-types.h"
 
-constexpr uint64_t NAMESPACE_ANNOTATION_ID = 0xb9c6f99ebf805f2cull; // From c++.capnp
-constexpr uint64_t INCLUDE_ANNOTATION_ID = 0xb899f3c154fdb458ull;   // From proxy.capnp
+constexpr uint64_t NAMESPACE_ANNOTATION_ID = 0xb9c6f99ebf805f2cull;     // From c++.capnp
+constexpr uint64_t INCLUDE_ANNOTATION_ID = 0xb899f3c154fdb458ull;       // From proxy.capnp
 constexpr uint64_t INCLUDE_TYPES_ANNOTATION_ID = 0xbcec15648e8a0cf1ull; // From proxy.capnp
-constexpr uint64_t WRAP_ANNOTATION_ID = 0xe6f46079b7b1405eull;      // From proxy.capnp
-constexpr uint64_t COUNT_ANNOTATION_ID = 0xd02682b319f69b38ull;     // From proxy.capnp
-constexpr uint64_t EXCEPTION_ANNOTATION_ID = 0x996a183200992f88ull; // From proxy.capnp
-constexpr uint64_t NAME_ANNOTATION_ID = 0xb594888f63f4dbb9ull;      // From proxy.capnp
-constexpr uint64_t SKIP_ANNOTATION_ID = 0x824c08b82695d8ddull;      // From proxy.capnp
+constexpr uint64_t WRAP_ANNOTATION_ID = 0xe6f46079b7b1405eull;          // From proxy.capnp
+constexpr uint64_t COUNT_ANNOTATION_ID = 0xd02682b319f69b38ull;         // From proxy.capnp
+constexpr uint64_t EXCEPTION_ANNOTATION_ID = 0x996a183200992f88ull;     // From proxy.capnp
+constexpr uint64_t NAME_ANNOTATION_ID = 0xb594888f63f4dbb9ull;          // From proxy.capnp
+constexpr uint64_t SKIP_ANNOTATION_ID = 0x824c08b82695d8ddull;          // From proxy.capnp
 
 template <typename Reader>
 static bool AnnotationExists(const Reader& reader, uint64_t id)
@@ -96,8 +96,7 @@ static OutputStream& operator<<(OutputStream& os, const Array& array)
     return os;
 }
 
-struct Format
-{
+struct Format {
     template <typename Value>
     Format& operator<<(Value&& value)
     {
@@ -136,11 +135,11 @@ static bool BoxedType(const ::capnp::Type& type)
 // "#include <d/file.capnp.proxy.h>" "#include <d/file.capnp.proxy-types.h>"i
 // will be generated.
 static void Generate(kj::StringPtr src_prefix,
-    kj::StringPtr include_prefix,
-    kj::StringPtr src_file,
-    const std::vector<kj::StringPtr>& import_paths,
-    const kj::ReadableDirectory& src_dir,
-    const std::vector<kj::Own<const kj::ReadableDirectory>>& import_dirs)
+                     kj::StringPtr include_prefix,
+                     kj::StringPtr src_file,
+                     const std::vector<kj::StringPtr>& import_paths,
+                     const kj::ReadableDirectory& src_dir,
+                     const std::vector<kj::Own<const kj::ReadableDirectory>>& import_dirs)
 {
     std::string output_path;
     if (src_prefix == ".") {
@@ -387,7 +386,7 @@ static void Generate(kj::StringPtr src_prefix,
             const std::ostringstream client_destroy;
 
             int method_ordinal = 0;
-            ForEachMethod(interface, [&] (const capnp::InterfaceSchema& method_interface, const capnp::InterfaceSchema::Method& method) {
+            ForEachMethod(interface, [&](const capnp::InterfaceSchema& method_interface, const capnp::InterfaceSchema::Method& method) {
                 const kj::StringPtr method_name = method.getProto().getName();
                 kj::StringPtr proxied_method_name = method_name;
                 GetAnnotationText(method.getProto(), NAME_ANNOTATION_ID, &proxied_method_name);
@@ -397,8 +396,7 @@ static void Generate(kj::StringPtr src_prefix,
                 const bool is_construct = method_name == "construct";
                 const bool is_destroy = method_name == "destroy";
 
-                struct Field
-                {
+                struct Field {
                     ::capnp::StructSchema::Field param;
                     bool param_is_set = false;
                     ::capnp::StructSchema::Field result;
@@ -445,10 +443,10 @@ static void Generate(kj::StringPtr src_prefix,
                     if (!GetAnnotationInt32(schema_field.getProto(), COUNT_ANNOTATION_ID, &count)) {
                         if (schema_field.getType().isStruct()) {
                             GetAnnotationInt32(schema_field.getType().asStruct().getProto(),
-                                    COUNT_ANNOTATION_ID, &count);
+                                               COUNT_ANNOTATION_ID, &count);
                         } else if (schema_field.getType().isInterface()) {
                             GetAnnotationInt32(schema_field.getType().asInterface().getProto(),
-                                    COUNT_ANNOTATION_ID, &count);
+                                               COUNT_ANNOTATION_ID, &count);
                         }
                     }
 
@@ -597,19 +595,21 @@ static void Generate(kj::StringPtr src_prefix,
 
             client << "};\n";
             server << "};\n";
-            dec << "\n" << client.str() << "\n" << server.str() << "\n";
-            KJ_IF_MAYBE(bracket, proxied_class_type.findFirst('<')) {
-              // Skip ProxyType definition for complex type expressions which
-              // could lead to duplicate definitions. They can be defined
-              // manually if actually needed.
+            dec << "\n"
+                << client.str() << "\n"
+                << server.str() << "\n";
+            KJ_IF_MAYBE (bracket, proxied_class_type.findFirst('<')) {
+                // Skip ProxyType definition for complex type expressions which
+                // could lead to duplicate definitions. They can be defined
+                // manually if actually needed.
             } else {
-              dec << "template<>\nstruct ProxyType<" << proxied_class_type << ">\n{\n";
-              dec << "    using Type = " << proxied_class_type << ";\n";
-              dec << "    using Message = " << message_namespace << "::" << node_name << ";\n";
-              dec << "    using Client = ProxyClient<Message>;\n";
-              dec << "    using Server = ProxyServer<Message>;\n";
-              dec << "};\n";
-              int_client << "ProxyTypeRegister t" << node_nested.getId() << "{TypeList<" << proxied_class_type << ">{}};\n";
+                dec << "template<>\nstruct ProxyType<" << proxied_class_type << ">\n{\n";
+                dec << "    using Type = " << proxied_class_type << ";\n";
+                dec << "    using Message = " << message_namespace << "::" << node_name << ";\n";
+                dec << "    using Client = ProxyClient<Message>;\n";
+                dec << "    using Server = ProxyServer<Message>;\n";
+                dec << "};\n";
+                int_client << "ProxyTypeRegister t" << node_nested.getId() << "{TypeList<" << proxied_class_type << ">{}};\n";
             }
             def_types << "ProxyClient<" << message_namespace << "::" << node_name
                       << ">::~ProxyClient() { clientDestroy(*this); " << client_destroy.str() << " }\n";
@@ -626,7 +626,8 @@ static void Generate(kj::StringPtr src_prefix,
     cpp_server << "} // namespace mp\n";
 
     cpp_client << def_client.str();
-    cpp_client << "namespace {\n" << int_client.str() << "} // namespace\n";
+    cpp_client << "namespace {\n"
+               << int_client.str() << "} // namespace\n";
     cpp_client << "} // namespace mp\n";
 
     cpp_types << def_types.str();
@@ -653,13 +654,13 @@ int main(int argc, char** argv)
     auto fs = kj::newDiskFilesystem();
     auto cwd = fs->getCurrentPath();
     kj::Own<const kj::ReadableDirectory> src_dir;
-    KJ_IF_MAYBE(dir, fs->getRoot().tryOpenSubdir(cwd.evalNative(argv[1]))) {
+    KJ_IF_MAYBE (dir, fs->getRoot().tryOpenSubdir(cwd.evalNative(argv[1]))) {
         src_dir = kj::mv(*dir);
     } else {
         throw std::runtime_error(std::string("Failed to open src_prefix prefix directory: ") + argv[1]);
     }
     for (int i = 4; i < argc; ++i) {
-        KJ_IF_MAYBE(dir, fs->getRoot().tryOpenSubdir(cwd.evalNative(argv[i]))) {
+        KJ_IF_MAYBE (dir, fs->getRoot().tryOpenSubdir(cwd.evalNative(argv[i]))) {
             import_paths.emplace_back(argv[i]);
             import_dirs.emplace_back(kj::mv(*dir));
         } else {
@@ -667,7 +668,7 @@ int main(int argc, char** argv)
         }
     }
     for (const char* path : {CMAKE_INSTALL_PREFIX "/include", capnp_PREFIX "/include"}) {
-        KJ_IF_MAYBE(dir, fs->getRoot().tryOpenSubdir(cwd.evalNative(path))) {
+        KJ_IF_MAYBE (dir, fs->getRoot().tryOpenSubdir(cwd.evalNative(path))) {
             import_paths.emplace_back(path);
             import_dirs.emplace_back(kj::mv(*dir));
         }

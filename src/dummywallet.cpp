@@ -13,14 +13,14 @@ class Chain;
 class Handler;
 class Wallet;
 class WalletLoader;
-}
+} // namespace interfaces
 
-class DummyWalletInit : public WalletInitInterface {
+class DummyWalletInit : public WalletInitInterface
+{
 public:
-
-    bool HasWalletSupport() const override {return false;}
+    bool HasWalletSupport() const override { return false; }
     void AddWalletOptions(ArgsManager& argsman) const override;
-    bool ParameterInteraction() const override {return true;}
+    bool ParameterInteraction() const override { return true; }
     void Construct(node::NodeContext& node) const override { LogInfo("No wallet support compiled in!"); }
 };
 

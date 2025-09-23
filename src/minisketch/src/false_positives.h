@@ -16,12 +16,12 @@
 namespace {
 
 /** Compute floor(log2(x!)), exactly up to x=57; an underestimate up to x=2^32-1. */
-uint64_t Log2Factorial(uint32_t x) {
+uint64_t Log2Factorial(uint32_t x)
+{
     //! Values of floor(106*log2(1 + i/32)) for i=0..31
     static constexpr uint8_t T[32] = {
         0, 4, 9, 13, 18, 22, 26, 30, 34, 37, 41, 45, 48, 52, 55, 58, 62, 65, 68,
-        71, 74, 77, 80, 82, 85, 88, 90, 93, 96, 98, 101, 103
-    };
+        71, 74, 77, 80, 82, 85, 88, 90, 93, 96, 98, 101, 103};
     int bits = CountBits(x, 32);
     // Compute an (under)estimate of floor(106*log2(x)).
     // This works by relying on floor(log2(x)) = countbits(x)-1, and adding
@@ -46,7 +46,8 @@ uint64_t Log2Factorial(uint32_t x) {
 /** Compute floor(log2(2^(bits * capacity) / sum((2^bits - 1) choose k, k=0..capacity))), for bits>1
  *
  * See doc/gen_basefpbits.sage for how the tables were obtained. */
-uint64_t BaseFPBits(uint32_t bits, uint32_t capacity) {
+uint64_t BaseFPBits(uint32_t bits, uint32_t capacity)
+{
     // Correction table for low bits/capacities
     static constexpr uint8_t ADD5[] = {1, 1, 1, 1, 2, 2, 2, 3, 4, 4, 5, 5, 6, 7, 8, 8, 9, 10, 10, 10, 11, 11, 11, 12, 12, 12, 12};
     static constexpr uint8_t ADD6[] = {1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 4, 4, 5, 6, 6, 6, 7, 8, 8, 10, 10, 11, 12, 12, 13, 14, 15, 15, 16, 17, 18, 18, 19, 20, 20, 21, 21, 22, 22, 23, 23, 23, 24, 24, 24, 24};
@@ -62,24 +63,34 @@ uint64_t BaseFPBits(uint32_t bits, uint32_t capacity) {
     }
     ret += Log2Factorial(capacity);
     switch (bits) {
-        case 2: return ret + (capacity <= 2 ? 0 : 1);
-        case 3: return ret + (capacity <= 2 ? 0 : (0x2a5 >> 2 * (capacity - 3)) & 3);
-        case 4: return ret + (capacity <= 3 ? 0 : (0xb6d91a449 >> 3 * (capacity - 4)) & 7);
-        case 5: return ret + (capacity <= 4 ? 0 : ADD5[capacity - 5]);
-        case 6: return ret + (capacity <= 4 ? 0 : capacity > 54 ? 25 : ADD6[capacity - 5]);
-        case 7: return ret + (capacity <= 4 ? 0 : capacity > 57 ? 21 : ADD7[capacity - 5]);
-        case 8: return ret + (capacity <= 9 ? 0 : capacity > 56 ? 10 : ADD8[capacity - 10]);
-        case 9: return ret + (capacity <= 11 ? 0 : capacity > 54 ? 5 : ADD9[capacity - 12]);
-        case 10: return ret + (capacity <= 21 ? 0 : capacity > 50 ? 2 : (0x1a6665545555041 >> 2 * (capacity - 22)) & 3);
-        case 11: return ret + (capacity <= 21 ? 0 : capacity > 45 ? 1 : (0x5b3dc1 >> (capacity - 22)) & 1);
-        case 12: return ret + (capacity <= 21 ? 0 : capacity > 57 ? 0 : (0xe65522041 >> (capacity - 22)) & 1);
-        case 13: return ret + (capacity <= 27 ? 0 : capacity > 55 ? 0 : (0x8904081 >> (capacity - 28)) & 1);
-        case 14: return ret + (capacity <= 47 ? 0 : capacity > 48 ? 0 : 1);
-        default: return ret;
+    case 2: return ret + (capacity <= 2 ? 0 : 1);
+    case 3: return ret + (capacity <= 2 ? 0 : (0x2a5 >> 2 * (capacity - 3)) & 3);
+    case 4: return ret + (capacity <= 3 ? 0 : (0xb6d91a449 >> 3 * (capacity - 4)) & 7);
+    case 5: return ret + (capacity <= 4 ? 0 : ADD5[capacity - 5]);
+    case 6: return ret + (capacity <= 4 ? 0 : capacity > 54 ? 25 :
+                                                              ADD6[capacity - 5]);
+    case 7: return ret + (capacity <= 4 ? 0 : capacity > 57 ? 21 :
+                                                              ADD7[capacity - 5]);
+    case 8: return ret + (capacity <= 9 ? 0 : capacity > 56 ? 10 :
+                                                              ADD8[capacity - 10]);
+    case 9: return ret + (capacity <= 11 ? 0 : capacity > 54 ? 5 :
+                                                               ADD9[capacity - 12]);
+    case 10: return ret + (capacity <= 21 ? 0 : capacity > 50 ? 2 :
+                                                                (0x1a6665545555041 >> 2 * (capacity - 22)) & 3);
+    case 11: return ret + (capacity <= 21 ? 0 : capacity > 45 ? 1 :
+                                                                (0x5b3dc1 >> (capacity - 22)) & 1);
+    case 12: return ret + (capacity <= 21 ? 0 : capacity > 57 ? 0 :
+                                                                (0xe65522041 >> (capacity - 22)) & 1);
+    case 13: return ret + (capacity <= 27 ? 0 : capacity > 55 ? 0 :
+                                                                (0x8904081 >> (capacity - 28)) & 1);
+    case 14: return ret + (capacity <= 47 ? 0 : capacity > 48 ? 0 :
+                                                                1);
+    default: return ret;
     }
 }
 
-size_t ComputeCapacity(uint32_t bits, size_t max_elements, uint32_t fpbits) {
+size_t ComputeCapacity(uint32_t bits, size_t max_elements, uint32_t fpbits)
+{
     if (bits == 0) return 0;
     if (max_elements > 0xffffffff) return max_elements;
     uint64_t base_fpbits = BaseFPBits(bits, static_cast<uint32_t>(max_elements));
@@ -89,7 +100,8 @@ size_t ComputeCapacity(uint32_t bits, size_t max_elements, uint32_t fpbits) {
     return max_elements + (fpbits - base_fpbits + bits - 1) / bits;
 }
 
-size_t ComputeMaxElements(uint32_t bits, size_t capacity, uint32_t fpbits) {
+size_t ComputeMaxElements(uint32_t bits, size_t capacity, uint32_t fpbits)
+{
     if (bits == 0) return 0;
     if (capacity > 0xffffffff) return capacity;
     // Start with max_elements=capacity, and decrease max_elements until the corresponding capacity is capacity.
@@ -107,6 +119,6 @@ size_t ComputeMaxElements(uint32_t bits, size_t capacity, uint32_t fpbits) {
     }
 }
 
-}  // namespace
+} // namespace
 
 #endif

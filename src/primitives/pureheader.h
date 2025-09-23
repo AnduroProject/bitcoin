@@ -20,7 +20,6 @@
 class CPureBlockHeader
 {
 private:
-
     /* Modifiers to the version.  */
     static const int32_t VERSION_AUXPOW = (1 << 8);
 
@@ -129,7 +128,7 @@ public:
      * Set the auxpow flag.  This is used for testing.
      * @param auxpow Whether to mark auxpow as true.
      */
-    inline void SetAuxpowVersion (bool auxpow)
+    inline void SetAuxpowVersion(bool auxpow)
     {
         if (auxpow)
             nVersion |= VERSION_AUXPOW;

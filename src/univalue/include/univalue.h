@@ -19,9 +19,16 @@
 #include <vector>
 
 // NOLINTNEXTLINE(misc-no-recursion)
-class UniValue {
+class UniValue
+{
 public:
-    enum VType { VNULL, VOBJ, VARR, VSTR, VNUM, VBOOL, };
+    enum VType { VNULL,
+                 VOBJ,
+                 VARR,
+                 VSTR,
+                 VNUM,
+                 VBOOL,
+    };
 
     class type_error : public std::runtime_error
     {
@@ -72,11 +79,15 @@ public:
 
     void reserve(size_t new_cap);
 
-    void getObjMap(std::map<std::string,UniValue>& kv) const;
-    bool checkObject(const std::map<std::string,UniValue::VType>& memberTypes) const;
+    void getObjMap(std::map<std::string, UniValue>& kv) const;
+    bool checkObject(const std::map<std::string, UniValue::VType>& memberTypes) const;
     const UniValue& operator[](const std::string& key) const;
     const UniValue& operator[](size_t index) const;
-    bool exists(const std::string& key) const { size_t i; return findKey(key, i); }
+    bool exists(const std::string& key) const
+    {
+        size_t i;
+        return findKey(key, i);
+    }
 
     bool isNull() const { return (typ == VNULL); }
     bool isTrue() const { return (typ == VBOOL) && (val == "1"); }
@@ -103,7 +114,7 @@ public:
 
 private:
     UniValue::VType typ;
-    std::string val;                       // numbers are stored as C++ strings
+    std::string val; // numbers are stored as C++ strings
     std::vector<std::string> keys;
     std::vector<UniValue> values;
 
@@ -150,8 +161,8 @@ Int UniValue::getInt() const
 }
 
 enum jtokentype {
-    JTOK_ERR        = -1,
-    JTOK_NONE       = 0,                           // eof
+    JTOK_ERR = -1,
+    JTOK_NONE = 0, // eof
     JTOK_OBJ_OPEN,
     JTOK_OBJ_CLOSE,
     JTOK_ARR_OPEN,
@@ -166,8 +177,8 @@ enum jtokentype {
 };
 
 extern enum jtokentype getJsonToken(std::string& tokenVal,
-                                    unsigned int& consumed, const char *raw, const char *end);
-extern const char *uvTypeName(UniValue::VType t);
+                                    unsigned int& consumed, const char* raw, const char* end);
+extern const char* uvTypeName(UniValue::VType t);
 
 static inline bool jsonTokenIsValue(enum jtokentype jtt)
 {

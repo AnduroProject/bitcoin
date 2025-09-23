@@ -5,15 +5,16 @@
  **********************************************************************/
 
 #include "../include/minisketch.h"
-#include <string.h>
-#include <memory>
-#include <vector>
+#include <algorithm>
 #include <chrono>
+#include <memory>
 #include <random>
 #include <set>
-#include <algorithm>
+#include <string.h>
+#include <vector>
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     if (argc < 1 || argc > 4) {
         printf("Usage: %s [syndromes=150] [errors=syndromes] [iters=10]\n", argv[0]);
         return 1;

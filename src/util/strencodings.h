@@ -27,19 +27,18 @@
 #include <vector>
 
 /** Used by SanitizeString() */
-enum SafeChars
-{
-    SAFE_CHARS_DEFAULT, //!< The full set of allowed chars
+enum SafeChars {
+    SAFE_CHARS_DEFAULT,    //!< The full set of allowed chars
     SAFE_CHARS_UA_COMMENT, //!< BIP-0014 subset
-    SAFE_CHARS_FILENAME, //!< Chars allowed in filenames
-    SAFE_CHARS_URI, //!< Chars allowed in URIs (RFC 3986)
+    SAFE_CHARS_FILENAME,   //!< Chars allowed in filenames
+    SAFE_CHARS_URI,        //!< Chars allowed in URIs (RFC 3986)
 };
 
 /**
  * Used by ParseByteUnits()
  * Lowercase base 1000
  * Uppercase base 1024
-*/
+ */
 enum class ByteUnit : uint64_t {
     NOOP = 1ULL,
     k = 1000ULL,
@@ -53,12 +52,12 @@ enum class ByteUnit : uint64_t {
 };
 
 /**
-* Remove unsafe chars. Safe chars chosen to allow simple messages/URLs/email
-* addresses, but avoid anything even possibly remotely dangerous like & or >
-* @param[in] str    The string to sanitize
-* @param[in] rule   The set of safe chars to choose (default: least restrictive)
-* @return           A new string without unsafe chars
-*/
+ * Remove unsafe chars. Safe chars chosen to allow simple messages/URLs/email
+ * addresses, but avoid anything even possibly remotely dangerous like & or >
+ * @param[in] str    The string to sanitize
+ * @param[in] rule   The set of safe chars to choose (default: least restrictive)
+ * @return           A new string without unsafe chars
+ */
 std::string SanitizeString(std::string_view str, int rule = SAFE_CHARS_DEFAULT);
 /** Parse the hex string into bytes (uint8_t or std::byte). Ignores whitespace. Returns nullopt on invalid input. */
 template <typename Byte = std::byte>
@@ -162,7 +161,8 @@ constexpr bool IsDigit(char c)
  * @param[in] c     character to test
  * @return          true if the argument is a whitespace character; otherwise false
  */
-constexpr inline bool IsSpace(char c) noexcept {
+constexpr inline bool IsSpace(char c) noexcept
+{
     return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v';
 }
 
@@ -203,7 +203,7 @@ bool TimingResistantEqual(const T& a, const T& b)
     if (b.size() == 0) return a.size() == 0;
     size_t accumulator = a.size() ^ b.size();
     for (size_t i = 0; i < a.size(); i++)
-        accumulator |= size_t(a[i] ^ b[i%b.size()]);
+        accumulator |= size_t(a[i] ^ b[i % b.size()]);
     return accumulator == 0;
 }
 
@@ -211,20 +211,20 @@ bool TimingResistantEqual(const T& a, const T& b)
  * @returns true on success, false on error.
  * @note The result must be in the range (-10^18,10^18), otherwise an overflow error will trigger.
  */
-[[nodiscard]] bool ParseFixedPoint(std::string_view, int decimals, int64_t *amount_out);
+[[nodiscard]] bool ParseFixedPoint(std::string_view, int decimals, int64_t* amount_out);
 
 namespace {
 /** Helper class for the default infn argument to ConvertBits (just returns the input). */
-struct IntIdentity
-{
+struct IntIdentity {
     [[maybe_unused]] int operator()(int x) const { return x; }
 };
 
 } // namespace
 
 /** Convert from one power-of-2 number base to another. */
-template<int frombits, int tobits, bool pad, typename O, typename It, typename I = IntIdentity>
-bool ConvertBits(O outfn, It it, It end, I infn = {}) {
+template <int frombits, int tobits, bool pad, typename O, typename It, typename I = IntIdentity>
+bool ConvertBits(O outfn, It it, It end, I infn = {})
+{
     size_t acc = 0;
     size_t bits = 0;
     constexpr size_t maxv = (1 << tobits) - 1;
@@ -346,7 +346,7 @@ struct Hex {
         for (std::size_t i = 0; i < bytes.size(); ++i) {
             bytes[i] = static_cast<std::byte>(
                 (ConstevalHexDigit(hex_str[2 * i]) << 4) |
-                 ConstevalHexDigit(hex_str[2 * i + 1]));
+                ConstevalHexDigit(hex_str[2 * i + 1]));
         }
     }
 };
@@ -384,18 +384,30 @@ struct Hex {
 inline namespace hex_literals {
 
 template <util::detail::Hex str>
-constexpr auto operator""_hex() { return str.bytes; }
+constexpr auto operator""_hex()
+{
+    return str.bytes;
+}
 
 template <util::detail::Hex str>
-constexpr auto operator""_hex_u8() { return std::bit_cast<std::array<uint8_t, str.bytes.size()>>(str.bytes); }
+constexpr auto operator""_hex_u8()
+{
+    return std::bit_cast<std::array<uint8_t, str.bytes.size()>>(str.bytes);
+}
 
 template <util::detail::Hex str>
-constexpr auto operator""_hex_v() { return std::vector<std::byte>{str.bytes.begin(), str.bytes.end()}; }
+constexpr auto operator""_hex_v()
+{
+    return std::vector<std::byte>{str.bytes.begin(), str.bytes.end()};
+}
 
 template <util::detail::Hex str>
-inline auto operator""_hex_v_u8() { return std::vector<uint8_t>{UCharCast(str.bytes.data()), UCharCast(str.bytes.data() + str.bytes.size())}; }
+inline auto operator""_hex_v_u8()
+{
+    return std::vector<uint8_t>{UCharCast(str.bytes.data()), UCharCast(str.bytes.data() + str.bytes.size())};
+}
 
-} // inline namespace hex_literals
+} // namespace hex_literals
 } // namespace util
 
 #endif // BITCOIN_UTIL_STRENCODINGS_H

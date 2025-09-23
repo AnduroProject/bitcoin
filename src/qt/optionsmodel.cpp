@@ -28,7 +28,7 @@
 #include <QStringList>
 #include <QVariant>
 
-const char *DEFAULT_GUI_PROXY_HOST = "127.0.0.1";
+const char* DEFAULT_GUI_PROXY_HOST = "127.0.0.1";
 
 static QString GetDefaultProxyAddress();
 
@@ -142,16 +142,15 @@ OptionsModel::FontChoice OptionsModel::FontChoiceFromString(const QString& s)
         f.fromString(s.mid(fontchoice_str_custom_prefix.size()));
         return f;
     } else {
-        return FontChoiceAbstract::EmbeddedFont;  // default
+        return FontChoiceAbstract::EmbeddedFont; // default
     }
 }
 
-OptionsModel::OptionsModel(interfaces::Node& node, QObject *parent) :
-    QAbstractListModel(parent), m_node{node}
+OptionsModel::OptionsModel(interfaces::Node& node, QObject* parent) : QAbstractListModel(parent), m_node{node}
 {
 }
 
-void OptionsModel::addOverriddenOption(const std::string &option)
+void OptionsModel::addOverriddenOption(const std::string& option)
 {
     strOverriddenByCommandLine += QString::fromStdString(option) + "=" + QString::fromStdString(gArgs.GetArg(option, "")) + " ";
 }
@@ -306,7 +305,7 @@ void OptionsModel::Reset()
         GUIUtil::SetStartOnSystemStartup(false);
 }
 
-int OptionsModel::rowCount(const QModelIndex & parent) const
+int OptionsModel::rowCount(const QModelIndex& parent) const
 {
     return OptionIDRowCount;
 }
@@ -374,21 +373,19 @@ void OptionsModel::SetPruneTargetGB(int prune_target_gb)
 }
 
 // read QSettings values and return them
-QVariant OptionsModel::data(const QModelIndex & index, int role) const
+QVariant OptionsModel::data(const QModelIndex& index, int role) const
 {
-    if(role == Qt::EditRole)
-    {
+    if (role == Qt::EditRole) {
         return getOption(OptionID(index.row()));
     }
     return QVariant();
 }
 
 // write QSettings values
-bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, int role)
+bool OptionsModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     bool successful = true; /* set to false on parse error */
-    if(role == Qt::EditRole)
-    {
+    if (role == Qt::EditRole) {
         successful = setOption(OptionID(index.row()), value);
     }
 
@@ -400,7 +397,7 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
 // NOLINTNEXTLINE(misc-no-recursion)
 QVariant OptionsModel::getOption(OptionID option, const std::string& suffix) const
 {
-    auto setting = [&]{ return node().getPersistentSetting(SettingName(option) + suffix); };
+    auto setting = [&] { return node().getPersistentSetting(SettingName(option) + suffix); };
 
     QSettings settings;
     switch (option) {
@@ -627,8 +624,7 @@ bool OptionsModel::setOption(OptionID option, const QVariant& value, const std::
             setRestartRequired(true);
         }
         break;
-    case FontForMoney:
-    {
+    case FontForMoney: {
         const auto& new_font = value.value<FontChoice>();
         if (m_font_money == new_font) break;
         settings.setValue("FontForMoney", FontChoiceToString(new_font));
@@ -726,8 +722,7 @@ void OptionsModel::checkAndMigrate()
     QSettings settings;
     static const char strSettingsVersionKey[] = "nSettingsVersion";
     int settingsVersion = settings.contains(strSettingsVersionKey) ? settings.value(strSettingsVersionKey).toInt() : 0;
-    if (settingsVersion < CLIENT_VERSION)
-    {
+    if (settingsVersion < CLIENT_VERSION) {
         // -dbcache was bumped from 100 to 300 in 0.13
         // see https://github.com/bitcoin/bitcoin/pull/8273
         // force people to upgrade to the new value if they are using 100MB

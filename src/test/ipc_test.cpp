@@ -15,11 +15,11 @@
 #include <validation.h>
 
 #include <future>
-#include <thread>
 #include <kj/common.h>
 #include <kj/memory.h>
 #include <kj/test.h>
 #include <stdexcept>
+#include <thread>
 
 #include <boost/test/unit_test.hpp>
 

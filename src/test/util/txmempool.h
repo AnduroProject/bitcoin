@@ -30,28 +30,52 @@ struct TestMemPoolEntryHelper {
     CTxMemPoolEntry FromTx(const CTransactionRef& tx) const;
 
     // Change the default value
-    TestMemPoolEntryHelper& Fee(CAmount _fee) { nFee = _fee; return *this; }
-    TestMemPoolEntryHelper& Time(NodeSeconds tp) { time = tp; return *this; }
-    TestMemPoolEntryHelper& Height(unsigned int _height) { nHeight = _height; return *this; }
-    TestMemPoolEntryHelper& Sequence(uint64_t _seq) { m_sequence = _seq; return *this; }
-    TestMemPoolEntryHelper& SpendsCoinbase(bool _flag) { spendsCoinbase = _flag; return *this; }
-    TestMemPoolEntryHelper& SigOpsCost(unsigned int _sigopsCost) { sigOpCost = _sigopsCost; return *this; }
+    TestMemPoolEntryHelper& Fee(CAmount _fee)
+    {
+        nFee = _fee;
+        return *this;
+    }
+    TestMemPoolEntryHelper& Time(NodeSeconds tp)
+    {
+        time = tp;
+        return *this;
+    }
+    TestMemPoolEntryHelper& Height(unsigned int _height)
+    {
+        nHeight = _height;
+        return *this;
+    }
+    TestMemPoolEntryHelper& Sequence(uint64_t _seq)
+    {
+        m_sequence = _seq;
+        return *this;
+    }
+    TestMemPoolEntryHelper& SpendsCoinbase(bool _flag)
+    {
+        spendsCoinbase = _flag;
+        return *this;
+    }
+    TestMemPoolEntryHelper& SigOpsCost(unsigned int _sigopsCost)
+    {
+        sigOpCost = _sigopsCost;
+        return *this;
+    }
 };
 
 /** Check expected properties for every PackageMempoolAcceptResult, regardless of value. Returns
  * a string if an error occurs with error populated, nullopt otherwise. If mempool is provided,
  * checks that the expected transactions are in mempool (this should be set to nullptr for a test_accept).
-*/
-std::optional<std::string>  CheckPackageMempoolAcceptResult(const Package& txns,
-                                                            const PackageMempoolAcceptResult& result,
-                                                            bool expect_valid,
-                                                            const CTxMemPool* mempool);
+ */
+std::optional<std::string> CheckPackageMempoolAcceptResult(const Package& txns,
+                                                           const PackageMempoolAcceptResult& result,
+                                                           bool expect_valid,
+                                                           const CTxMemPool* mempool);
 
 /** Check that we never get into a state where an ephemeral dust
  *  transaction would be mined without the spend of the dust
  *  also being mined. This assumes standardness checks are being
  *  enforced.
-*/
+ */
 void CheckMempoolEphemeralInvariants(const CTxMemPool& tx_pool);
 
 /** For every transaction in tx_pool, check TRUC invariants:

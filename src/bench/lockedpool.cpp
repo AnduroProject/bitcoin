@@ -14,8 +14,8 @@
 
 static void BenchLockedPool(benchmark::Bench& bench)
 {
-    void *synth_base = reinterpret_cast<void*>(0x08000000);
-    const size_t synth_size = 1024*1024;
+    void* synth_base = reinterpret_cast<void*>(0x08000000);
+    const size_t synth_size = 1024 * 1024;
     Arena b(synth_base, synth_size, 16);
 
     std::vector<void*> addr{ASIZE, nullptr};
@@ -33,7 +33,7 @@ static void BenchLockedPool(benchmark::Bench& bench)
         if (lsb)
             s ^= 0xf00f00f0; // LFSR period 0xf7ffffe0
     });
-    for (void *ptr: addr)
+    for (void* ptr : addr)
         b.free(ptr);
     addr.clear();
 }

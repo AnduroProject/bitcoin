@@ -91,9 +91,9 @@ struct UniValueType {
   Check for expected keys/value types in an Object.
 */
 void RPCTypeCheckObj(const UniValue& o,
-    const std::map<std::string, UniValueType>& typesExpected,
-    bool fAllowNull = false,
-    bool fStrict = false);
+                     const std::map<std::string, UniValueType>& typesExpected,
+                     bool fAllowNull = false,
+                     bool fStrict = false);
 
 /**
  * Utilities: convert hex-encoded Values
@@ -197,10 +197,10 @@ struct RPCArg {
                           //!< also allows the keys to be passed as top-level
                           //!< named parameters, as a more convenient way to pass
                           //!< options to the RPC method without nesting them.
-        OBJ_USER_KEYS, //!< Special type where the user must set the keys e.g. to define multiple addresses; as opposed to e.g. an options object where the keys are predefined
-        AMOUNT,        //!< Special type representing a floating point amount (can be either NUM or STR)
-        STR_HEX,       //!< Special type that is a STR with only hex chars
-        RANGE,         //!< Special type that is a NUM or [NUM,NUM]
+        OBJ_USER_KEYS,    //!< Special type where the user must set the keys e.g. to define multiple addresses; as opposed to e.g. an options object where the keys are predefined
+        AMOUNT,           //!< Special type representing a floating point amount (can be either NUM or STR)
+        STR_HEX,          //!< Special type that is a STR with only hex chars
+        RANGE,            //!< Special type that is a NUM or [NUM,NUM]
     };
 
     enum class Optional {

@@ -10,7 +10,6 @@
 
 static void PrePadded(benchmark::Bench& bench)
 {
-
     CSHA256 hasher;
 
     // Setup the salted hasher

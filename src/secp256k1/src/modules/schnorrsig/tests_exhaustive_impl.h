@@ -14,13 +14,11 @@ static const unsigned char invalid_pubkey_bytes[][32] = {
     /* 0 */
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    },
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     /* 2 */
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
-    },
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2},
     /* order */
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -28,8 +26,7 @@ static const unsigned char invalid_pubkey_bytes[][32] = {
         ((EXHAUSTIVE_TEST_ORDER + 0UL) >> 24) & 0xFF,
         ((EXHAUSTIVE_TEST_ORDER + 0UL) >> 16) & 0xFF,
         ((EXHAUSTIVE_TEST_ORDER + 0UL) >> 8) & 0xFF,
-        (EXHAUSTIVE_TEST_ORDER + 0UL) & 0xFF
-    },
+        (EXHAUSTIVE_TEST_ORDER + 0UL) & 0xFF},
     /* order + 1 */
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -37,34 +34,30 @@ static const unsigned char invalid_pubkey_bytes[][32] = {
         ((EXHAUSTIVE_TEST_ORDER + 1UL) >> 24) & 0xFF,
         ((EXHAUSTIVE_TEST_ORDER + 1UL) >> 16) & 0xFF,
         ((EXHAUSTIVE_TEST_ORDER + 1UL) >> 8) & 0xFF,
-        (EXHAUSTIVE_TEST_ORDER + 1UL) & 0xFF
-    },
+        (EXHAUSTIVE_TEST_ORDER + 1UL) & 0xFF},
     /* field size */
     {
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFC, 0x2F
-    },
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFC, 0x2F},
     /* field size + 1 (note that 1 is legal) */
     {
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFC, 0x30
-    },
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFC, 0x30},
     /* 2^256 - 1 */
     {
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-    }
-};
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
 
 #define NUM_INVALID_KEYS (sizeof(invalid_pubkey_bytes) / sizeof(invalid_pubkey_bytes[0]))
 
-static int secp256k1_hardened_nonce_function_smallint(unsigned char *nonce32, const unsigned char *msg,
+static int secp256k1_hardened_nonce_function_smallint(unsigned char* nonce32, const unsigned char* msg,
                                                       size_t msglen,
-                                                      const unsigned char *key32, const unsigned char *xonly_pk32,
-                                                      const unsigned char *algo, size_t algolen,
-                                                      void* data) {
+                                                      const unsigned char* key32, const unsigned char* xonly_pk32,
+                                                      const unsigned char* algo, size_t algolen,
+                                                      void* data)
+{
     secp256k1_scalar s;
-    int *idata = data;
+    int* idata = data;
     (void)msg;
     (void)msglen;
     (void)key32;
@@ -76,7 +69,8 @@ static int secp256k1_hardened_nonce_function_smallint(unsigned char *nonce32, co
     return 1;
 }
 
-static void test_exhaustive_schnorrsig_verify(const secp256k1_context *ctx, const secp256k1_xonly_pubkey* pubkeys, unsigned char (*xonly_pubkey_bytes)[32], const int* parities) {
+static void test_exhaustive_schnorrsig_verify(const secp256k1_context* ctx, const secp256k1_xonly_pubkey* pubkeys, unsigned char (*xonly_pubkey_bytes)[32], const int* parities)
+{
     int d;
     uint64_t iter = 0;
     /* Iterate over the possible public keys to verify against (through their corresponding DL d). */
@@ -138,7 +132,8 @@ static void test_exhaustive_schnorrsig_verify(const secp256k1_context *ctx, cons
     }
 }
 
-static void test_exhaustive_schnorrsig_sign(const secp256k1_context *ctx, unsigned char (*xonly_pubkey_bytes)[32], const secp256k1_keypair* keypairs, const int* parities) {
+static void test_exhaustive_schnorrsig_sign(const secp256k1_context* ctx, unsigned char (*xonly_pubkey_bytes)[32], const secp256k1_keypair* keypairs, const int* parities)
+{
     int d, k;
     uint64_t iter = 0;
     secp256k1_schnorrsig_extraparams extraparams = SECP256K1_SCHNORRSIG_EXTRAPARAMS_INIT;
@@ -183,7 +178,8 @@ static void test_exhaustive_schnorrsig_sign(const secp256k1_context *ctx, unsign
     }
 }
 
-static void test_exhaustive_schnorrsig(const secp256k1_context *ctx) {
+static void test_exhaustive_schnorrsig(const secp256k1_context* ctx)
+{
     secp256k1_keypair keypair[EXHAUSTIVE_TEST_ORDER - 1];
     secp256k1_xonly_pubkey xonly_pubkey[EXHAUSTIVE_TEST_ORDER - 1];
     int parity[EXHAUSTIVE_TEST_ORDER - 1];

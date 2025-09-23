@@ -11,8 +11,7 @@ namespace ipc {
 //! isn't needed within a single process, like code copying global state from an
 //! existing process to a new process when it's initialized, or code dealing
 //! with shared objects that are created or destroyed remotely.
-struct Context
-{
+struct Context {
 };
 } // namespace ipc
 

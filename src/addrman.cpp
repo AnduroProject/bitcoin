@@ -107,10 +107,7 @@ double AddrInfo::GetChance(NodeSeconds now) const
 }
 
 AddrManImpl::AddrManImpl(const NetGroupManager& netgroupman, bool deterministic, int32_t consistency_check_ratio)
-    : insecure_rand{deterministic}
-    , nKey{deterministic ? uint256{1} : insecure_rand.rand256()}
-    , m_consistency_check_ratio{consistency_check_ratio}
-    , m_netgroupman{netgroupman}
+    : insecure_rand{deterministic}, nKey{deterministic ? uint256{1} : insecure_rand.rand256()}, m_consistency_check_ratio{consistency_check_ratio}, m_netgroupman{netgroupman}
 {
     for (auto& bucket : vvNew) {
         for (auto& entry : bucket) {
@@ -267,16 +264,16 @@ void AddrManImpl::Unserialize(Stream& s_)
 
     if (nNew > ADDRMAN_NEW_BUCKET_COUNT * ADDRMAN_BUCKET_SIZE || nNew < 0) {
         throw std::ios_base::failure(
-                strprintf("Corrupt AddrMan serialization: nNew=%d, should be in [0, %d]",
-                    nNew,
-                    ADDRMAN_NEW_BUCKET_COUNT * ADDRMAN_BUCKET_SIZE));
+            strprintf("Corrupt AddrMan serialization: nNew=%d, should be in [0, %d]",
+                      nNew,
+                      ADDRMAN_NEW_BUCKET_COUNT * ADDRMAN_BUCKET_SIZE));
     }
 
     if (nTried > ADDRMAN_TRIED_BUCKET_COUNT * ADDRMAN_BUCKET_SIZE || nTried < 0) {
         throw std::ios_base::failure(
-                strprintf("Corrupt AddrMan serialization: nTried=%d, should be in [0, %d]",
-                    nTried,
-                    ADDRMAN_TRIED_BUCKET_COUNT * ADDRMAN_BUCKET_SIZE));
+            strprintf("Corrupt AddrMan serialization: nTried=%d, should be in [0, %d]",
+                      nTried,
+                      ADDRMAN_TRIED_BUCKET_COUNT * ADDRMAN_BUCKET_SIZE));
     }
 
     // Deserialize entries from the new table.
@@ -297,8 +294,7 @@ void AddrManImpl::Unserialize(Stream& s_)
         s >> info;
         int nKBucket = info.GetTriedBucket(nKey, m_netgroupman);
         int nKBucketPos = info.GetBucketPosition(nKey, false, nKBucket);
-        if (info.IsValid()
-                && vvTried[nKBucket][nKBucketPos] == -1) {
+        if (info.IsValid() && vvTried[nKBucket][nKBucketPos] == -1) {
             info.nRandomPos = vRandom.size();
             info.fInTried = true;
             vRandom.push_back(nIdCount);
@@ -339,7 +335,7 @@ void AddrManImpl::Unserialize(Stream& s_)
         s >> serialized_asmap_checksum;
     }
     const bool restore_bucketing{nUBuckets == ADDRMAN_NEW_BUCKET_COUNT &&
-        serialized_asmap_checksum == supplied_asmap_checksum};
+                                 serialized_asmap_checksum == supplied_asmap_checksum};
 
     if (!restore_bucketing) {
         LogDebug(BCLog::ADDRMAN, "Bucketing method was updated, re-bucketing addrman entries from disk\n");
@@ -377,7 +373,7 @@ void AddrManImpl::Unserialize(Stream& s_)
 
     // Prune new entries with refcount 0 (as a result of collisions or invalid address).
     int nLostUnk = 0;
-    for (auto it = mapInfo.cbegin(); it != mapInfo.cend(); ) {
+    for (auto it = mapInfo.cbegin(); it != mapInfo.cend();) {
         if (it->second.fInTried == false && it->second.nRefCount == 0) {
             const auto itCopy = it++;
             Delete(itCopy->first);
@@ -1008,7 +1004,7 @@ std::optional<AddressPosition> AddrManImpl::FindAddressEntry_(const CAddress& ad
 
     if (!addr_info) return std::nullopt;
 
-    if(addr_info->fInTried) {
+    if (addr_info->fInTried) {
         int bucket{addr_info->GetTriedBucket(nKey, m_netgroupman)};
         return AddressPosition(/*tried_in=*/true,
                                /*multiplicity_in=*/1,

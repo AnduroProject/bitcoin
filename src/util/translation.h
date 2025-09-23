@@ -63,10 +63,16 @@ struct TranslatedLiteral {
 
 // TranslatedLiteral operators for formatting and adding to strings.
 inline std::ostream& operator<<(std::ostream& os, const TranslatedLiteral& lit) { return os << std::string{lit}; }
-template<typename T>
-T operator+(const T& lhs, const TranslatedLiteral& rhs) { return lhs + static_cast<T>(rhs); }
-template<typename T>
-T operator+(const TranslatedLiteral& lhs, const T& rhs) { return static_cast<T>(lhs) + rhs; }
+template <typename T>
+T operator+(const T& lhs, const TranslatedLiteral& rhs)
+{
+    return lhs + static_cast<T>(rhs);
+}
+template <typename T>
+T operator+(const TranslatedLiteral& lhs, const T& rhs)
+{
+    return static_cast<T>(lhs) + rhs;
+}
 
 template <unsigned num_params>
 struct BilingualFmt {

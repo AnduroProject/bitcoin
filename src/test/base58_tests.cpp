@@ -36,8 +36,8 @@ BOOST_AUTO_TEST_CASE(base58_EncodeBase58)
         std::vector<unsigned char> sourcedata = ParseHex(test[0].get_str());
         std::string base58string = test[1].get_str();
         BOOST_CHECK_MESSAGE(
-                    EncodeBase58(sourcedata) == base58string,
-                    strTest);
+            EncodeBase58(sourcedata) == base58string,
+            strTest);
     }
 }
 
@@ -65,21 +65,23 @@ BOOST_AUTO_TEST_CASE(base58_DecodeBase58)
     BOOST_CHECK(!DecodeBase58("invalid\0"s, result, 100));
     BOOST_CHECK(!DecodeBase58("\0invalid"s, result, 100));
 
-    BOOST_CHECK( DecodeBase58("good"s, result, 100));
+    BOOST_CHECK(DecodeBase58("good"s, result, 100));
     BOOST_CHECK(!DecodeBase58("bad0IOl"s, result, 100));
     BOOST_CHECK(!DecodeBase58("goodbad0IOl"s, result, 100));
     BOOST_CHECK(!DecodeBase58("good\0bad0IOl"s, result, 100));
 
     // check that DecodeBase58 skips whitespace, but still fails with unexpected non-whitespace at the end.
     BOOST_CHECK(!DecodeBase58(" \t\n\v\f\r skip \r\f\v\n\t a", result, 3));
-    BOOST_CHECK( DecodeBase58(" \t\n\v\f\r skip \r\f\v\n\t ", result, 3));
+    BOOST_CHECK(DecodeBase58(" \t\n\v\f\r skip \r\f\v\n\t ", result, 3));
     constexpr auto expected{"971a55"_hex_u8};
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 
-    BOOST_CHECK( DecodeBase58Check("3vQB7B6MrGQZaxCuFg4oh"s, result, 100));
+    BOOST_CHECK(DecodeBase58Check("3vQB7B6MrGQZaxCuFg4oh"s, result, 100));
     BOOST_CHECK(!DecodeBase58Check("3vQB7B6MrGQZaxCuFg4oi"s, result, 100));
     BOOST_CHECK(!DecodeBase58Check("3vQB7B6MrGQZaxCuFg4oh0IOl"s, result, 100));
-    BOOST_CHECK(!DecodeBase58Check("3vQB7B6MrGQZaxCuFg4oh\0" "0IOl"s, result, 100));
+    BOOST_CHECK(!DecodeBase58Check("3vQB7B6MrGQZaxCuFg4oh\0"
+                                   "0IOl"s,
+                                   result, 100));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

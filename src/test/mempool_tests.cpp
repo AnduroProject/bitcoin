@@ -34,14 +34,12 @@ BOOST_AUTO_TEST_CASE(MempoolRemoveTest)
     txParent.vin.resize(1);
     txParent.vin[0].scriptSig = CScript() << OP_11;
     txParent.vout.resize(3);
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         txParent.vout[i].scriptPubKey = CScript() << OP_11 << OP_EQUAL;
         txParent.vout[i].nValue = 33000LL;
     }
     CMutableTransaction txChild[3];
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         txChild[i].vin.resize(1);
         txChild[i].vin[0].scriptSig = CScript() << OP_11;
         txChild[i].vin[0].prevout.hash = txParent.GetHash();
@@ -51,8 +49,7 @@ BOOST_AUTO_TEST_CASE(MempoolRemoveTest)
         txChild[i].vout[0].nValue = 11000LL;
     }
     CMutableTransaction txGrandChild[3];
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         txGrandChild[i].vin.resize(1);
         txGrandChild[i].vin[0].scriptSig = CScript() << OP_11;
         txGrandChild[i].vin[0].prevout.hash = txChild[i].GetHash();
@@ -79,8 +76,7 @@ BOOST_AUTO_TEST_CASE(MempoolRemoveTest)
 
     // Parent, children, grandchildren:
     AddToMempool(testPool, entry.FromTx(txParent));
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         AddToMempool(testPool, entry.FromTx(txChild[i]));
         AddToMempool(testPool, entry.FromTx(txGrandChild[i]));
     }
@@ -102,8 +98,7 @@ BOOST_AUTO_TEST_CASE(MempoolRemoveTest)
     BOOST_CHECK_EQUAL(testPool.size(), 0U);
 
     // Add children and grandchildren, but NOT the parent (simulate the parent being in a block)
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         AddToMempool(testPool, entry.FromTx(txChild[i]));
         AddToMempool(testPool, entry.FromTx(txGrandChild[i]));
     }
@@ -285,10 +280,10 @@ BOOST_AUTO_TEST_CASE(MempoolIndexingTest)
      *  tx6 = 2.2M (5 txs)
      *  tx7 = 2.2M (4 txs)
      */
-    sortedOrder.erase(sortedOrder.begin(), sortedOrder.begin()+2); // take out tx9, tx8 from the beginning
-    sortedOrder.insert(sortedOrder.begin()+5, tx9.GetHash().ToString());
-    sortedOrder.insert(sortedOrder.begin()+6, tx8.GetHash().ToString());
-    sortedOrder.insert(sortedOrder.begin()+7, tx10.GetHash().ToString()); // tx10 is just before tx6
+    sortedOrder.erase(sortedOrder.begin(), sortedOrder.begin() + 2); // take out tx9, tx8 from the beginning
+    sortedOrder.insert(sortedOrder.begin() + 5, tx9.GetHash().ToString());
+    sortedOrder.insert(sortedOrder.begin() + 6, tx8.GetHash().ToString());
+    sortedOrder.insert(sortedOrder.begin() + 7, tx10.GetHash().ToString()); // tx10 is just before tx6
     CheckSort<descendant_score>(pool, sortedOrder);
 
     // there should be 10 transactions in the mempool
@@ -377,7 +372,7 @@ BOOST_AUTO_TEST_CASE(MempoolAncestorIndexingTest)
     if (tx3.GetHash() < tx6.GetHash())
         sortedOrder.push_back(tx6.GetHash().ToString());
     else
-        sortedOrder.insert(sortedOrder.end()-1,tx6.GetHash().ToString());
+        sortedOrder.insert(sortedOrder.end() - 1, tx6.GetHash().ToString());
 
     CheckSort<ancestor_score>(pool, sortedOrder);
 
@@ -391,11 +386,11 @@ BOOST_AUTO_TEST_CASE(MempoolAncestorIndexingTest)
     uint64_t tx7Size = GetVirtualTransactionSize(CTransaction(tx7));
 
     /* set the fee to just below tx2's feerate when including ancestor */
-    CAmount fee = (20000/tx2Size)*(tx7Size + tx6Size) - 1;
+    CAmount fee = (20000 / tx2Size) * (tx7Size + tx6Size) - 1;
 
     AddToMempool(pool, entry.Fee(fee).FromTx(tx7));
     BOOST_CHECK_EQUAL(pool.size(), 7U);
-    sortedOrder.insert(sortedOrder.begin()+1, tx7.GetHash().ToString());
+    sortedOrder.insert(sortedOrder.begin() + 1, tx7.GetHash().ToString());
     CheckSort<ancestor_score>(pool, sortedOrder);
 
     /* after tx6 is mined, tx7 should move up in the sort */
@@ -403,12 +398,12 @@ BOOST_AUTO_TEST_CASE(MempoolAncestorIndexingTest)
     vtx.push_back(MakeTransactionRef(tx6));
     pool.removeForBlock(vtx, 1);
 
-    sortedOrder.erase(sortedOrder.begin()+1);
+    sortedOrder.erase(sortedOrder.begin() + 1);
     // Ties are broken by hash
     if (tx3.GetHash() < tx6.GetHash())
         sortedOrder.pop_back();
     else
-        sortedOrder.erase(sortedOrder.end()-2);
+        sortedOrder.erase(sortedOrder.end() - 2);
     sortedOrder.insert(sortedOrder.begin(), tx7.GetHash().ToString());
     CheckSort<ancestor_score>(pool, sortedOrder);
 
@@ -416,17 +411,17 @@ BOOST_AUTO_TEST_CASE(MempoolAncestorIndexingTest)
     // tx7 -> tx8
     CMutableTransaction tx8 = CMutableTransaction();
     tx8.vin.resize(1);
-    tx8.vin[0].prevout  = COutPoint(tx7.GetHash(), 0);
+    tx8.vin[0].prevout = COutPoint(tx7.GetHash(), 0);
     tx8.vin[0].scriptSig = CScript() << OP_11;
     tx8.vout.resize(1);
     tx8.vout[0].scriptPubKey = CScript() << OP_11 << OP_EQUAL;
-    tx8.vout[0].nValue = 10*COIN;
+    tx8.vout[0].nValue = 10 * COIN;
 
     // Check that we sort by min(feerate, ancestor_feerate):
     // set the fee so that the ancestor feerate is above tx1/5,
     // but the transaction's own feerate is lower
     AddToMempool(pool, entry.Fee(5000LL).FromTx(tx8));
-    sortedOrder.insert(sortedOrder.end()-1, tx8.GetHash().ToString());
+    sortedOrder.insert(sortedOrder.end() - 1, tx8.GetHash().ToString());
     CheckSort<ancestor_score>(pool, sortedOrder);
 }
 
@@ -562,28 +557,28 @@ BOOST_AUTO_TEST_CASE(MempoolSizeLimitTest)
     BOOST_CHECK_EQUAL(pool.GetMinFee(1).GetFeePerK(), maxFeeRateRemoved.GetFeePerK() + 1000);
     // ... we should keep the same min fee until we get a block
     pool.removeForBlock(vtx, 1);
-    SetMockTime(42 + 2*CTxMemPool::ROLLING_FEE_HALFLIFE);
-    BOOST_CHECK_EQUAL(pool.GetMinFee(1).GetFeePerK(), llround((maxFeeRateRemoved.GetFeePerK() + 1000)/2.0));
+    SetMockTime(42 + 2 * CTxMemPool::ROLLING_FEE_HALFLIFE);
+    BOOST_CHECK_EQUAL(pool.GetMinFee(1).GetFeePerK(), llround((maxFeeRateRemoved.GetFeePerK() + 1000) / 2.0));
     // ... then feerate should drop 1/2 each halflife
 
-    SetMockTime(42 + 2*CTxMemPool::ROLLING_FEE_HALFLIFE + CTxMemPool::ROLLING_FEE_HALFLIFE/2);
-    BOOST_CHECK_EQUAL(pool.GetMinFee(pool.DynamicMemoryUsage() * 5 / 2).GetFeePerK(), llround((maxFeeRateRemoved.GetFeePerK() + 1000)/4.0));
+    SetMockTime(42 + 2 * CTxMemPool::ROLLING_FEE_HALFLIFE + CTxMemPool::ROLLING_FEE_HALFLIFE / 2);
+    BOOST_CHECK_EQUAL(pool.GetMinFee(pool.DynamicMemoryUsage() * 5 / 2).GetFeePerK(), llround((maxFeeRateRemoved.GetFeePerK() + 1000) / 4.0));
     // ... with a 1/2 halflife when mempool is < 1/2 its target size
 
-    SetMockTime(42 + 2*CTxMemPool::ROLLING_FEE_HALFLIFE + CTxMemPool::ROLLING_FEE_HALFLIFE/2 + CTxMemPool::ROLLING_FEE_HALFLIFE/4);
-    BOOST_CHECK_EQUAL(pool.GetMinFee(pool.DynamicMemoryUsage() * 9 / 2).GetFeePerK(), llround((maxFeeRateRemoved.GetFeePerK() + 1000)/8.0));
+    SetMockTime(42 + 2 * CTxMemPool::ROLLING_FEE_HALFLIFE + CTxMemPool::ROLLING_FEE_HALFLIFE / 2 + CTxMemPool::ROLLING_FEE_HALFLIFE / 4);
+    BOOST_CHECK_EQUAL(pool.GetMinFee(pool.DynamicMemoryUsage() * 9 / 2).GetFeePerK(), llround((maxFeeRateRemoved.GetFeePerK() + 1000) / 8.0));
     // ... with a 1/4 halflife when mempool is < 1/4 its target size
 
-    SetMockTime(42 + 7*CTxMemPool::ROLLING_FEE_HALFLIFE + CTxMemPool::ROLLING_FEE_HALFLIFE/2 + CTxMemPool::ROLLING_FEE_HALFLIFE/4);
+    SetMockTime(42 + 7 * CTxMemPool::ROLLING_FEE_HALFLIFE + CTxMemPool::ROLLING_FEE_HALFLIFE / 2 + CTxMemPool::ROLLING_FEE_HALFLIFE / 4);
     BOOST_CHECK_EQUAL(pool.GetMinFee(1).GetFeePerK(), 1000);
     // ... but feerate should never drop below 1000
 
-    SetMockTime(42 + 8*CTxMemPool::ROLLING_FEE_HALFLIFE + CTxMemPool::ROLLING_FEE_HALFLIFE/2 + CTxMemPool::ROLLING_FEE_HALFLIFE/4);
+    SetMockTime(42 + 8 * CTxMemPool::ROLLING_FEE_HALFLIFE + CTxMemPool::ROLLING_FEE_HALFLIFE / 2 + CTxMemPool::ROLLING_FEE_HALFLIFE / 4);
     BOOST_CHECK_EQUAL(pool.GetMinFee(1).GetFeePerK(), 0);
     // ... unless it has gone all the way to 0 (after getting past 1000/2)
 }
 
-inline CTransactionRef make_tx(std::vector<CAmount>&& output_values, std::vector<CTransactionRef>&& inputs=std::vector<CTransactionRef>(), std::vector<uint32_t>&& input_indices=std::vector<uint32_t>())
+inline CTransactionRef make_tx(std::vector<CAmount>&& output_values, std::vector<CTransactionRef>&& inputs = std::vector<CTransactionRef>(), std::vector<uint32_t>&& input_indices = std::vector<uint32_t>())
 {
     CMutableTransaction tx = CMutableTransaction();
     tx.vin.resize(inputs.size());
@@ -708,8 +703,8 @@ BOOST_AUTO_TEST_CASE(MempoolAncestryTests)
         v -= 50 * CENT;
         AddToMempool(pool, entry.Fee(10000LL).FromTx(tyi));
         pool.GetTransactionAncestry(tyi->GetHash(), ancestors, descendants);
-        BOOST_CHECK_EQUAL(ancestors, i+1);
-        BOOST_CHECK_EQUAL(descendants, i+1);
+        BOOST_CHECK_EQUAL(ancestors, i + 1);
+        BOOST_CHECK_EQUAL(descendants, i + 1);
     }
     CTransactionRef ty6 = make_tx(/*output_values=*/{5 * COIN}, /*inputs=*/{tx3, ty5});
     AddToMempool(pool, entry.Fee(10000LL).FromTx(ty6));
@@ -775,7 +770,7 @@ BOOST_AUTO_TEST_CASE(MempoolAncestryTestsDiamond)
     //
     CTransactionRef ta, tb, tc, td;
     ta = make_tx(/*output_values=*/{10 * COIN});
-    tb = make_tx(/*output_values=*/{5 * COIN, 3 * COIN}, /*inputs=*/ {ta});
+    tb = make_tx(/*output_values=*/{5 * COIN, 3 * COIN}, /*inputs=*/{ta});
     tc = make_tx(/*output_values=*/{2 * COIN}, /*inputs=*/{tb}, /*input_indices=*/{1});
     td = make_tx(/*output_values=*/{6 * COIN}, /*inputs=*/{tb, tc}, /*input_indices=*/{0, 0});
     AddToMempool(pool, entry.Fee(10000LL).FromTx(ta));

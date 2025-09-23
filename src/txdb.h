@@ -18,11 +18,11 @@
 #include <optional>
 #include <vector>
 
-#include <coordinate/coordinate_assets.h>
-#include <coordinate/signed_block.h>
-#include <coordinate/invalid_tx.h>
-#include <coordinate/signed_txindex.h>
 #include <coordinate/coordinate_address.h>
+#include <coordinate/coordinate_assets.h>
+#include <coordinate/invalid_tx.h>
+#include <coordinate/signed_block.h>
+#include <coordinate/signed_txindex.h>
 class COutPoint;
 class uint256;
 
@@ -45,14 +45,15 @@ protected:
     DBParams m_db_params;
     CoinsViewOptions m_options;
     std::unique_ptr<CDBWrapper> m_db;
+
 public:
     explicit CCoinsViewDB(DBParams db_params, CoinsViewOptions options);
 
     std::optional<Coin> GetCoin(const COutPoint& outpoint) const override;
-    bool HaveCoin(const COutPoint &outpoint) const override;
+    bool HaveCoin(const COutPoint& outpoint) const override;
     uint256 GetBestBlock() const override;
     std::vector<uint256> GetHeadBlocks() const override;
-    bool BatchWrite(CoinsViewCacheCursor& cursor, const uint256 &hashBlock) override;
+    bool BatchWrite(CoinsViewCacheCursor& cursor, const uint256& hashBlock) override;
     std::unique_ptr<CCoinsViewCursor> Cursor() const override;
 
     //! Whether an unsupported database format is used.
@@ -75,7 +76,7 @@ public:
     std::vector<CoordinateAsset> GetAssets();
     bool GetLastAssetID(uint32_t& nID);
     bool WriteLastAssetID(const uint32_t nID);
-    bool GetAsset(const uint32_t nID,CoordinateAsset& asset);
+    bool GetAsset(const uint32_t nID, CoordinateAsset& asset);
     bool RemoveAsset(const uint32_t nID);
     bool WriteAssetMinedBlock(uint256 blockHash);
     bool getAssetMinedBlock(uint256 blockHash);
@@ -84,7 +85,8 @@ public:
 };
 
 /** Access to the signed blocks database (blocks/signedblocks/) */
-class SignedBlocksDB : public CDBWrapper {
+class SignedBlocksDB : public CDBWrapper
+{
 public:
     SignedBlocksDB(DBParams db_params);
     bool GetLastSignedBlockID(uint64_t& nHeight);

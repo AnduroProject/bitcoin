@@ -17,8 +17,7 @@ const std::vector<std::string> NET_PERMISSIONS_DOC{
     "relay (relay even in -blocksonly mode, and unlimited transaction announcements)",
     "mempool (allow requesting BIP35 mempool contents)",
     "download (allow getheaders during IBD, no disconnect after maxuploadtarget limit)",
-    "addr (responses to GETADDR avoid hitting the cache and contain random records with the most up-to-date info)"
-};
+    "addr (responses to GETADDR avoid hitting the cache and contain random records with the most up-to-date info)"};
 
 namespace {
 
@@ -44,18 +43,27 @@ static bool TryParsePermissionFlags(const std::string& str, NetPermissionFlags& 
             const auto len = commaSeparator == std::string::npos ? permissions.length() - readen : commaSeparator - readen;
             // permission == perm1
             const auto permission = permissions.substr(readen, len);
-            readen += len; // We read "perm1"
+            readen += len;                                     // We read "perm1"
             if (commaSeparator != std::string::npos) readen++; // We read ","
 
-            if (permission == "bloomfilter" || permission == "bloom") NetPermissions::AddFlag(flags, NetPermissionFlags::BloomFilter);
-            else if (permission == "noban") NetPermissions::AddFlag(flags, NetPermissionFlags::NoBan);
-            else if (permission == "forcerelay") NetPermissions::AddFlag(flags, NetPermissionFlags::ForceRelay);
-            else if (permission == "mempool") NetPermissions::AddFlag(flags, NetPermissionFlags::Mempool);
-            else if (permission == "download") NetPermissions::AddFlag(flags, NetPermissionFlags::Download);
-            else if (permission == "all") NetPermissions::AddFlag(flags, NetPermissionFlags::All);
-            else if (permission == "relay") NetPermissions::AddFlag(flags, NetPermissionFlags::Relay);
-            else if (permission == "addr") NetPermissions::AddFlag(flags, NetPermissionFlags::Addr);
-            else if (permission == "in") connection_direction |= ConnectionDirection::In;
+            if (permission == "bloomfilter" || permission == "bloom")
+                NetPermissions::AddFlag(flags, NetPermissionFlags::BloomFilter);
+            else if (permission == "noban")
+                NetPermissions::AddFlag(flags, NetPermissionFlags::NoBan);
+            else if (permission == "forcerelay")
+                NetPermissions::AddFlag(flags, NetPermissionFlags::ForceRelay);
+            else if (permission == "mempool")
+                NetPermissions::AddFlag(flags, NetPermissionFlags::Mempool);
+            else if (permission == "download")
+                NetPermissions::AddFlag(flags, NetPermissionFlags::Download);
+            else if (permission == "all")
+                NetPermissions::AddFlag(flags, NetPermissionFlags::All);
+            else if (permission == "relay")
+                NetPermissions::AddFlag(flags, NetPermissionFlags::Relay);
+            else if (permission == "addr")
+                NetPermissions::AddFlag(flags, NetPermissionFlags::Addr);
+            else if (permission == "in")
+                connection_direction |= ConnectionDirection::In;
             else if (permission == "out") {
                 if (output_connection_direction == nullptr) {
                     // Only NetWhitebindPermissions() should pass a nullptr.
@@ -63,8 +71,8 @@ static bool TryParsePermissionFlags(const std::string& str, NetPermissionFlags& 
                     return false;
                 }
                 connection_direction |= ConnectionDirection::Out;
-            }
-            else if (permission.length() == 0); // Allow empty entries
+            } else if (permission.length() == 0)
+                ; // Allow empty entries
             else {
                 error = strprintf(_("Invalid P2P permission: '%s'"), permission);
                 return false;
@@ -87,7 +95,7 @@ static bool TryParsePermissionFlags(const std::string& str, NetPermissionFlags& 
     return true;
 }
 
-}
+} // namespace
 
 std::vector<std::string> NetPermissions::ToStrings(NetPermissionFlags flags)
 {

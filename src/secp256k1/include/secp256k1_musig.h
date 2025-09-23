@@ -105,10 +105,9 @@ typedef struct secp256k1_musig_partial_sig {
  *  In:     in66: pointer to the 66-byte nonce to be parsed
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubnonce_parse(
-    const secp256k1_context *ctx,
-    secp256k1_musig_pubnonce *nonce,
-    const unsigned char *in66
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+    const secp256k1_context* ctx,
+    secp256k1_musig_pubnonce* nonce,
+    const unsigned char* in66) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
 
 /** Serialize a signer's public nonce
  *
@@ -118,10 +117,9 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubnonce_parse(
  *  In:    nonce: pointer to the nonce
  */
 SECP256K1_API int secp256k1_musig_pubnonce_serialize(
-    const secp256k1_context *ctx,
-    unsigned char *out66,
-    const secp256k1_musig_pubnonce *nonce
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+    const secp256k1_context* ctx,
+    unsigned char* out66,
+    const secp256k1_musig_pubnonce* nonce) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
 
 /** Parse an aggregate public nonce.
  *
@@ -131,10 +129,9 @@ SECP256K1_API int secp256k1_musig_pubnonce_serialize(
  *  In:     in66: pointer to the 66-byte nonce to be parsed
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_aggnonce_parse(
-    const secp256k1_context *ctx,
-    secp256k1_musig_aggnonce *nonce,
-    const unsigned char *in66
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+    const secp256k1_context* ctx,
+    secp256k1_musig_aggnonce* nonce,
+    const unsigned char* in66) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
 
 /** Serialize an aggregate public nonce
  *
@@ -144,10 +141,9 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_aggnonce_parse(
  *  In:    nonce: pointer to the nonce
  */
 SECP256K1_API int secp256k1_musig_aggnonce_serialize(
-    const secp256k1_context *ctx,
-    unsigned char *out66,
-    const secp256k1_musig_aggnonce *nonce
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+    const secp256k1_context* ctx,
+    unsigned char* out66,
+    const secp256k1_musig_aggnonce* nonce) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
 
 /** Parse a MuSig partial signature.
  *
@@ -157,10 +153,9 @@ SECP256K1_API int secp256k1_musig_aggnonce_serialize(
  *  In:     in32: pointer to the 32-byte signature to be parsed
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_partial_sig_parse(
-    const secp256k1_context *ctx,
-    secp256k1_musig_partial_sig *sig,
-    const unsigned char *in32
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+    const secp256k1_context* ctx,
+    secp256k1_musig_partial_sig* sig,
+    const unsigned char* in32) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
 
 /** Serialize a MuSig partial signature
  *
@@ -170,10 +165,9 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_partial_sig_parse
  *  In:      sig: pointer to the signature
  */
 SECP256K1_API int secp256k1_musig_partial_sig_serialize(
-    const secp256k1_context *ctx,
-    unsigned char *out32,
-    const secp256k1_musig_partial_sig *sig
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+    const secp256k1_context* ctx,
+    unsigned char* out32,
+    const secp256k1_musig_partial_sig* sig) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
 
 /** Computes an aggregate public key and uses it to initialize a keyagg_cache
  *
@@ -197,12 +191,11 @@ SECP256K1_API int secp256k1_musig_partial_sig_serialize(
  *         n_pubkeys: length of pubkeys array. Must be greater than 0.
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubkey_agg(
-    const secp256k1_context *ctx,
-    secp256k1_xonly_pubkey *agg_pk,
-    secp256k1_musig_keyagg_cache *keyagg_cache,
-    const secp256k1_pubkey * const *pubkeys,
-    size_t n_pubkeys
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(4);
+    const secp256k1_context* ctx,
+    secp256k1_xonly_pubkey* agg_pk,
+    secp256k1_musig_keyagg_cache* keyagg_cache,
+    const secp256k1_pubkey* const* pubkeys,
+    size_t n_pubkeys) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(4);
 
 /** Obtain the aggregate public key from a keyagg_cache.
  *
@@ -217,10 +210,9 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubkey_agg(
  *                    `musig_pubkey_agg`
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubkey_get(
-    const secp256k1_context *ctx,
-    secp256k1_pubkey *agg_pk,
-    const secp256k1_musig_keyagg_cache *keyagg_cache
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+    const secp256k1_context* ctx,
+    secp256k1_pubkey* agg_pk,
+    const secp256k1_musig_keyagg_cache* keyagg_cache) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
 
 /** Apply plain "EC" tweaking to a public key in a given keyagg_cache by adding
  *  the generator multiplied with `tweak32` to it. This is useful for deriving
@@ -260,11 +252,10 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubkey_get(
  *                        negligible (around 1 in 2^128).
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubkey_ec_tweak_add(
-    const secp256k1_context *ctx,
-    secp256k1_pubkey *output_pubkey,
-    secp256k1_musig_keyagg_cache *keyagg_cache,
-    const unsigned char *tweak32
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
+    const secp256k1_context* ctx,
+    secp256k1_pubkey* output_pubkey,
+    secp256k1_musig_keyagg_cache* keyagg_cache,
+    const unsigned char* tweak32) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
 
 /** Apply x-only tweaking to a public key in a given keyagg_cache by adding the
  *  generator multiplied with `tweak32` to it. This is useful for creating
@@ -302,11 +293,10 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubkey_ec_tweak_a
  *                        negligible (around 1 in 2^128).
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubkey_xonly_tweak_add(
-    const secp256k1_context *ctx,
-    secp256k1_pubkey *output_pubkey,
-    secp256k1_musig_keyagg_cache *keyagg_cache,
-    const unsigned char *tweak32
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
+    const secp256k1_context* ctx,
+    secp256k1_pubkey* output_pubkey,
+    secp256k1_musig_keyagg_cache* keyagg_cache,
+    const unsigned char* tweak32) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
 
 /** Starts a signing session by generating a nonce
  *
@@ -360,16 +350,15 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_pubkey_xonly_twea
  *                     derivation function (can be NULL)
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_nonce_gen(
-    const secp256k1_context *ctx,
-    secp256k1_musig_secnonce *secnonce,
-    secp256k1_musig_pubnonce *pubnonce,
-    unsigned char *session_secrand32,
-    const unsigned char *seckey,
-    const secp256k1_pubkey *pubkey,
-    const unsigned char *msg32,
-    const secp256k1_musig_keyagg_cache *keyagg_cache,
-    const unsigned char *extra_input32
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(6);
+    const secp256k1_context* ctx,
+    secp256k1_musig_secnonce* secnonce,
+    secp256k1_musig_pubnonce* pubnonce,
+    unsigned char* session_secrand32,
+    const unsigned char* seckey,
+    const secp256k1_pubkey* pubkey,
+    const unsigned char* msg32,
+    const secp256k1_musig_keyagg_cache* keyagg_cache,
+    const unsigned char* extra_input32) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(6);
 
 
 /** Alternative way to generate a nonce and start a signing session
@@ -423,15 +412,14 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_nonce_gen(
  *                     derivation function (can be NULL)
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_nonce_gen_counter(
-    const secp256k1_context *ctx,
-    secp256k1_musig_secnonce *secnonce,
-    secp256k1_musig_pubnonce *pubnonce,
+    const secp256k1_context* ctx,
+    secp256k1_musig_secnonce* secnonce,
+    secp256k1_musig_pubnonce* pubnonce,
     uint64_t nonrepeating_cnt,
-    const secp256k1_keypair *keypair,
-    const unsigned char *msg32,
-    const secp256k1_musig_keyagg_cache *keyagg_cache,
-    const unsigned char *extra_input32
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(5);
+    const secp256k1_keypair* keypair,
+    const unsigned char* msg32,
+    const secp256k1_musig_keyagg_cache* keyagg_cache,
+    const unsigned char* extra_input32) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(5);
 
 /** Aggregates the nonces of all signers into a single nonce
  *
@@ -453,11 +441,10 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_nonce_gen_counter
  *                       greater than 0.
  */
 SECP256K1_API int secp256k1_musig_nonce_agg(
-    const secp256k1_context *ctx,
-    secp256k1_musig_aggnonce *aggnonce,
-    const secp256k1_musig_pubnonce * const *pubnonces,
-    size_t n_pubnonces
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+    const secp256k1_context* ctx,
+    secp256k1_musig_aggnonce* aggnonce,
+    const secp256k1_musig_pubnonce* const* pubnonces,
+    size_t n_pubnonces) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
 
 /** Takes the aggregate nonce and creates a session that is required for signing
  *  and verification of partial signatures.
@@ -472,12 +459,11 @@ SECP256K1_API int secp256k1_musig_nonce_agg(
  *                      aggregate (and potentially tweaked) pubkey
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_nonce_process(
-    const secp256k1_context *ctx,
-    secp256k1_musig_session *session,
-    const secp256k1_musig_aggnonce *aggnonce,
-    const unsigned char *msg32,
-    const secp256k1_musig_keyagg_cache *keyagg_cache
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5);
+    const secp256k1_context* ctx,
+    secp256k1_musig_session* session,
+    const secp256k1_musig_aggnonce* aggnonce,
+    const unsigned char* msg32,
+    const secp256k1_musig_keyagg_cache* keyagg_cache) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5);
 
 /** Produces a partial signature
  *
@@ -512,13 +498,12 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_nonce_process(
  *                     musig_nonce_process
  */
 SECP256K1_API int secp256k1_musig_partial_sign(
-    const secp256k1_context *ctx,
-    secp256k1_musig_partial_sig *partial_sig,
-    secp256k1_musig_secnonce *secnonce,
-    const secp256k1_keypair *keypair,
-    const secp256k1_musig_keyagg_cache *keyagg_cache,
-    const secp256k1_musig_session *session
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5) SECP256K1_ARG_NONNULL(6);
+    const secp256k1_context* ctx,
+    secp256k1_musig_partial_sig* partial_sig,
+    secp256k1_musig_secnonce* secnonce,
+    const secp256k1_keypair* keypair,
+    const secp256k1_musig_keyagg_cache* keyagg_cache,
+    const secp256k1_musig_session* session) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5) SECP256K1_ARG_NONNULL(6);
 
 /** Verifies an individual signer's partial signature
  *
@@ -553,13 +538,12 @@ SECP256K1_API int secp256k1_musig_partial_sign(
  *                    `musig_nonce_process`
  */
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_partial_sig_verify(
-    const secp256k1_context *ctx,
-    const secp256k1_musig_partial_sig *partial_sig,
-    const secp256k1_musig_pubnonce *pubnonce,
-    const secp256k1_pubkey *pubkey,
-    const secp256k1_musig_keyagg_cache *keyagg_cache,
-    const secp256k1_musig_session *session
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5) SECP256K1_ARG_NONNULL(6);
+    const secp256k1_context* ctx,
+    const secp256k1_musig_partial_sig* partial_sig,
+    const secp256k1_musig_pubnonce* pubnonce,
+    const secp256k1_pubkey* pubkey,
+    const secp256k1_musig_keyagg_cache* keyagg_cache,
+    const secp256k1_musig_session* session) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5) SECP256K1_ARG_NONNULL(6);
 
 /** Aggregates partial signatures
  *
@@ -574,12 +558,11 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_musig_partial_sig_verif
  *                     greater than 0.
  */
 SECP256K1_API int secp256k1_musig_partial_sig_agg(
-    const secp256k1_context *ctx,
-    unsigned char *sig64,
-    const secp256k1_musig_session *session,
-    const secp256k1_musig_partial_sig * const *partial_sigs,
-    size_t n_sigs
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
+    const secp256k1_context* ctx,
+    unsigned char* sig64,
+    const secp256k1_musig_session* session,
+    const secp256k1_musig_partial_sig* const* partial_sigs,
+    size_t n_sigs) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
 
 #ifdef __cplusplus
 }

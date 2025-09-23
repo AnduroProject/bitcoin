@@ -14,8 +14,8 @@
 #include <test/util/random.h>
 #include <test/util/script.h>
 #include <test/util/setup_common.h>
-#include <util/strencodings.h>
 #include <test/util/txmempool.h>
+#include <util/strencodings.h>
 #include <validation.h>
 
 #include <boost/test/unit_test.hpp>
@@ -27,24 +27,24 @@ using namespace util::hex_literals;
 static const CAmount low_fee_amt{200};
 
 struct TxPackageTest : TestChain100Setup {
-// Create placeholder transactions that have no meaning.
-inline CTransactionRef create_placeholder_tx(size_t num_inputs, size_t num_outputs)
-{
-    CMutableTransaction mtx = CMutableTransaction();
-    mtx.vin.resize(num_inputs);
-    mtx.vout.resize(num_outputs);
-    auto random_script = CScript() << ToByteVector(m_rng.rand256()) << ToByteVector(m_rng.rand256());
-    for (size_t i{0}; i < num_inputs; ++i) {
-        mtx.vin[i].prevout.hash = Txid::FromUint256(m_rng.rand256());
-        mtx.vin[i].prevout.n = 0;
-        mtx.vin[i].scriptSig = random_script;
+    // Create placeholder transactions that have no meaning.
+    inline CTransactionRef create_placeholder_tx(size_t num_inputs, size_t num_outputs)
+    {
+        CMutableTransaction mtx = CMutableTransaction();
+        mtx.vin.resize(num_inputs);
+        mtx.vout.resize(num_outputs);
+        auto random_script = CScript() << ToByteVector(m_rng.rand256()) << ToByteVector(m_rng.rand256());
+        for (size_t i{0}; i < num_inputs; ++i) {
+            mtx.vin[i].prevout.hash = Txid::FromUint256(m_rng.rand256());
+            mtx.vin[i].prevout.n = 0;
+            mtx.vin[i].scriptSig = random_script;
+        }
+        for (size_t o{0}; o < num_outputs; ++o) {
+            mtx.vout[o].nValue = 1 * CENT;
+            mtx.vout[o].scriptPubKey = random_script;
+        }
+        return MakeTransactionRef(mtx);
     }
-    for (size_t o{0}; o < num_outputs; ++o) {
-        mtx.vout[o].nValue = 1 * CENT;
-        mtx.vout[o].scriptPubKey = random_script;
-    }
-    return MakeTransactionRef(mtx);
-}
 }; // struct TxPackageTest
 
 BOOST_FIXTURE_TEST_SUITE(txpackage_tests, TxPackageTest)

@@ -17,7 +17,7 @@ class Node;
 } // namespace interfaces
 
 namespace Ui {
-    class SendCoinsEntry;
+class SendCoinsEntry;
 }
 
 /**
@@ -28,24 +28,24 @@ class SendCoinsEntry : public QWidget
     Q_OBJECT
 
 public:
-    explicit SendCoinsEntry(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
+    explicit SendCoinsEntry(const PlatformStyle* platformStyle, QWidget* parent = nullptr);
     ~SendCoinsEntry();
 
-    void setModel(WalletModel *model);
+    void setModel(WalletModel* model);
     bool validate(interfaces::Node& node);
     SendCoinsRecipient getValue();
 
     /** Return whether the entry is still empty and unedited */
     bool isClear();
 
-    void setValue(const SendCoinsRecipient &value);
-    void setAddress(const QString &address);
-    void setAmount(const CAmount &amount);
+    void setValue(const SendCoinsRecipient& value);
+    void setAddress(const QString& address);
+    void setAmount(const CAmount& amount);
 
     /** Set up the tab chain manually, as Qt messes up the tab chain by default in some cases
      *  (issue https://bugreports.qt-project.org/browse/QTBUG-10907).
      */
-    QWidget *setupTabChain(QWidget *prev);
+    QWidget* setupTabChain(QWidget* prev);
 
     void setFocus();
 
@@ -54,7 +54,7 @@ public Q_SLOTS:
     void checkSubtractFeeFromAmount();
 
 Q_SIGNALS:
-    void removeEntry(SendCoinsEntry *entry);
+    void removeEntry(SendCoinsEntry* entry);
     void useAvailableBalance(SendCoinsEntry* entry);
     void payAmountChanged();
     void subtractFeeFromAmountChanged();
@@ -62,7 +62,7 @@ Q_SIGNALS:
 private Q_SLOTS:
     void deleteClicked();
     void useAvailableBalanceClicked();
-    void on_payTo_textChanged(const QString &address);
+    void on_payTo_textChanged(const QString& address);
     void on_addressBookButton_clicked();
     void on_pasteButton_clicked();
     void updateDisplayUnit();
@@ -72,11 +72,11 @@ protected:
 
 private:
     SendCoinsRecipient recipient;
-    Ui::SendCoinsEntry *ui;
+    Ui::SendCoinsEntry* ui;
     WalletModel* model{nullptr};
-    const PlatformStyle *platformStyle;
+    const PlatformStyle* platformStyle;
 
-    bool updateLabel(const QString &address);
+    bool updateLabel(const QString& address);
 };
 
 #endif // BITCOIN_QT_SENDCOINSENTRY_H

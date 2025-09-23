@@ -24,11 +24,11 @@
 #include <memory>
 #include <thread>
 
-static const int CONTINUE_EXECUTION=-1;
+static const int CONTINUE_EXECUTION = -1;
 
 const TranslateFn G_TRANSLATION_FUN{nullptr};
 
-static void SetupBitcoinUtilArgs(ArgsManager &argsman)
+static void SetupBitcoinUtilArgs(ArgsManager& argsman)
 {
     SetupHelpOptions(argsman);
 
@@ -58,10 +58,10 @@ static int AppInitUtil(ArgsManager& args, int argc, char* argv[])
             strUsage += FormatParagraph(LicenseInfo());
         } else {
             strUsage += "\n"
-                "The bitcoin-util tool provides bitcoin related functionality that does not rely on the ability to access a running node. Available [commands] are listed below.\n"
-                "\n"
-                "Usage:  bitcoin-util [options] [command]\n"
-                "or:     bitcoin-util [options] grind <hex-block-header>\n";
+                        "The bitcoin-util tool provides bitcoin related functionality that does not rely on the ability to access a running node. Available [commands] are listed below.\n"
+                        "\n"
+                        "Usage:  bitcoin-util [options] [command]\n"
+                        "or:     bitcoin-util [options] grind <hex-block-header>\n";
             strUsage += "\n" + args.GetHelpMessage();
         }
 
@@ -97,7 +97,7 @@ static void grind_task(uint32_t nBits, CBlockHeader header, uint32_t offset, uin
     finish = finish - (finish % step) + offset;
 
     while (!found && header.nNonce < finish) {
-        const uint32_t next = (finish - header.nNonce < 5000*step) ? finish : header.nNonce + 5000*step;
+        const uint32_t next = (finish - header.nNonce < 5000 * step) ? finish : header.nNonce + 5000 * step;
         do {
             if (UintToArith256(header.GetHash()) <= target) {
                 if (!found.exchange(true)) {
@@ -106,7 +106,7 @@ static void grind_task(uint32_t nBits, CBlockHeader header, uint32_t offset, uin
                 return;
             }
             header.nNonce += step;
-        } while(header.nNonce != next);
+        } while (header.nNonce != next);
     }
 }
 

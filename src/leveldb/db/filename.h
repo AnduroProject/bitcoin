@@ -8,11 +8,11 @@
 #define STORAGE_LEVELDB_DB_FILENAME_H_
 
 #include <stdint.h>
-
 #include <string>
 
 #include "leveldb/slice.h"
 #include "leveldb/status.h"
+
 #include "port/port.h"
 
 namespace leveldb {

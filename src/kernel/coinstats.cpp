@@ -158,15 +158,15 @@ std::optional<CCoinsStats> ComputeUTXOStats(CoinStatsHashType hash_type, CCoinsV
 
     bool success = [&]() -> bool {
         switch (hash_type) {
-        case(CoinStatsHashType::HASH_SERIALIZED): {
+        case (CoinStatsHashType::HASH_SERIALIZED): {
             HashWriter ss{};
             return ComputeUTXOStats(view, stats, ss, interruption_point);
         }
-        case(CoinStatsHashType::MUHASH): {
+        case (CoinStatsHashType::MUHASH): {
             MuHash3072 muhash;
             return ComputeUTXOStats(view, stats, muhash, interruption_point);
         }
-        case(CoinStatsHashType::NONE): {
+        case (CoinStatsHashType::NONE): {
             return ComputeUTXOStats(view, stats, nullptr, interruption_point);
         }
         } // no default case, so the compiler can warn about missing cases

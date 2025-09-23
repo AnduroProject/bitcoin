@@ -2,10 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <qt/test/wallettests.h>
 #include <qt/test/util.h>
+#include <qt/test/wallettests.h>
 
-#include <wallet/coincontrol.h>
 #include <interfaces/chain.h>
 #include <interfaces/node.h>
 #include <key_io.h>
@@ -27,6 +26,7 @@
 #include <script/solver.h>
 #include <test/util/setup_common.h>
 #include <validation.h>
+#include <wallet/coincontrol.h>
 #include <wallet/test/util.h>
 #include <wallet/wallet.h>
 
@@ -38,17 +38,17 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
+#include <QDialogButtonBox>
+#include <QListView>
 #include <QObject>
 #include <QPushButton>
+#include <QTextEdit>
 #include <QTimer>
 #include <QVBoxLayout>
-#include <QTextEdit>
-#include <QListView>
-#include <QDialogButtonBox>
 
 using wallet::AddWallet;
-using wallet::CWallet;
 using wallet::CreateMockableWalletDatabase;
+using wallet::CWallet;
 using wallet::RemoveWallet;
 using wallet::WALLET_FLAG_DESCRIPTORS;
 using wallet::WALLET_FLAG_DISABLE_PRIVATE_KEYS;
@@ -56,8 +56,7 @@ using wallet::WalletContext;
 using wallet::WalletDescriptor;
 using wallet::WalletRescanReserver;
 
-namespace
-{
+namespace {
 //! Press "Yes" or "Cancel" buttons in modal send confirmation dialog.
 void ConfirmSend(QString* text = nullptr, QMessageBox::StandardButton confirm_type = QMessageBox::Yes)
 {
@@ -76,7 +75,7 @@ void ConfirmSend(QString* text = nullptr, QMessageBox::StandardButton confirm_ty
 
 //! Send coins to address and return txid.
 Txid SendCoins(CWallet& wallet, SendCoinsDialog& sendCoinsDialog, const CTxDestination& address, CAmount amount, bool rbf,
-                  QMessageBox::StandardButton confirm_type = QMessageBox::Yes)
+               QMessageBox::StandardButton confirm_type = QMessageBox::Yes)
 {
     QVBoxLayout* entries = sendCoinsDialog.findChild<QVBoxLayout*>("entries");
     SendCoinsEntry* entry = qobject_cast<SendCoinsEntry*>(entries->itemAt(0)->widget());
@@ -210,7 +209,7 @@ std::shared_ptr<CWallet> SetupDescriptorsWallet(interfaces::Node& node, TestChai
     } else {
         key_str = EncodeSecret(test.coinbaseKey);
     }
-    auto descs = Parse("combo(" + key_str + ")", provider, error, /* require_checksum=*/ false);
+    auto descs = Parse("combo(" + key_str + ")", provider, error, /* require_checksum=*/false);
     assert(!descs.empty());
     assert(descs.size() == 1);
     auto& desc = descs.at(0);
@@ -232,7 +231,8 @@ public:
     std::unique_ptr<ClientModel> clientModel;
     std::unique_ptr<WalletModel> walletModel;
 
-    MiniGUI(interfaces::Node& node, const PlatformStyle* platformStyle) : sendCoinsDialog(platformStyle), transactionView(platformStyle), optionsModel(node) {
+    MiniGUI(interfaces::Node& node, const PlatformStyle* platformStyle) : sendCoinsDialog(platformStyle), transactionView(platformStyle), optionsModel(node)
+    {
         bilingual_str error;
         QVERIFY(optionsModel.Init(error));
         clientModel = std::make_unique<ClientModel>(node, &optionsModel);
@@ -247,7 +247,6 @@ public:
         sendCoinsDialog.setModel(walletModel.get());
         transactionView.setModel(walletModel.get());
     }
-
 };
 
 //! Simple qt wallet tests.
@@ -359,7 +358,7 @@ void TestGUI(interfaces::Node& node, const std::shared_ptr<CWallet>& wallet)
 
     // Check addition to history
     int currentRowCount = requestTableModel->rowCount({});
-    QCOMPARE(currentRowCount, initialRowCount+1);
+    QCOMPARE(currentRowCount, initialRowCount + 1);
 
     // Check addition to wallet
     std::vector<std::string> requests = walletModel.wallet().getAddressReceiveRequests();
@@ -378,10 +377,10 @@ void TestGUI(interfaces::Node& node, const std::shared_ptr<CWallet>& wallet)
 
     // Check Remove button
     QTableView* table = receiveCoinsDialog.findChild<QTableView*>("recentRequestsView");
-    table->selectRow(currentRowCount-1);
+    table->selectRow(currentRowCount - 1);
     QPushButton* removeRequestButton = receiveCoinsDialog.findChild<QPushButton*>("removeRequestButton");
     removeRequestButton->click();
-    QCOMPARE(requestTableModel->rowCount({}), currentRowCount-1);
+    QCOMPARE(requestTableModel->rowCount({}), currentRowCount - 1);
 
     // Check removal from wallet
     QCOMPARE(walletModel.wallet().getAddressReceiveRequests().size(), size_t{0});
@@ -410,7 +409,7 @@ void TestGUIWatchOnly(interfaces::Node& node, TestChain100Setup& test)
     // Time to reject "save" PSBT dialog ('SendCoins' locks the main thread until the dialog receives the event).
     QTimer timer;
     timer.setInterval(500);
-    QObject::connect(&timer, &QTimer::timeout, [&](){
+    QObject::connect(&timer, &QTimer::timeout, [&]() {
         for (QWidget* widget : QApplication::topLevelWidgets()) {
             if (widget->inherits("QMessageBox") && widget->objectName().compare("psbt_copied_message") == 0) {
                 QMessageBox* dialog = qobject_cast<QMessageBox*>(widget);

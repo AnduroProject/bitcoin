@@ -3,8 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <bech32.h>
-#include <test/fuzz/fuzz.h>
 #include <test/fuzz/FuzzedDataProvider.h>
+#include <test/fuzz/fuzz.h>
 #include <test/util/str.h>
 #include <util/strencodings.h>
 
@@ -37,9 +37,7 @@ std::string GenerateRandomHRP(FuzzedDataProvider& fdp)
     size_t length = fdp.ConsumeIntegralInRange<size_t>(1, 83);
     for (size_t i = 0; i < length; ++i) {
         // Generate lowercase ASCII characters in ([33-126] - ['A'-'Z']) range
-        char c = fdp.ConsumeBool()
-                 ? fdp.ConsumeIntegralInRange<char>(33, 'A' - 1)
-                 : fdp.ConsumeIntegralInRange<char>('Z' + 1, 126);
+        char c = fdp.ConsumeBool() ? fdp.ConsumeIntegralInRange<char>(33, 'A' - 1) : fdp.ConsumeIntegralInRange<char>('Z' + 1, 126);
         hrp += c;
     }
     return hrp;
@@ -56,7 +54,7 @@ FUZZ_TARGET(bech32_roundtrip)
 
     auto size = converted_input.size() + hrp.length() + std::string({bech32::SEPARATOR}).size() + bech32::CHECKSUM_SIZE;
     if (size <= bech32::CharLimit::BECH32) {
-        for (auto encoding: {bech32::Encoding::BECH32, bech32::Encoding::BECH32M}) {
+        for (auto encoding : {bech32::Encoding::BECH32, bech32::Encoding::BECH32M}) {
             auto encoded = bech32::Encode(encoding, hrp, converted_input);
             assert(!encoded.empty());
 

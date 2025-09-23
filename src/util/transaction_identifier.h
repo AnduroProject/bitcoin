@@ -39,11 +39,20 @@ public:
     transaction_identifier() : m_wrapped{} {}
 
     template <typename Other>
-    bool operator==(const Other& other) const { return Compare(other) == 0; }
+    bool operator==(const Other& other) const
+    {
+        return Compare(other) == 0;
+    }
     template <typename Other>
-    bool operator!=(const Other& other) const { return Compare(other) != 0; }
+    bool operator!=(const Other& other) const
+    {
+        return Compare(other) != 0;
+    }
     template <typename Other>
-    bool operator<(const Other& other) const { return Compare(other) < 0; }
+    bool operator<(const Other& other) const
+    {
+        return Compare(other) < 0;
+    }
 
     const uint256& ToUint256() const LIFETIMEBOUND { return m_wrapped; }
     static transaction_identifier FromUint256(const uint256& id) { return {id}; }
@@ -63,8 +72,16 @@ public:
     constexpr const std::byte* data() const { return reinterpret_cast<const std::byte*>(m_wrapped.data()); }
     constexpr const std::byte* begin() const { return reinterpret_cast<const std::byte*>(m_wrapped.begin()); }
     constexpr const std::byte* end() const { return reinterpret_cast<const std::byte*>(m_wrapped.end()); }
-    template <typename Stream> void Serialize(Stream& s) const { m_wrapped.Serialize(s); }
-    template <typename Stream> void Unserialize(Stream& s) { m_wrapped.Unserialize(s); }
+    template <typename Stream>
+    void Serialize(Stream& s) const
+    {
+        m_wrapped.Serialize(s);
+    }
+    template <typename Stream>
+    void Unserialize(Stream& s)
+    {
+        m_wrapped.Unserialize(s);
+    }
 
     /** Conversion function to `uint256`.
      *

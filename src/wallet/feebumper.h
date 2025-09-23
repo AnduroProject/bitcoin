@@ -6,8 +6,8 @@
 #define BITCOIN_WALLET_FEEBUMPER_H
 
 #include <consensus/consensus.h>
-#include <script/interpreter.h>
 #include <primitives/transaction.h>
+#include <script/interpreter.h>
 
 class uint256;
 enum class FeeEstimateMode;
@@ -20,8 +20,7 @@ class CWalletTx;
 
 namespace feebumper {
 
-enum class Result
-{
+enum class Result {
     OK,
     INVALID_ADDRESS_OR_KEY,
     INVALID_REQUEST,
@@ -47,15 +46,15 @@ bool TransactionCanBeBumped(const CWallet& wallet, const Txid& txid);
  * @param[in] original_change_index The position of the change output to deduct the fee from in the transaction being bumped
  */
 Result CreateRateBumpTransaction(CWallet& wallet,
-    const Txid& txid,
-    const CCoinControl& coin_control,
-    std::vector<bilingual_str>& errors,
-    CAmount& old_fee,
-    CAmount& new_fee,
-    CMutableTransaction& mtx,
-    bool require_mine,
-    const std::vector<CTxOut>& outputs,
-    std::optional<uint32_t> original_change_index = std::nullopt);
+                                 const Txid& txid,
+                                 const CCoinControl& coin_control,
+                                 std::vector<bilingual_str>& errors,
+                                 CAmount& old_fee,
+                                 CAmount& new_fee,
+                                 CMutableTransaction& mtx,
+                                 bool require_mine,
+                                 const std::vector<CTxOut>& outputs,
+                                 std::optional<uint32_t> original_change_index = std::nullopt);
 
 //! Sign the new transaction,
 //! @return false if the tx couldn't be found or if it was
@@ -67,13 +66,12 @@ bool SignTransaction(CWallet& wallet, CMutableTransaction& mtx);
 //! but sets errors if the tx could not be added to the mempool (will try later)
 //! or if the old transaction could not be marked as replaced.
 Result CommitTransaction(CWallet& wallet,
-    const Txid& txid,
-    CMutableTransaction&& mtx,
-    std::vector<bilingual_str>& errors,
-    Txid& bumped_txid);
+                         const Txid& txid,
+                         CMutableTransaction&& mtx,
+                         std::vector<bilingual_str>& errors,
+                         Txid& bumped_txid);
 
-struct SignatureWeights
-{
+struct SignatureWeights {
 private:
     int m_sigs_count{0};
     int64_t m_sigs_weight{0};
@@ -99,7 +97,7 @@ public:
     int64_t GetWeightDiffToMax() const
     {
         // Note: the witness scaling factor is already accounted for because the count is multiplied by it.
-        return (/* max signature size=*/ 72 * m_sigs_count) - m_sigs_weight;
+        return (/* max signature size=*/72 * m_sigs_count) - m_sigs_weight;
     }
 };
 

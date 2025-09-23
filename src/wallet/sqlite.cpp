@@ -265,10 +265,10 @@ void SQLiteDatabase::Open()
         }
         // Trace SQL statements if tracing is enabled with -debug=walletdb -loglevel=walletdb:trace
         if (LogAcceptCategory(BCLog::WALLETDB, BCLog::Level::Trace)) {
-           ret = sqlite3_trace_v2(m_db, SQLITE_TRACE_STMT, TraceSqlCallback, this);
-           if (ret != SQLITE_OK) {
-               LogPrintf("Failed to enable SQL tracing for %s\n", Filename());
-           }
+            ret = sqlite3_trace_v2(m_db, SQLITE_TRACE_STMT, TraceSqlCallback, this);
+            if (ret != SQLITE_OK) {
+                LogPrintf("Failed to enable SQL tracing for %s\n", Filename());
+            }
         }
     }
 
@@ -633,7 +633,7 @@ std::unique_ptr<DatabaseCursor> SQLiteBatch::GetNewPrefixCursor(std::span<const 
     if (!cursor) return nullptr;
 
     const char* stmt_text = end_range.empty() ? "SELECT key, value FROM main WHERE key >= ?" :
-                            "SELECT key, value FROM main WHERE key >= ? AND key < ?";
+                                                "SELECT key, value FROM main WHERE key >= ? AND key < ?";
     int res = sqlite3_prepare_v2(m_database.m_db, stmt_text, -1, &cursor->m_cursor_stmt, nullptr);
     if (res != SQLITE_OK) {
         throw std::runtime_error(strprintf(

@@ -45,13 +45,13 @@ static void ProcessPCP()
     std::chrono::milliseconds sleep_time;
 
     // Local functor to handle result from PCP/NATPMP mapping.
-    auto handle_mapping = [&](std::variant<MappingResult, MappingError> &res) -> void {
+    auto handle_mapping = [&](std::variant<MappingResult, MappingError>& res) -> void {
         if (MappingResult* mapping = std::get_if<MappingResult>(&res)) {
             LogPrintLevel(BCLog::NET, BCLog::Level::Info, "portmap: Added mapping %s\n", mapping->ToString());
             AddLocal(mapping->external, LOCAL_MAPPED);
             ret = true;
             actual_lifetime = std::min(actual_lifetime, mapping->lifetime);
-        } else if (MappingError *err = std::get_if<MappingError>(&res)) {
+        } else if (MappingError* err = std::get_if<MappingError>(&res)) {
             // Detailed error will already have been logged internally in respective Portmap function.
             if (*err == MappingError::NO_RESOURCES) {
                 no_resources = true;
@@ -62,7 +62,7 @@ static void ProcessPCP()
     do {
         actual_lifetime = requested_lifetime;
         no_resources = false; // Set to true if there was any "no resources" error.
-        ret = false; // Set to true if any mapping succeeds.
+        ret = false;          // Set to true if any mapping succeeds.
 
         // IPv4
         std::optional<CNetAddr> gateway4 = QueryDefaultGateway(NET_IPV4);
@@ -91,7 +91,7 @@ static void ProcessPCP()
             LogPrintLevel(BCLog::NET, BCLog::Level::Debug, "portmap: gateway [IPv6]: %s\n", gateway6->ToStringAddr());
 
             // Try to open pinholes for all routable local IPv6 addresses.
-            for (const auto &addr: GetLocalAddresses()) {
+            for (const auto& addr : GetLocalAddresses()) {
                 if (!addr.IsRoutable() || !addr.IsIPv6()) continue;
                 auto res = PCPRequestPortMap(pcp_nonce, *gateway6, addr, private_port, requested_lifetime);
                 handle_mapping(res);

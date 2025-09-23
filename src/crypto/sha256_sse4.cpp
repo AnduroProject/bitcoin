@@ -10,46 +10,93 @@
 
 #if defined(__x86_64__) || defined(__amd64__)
 
-namespace sha256_sse4
-{
+namespace sha256_sse4 {
 void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
 #if defined(__clang__)
-  /*
-  clang is unable to compile this with -O0 and -fsanitize=address.
-  See upstream bug: https://github.com/llvm/llvm-project/issues/92182.
-  This also fails to compile with -O2, -fcf-protection & -fsanitize=address.
-  See https://github.com/bitcoin/bitcoin/issues/31913.
-  */
+/*
+clang is unable to compile this with -O0 and -fsanitize=address.
+See upstream bug: https://github.com/llvm/llvm-project/issues/92182.
+This also fails to compile with -O2, -fcf-protection & -fsanitize=address.
+See https://github.com/bitcoin/bitcoin/issues/31913.
+*/
 #if __has_feature(address_sanitizer)
-  __attribute__((no_sanitize("address")))
+    __attribute__((no_sanitize("address")))
 #endif
 #endif
 {
-    static const uint32_t K256 alignas(16) [] = {
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
-        0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
-        0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
-        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
-        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
-        0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
-        0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+    static const uint32_t K256 alignas(16)[] = {
+        0x428a2f98,
+        0x71374491,
+        0xb5c0fbcf,
+        0xe9b5dba5,
+        0x3956c25b,
+        0x59f111f1,
+        0x923f82a4,
+        0xab1c5ed5,
+        0xd807aa98,
+        0x12835b01,
+        0x243185be,
+        0x550c7dc3,
+        0x72be5d74,
+        0x80deb1fe,
+        0x9bdc06a7,
+        0xc19bf174,
+        0xe49b69c1,
+        0xefbe4786,
+        0x0fc19dc6,
+        0x240ca1cc,
+        0x2de92c6f,
+        0x4a7484aa,
+        0x5cb0a9dc,
+        0x76f988da,
+        0x983e5152,
+        0xa831c66d,
+        0xb00327c8,
+        0xbf597fc7,
+        0xc6e00bf3,
+        0xd5a79147,
+        0x06ca6351,
+        0x14292967,
+        0x27b70a85,
+        0x2e1b2138,
+        0x4d2c6dfc,
+        0x53380d13,
+        0x650a7354,
+        0x766a0abb,
+        0x81c2c92e,
+        0x92722c85,
+        0xa2bfe8a1,
+        0xa81a664b,
+        0xc24b8b70,
+        0xc76c51a3,
+        0xd192e819,
+        0xd6990624,
+        0xf40e3585,
+        0x106aa070,
+        0x19a4c116,
+        0x1e376c08,
+        0x2748774c,
+        0x34b0bcb5,
+        0x391c0cb3,
+        0x4ed8aa4a,
+        0x5b9cca4f,
+        0x682e6ff3,
+        0x748f82ee,
+        0x78a5636f,
+        0x84c87814,
+        0x8cc70208,
+        0x90befffa,
+        0xa4506ceb,
+        0xbef9a3f7,
+        0xc67178f2,
     };
-    static const uint32_t FLIP_MASK alignas(16) [] = {0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f};
-    static const uint32_t SHUF_00BA alignas(16) [] = {0x03020100, 0x0b0a0908, 0xffffffff, 0xffffffff};
-    static const uint32_t SHUF_DC00 alignas(16) [] = {0xffffffff, 0xffffffff, 0x03020100, 0x0b0a0908};
+    static const uint32_t FLIP_MASK alignas(16)[] = {0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f};
+    static const uint32_t SHUF_00BA alignas(16)[] = {0x03020100, 0x0b0a0908, 0xffffffff, 0xffffffff};
+    static const uint32_t SHUF_DC00 alignas(16)[] = {0xffffffff, 0xffffffff, 0x03020100, 0x0b0a0908};
     uint32_t a, b, c, d, f, g, h, y0, y1, y2;
     uint64_t tbl;
     uint64_t inp_end, inp;
-    uint32_t xfer alignas(16) [4];
+    uint32_t xfer alignas(16)[4];
 
     __asm__ __volatile__(
         "shl    $0x6,%2;"
@@ -962,34 +1009,33 @@ void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
 
         : "+r"(s), "+r"(chunk), "+r"(blocks), "=r"(a), "=r"(b), "=r"(c), "=r"(d), /* e = chunk */ "=r"(f), "=r"(g), "=r"(h), "=r"(y0), "=r"(y1), "=r"(y2), "=r"(tbl), "+m"(inp_end), "+m"(inp), "+m"(xfer)
         : "m"(K256), "m"(FLIP_MASK), "m"(SHUF_00BA), "m"(SHUF_DC00)
-        : "cc", "memory", "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12"
-   );
+        : "cc", "memory", "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12");
 }
-}
+} // namespace sha256_sse4
 
 /*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Copyright (c) 2012, Intel Corporation 
-; 
-; All rights reserved. 
-; 
+; Copyright (c) 2012, Intel Corporation
+;
+; All rights reserved.
+;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions are
-; met: 
-; 
+; met:
+;
 ; * Redistributions of source code must retain the above copyright
-;   notice, this list of conditions and the following disclaimer.  
-; 
+;   notice, this list of conditions and the following disclaimer.
+;
 ; * Redistributions in binary form must reproduce the above copyright
 ;   notice, this list of conditions and the following disclaimer in the
 ;   documentation and/or other materials provided with the
-;   distribution. 
-; 
+;   distribution.
+;
 ; * Neither the name of the Intel Corporation nor the names of its
 ;   contributors may be used to endorse or promote products derived from
-;   this software without specific prior written permission. 
-; 
-; 
+;   this software without specific prior written permission.
+;
+;
 ; THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION "AS IS" AND ANY
 ; EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 ; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -1020,7 +1066,7 @@ void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
 ; This code schedules 1 blocks at a time, with 4 lanes per block
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-%define	MOVDQ movdqu ;; assume buffers not aligned 
+%define	MOVDQ movdqu ;; assume buffers not aligned
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Define Macros
 
@@ -1057,7 +1103,7 @@ void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
 %define SHUF_00BA	xmm10 ; shuffle xBxA -> 00BA
 %define SHUF_DC00	xmm11 ; shuffle xDxC -> DC00
 %define BYTE_FLIP_MASK	xmm12
-    
+
 %ifdef LINUX
 %define NUM_BLKS rdx	; 3rd arg
 %define CTX	rsi	; 2nd arg
@@ -1073,10 +1119,10 @@ void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
 %define INP	rcx 	; 1st arg
 
 %define SRND	rcx	; clobbers INP
-%define c 	edi 
-%define d	esi 
+%define c 	edi
+%define d	esi
 %define e 	r8d
-    
+
 %endif
 %define TBL	rbp
 %define a eax
@@ -1134,164 +1180,164 @@ STACK_SIZE	equ _XMM_SAVE + _XMM_SAVE_SIZE
 %endm
 
 %macro FOUR_ROUNDS_AND_SCHED 0
-	;; compute s0 four at a time and s1 two at a time
-	;; compute W[-16] + W[-7] 4 at a time
-	movdqa	XTMP0, X3
+        ;; compute s0 four at a time and s1 two at a time
+        ;; compute W[-16] + W[-7] 4 at a time
+        movdqa	XTMP0, X3
     mov	y0, e		; y0 = e
     ror	y0, (25-11)	; y0 = e >> (25-11)
     mov	y1, a		; y1 = a
-	palignr	XTMP0, X2, 4	; XTMP0 = W[-7]
+        palignr	XTMP0, X2, 4	; XTMP0 = W[-7]
     ror	y1, (22-13)	; y1 = a >> (22-13)
     xor	y0, e		; y0 = e ^ (e >> (25-11))
     mov	y2, f		; y2 = f
     ror	y0, (11-6)	; y0 = (e >> (11-6)) ^ (e >> (25-6))
-	movdqa	XTMP1, X1
+        movdqa	XTMP1, X1
     xor	y1, a		; y1 = a ^ (a >> (22-13)
     xor	y2, g		; y2 = f^g
-	paddd	XTMP0, X0	; XTMP0 = W[-7] + W[-16]
+        paddd	XTMP0, X0	; XTMP0 = W[-7] + W[-16]
     xor	y0, e		; y0 = e ^ (e >> (11-6)) ^ (e >> (25-6))
     and	y2, e		; y2 = (f^g)&e
     ror	y1, (13-2)	; y1 = (a >> (13-2)) ^ (a >> (22-2))
-	;; compute s0
-	palignr	XTMP1, X0, 4	; XTMP1 = W[-15]
+        ;; compute s0
+        palignr	XTMP1, X0, 4	; XTMP1 = W[-15]
     xor	y1, a		; y1 = a ^ (a >> (13-2)) ^ (a >> (22-2))
     ror	y0, 6		; y0 = S1 = (e>>6) & (e>>11) ^ (e>>25)
     xor	y2, g		; y2 = CH = ((f^g)&e)^g
-	movdqa	XTMP2, XTMP1	; XTMP2 = W[-15]
+        movdqa	XTMP2, XTMP1	; XTMP2 = W[-15]
     ror	y1, 2		; y1 = S0 = (a>>2) ^ (a>>13) ^ (a>>22)
     add	y2, y0		; y2 = S1 + CH
     add	y2, [rsp + _XFER + 0*4]	; y2 = k + w + S1 + CH
-	movdqa	XTMP3, XTMP1	; XTMP3 = W[-15]
+        movdqa	XTMP3, XTMP1	; XTMP3 = W[-15]
     mov	y0, a		; y0 = a
     add	h, y2		; h = h + S1 + CH + k + w
     mov	y2, a		; y2 = a
-	pslld	XTMP1, (32-7)
+        pslld	XTMP1, (32-7)
     or	y0, c		; y0 = a|c
     add	d, h		; d = d + h + S1 + CH + k + w
     and	y2, c		; y2 = a&c
-	psrld	XTMP2, 7
+        psrld	XTMP2, 7
     and	y0, b		; y0 = (a|c)&b
     add	h, y1		; h = h + S1 + CH + k + w + S0
-	por	XTMP1, XTMP2	; XTMP1 = W[-15] ror 7
+        por	XTMP1, XTMP2	; XTMP1 = W[-15] ror 7
     or	y0, y2		; y0 = MAJ = (a|c)&b)|(a&c)
     add	h, y0		; h = h + S1 + CH + k + w + S0 + MAJ
 
 ROTATE_ARGS
-	movdqa	XTMP2, XTMP3	; XTMP2 = W[-15]
+        movdqa	XTMP2, XTMP3	; XTMP2 = W[-15]
     mov	y0, e		; y0 = e
     mov	y1, a		; y1 = a
-	movdqa	XTMP4, XTMP3	; XTMP4 = W[-15]
+        movdqa	XTMP4, XTMP3	; XTMP4 = W[-15]
     ror	y0, (25-11)	; y0 = e >> (25-11)
     xor	y0, e		; y0 = e ^ (e >> (25-11))
     mov	y2, f		; y2 = f
     ror	y1, (22-13)	; y1 = a >> (22-13)
-	pslld	XTMP3, (32-18)
+        pslld	XTMP3, (32-18)
     xor	y1, a		; y1 = a ^ (a >> (22-13)
     ror	y0, (11-6)	; y0 = (e >> (11-6)) ^ (e >> (25-6))
     xor	y2, g		; y2 = f^g
-	psrld	XTMP2, 18
+        psrld	XTMP2, 18
     ror	y1, (13-2)	; y1 = (a >> (13-2)) ^ (a >> (22-2))
     xor	y0, e		; y0 = e ^ (e >> (11-6)) ^ (e >> (25-6))
     and	y2, e		; y2 = (f^g)&e
     ror	y0, 6		; y0 = S1 = (e>>6) & (e>>11) ^ (e>>25)
-	pxor	XTMP1, XTMP3
+        pxor	XTMP1, XTMP3
     xor	y1, a		; y1 = a ^ (a >> (13-2)) ^ (a >> (22-2))
     xor	y2, g		; y2 = CH = ((f^g)&e)^g
-	psrld	XTMP4, 3	; XTMP4 = W[-15] >> 3
+        psrld	XTMP4, 3	; XTMP4 = W[-15] >> 3
     add	y2, y0		; y2 = S1 + CH
     add	y2, [rsp + _XFER + 1*4]	; y2 = k + w + S1 + CH
     ror	y1, 2		; y1 = S0 = (a>>2) ^ (a>>13) ^ (a>>22)
-	pxor	XTMP1, XTMP2	; XTMP1 = W[-15] ror 7 ^ W[-15] ror 18
+        pxor	XTMP1, XTMP2	; XTMP1 = W[-15] ror 7 ^ W[-15] ror 18
     mov	y0, a		; y0 = a
     add	h, y2		; h = h + S1 + CH + k + w
     mov	y2, a		; y2 = a
-	pxor	XTMP1, XTMP4	; XTMP1 = s0
+        pxor	XTMP1, XTMP4	; XTMP1 = s0
     or	y0, c		; y0 = a|c
     add	d, h		; d = d + h + S1 + CH + k + w
     and	y2, c		; y2 = a&c
-	;; compute low s1
-	pshufd	XTMP2, X3, 11111010b	; XTMP2 = W[-2] {BBAA}
+        ;; compute low s1
+        pshufd	XTMP2, X3, 11111010b	; XTMP2 = W[-2] {BBAA}
     and	y0, b		; y0 = (a|c)&b
     add	h, y1		; h = h + S1 + CH + k + w + S0
-	paddd	XTMP0, XTMP1	; XTMP0 = W[-16] + W[-7] + s0
+        paddd	XTMP0, XTMP1	; XTMP0 = W[-16] + W[-7] + s0
     or	y0, y2		; y0 = MAJ = (a|c)&b)|(a&c)
     add	h, y0		; h = h + S1 + CH + k + w + S0 + MAJ
 
 ROTATE_ARGS
-	movdqa	XTMP3, XTMP2	; XTMP3 = W[-2] {BBAA}
+        movdqa	XTMP3, XTMP2	; XTMP3 = W[-2] {BBAA}
     mov	y0, e		; y0 = e
     mov	y1, a		; y1 = a
     ror	y0, (25-11)	; y0 = e >> (25-11)
-	movdqa	XTMP4, XTMP2	; XTMP4 = W[-2] {BBAA}
+        movdqa	XTMP4, XTMP2	; XTMP4 = W[-2] {BBAA}
     xor	y0, e		; y0 = e ^ (e >> (25-11))
     ror	y1, (22-13)	; y1 = a >> (22-13)
     mov	y2, f		; y2 = f
     xor	y1, a		; y1 = a ^ (a >> (22-13)
     ror	y0, (11-6)	; y0 = (e >> (11-6)) ^ (e >> (25-6))
-	psrlq	XTMP2, 17	; XTMP2 = W[-2] ror 17 {xBxA}
+        psrlq	XTMP2, 17	; XTMP2 = W[-2] ror 17 {xBxA}
     xor	y2, g		; y2 = f^g
-	psrlq	XTMP3, 19	; XTMP3 = W[-2] ror 19 {xBxA}
+        psrlq	XTMP3, 19	; XTMP3 = W[-2] ror 19 {xBxA}
     xor	y0, e		; y0 = e ^ (e >> (11-6)) ^ (e >> (25-6))
     and	y2, e		; y2 = (f^g)&e
-	psrld	XTMP4, 10	; XTMP4 = W[-2] >> 10 {BBAA}
+        psrld	XTMP4, 10	; XTMP4 = W[-2] >> 10 {BBAA}
     ror	y1, (13-2)	; y1 = (a >> (13-2)) ^ (a >> (22-2))
     xor	y1, a		; y1 = a ^ (a >> (13-2)) ^ (a >> (22-2))
     xor	y2, g		; y2 = CH = ((f^g)&e)^g
     ror	y0, 6		; y0 = S1 = (e>>6) & (e>>11) ^ (e>>25)
-	pxor	XTMP2, XTMP3
+        pxor	XTMP2, XTMP3
     add	y2, y0		; y2 = S1 + CH
     ror	y1, 2		; y1 = S0 = (a>>2) ^ (a>>13) ^ (a>>22)
     add	y2, [rsp + _XFER + 2*4]	; y2 = k + w + S1 + CH
-	pxor	XTMP4, XTMP2	; XTMP4 = s1 {xBxA}
+        pxor	XTMP4, XTMP2	; XTMP4 = s1 {xBxA}
     mov	y0, a		; y0 = a
     add	h, y2		; h = h + S1 + CH + k + w
     mov	y2, a		; y2 = a
-	pshufb	XTMP4, SHUF_00BA	; XTMP4 = s1 {00BA}
+        pshufb	XTMP4, SHUF_00BA	; XTMP4 = s1 {00BA}
     or	y0, c		; y0 = a|c
     add	d, h		; d = d + h + S1 + CH + k + w
     and	y2, c		; y2 = a&c
-	paddd	XTMP0, XTMP4	; XTMP0 = {..., ..., W[1], W[0]}
+        paddd	XTMP0, XTMP4	; XTMP0 = {..., ..., W[1], W[0]}
     and	y0, b		; y0 = (a|c)&b
     add	h, y1		; h = h + S1 + CH + k + w + S0
-	;; compute high s1
-	pshufd	XTMP2, XTMP0, 01010000b	; XTMP2 = W[-2] {DDCC}
+        ;; compute high s1
+        pshufd	XTMP2, XTMP0, 01010000b	; XTMP2 = W[-2] {DDCC}
     or	y0, y2		; y0 = MAJ = (a|c)&b)|(a&c)
     add	h, y0		; h = h + S1 + CH + k + w + S0 + MAJ
 
 ROTATE_ARGS
-	movdqa	XTMP3, XTMP2	; XTMP3 = W[-2] {DDCC}
+        movdqa	XTMP3, XTMP2	; XTMP3 = W[-2] {DDCC}
     mov	y0, e		; y0 = e
     ror	y0, (25-11)	; y0 = e >> (25-11)
     mov	y1, a		; y1 = a
-	movdqa	X0,    XTMP2	; X0    = W[-2] {DDCC}
+        movdqa	X0,    XTMP2	; X0    = W[-2] {DDCC}
     ror	y1, (22-13)	; y1 = a >> (22-13)
     xor	y0, e		; y0 = e ^ (e >> (25-11))
     mov	y2, f		; y2 = f
     ror	y0, (11-6)	; y0 = (e >> (11-6)) ^ (e >> (25-6))
-	psrlq	XTMP2, 17	; XTMP2 = W[-2] ror 17 {xDxC}
+        psrlq	XTMP2, 17	; XTMP2 = W[-2] ror 17 {xDxC}
     xor	y1, a		; y1 = a ^ (a >> (22-13)
     xor	y2, g		; y2 = f^g
-	psrlq	XTMP3, 19	; XTMP3 = W[-2] ror 19 {xDxC}
+        psrlq	XTMP3, 19	; XTMP3 = W[-2] ror 19 {xDxC}
     xor	y0, e		; y0 = e ^ (e >> (11-6)) ^ (e >> (25-6))
     and	y2, e		; y2 = (f^g)&e
     ror	y1, (13-2)	; y1 = (a >> (13-2)) ^ (a >> (22-2))
-	psrld	X0,    10	; X0 = W[-2] >> 10 {DDCC}
+        psrld	X0,    10	; X0 = W[-2] >> 10 {DDCC}
     xor	y1, a		; y1 = a ^ (a >> (13-2)) ^ (a >> (22-2))
     ror	y0, 6		; y0 = S1 = (e>>6) & (e>>11) ^ (e>>25)
     xor	y2, g		; y2 = CH = ((f^g)&e)^g
-	pxor	XTMP2, XTMP3
+        pxor	XTMP2, XTMP3
     ror	y1, 2		; y1 = S0 = (a>>2) ^ (a>>13) ^ (a>>22)
     add	y2, y0		; y2 = S1 + CH
     add	y2, [rsp + _XFER + 3*4]	; y2 = k + w + S1 + CH
-	pxor	X0, XTMP2	; X0 = s1 {xDxC}
+        pxor	X0, XTMP2	; X0 = s1 {xDxC}
     mov	y0, a		; y0 = a
     add	h, y2		; h = h + S1 + CH + k + w
     mov	y2, a		; y2 = a
-	pshufb	X0, SHUF_DC00	; X0 = s1 {DC00}
+        pshufb	X0, SHUF_DC00	; X0 = s1 {DC00}
     or	y0, c		; y0 = a|c
     add	d, h		; d = d + h + S1 + CH + k + w
     and	y2, c		; y2 = a&c
-	paddd	X0, XTMP0	; X0 = {W[3], W[2], W[1], W[0]}
+        paddd	X0, XTMP0	; X0 = {W[3], W[2], W[1], W[0]}
     and	y0, b		; y0 = (a|c)&b
     add	h, y1		; h = h + S1 + CH + k + w + S0
     or	y0, y2		; y0 = MAJ = (a|c)&b)|(a&c)
@@ -1356,10 +1402,10 @@ sha256_sse4:
 
     sub	rsp,STACK_SIZE
 %ifndef LINUX
-    movdqa	[rsp + _XMM_SAVE + 0*16],xmm6	
+    movdqa	[rsp + _XMM_SAVE + 0*16],xmm6
     movdqa	[rsp + _XMM_SAVE + 1*16],xmm7
-    movdqa	[rsp + _XMM_SAVE + 2*16],xmm8	
-    movdqa	[rsp + _XMM_SAVE + 3*16],xmm9	
+    movdqa	[rsp + _XMM_SAVE + 2*16],xmm8
+    movdqa	[rsp + _XMM_SAVE + 3*16],xmm9
     movdqa	[rsp + _XMM_SAVE + 4*16],xmm10
     movdqa	[rsp + _XMM_SAVE + 5*16],xmm11
     movdqa	[rsp + _XMM_SAVE + 6*16],xmm12
@@ -1392,7 +1438,7 @@ loop0:
     COPY_XMM_AND_BSWAP	X1, [INP + 1*16], BYTE_FLIP_MASK
     COPY_XMM_AND_BSWAP	X2, [INP + 2*16], BYTE_FLIP_MASK
     COPY_XMM_AND_BSWAP	X3, [INP + 3*16], BYTE_FLIP_MASK
-    
+
     mov	[rsp + _INP], INP
 
     ;; schedule 48 input dwords, by doing 3 rounds of 16 each
@@ -1482,8 +1528,8 @@ done_hash:
 %endif
     pop	rbx
 
-    ret	
-    
+    ret
+
 
 section .data
 align 64

@@ -21,7 +21,7 @@
 #include <string_view>
 
 /** Template base class for fixed-sized opaque blobs. */
-template<unsigned int BITS>
+template <unsigned int BITS>
 class base_blob
 {
 protected:
@@ -108,13 +108,13 @@ public:
 
     constexpr uint64_t GetUint64(int pos) const { return ReadLE64(m_data.data() + pos * 8); }
 
-    template<typename Stream>
+    template <typename Stream>
     void Serialize(Stream& s) const
     {
         s << std::span(m_data);
     }
 
-    template<typename Stream>
+    template <typename Stream>
     void Unserialize(Stream& s)
     {
         s.read(MakeWritableByteSpan(m_data));
@@ -181,7 +181,8 @@ std::optional<uintN_t> FromUserHex(std::string_view input)
  * @note This type is called uint160 for historical reasons only. It is an opaque
  * blob of 160 bits and has no integer operations.
  */
-class uint160 : public base_blob<160> {
+class uint160 : public base_blob<160>
+{
 public:
     static std::optional<uint160> FromHex(std::string_view str) { return detail::FromHex<uint160>(str); }
     constexpr uint160() = default;
@@ -193,7 +194,8 @@ public:
  * opaque blob of 256 bits and has no integer operations. Use arith_uint256 if
  * those are required.
  */
-class uint256 : public base_blob<256> {
+class uint256 : public base_blob<256>
+{
 public:
     static std::optional<uint256> FromHex(std::string_view str) { return detail::FromHex<uint256>(str); }
     static std::optional<uint256> FromUserHex(std::string_view str) { return detail::FromUserHex<uint256>(str); }

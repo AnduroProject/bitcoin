@@ -22,7 +22,7 @@
 class InvalidAddrManVersionError : public std::ios_base::failure
 {
 public:
-    InvalidAddrManVersionError(std::string msg) : std::ios_base::failure(msg) { }
+    InvalidAddrManVersionError(std::string msg) : std::ios_base::failure(msg) {}
 };
 
 class AddrManImpl;
@@ -48,7 +48,8 @@ struct AddressPosition {
     const int bucket;
     const int position;
 
-    bool operator==(AddressPosition other) {
+    bool operator==(AddressPosition other)
+    {
         return std::tie(tried, multiplicity, bucket, position) ==
                std::tie(other.tried, other.multiplicity, other.bucket, other.position);
     }
@@ -102,12 +103,12 @@ public:
     void Unserialize(Stream& s_);
 
     /**
-    * Return size information about addrman.
-    *
-    * @param[in] net              Select addresses only from specified network (nullopt = all)
-    * @param[in] in_new           Select addresses only from one table (true = new, false = tried, nullopt = both)
-    * @return                     Number of unique addresses that match specified options.
-    */
+     * Return size information about addrman.
+     *
+     * @param[in] net              Select addresses only from specified network (nullopt = all)
+     * @param[in] in_new           Select addresses only from one table (true = new, false = tried, nullopt = both)
+     * @return                     Number of unique addresses that match specified options.
+     */
     size_t Size(std::optional<Network> net = std::nullopt, std::optional<bool> in_new = std::nullopt) const;
 
     /**

@@ -23,8 +23,8 @@
 
 class ArgsManager;
 
-extern const char * const BITCOIN_CONF_FILENAME;
-extern const char * const BITCOIN_SETTINGS_FILENAME;
+extern const char* const BITCOIN_CONF_FILENAME;
+extern const char* const BITCOIN_SETTINGS_FILENAME;
 
 // Return true if -datadir option points to a valid directory or is not specified.
 bool CheckDataDirOption(const ArgsManager& args);
@@ -78,7 +78,7 @@ struct KeyInfo {
 KeyInfo InterpretKey(std::string key);
 
 std::optional<common::SettingsValue> InterpretValue(const KeyInfo& key, const std::string* value,
-                                                         unsigned int flags, std::string& error);
+                                                    unsigned int flags, std::string& error);
 
 struct SectionInfo {
     std::string m_name;
@@ -103,7 +103,7 @@ public:
      * interpreted.
      */
     enum Flags : uint32_t {
-        ALLOW_ANY = 0x01,         //!< disable validation
+        ALLOW_ANY = 0x01, //!< disable validation
         // ALLOW_BOOL = 0x02,     //!< unimplemented, draft implementation in #16545
         // ALLOW_INT = 0x04,      //!< unimplemented, draft implementation in #16545
         // ALLOW_STRING = 0x08,   //!< unimplemented, draft implementation in #16545
@@ -124,8 +124,7 @@ public:
     };
 
 protected:
-    struct Arg
-    {
+    struct Arg {
         std::string m_help_param;
         std::string m_help_text;
         unsigned int m_flags;
@@ -153,7 +152,7 @@ protected:
      */
     bool UseDefaultSection(const std::string& arg) const EXCLUSIVE_LOCKS_REQUIRED(cs_args);
 
- public:
+public:
     /**
      * Get setting value.
      *
@@ -359,7 +358,8 @@ protected:
     /**
      * Clear available arguments
      */
-    void ClearArgs() {
+    void ClearArgs()
+    {
         LOCK(cs_args);
         m_available_args.clear();
         m_network_only_args.clear();

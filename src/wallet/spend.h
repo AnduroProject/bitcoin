@@ -59,7 +59,7 @@ struct CoinsResult {
     void Add(OutputType type, const COutput& out);
 
     CAmount GetTotalAmount() { return total_amount; }
-    std::optional<CAmount> GetEffectiveTotalAmount() {return total_effective_amount; }
+    std::optional<CAmount> GetEffectiveTotalAmount() { return total_effective_amount; }
 
 private:
     /** Sum of all available coins raw value */
@@ -115,12 +115,12 @@ struct SelectionFilter {
 };
 
 /**
-* Group coins by the provided filters.
-*/
+ * Group coins by the provided filters.
+ */
 FilteredOutputGroups GroupOutputs(const CWallet& wallet,
-                          const CoinsResult& coins,
-                          const CoinSelectionParams& coin_sel_params,
-                          const std::vector<SelectionFilter>& filters);
+                                  const CoinsResult& coins,
+                                  const CoinSelectionParams& coin_sel_params,
+                                  const std::vector<SelectionFilter>& filters);
 
 /**
  * Attempt to find a valid input set that preserves privacy by not mixing OutputTypes.
@@ -139,7 +139,7 @@ FilteredOutputGroups GroupOutputs(const CWallet& wallet,
  *                                                  result that surpassed the tx max weight size).
  */
 util::Result<SelectionResult> AttemptSelection(interfaces::Chain& chain, const CAmount& nTargetValue, OutputGroupTypeMap& groups,
-                        const CoinSelectionParams& coin_selection_params, bool allow_mixed_output_types);
+                                               const CoinSelectionParams& coin_selection_params, bool allow_mixed_output_types);
 
 /**
  * Attempt to find a valid input set that meets the provided eligibility filter and target.
@@ -158,8 +158,7 @@ util::Result<SelectionResult> AttemptSelection(interfaces::Chain& chain, const C
 util::Result<SelectionResult> ChooseSelectionResult(interfaces::Chain& chain, const CAmount& nTargetValue, Groups& groups, const CoinSelectionParams& coin_selection_params);
 
 // User manually selected inputs that must be part of the transaction
-struct PreSelectedInputs
-{
+struct PreSelectedInputs {
     std::set<std::shared_ptr<COutput>> coins;
     // If subtract fee from outputs is disabled, the 'total_amount'
     // will be the sum of each output effective value
@@ -180,7 +179,7 @@ struct PreSelectedInputs
 /**
  * Fetch and validate coin control selected inputs.
  * Coins could be internal (from the wallet) or external.
-*/
+ */
 util::Result<PreSelectedInputs> FetchSelectedInputs(const CWallet& wallet, const CCoinControl& coin_control,
                                                     const CoinSelectionParams& coin_selection_params) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet);
 
@@ -197,7 +196,7 @@ util::Result<PreSelectedInputs> FetchSelectedInputs(const CWallet& wallet, const
  *                                                result that surpassed the tx max weight size).
  */
 util::Result<SelectionResult> AutomaticCoinSelection(const CWallet& wallet, CoinsResult& available_coins, const CAmount& nTargetValue,
-                 const CoinSelectionParams& coin_selection_params) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet);
+                                                     const CoinSelectionParams& coin_selection_params) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet);
 
 /**
  * Select all coins from coin_control, and if coin_control 'm_allow_other_inputs=true', call 'AutomaticCoinSelection' to
@@ -207,8 +206,7 @@ util::Result<SelectionResult> SelectCoins(const CWallet& wallet, CoinsResult& av
                                           const CAmount& nTargetValue, const CCoinControl& coin_control,
                                           const CoinSelectionParams& coin_selection_params) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet);
 
-struct CreatedTransactionResult
-{
+struct CreatedTransactionResult {
     CTransactionRef tx;
     CAmount fee;
     FeeCalculation fee_calc;

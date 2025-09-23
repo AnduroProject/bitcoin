@@ -83,8 +83,8 @@ std::string ConnectionTypeAsString(ConnectionType conn_type);
 /** Transport layer version */
 enum class TransportProtocolType : uint8_t {
     DETECTING, //!< Peer could be v1 or v2
-    V1, //!< Unencrypted, plaintext protocol
-    V2, //!< BIP324 protocol
+    V1,        //!< Unencrypted, plaintext protocol
+    V2,        //!< BIP324 protocol
 };
 
 /** Convert TransportProtocolType enum to a string value */

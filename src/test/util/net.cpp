@@ -36,17 +36,17 @@ void ConnmanTestMsg::Handshake(CNode& node,
 
     CSerializedNetMsg msg_version{
         NetMsg::Make(NetMsgType::VERSION,
-                version,                                        //
-                Using<CustomUintFormatter<8>>(remote_services), //
-                int64_t{},                                      // dummy time
-                int64_t{},                                      // ignored service bits
-                CNetAddr::V1(CService{}),                       // dummy
-                int64_t{},                                      // ignored service bits
-                CNetAddr::V1(CService{}),                       // ignored
-                uint64_t{1},                                    // dummy nonce
-                std::string{},                                  // dummy subver
-                int32_t{},                                      // dummy starting_height
-                relay_txs),
+                     version,                                        //
+                     Using<CustomUintFormatter<8>>(remote_services), //
+                     int64_t{},                                      // dummy time
+                     int64_t{},                                      // ignored service bits
+                     CNetAddr::V1(CService{}),                       // dummy
+                     int64_t{},                                      // ignored service bits
+                     CNetAddr::V1(CService{}),                       // ignored
+                     uint64_t{1},                                    // dummy nonce
+                     std::string{},                                  // dummy subver
+                     int32_t{},                                      // dummy starting_height
+                     relay_txs),
     };
 
     (void)connman.ReceiveMsgFrom(node, std::move(msg_version));
@@ -131,20 +131,20 @@ std::vector<NodeEvictionCandidate> GetRandomNodeEvictionCandidates(int n_candida
     candidates.reserve(n_candidates);
     for (int id = 0; id < n_candidates; ++id) {
         candidates.push_back({
-            .id=id,
-            .m_connected=std::chrono::seconds{random_context.randrange(100)},
-            .m_min_ping_time=std::chrono::microseconds{random_context.randrange(100)},
-            .m_last_block_time=std::chrono::seconds{random_context.randrange(100)},
-            .m_last_tx_time=std::chrono::seconds{random_context.randrange(100)},
-            .fRelevantServices=random_context.randbool(),
-            .m_relay_txs=random_context.randbool(),
-            .fBloomFilter=random_context.randbool(),
-            .nKeyedNetGroup=random_context.randrange(100u),
-            .prefer_evict=random_context.randbool(),
-            .m_is_local=random_context.randbool(),
-            .m_network=ALL_NETWORKS[random_context.randrange(ALL_NETWORKS.size())],
-            .m_noban=false,
-            .m_conn_type=ConnectionType::INBOUND,
+            .id = id,
+            .m_connected = std::chrono::seconds{random_context.randrange(100)},
+            .m_min_ping_time = std::chrono::microseconds{random_context.randrange(100)},
+            .m_last_block_time = std::chrono::seconds{random_context.randrange(100)},
+            .m_last_tx_time = std::chrono::seconds{random_context.randrange(100)},
+            .fRelevantServices = random_context.randbool(),
+            .m_relay_txs = random_context.randbool(),
+            .fBloomFilter = random_context.randbool(),
+            .nKeyedNetGroup = random_context.randrange(100u),
+            .prefer_evict = random_context.randbool(),
+            .m_is_local = random_context.randbool(),
+            .m_network = ALL_NETWORKS[random_context.randrange(ALL_NETWORKS.size())],
+            .m_noban = false,
+            .m_conn_type = ConnectionType::INBOUND,
         });
     }
     return candidates;
@@ -289,7 +289,7 @@ std::optional<CNetMessage> DynSock::Pipe::GetNetMsg()
 
         for (;;) {
             std::span<const uint8_t> s{m_data};
-            if (!transport.ReceivedBytes(s)) {  // Consumed bytes are removed from the front of s.
+            if (!transport.ReceivedBytes(s)) { // Consumed bytes are removed from the front of s.
                 return std::nullopt;
             }
             m_data.erase(m_data.begin(), m_data.begin() + m_data.size() - s.size());

@@ -20,33 +20,33 @@
 using util::Join;
 using util::RemovePrefixView;
 
-const char * const DEFAULT_DEBUGLOGFILE = "debug.log";
+const char* const DEFAULT_DEBUGLOGFILE = "debug.log";
 constexpr auto MAX_USER_SETABLE_SEVERITY_LEVEL{BCLog::Level::Info};
 
 BCLog::Logger& LogInstance()
 {
-/**
- * NOTE: the logger instances is leaked on exit. This is ugly, but will be
- * cleaned up by the OS/libc. Defining a logger as a global object doesn't work
- * since the order of destruction of static/global objects is undefined.
- * Consider if the logger gets destroyed, and then some later destructor calls
- * LogPrintf, maybe indirectly, and you get a core dump at shutdown trying to
- * access the logger. When the shutdown sequence is fully audited and tested,
- * explicit destruction of these objects can be implemented by changing this
- * from a raw pointer to a std::unique_ptr.
- * Since the ~Logger() destructor is never called, the Logger class and all
- * its subclasses must have implicitly-defined destructors.
- *
- * This method of initialization was originally introduced in
- * ee3374234c60aba2cc4c5cd5cac1c0aefc2d817c.
- */
+    /**
+     * NOTE: the logger instances is leaked on exit. This is ugly, but will be
+     * cleaned up by the OS/libc. Defining a logger as a global object doesn't work
+     * since the order of destruction of static/global objects is undefined.
+     * Consider if the logger gets destroyed, and then some later destructor calls
+     * LogPrintf, maybe indirectly, and you get a core dump at shutdown trying to
+     * access the logger. When the shutdown sequence is fully audited and tested,
+     * explicit destruction of these objects can be implemented by changing this
+     * from a raw pointer to a std::unique_ptr.
+     * Since the ~Logger() destructor is never called, the Logger class and all
+     * its subclasses must have implicitly-defined destructors.
+     *
+     * This method of initialization was originally introduced in
+     * ee3374234c60aba2cc4c5cd5cac1c0aefc2d817c.
+     */
     static BCLog::Logger* g_logger{new BCLog::Logger()};
     return *g_logger;
 }
 
 bool fLogIPs = DEFAULT_LOGIPS;
 
-static int FileWriteStr(std::string_view str, FILE *fp)
+static int FileWriteStr(std::string_view str, FILE* fp)
 {
     return fwrite(str.data(), 1, str.size(), fp);
 }
@@ -212,8 +212,7 @@ static const std::unordered_map<BCLog::LogFlags, std::string> LOG_CATEGORIES_BY_
             assert(inserted);
         }
         return out;
-    }(LOG_CATEGORIES_BY_STR)
-};
+    }(LOG_CATEGORIES_BY_STR)};
 
 bool GetLogCategory(BCLog::LogFlags& flag, std::string_view str)
 {
@@ -317,25 +316,26 @@ std::string BCLog::Logger::LogTimestampStr(SystemClock::time_point now, std::chr
 }
 
 namespace BCLog {
-    /** Belts and suspenders: make sure outgoing log messages don't contain
-     * potentially suspicious characters, such as terminal control codes.
-     *
-     * This escapes control characters except newline ('\n') in C syntax.
-     * It escapes instead of removes them to still allow for troubleshooting
-     * issues where they accidentally end up in strings.
-     */
-    std::string LogEscapeMessage(std::string_view str) {
-        std::string ret;
-        for (char ch_in : str) {
-            uint8_t ch = (uint8_t)ch_in;
-            if ((ch >= 32 || ch == '\n') && ch != '\x7f') {
-                ret += ch_in;
-            } else {
-                ret += strprintf("\\x%02x", ch);
-            }
+/** Belts and suspenders: make sure outgoing log messages don't contain
+ * potentially suspicious characters, such as terminal control codes.
+ *
+ * This escapes control characters except newline ('\n') in C syntax.
+ * It escapes instead of removes them to still allow for troubleshooting
+ * issues where they accidentally end up in strings.
+ */
+std::string LogEscapeMessage(std::string_view str)
+{
+    std::string ret;
+    for (char ch_in : str) {
+        uint8_t ch = (uint8_t)ch_in;
+        if ((ch >= 32 || ch == '\n') && ch != '\x7f') {
+            ret += ch_in;
+        } else {
+            ret += strprintf("\\x%02x", ch);
         }
-        return ret;
     }
+    return ret;
+}
 } // namespace BCLog
 
 std::string BCLog::Logger::GetLogPrefix(BCLog::LogFlags category, BCLog::Level level) const
@@ -514,12 +514,12 @@ void BCLog::Logger::ShrinkDebugFile()
     size_t log_size = 0;
     try {
         log_size = fs::file_size(m_file_path);
-    } catch (const fs::filesystem_error&) {}
+    } catch (const fs::filesystem_error&) {
+    }
 
     // If debug.log file is more than 10% bigger the RECENT_DEBUG_HISTORY_SIZE
     // trim it down by saving only the last RECENT_DEBUG_HISTORY_SIZE bytes
-    if (file && log_size > 11 * (RECENT_DEBUG_HISTORY_SIZE / 10))
-    {
+    if (file && log_size > 11 * (RECENT_DEBUG_HISTORY_SIZE / 10)) {
         // Restart the file with some of the end
         std::vector<char> vch(RECENT_DEBUG_HISTORY_SIZE, 0);
         if (fseek(file, -((long)vch.size()), SEEK_END)) {
@@ -531,13 +531,11 @@ void BCLog::Logger::ShrinkDebugFile()
         fclose(file);
 
         file = fsbridge::fopen(m_file_path, "w");
-        if (file)
-        {
+        if (file) {
             fwrite(vch.data(), 1, nBytes, file);
             fclose(file);
         }
-    }
-    else if (file != nullptr)
+    } else if (file != nullptr)
         fclose(file);
 }
 

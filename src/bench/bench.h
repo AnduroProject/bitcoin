@@ -42,8 +42,7 @@ using ankerl::nanobench::Bench;
 
 typedef std::function<void(Bench&)> BenchFunction;
 
-enum PriorityLevel : uint8_t
-{
+enum PriorityLevel : uint8_t {
     LOW = 1 << 0,
     HIGH = 1 << 2,
 };

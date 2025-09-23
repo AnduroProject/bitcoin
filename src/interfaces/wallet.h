@@ -85,7 +85,7 @@ public:
 
     //! Change wallet passphrase.
     virtual bool changeWalletPassphrase(const SecureString& old_wallet_passphrase,
-        const SecureString& new_wallet_passphrase) = 0;
+                                        const SecureString& new_wallet_passphrase) = 0;
 
     //! Abort a rescan.
     virtual void abortRescan() = 0;
@@ -116,9 +116,9 @@ public:
 
     //! Look up address in wallet, return whether exists.
     virtual bool getAddress(const CTxDestination& dest,
-        std::string* name,
-        wallet::isminetype* is_mine,
-        wallet::AddressPurpose* purpose) = 0;
+                            std::string* name,
+                            wallet::isminetype* is_mine,
+                            wallet::AddressPurpose* purpose) = 0;
 
     //! Get wallet address list.
     virtual std::vector<WalletAddress> getAddresses() = 0;
@@ -146,15 +146,15 @@ public:
 
     //! Create transaction.
     virtual util::Result<CTransactionRef> createTransaction(const std::vector<wallet::CRecipient>& recipients,
-        const wallet::CCoinControl& coin_control,
-        bool sign,
-        int& change_pos,
-        CAmount& fee) = 0;
+                                                            const wallet::CCoinControl& coin_control,
+                                                            bool sign,
+                                                            int& change_pos,
+                                                            CAmount& fee) = 0;
 
     //! Commit transaction.
     virtual void commitTransaction(CTransactionRef tx,
-        WalletValueMap value_map,
-        WalletOrderForm order_form) = 0;
+                                   WalletValueMap value_map,
+                                   WalletOrderForm order_form) = 0;
 
     //! Return whether transaction can be abandoned.
     virtual bool transactionCanBeAbandoned(const Txid& txid) = 0;
@@ -167,20 +167,20 @@ public:
 
     //! Create bump transaction.
     virtual bool createBumpTransaction(const Txid& txid,
-        const wallet::CCoinControl& coin_control,
-        std::vector<bilingual_str>& errors,
-        CAmount& old_fee,
-        CAmount& new_fee,
-        CMutableTransaction& mtx) = 0;
+                                       const wallet::CCoinControl& coin_control,
+                                       std::vector<bilingual_str>& errors,
+                                       CAmount& old_fee,
+                                       CAmount& new_fee,
+                                       CMutableTransaction& mtx) = 0;
 
     //! Sign bump transaction.
     virtual bool signBumpTransaction(CMutableTransaction& mtx) = 0;
 
     //! Commit bump transaction.
     virtual bool commitBumpTransaction(const Txid& txid,
-        CMutableTransaction&& mtx,
-        std::vector<bilingual_str>& errors,
-        Txid& bumped_txid) = 0;
+                                       CMutableTransaction&& mtx,
+                                       std::vector<bilingual_str>& errors,
+                                       Txid& bumped_txid) = 0;
 
     //! Get a transaction.
     virtual CTransactionRef getTx(const Txid& txid) = 0;
@@ -193,24 +193,24 @@ public:
 
     //! Try to get updated status for a particular transaction, if possible without blocking.
     virtual bool tryGetTxStatus(const Txid& txid,
-        WalletTxStatus& tx_status,
-        int& num_blocks,
-        int64_t& block_time) = 0;
+                                WalletTxStatus& tx_status,
+                                int& num_blocks,
+                                int64_t& block_time) = 0;
 
     //! Get transaction details.
     virtual WalletTx getWalletTxDetails(const Txid& txid,
-        WalletTxStatus& tx_status,
-        WalletOrderForm& order_form,
-        bool& in_mempool,
-        int& num_blocks) = 0;
+                                        WalletTxStatus& tx_status,
+                                        WalletOrderForm& order_form,
+                                        bool& in_mempool,
+                                        int& num_blocks) = 0;
 
     //! Fill PSBT.
     virtual std::optional<common::PSBTError> fillPSBT(std::optional<int> sighash_type,
-        bool sign,
-        bool bip32derivs,
-        size_t* n_signed,
-        PartiallySignedTransaction& psbtx,
-        bool& complete) = 0;
+                                                      bool sign,
+                                                      bool bip32derivs,
+                                                      size_t* n_signed,
+                                                      PartiallySignedTransaction& psbtx,
+                                                      bool& complete) = 0;
 
     //! Get balances.
     virtual WalletBalances getBalances() = 0;
@@ -249,9 +249,9 @@ public:
 
     //! Get minimum fee.
     virtual CAmount getMinimumFee(unsigned int tx_bytes,
-        const wallet::CCoinControl& coin_control,
-        int* returned_target,
-        FeeReason* reason) = 0;
+                                  const wallet::CCoinControl& coin_control,
+                                  int* returned_target,
+                                  FeeReason* reason) = 0;
 
     //! Get tx confirm target.
     virtual unsigned int getConfirmTarget() = 0;
@@ -294,10 +294,10 @@ public:
 
     //! Register handler for address book changed messages.
     using AddressBookChangedFn = std::function<void(const CTxDestination& address,
-        const std::string& label,
-        bool is_mine,
-        wallet::AddressPurpose purpose,
-        ChangeType status)>;
+                                                    const std::string& label,
+                                                    bool is_mine,
+                                                    wallet::AddressPurpose purpose,
+                                                    ChangeType status)>;
     virtual std::unique_ptr<Handler> handleAddressBookChanged(AddressBookChangedFn fn) = 0;
 
     //! Register handler for transaction changed messages.
@@ -353,8 +353,7 @@ public:
 };
 
 //! Information about one wallet address.
-struct WalletAddress
-{
+struct WalletAddress {
     CTxDestination dest;
     wallet::isminetype is_mine;
     wallet::AddressPurpose purpose;
@@ -367,8 +366,7 @@ struct WalletAddress
 };
 
 //! Collection of wallet balances.
-struct WalletBalances
-{
+struct WalletBalances {
     CAmount balance = 0;
     CAmount unconfirmed_balance = 0;
     CAmount immature_balance = 0;
@@ -381,8 +379,7 @@ struct WalletBalances
 };
 
 // Wallet transaction information.
-struct WalletTx
-{
+struct WalletTx {
     CTransactionRef tx;
     std::vector<wallet::isminetype> txin_is_mine;
     std::vector<wallet::isminetype> txout_is_mine;
@@ -400,8 +397,7 @@ struct WalletTx
 };
 
 //! Updated transaction status.
-struct WalletTxStatus
-{
+struct WalletTxStatus {
     int block_height;
     int blocks_to_maturity;
     int depth_in_main_chain;
@@ -414,8 +410,7 @@ struct WalletTxStatus
 };
 
 //! Wallet transaction output.
-struct WalletTxOut
-{
+struct WalletTxOut {
     CTxOut txout;
     int64_t time;
     int depth_in_main_chain = -1;
@@ -423,8 +418,7 @@ struct WalletTxOut
 };
 
 //! Migrated wallet info
-struct WalletMigrationResult
-{
+struct WalletMigrationResult {
     std::unique_ptr<Wallet> wallet;
     std::optional<std::string> watchonly_wallet_name;
     std::optional<std::string> solvables_wallet_name;

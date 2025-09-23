@@ -31,7 +31,7 @@ class Init;
 
 
 /** Main Bitcoin application object */
-class BitcoinApplication: public QApplication
+class BitcoinApplication : public QApplication
 {
     Q_OBJECT
 public:
@@ -49,9 +49,9 @@ public:
     /// Initialize prune setting
     void InitPruneSetting(int64_t prune_MiB);
     /// Create main window
-    void createWindow(const NetworkStyle *networkStyle);
+    void createWindow(const NetworkStyle* networkStyle);
     /// Create splash screen
-    void createSplashScreen(const NetworkStyle *networkStyle);
+    void createSplashScreen(const NetworkStyle* networkStyle);
     /// Create or spawn node
     void createNode(interfaces::Init& init);
     /// Basic initialization, before starting initialization/shutdown thread. Return true on success.
@@ -66,14 +66,18 @@ public:
     /// Setup platform style
     void setupPlatformStyle();
 
-    interfaces::Node& node() const { assert(m_node); return *m_node; }
+    interfaces::Node& node() const
+    {
+        assert(m_node);
+        return *m_node;
+    }
 
 public Q_SLOTS:
     void initializeResult(bool success, interfaces::BlockAndHeaderTipInfo tip_info);
     /// Request core shutdown
     void requestShutdown();
     /// Handle runaway exceptions. Shows a message box with the problem and quits the program.
-    void handleRunawayException(const QString &message);
+    void handleRunawayException(const QString& message);
 
     /**
      * A helper function that shows a message box

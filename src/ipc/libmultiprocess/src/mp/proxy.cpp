@@ -291,8 +291,9 @@ std::tuple<ConnThread, bool> SetThread(ConnThreads& threads, std::mutex& mutex, 
     auto thread = threads.find(connection);
     if (thread != threads.end()) return {thread, false};
     thread = threads.emplace(
-        std::piecewise_construct, std::forward_as_tuple(connection),
-        std::forward_as_tuple(make_thread(), connection, /* destroy_connection= */ false)).first;
+                        std::piecewise_construct, std::forward_as_tuple(connection),
+                        std::forward_as_tuple(make_thread(), connection, /* destroy_connection= */ false))
+                 .first;
     thread->second.setCleanup([&threads, &mutex, thread] {
         // Note: it is safe to use the `thread` iterator in this cleanup
         // function, because the iterator would only be invalid if the map entry

@@ -52,11 +52,11 @@ FUZZ_TARGET(connman, .init = initialize_connman)
     }
     AddrManDeterministic& addr_man{*addr_man_ptr};
     ConnmanTestMsg connman{fuzzed_data_provider.ConsumeIntegral<uint64_t>(),
-                     fuzzed_data_provider.ConsumeIntegral<uint64_t>(),
-                     addr_man,
-                     netgroupman,
-                     Params(),
-                     fuzzed_data_provider.ConsumeBool()};
+                           fuzzed_data_provider.ConsumeIntegral<uint64_t>(),
+                           addr_man,
+                           netgroupman,
+                           Params(),
+                           fuzzed_data_provider.ConsumeBool()};
 
     const uint64_t max_outbound_limit{fuzzed_data_provider.ConsumeIntegral<uint64_t>()};
     CConnman::Options options;
@@ -68,12 +68,14 @@ FUZZ_TARGET(connman, .init = initialize_connman)
     CSubNet random_subnet;
     std::string random_string;
 
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 100) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 100)
+    {
         CNode& p2p_node{*ConsumeNodeAsUniquePtr(fuzzed_data_provider).release()};
         connman.AddTestNode(p2p_node);
     }
 
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000)
+    {
         CallOneOf(
             fuzzed_data_provider,
             [&] {

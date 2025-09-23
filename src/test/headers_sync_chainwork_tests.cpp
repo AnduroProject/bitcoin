@@ -22,8 +22,8 @@ struct HeadersGeneratorSetup : public RegTestingSetup {
      * prev_time, and with a fixed merkle root hash.
      */
     void GenerateHeaders(std::vector<CBlockHeader>& headers, size_t count,
-            const uint256& starting_hash, const int nVersion, int prev_time,
-            const uint256& merkle_root, const uint32_t nBits);
+                         const uint256& starting_hash, const int nVersion, int prev_time,
+                         const uint256& merkle_root, const uint32_t nBits);
 };
 
 void HeadersGeneratorSetup::FindProofOfWork(CBlockHeader& starting_header)
@@ -34,18 +34,19 @@ void HeadersGeneratorSetup::FindProofOfWork(CBlockHeader& starting_header)
 }
 
 void HeadersGeneratorSetup::GenerateHeaders(std::vector<CBlockHeader>& headers,
-        size_t count, const uint256& starting_hash, const int nVersion, int prev_time,
-        const uint256& merkle_root, const uint32_t nBits)
+                                            size_t count, const uint256& starting_hash, const int nVersion, int prev_time,
+                                            const uint256& merkle_root, const uint32_t nBits)
 {
     uint256 prev_hash = starting_hash;
 
     while (headers.size() < count) {
         headers.emplace_back();
-        CBlockHeader& next_header = headers.back();;
+        CBlockHeader& next_header = headers.back();
+        ;
         next_header.nVersion = nVersion;
         next_header.hashPrevBlock = prev_hash;
         next_header.hashMerkleRoot = merkle_root;
-        next_header.nTime = prev_time+1;
+        next_header.nTime = prev_time + 1;
         next_header.nBits = nBits;
 
         FindProofOfWork(next_header);
@@ -73,17 +74,17 @@ BOOST_AUTO_TEST_CASE(headers_sync_state)
     std::unique_ptr<HeadersSyncState> hss;
 
     const int target_blocks = 15000;
-    arith_uint256 chain_work = target_blocks*2;
+    arith_uint256 chain_work = target_blocks * 2;
 
     // Generate headers for two different chains (using differing merkle roots
     // to ensure the headers are different).
-    GenerateHeaders(first_chain, target_blocks-1, Params().GenesisBlock().GetHash(),
-            Params().GenesisBlock().nVersion, Params().GenesisBlock().nTime,
-            ArithToUint256(0), Params().GenesisBlock().nBits);
+    GenerateHeaders(first_chain, target_blocks - 1, Params().GenesisBlock().GetHash(),
+                    Params().GenesisBlock().nVersion, Params().GenesisBlock().nTime,
+                    ArithToUint256(0), Params().GenesisBlock().nBits);
 
-    GenerateHeaders(second_chain, target_blocks-2, Params().GenesisBlock().GetHash(),
-            Params().GenesisBlock().nVersion, Params().GenesisBlock().nTime,
-            ArithToUint256(1), Params().GenesisBlock().nBits);
+    GenerateHeaders(second_chain, target_blocks - 2, Params().GenesisBlock().GetHash(),
+                    Params().GenesisBlock().nVersion, Params().GenesisBlock().nTime,
+                    ArithToUint256(1), Params().GenesisBlock().nBits);
 
     const CBlockIndex* chain_start = WITH_LOCK(::cs_main, return m_node.chainman->m_blockman.LookupBlockIndex(Params().GenesisBlock().GetHash()));
     std::vector<CBlockHeader> headers_batch;
@@ -125,7 +126,7 @@ BOOST_AUTO_TEST_CASE(headers_sync_state)
     // succeed (too little work)
     hss.reset(new HeadersSyncState(0, Params().GetConsensus(), chain_start, chain_work));
     BOOST_CHECK(hss->GetState() == HeadersSyncState::State::PRESYNC);
-     // Pretend just the first message is "full", so we don't abort.
+    // Pretend just the first message is "full", so we don't abort.
     (void)hss->ProcessNextHeaders({second_chain.front()}, true);
     BOOST_CHECK(hss->GetState() == HeadersSyncState::State::PRESYNC);
 

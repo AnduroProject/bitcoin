@@ -17,8 +17,8 @@ class QValueComboBox;
 QT_END_NAMESPACE
 
 /** Widget for entering bitcoin amounts.
-  */
-class BitcoinAmountField: public QWidget
+ */
+class BitcoinAmountField : public QWidget
 {
     Q_OBJECT
 
@@ -27,9 +27,9 @@ class BitcoinAmountField: public QWidget
     Q_PROPERTY(qint64 value READ value WRITE setValue NOTIFY valueChanged USER true)
 
 public:
-    explicit BitcoinAmountField(QWidget *parent = nullptr);
+    explicit BitcoinAmountField(QWidget* parent = nullptr);
 
-    CAmount value(bool *value=nullptr) const;
+    CAmount value(bool* value = nullptr) const;
     void setValue(const CAmount& value);
 
     /** If allow empty is set to false the field will be set to the minimum allowed value if left empty. **/
@@ -64,22 +64,21 @@ public:
     /** Qt messes up the tab chain by default in some cases (issue https://bugreports.qt-project.org/browse/QTBUG-10907),
         in these cases we have to set it up manually.
     */
-    QWidget *setupTabChain(QWidget *prev);
+    QWidget* setupTabChain(QWidget* prev);
 
 Q_SIGNALS:
     void valueChanged();
 
 protected:
     /** Intercept focus-in event and ',' key presses */
-    bool eventFilter(QObject *object, QEvent *event) override;
+    bool eventFilter(QObject* object, QEvent* event) override;
 
 private:
     AmountSpinBox* amount{nullptr};
-    QValueComboBox *unit;
+    QValueComboBox* unit;
 
 private Q_SLOTS:
     void unitChanged(int idx);
-
 };
 
 #endif // BITCOIN_QT_BITCOINAMOUNTFIELD_H

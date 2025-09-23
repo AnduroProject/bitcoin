@@ -20,7 +20,7 @@ public:
 
     Q_OBJECT
 
-    private Q_SLOTS:
+private Q_SLOTS:
     void rpcNestedTests();
 };
 

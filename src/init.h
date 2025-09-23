@@ -32,9 +32,9 @@ bool ShutdownRequested(node::NodeContext& node);
 /** Interrupt threads */
 void Interrupt(node::NodeContext& node);
 void Shutdown(node::NodeContext& node);
-//!Initialize the logging infrastructure
+//! Initialize the logging infrastructure
 void InitLogging(const ArgsManager& args);
-//!Parameter interaction: change current parameters depending on various rules
+//! Parameter interaction: change current parameters depending on various rules
 void InitParameterInteraction(ArgsManager& args);
 
 /** Initialize bitcoin core: Basic context setup.
@@ -74,7 +74,7 @@ bool AppInitMain(node::NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip
 /**
  * Register all arguments with the ArgsManager
  */
-void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc=false);
+void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc = false);
 
 /** Validates requirements to run the indexes and spawns each index initial sync thread */
 bool StartIndexBackgroundSync(node::NodeContext& node);

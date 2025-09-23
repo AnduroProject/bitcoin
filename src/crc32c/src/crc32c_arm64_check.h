@@ -29,14 +29,14 @@ extern "C" unsigned long getauxval(unsigned long type) __attribute__((weak));
 #endif  // defined (__linux__)
 
 #ifdef __APPLE__
-#include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
 #endif  // defined (__APPLE__)
 
 namespace crc32c {
 
 inline bool CanUseArm64Crc32() {
-#if defined (__linux__) && (HAVE_STRONG_GETAUXVAL || HAVE_WEAK_GETAUXVAL)
+#if defined(__linux__) && (HAVE_STRONG_GETAUXVAL || HAVE_WEAK_GETAUXVAL)
   // From 'arch/arm64/include/uapi/asm/hwcap.h' in Linux kernel source code.
   constexpr unsigned long kHWCAP_PMULL = 1 << 4;
   constexpr unsigned long kHWCAP_CRC32 = 1 << 7;
@@ -54,8 +54,8 @@ inline bool CanUseArm64Crc32() {
 #elif defined(__APPLE__)
   int val = 0;
   size_t len = sizeof(val);
-  return sysctlbyname("hw.optional.armv8_crc32", &val, &len, nullptr, 0) == 0
-             && val != 0;
+  return sysctlbyname("hw.optional.armv8_crc32", &val, &len, nullptr, 0) == 0 &&
+         val != 0;
 #else
   return false;
 #endif  // HAVE_STRONG_GETAUXVAL || HAVE_WEAK_GETAUXVAL

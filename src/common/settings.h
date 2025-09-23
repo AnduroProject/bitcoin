@@ -42,13 +42,13 @@ struct Settings {
 
 //! Read settings file.
 bool ReadSettings(const fs::path& path,
-    std::map<std::string, SettingsValue>& values,
-    std::vector<std::string>& errors);
+                  std::map<std::string, SettingsValue>& values,
+                  std::vector<std::string>& errors);
 
 //! Write settings file.
 bool WriteSettings(const fs::path& path,
-    const std::map<std::string, SettingsValue>& values,
-    std::vector<std::string>& errors);
+                   const std::map<std::string, SettingsValue>& values,
+                   std::vector<std::string>& errors);
 
 //! Get settings value from combined sources: forced settings, command line
 //! arguments, runtime read-write settings, and the read-only config file.
@@ -64,18 +64,18 @@ bool WriteSettings(const fs::path& path,
 //! @param get_chain_type - enable special backwards compatible behavior
 //!                         for GetChainType
 SettingsValue GetSetting(const Settings& settings,
-    const std::string& section,
-    const std::string& name,
-    bool ignore_default_section_config,
-    bool ignore_nonpersistent,
-    bool get_chain_type);
+                         const std::string& section,
+                         const std::string& name,
+                         bool ignore_default_section_config,
+                         bool ignore_nonpersistent,
+                         bool get_chain_type);
 
 //! Get combined setting value similar to GetSetting(), except if setting was
 //! specified multiple times, return a list of all the values specified.
 std::vector<SettingsValue> GetSettingsList(const Settings& settings,
-    const std::string& section,
-    const std::string& name,
-    bool ignore_default_section_config);
+                                           const std::string& section,
+                                           const std::string& name,
+                                           bool ignore_default_section_config);
 
 //! Return true if a setting is set in the default config file section, and not
 //! overridden by a higher priority command-line or network section value.

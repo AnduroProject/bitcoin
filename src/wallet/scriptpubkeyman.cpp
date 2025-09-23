@@ -38,8 +38,7 @@ namespace {
  * distinguish between top-level scriptPubKey execution and P2SH redeemScript
  * execution (a distinction that has no impact on consensus rules).
  */
-enum class IsMineSigVersion
-{
+enum class IsMineSigVersion {
     TOP = 0,        //!< scriptPubKey execution
     P2SH = 1,       //!< P2SH redeemScript
     WITNESS_V0 = 2, //!< P2WSH witness script execution
@@ -50,8 +49,7 @@ enum class IsMineSigVersion
  * Its order is significant, as we return the max of all explored
  * possibilities.
  */
-enum class IsMineResult
-{
+enum class IsMineResult {
     NO = 0,         //!< Not ours
     WATCH_ONLY = 1, //!< Included in watch-only balance
     SPENDABLE = 2,  //!< Included in all balances
@@ -81,7 +79,7 @@ bool HaveKeys(const std::vector<valtype>& pubkeys, const LegacyDataSPKM& keystor
 //!                            scripts or simply treat any script that has been
 //!                            stored in the keystore as spendable
 // NOLINTNEXTLINE(misc-no-recursion)
-IsMineResult LegacyWalletIsMineInnerDONOTUSE(const LegacyDataSPKM& keystore, const CScript& scriptPubKey, IsMineSigVersion sigversion, bool recurse_scripthash=true)
+IsMineResult LegacyWalletIsMineInnerDONOTUSE(const LegacyDataSPKM& keystore, const CScript& scriptPubKey, IsMineSigVersion sigversion, bool recurse_scripthash = true)
 {
     IsMineResult ret = IsMineResult::NO;
 
@@ -105,8 +103,7 @@ IsMineResult LegacyWalletIsMineInnerDONOTUSE(const LegacyDataSPKM& keystore, con
             ret = std::max(ret, IsMineResult::SPENDABLE);
         }
         break;
-    case TxoutType::WITNESS_V0_KEYHASH:
-    {
+    case TxoutType::WITNESS_V0_KEYHASH: {
         if (sigversion == IsMineSigVersion::WITNESS_V0) {
             // P2WPKH inside P2WSH is invalid.
             return IsMineResult::INVALID;
@@ -132,8 +129,7 @@ IsMineResult LegacyWalletIsMineInnerDONOTUSE(const LegacyDataSPKM& keystore, con
             ret = std::max(ret, IsMineResult::SPENDABLE);
         }
         break;
-    case TxoutType::SCRIPTHASH:
-    {
+    case TxoutType::SCRIPTHASH: {
         if (sigversion != IsMineSigVersion::TOP) {
             // P2SH inside P2WSH or P2SH is invalid.
             return IsMineResult::INVALID;
@@ -145,8 +141,7 @@ IsMineResult LegacyWalletIsMineInnerDONOTUSE(const LegacyDataSPKM& keystore, con
         }
         break;
     }
-    case TxoutType::WITNESS_V0_SCRIPTHASH:
-    {
+    case TxoutType::WITNESS_V0_SCRIPTHASH: {
         if (sigversion == IsMineSigVersion::WITNESS_V0) {
             // P2WSH inside P2WSH is invalid.
             return IsMineResult::INVALID;
@@ -162,8 +157,7 @@ IsMineResult LegacyWalletIsMineInnerDONOTUSE(const LegacyDataSPKM& keystore, con
         break;
     }
 
-    case TxoutType::MULTISIG:
-    {
+    case TxoutType::MULTISIG: {
         // Never treat bare multisig outputs as ours (they can still be made watchonly-though)
         if (sigversion == IsMineSigVersion::TOP) {
             break;
@@ -174,7 +168,7 @@ IsMineResult LegacyWalletIsMineInnerDONOTUSE(const LegacyDataSPKM& keystore, con
         // partially owned (somebody else has a key that can spend
         // them) enable spend-out-from-under-you attacks, especially
         // in shared-wallet situations.
-        std::vector<valtype> keys(vSolutions.begin()+1, vSolutions.begin()+vSolutions.size()-1);
+        std::vector<valtype> keys(vSolutions.begin() + 1, vSolutions.begin() + vSolutions.size() - 1);
         if (!PermitsUncompressed(sigversion)) {
             for (size_t i = 0; i < keys.size(); i++) {
                 if (keys[i].size() != 33) {
@@ -220,13 +214,11 @@ bool LegacyDataSPKM::CheckDecryptionKey(const CKeyingMaterial& master_key)
         bool keyFail = false;
         CryptedKeyMap::const_iterator mi = mapCryptedKeys.begin();
         WalletBatch batch(m_storage.GetDatabase());
-        for (; mi != mapCryptedKeys.end(); ++mi)
-        {
-            const CPubKey &vchPubKey = (*mi).second.first;
-            const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
+        for (; mi != mapCryptedKeys.end(); ++mi) {
+            const CPubKey& vchPubKey = (*mi).second.first;
+            const std::vector<unsigned char>& vchCryptedSecret = (*mi).second.second;
             CKey key;
-            if (!DecryptKey(master_key, vchCryptedSecret, vchPubKey, key))
-            {
+            if (!DecryptKey(master_key, vchCryptedSecret, vchPubKey, key)) {
                 keyFail = true;
                 break;
             }
@@ -238,8 +230,7 @@ bool LegacyDataSPKM::CheckDecryptionKey(const CKeyingMaterial& master_key)
                 batch.WriteCryptedKey(vchPubKey, vchCryptedSecret, mapKeyMetadata[vchPubKey.GetID()]);
             }
         }
-        if (keyPass && keyFail)
-        {
+        if (keyPass && keyFail) {
             LogPrintf("The wallet is probably corrupted: Some keys decrypt but not all.\n");
             throw std::runtime_error("Error unlocking wallet: some keys decrypt but not all. Your wallet file may be corrupt.");
         }
@@ -278,7 +269,7 @@ bool LegacyDataSPKM::CanProvide(const CScript& script, SignatureData& sigdata)
     }
 }
 
-bool LegacyDataSPKM::LoadKey(const CKey& key, const CPubKey &pubkey)
+bool LegacyDataSPKM::LoadKey(const CKey& key, const CPubKey& pubkey)
 {
     return AddKeyPubKeyInner(key, pubkey);
 }
@@ -288,8 +279,7 @@ bool LegacyDataSPKM::LoadCScript(const CScript& redeemScript)
     /* A sanity check was added in pull #3843 to avoid adding redeemScripts
      * that never can be redeemed. However, old wallets may still contain
      * these. Do not add them to the wallet and warn. */
-    if (redeemScript.size() > MAX_SCRIPT_ELEMENT_SIZE)
-    {
+    if (redeemScript.size() > MAX_SCRIPT_ELEMENT_SIZE) {
         std::string strAddr = EncodeDestination(ScriptHash(redeemScript));
         WalletLogPrintf("%s: Warning: This wallet contains a redeemScript of size %i which exceeds maximum size %i thus can never be redeemed. Do not use address %s.\n", __func__, redeemScript.size(), MAX_SCRIPT_ELEMENT_SIZE, strAddr);
         return true;
@@ -316,7 +306,7 @@ bool LegacyDataSPKM::AddKeyPubKeyInner(const CKey& key, const CPubKey& pubkey)
     return FillableSigningProvider::AddKeyPubKey(key, pubkey);
 }
 
-bool LegacyDataSPKM::LoadCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret, bool checksum_valid)
+bool LegacyDataSPKM::LoadCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, bool checksum_valid)
 {
     // Set fDecryptionThoroughlyChecked to false when the checksum is invalid
     if (!checksum_valid) {
@@ -326,7 +316,7 @@ bool LegacyDataSPKM::LoadCryptedKey(const CPubKey &vchPubKey, const std::vector<
     return AddCryptedKeyInner(vchPubKey, vchCryptedSecret);
 }
 
-bool LegacyDataSPKM::AddCryptedKeyInner(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret)
+bool LegacyDataSPKM::AddCryptedKeyInner(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret)
 {
     LOCK(cs_KeyStore);
     assert(mapKeys.empty());
@@ -336,25 +326,25 @@ bool LegacyDataSPKM::AddCryptedKeyInner(const CPubKey &vchPubKey, const std::vec
     return true;
 }
 
-bool LegacyDataSPKM::HaveWatchOnly(const CScript &dest) const
+bool LegacyDataSPKM::HaveWatchOnly(const CScript& dest) const
 {
     LOCK(cs_KeyStore);
     return setWatchOnly.count(dest) > 0;
 }
 
-bool LegacyDataSPKM::LoadWatchOnly(const CScript &dest)
+bool LegacyDataSPKM::LoadWatchOnly(const CScript& dest)
 {
     return AddWatchOnlyInMem(dest);
 }
 
-static bool ExtractPubKey(const CScript &dest, CPubKey& pubKeyOut)
+static bool ExtractPubKey(const CScript& dest, CPubKey& pubKeyOut)
 {
     std::vector<std::vector<unsigned char>> solutions;
     return Solver(dest, solutions) == TxoutType::PUBKEY &&
-        (pubKeyOut = CPubKey(solutions[0])).IsFullyValid();
+           (pubKeyOut = CPubKey(solutions[0])).IsFullyValid();
 }
 
-bool LegacyDataSPKM::AddWatchOnlyInMem(const CScript &dest)
+bool LegacyDataSPKM::AddWatchOnlyInMem(const CScript& dest)
 {
     LOCK(cs_KeyStore);
     setWatchOnly.insert(dest);
@@ -379,7 +369,7 @@ void LegacyDataSPKM::AddInactiveHDChain(const CHDChain& chain)
     m_inactive_hd_chains[chain.seed_id] = chain;
 }
 
-bool LegacyDataSPKM::HaveKey(const CKeyID &address) const
+bool LegacyDataSPKM::HaveKey(const CKeyID& address) const
 {
     LOCK(cs_KeyStore);
     if (!m_storage.HasEncryptionKeys()) {
@@ -388,7 +378,7 @@ bool LegacyDataSPKM::HaveKey(const CKeyID &address) const
     return mapCryptedKeys.count(address) > 0;
 }
 
-bool LegacyDataSPKM::GetKey(const CKeyID &address, CKey& keyOut) const
+bool LegacyDataSPKM::GetKey(const CKeyID& address, CKey& keyOut) const
 {
     LOCK(cs_KeyStore);
     if (!m_storage.HasEncryptionKeys()) {
@@ -396,10 +386,9 @@ bool LegacyDataSPKM::GetKey(const CKeyID &address, CKey& keyOut) const
     }
 
     CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
-    if (mi != mapCryptedKeys.end())
-    {
-        const CPubKey &vchPubKey = (*mi).second.first;
-        const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
+    if (mi != mapCryptedKeys.end()) {
+        const CPubKey& vchPubKey = (*mi).second.first;
+        const std::vector<unsigned char>& vchCryptedSecret = (*mi).second.second;
         return m_storage.WithEncryptionKey([&](const CKeyingMaterial& encryption_key) {
             return DecryptKey(encryption_key, vchCryptedSecret, vchPubKey, keyOut);
         });
@@ -427,7 +416,7 @@ bool LegacyDataSPKM::GetKeyOrigin(const CKeyID& keyID, KeyOriginInfo& info) cons
     return true;
 }
 
-bool LegacyDataSPKM::GetWatchPubKey(const CKeyID &address, CPubKey &pubkey_out) const
+bool LegacyDataSPKM::GetWatchPubKey(const CKeyID& address, CPubKey& pubkey_out) const
 {
     LOCK(cs_KeyStore);
     WatchKeyMap::const_iterator it = mapWatchKeys.find(address);
@@ -438,7 +427,7 @@ bool LegacyDataSPKM::GetWatchPubKey(const CKeyID &address, CPubKey &pubkey_out) 
     return false;
 }
 
-bool LegacyDataSPKM::GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const
+bool LegacyDataSPKM::GetPubKey(const CKeyID& address, CPubKey& vchPubKeyOut) const
 {
     LOCK(cs_KeyStore);
     if (!m_storage.HasEncryptionKeys()) {
@@ -449,8 +438,7 @@ bool LegacyDataSPKM::GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) con
     }
 
     CryptedKeyMap::const_iterator mi = mapCryptedKeys.find(address);
-    if (mi != mapCryptedKeys.end())
-    {
+    if (mi != mapCryptedKeys.end()) {
         vchPubKeyOut = (*mi).second.first;
         return true;
     }
@@ -877,8 +865,8 @@ bool DescriptorScriptPubKeyMan::CheckDecryptionKey(const CKeyingMaterial& master
     bool keyPass = m_map_crypted_keys.empty(); // Always pass when there are no encrypted keys
     bool keyFail = false;
     for (const auto& mi : m_map_crypted_keys) {
-        const CPubKey &pubkey = mi.second.first;
-        const std::vector<unsigned char> &crypted_secret = mi.second.second;
+        const CPubKey& pubkey = mi.second.first;
+        const std::vector<unsigned char>& crypted_secret = mi.second.second;
         CKey key;
         if (!DecryptKey(master_key, crypted_secret, pubkey, key)) {
             keyFail = true;
@@ -906,9 +894,8 @@ bool DescriptorScriptPubKeyMan::Encrypt(const CKeyingMaterial& master_key, Walle
         return false;
     }
 
-    for (const KeyMap::value_type& key_in : m_map_keys)
-    {
-        const CKey &key = key_in.second;
+    for (const KeyMap::value_type& key_in : m_map_keys) {
+        const CKey& key = key_in.second;
         CPubKey pubkey = key.GetPubKey();
         CKeyingMaterial secret{UCharCast(key.begin()), UCharCast(key.end())};
         std::vector<unsigned char> crypted_secret;
@@ -977,8 +964,8 @@ std::optional<CKey> DescriptorScriptPubKeyMan::GetKey(const CKeyID& keyid) const
         const std::vector<unsigned char>& crypted_secret = it->second.second;
         CKey key;
         if (!Assume(m_storage.WithEncryptionKey([&](const CKeyingMaterial& encryption_key) {
-            return DecryptKey(encryption_key, crypted_secret, it->second.first, key);
-        }))) {
+                return DecryptKey(encryption_key, crypted_secret, it->second.first, key);
+            }))) {
             return std::nullopt;
         }
         return key;
@@ -1092,7 +1079,7 @@ std::vector<WalletDestination> DescriptorScriptPubKeyMan::MarkUnusedAddresses(co
     return result;
 }
 
-void DescriptorScriptPubKeyMan::AddDescriptorKey(const CKey& key, const CPubKey &pubkey)
+void DescriptorScriptPubKeyMan::AddDescriptorKey(const CKey& key, const CPubKey& pubkey)
 {
     LOCK(cs_desc_man);
     WalletBatch batch(m_storage.GetDatabase());
@@ -1101,7 +1088,7 @@ void DescriptorScriptPubKeyMan::AddDescriptorKey(const CKey& key, const CPubKey 
     }
 }
 
-bool DescriptorScriptPubKeyMan::AddDescriptorKeyWithDB(WalletBatch& batch, const CKey& key, const CPubKey &pubkey)
+bool DescriptorScriptPubKeyMan::AddDescriptorKeyWithDB(WalletBatch& batch, const CKey& key, const CPubKey& pubkey)
 {
     AssertLockHeld(cs_desc_man);
     assert(!m_storage.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS));
@@ -1552,7 +1539,7 @@ void DescriptorScriptPubKeyMan::UpgradeDescriptorCache()
     FlatSigningProvider out_keys;
     std::vector<CScript> scripts_temp;
     DescriptorCache temp_cache;
-    if (!m_wallet_descriptor.descriptor->Expand(0, provider, scripts_temp, out_keys, &temp_cache)){
+    if (!m_wallet_descriptor.descriptor->Expand(0, provider, scripts_temp, out_keys, &temp_cache)) {
         throw std::runtime_error("Unable to expand descriptor");
     }
 

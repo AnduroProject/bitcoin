@@ -33,7 +33,7 @@ SignatureCache::SignatureCache(const size_t max_size_bytes)
 
     const auto [num_elems, approx_size_bytes] = setValid.setup_bytes(max_size_bytes);
     LogInfo("Using %zu MiB out of %zu MiB requested for signature cache, able to store %zu elements",
-              approx_size_bytes >> 20, max_size_bytes >> 20, num_elems);
+            approx_size_bytes >> 20, max_size_bytes >> 20, num_elems);
 }
 
 void SignatureCache::ComputeEntryECDSA(uint256& entry, const uint256& hash, const std::vector<unsigned char>& vchSig, const CPubKey& pubkey) const

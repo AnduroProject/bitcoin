@@ -51,7 +51,7 @@ static void WalletCreate(benchmark::Bench& bench, bool encrypted)
         assert(wallet != nullptr);
 
         // Release wallet
-        RemoveWallet(context, wallet, /*load_on_start=*/ std::nullopt);
+        RemoveWallet(context, wallet, /*load_on_start=*/std::nullopt);
         WaitForDeleteWallet(std::move(wallet));
         fs::remove_all(wallet_path);
     });

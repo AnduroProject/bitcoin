@@ -37,8 +37,7 @@ BOOST_AUTO_TEST_CASE(disconnectpool_memory_limits)
         // list entry: 2 pointers (next pointer and prev pointer) + element itself
         + memusage::MallocUsage((2 * sizeof(void*)) + sizeof(decltype(block_vtx)::value_type))
         // unordered map: 1 pointer for the hashtable + key and value
-        + memusage::MallocUsage(sizeof(void*) + sizeof(decltype(temp_map)::key_type)
-                                + sizeof(decltype(temp_map)::value_type))};
+        + memusage::MallocUsage(sizeof(void*) + sizeof(decltype(temp_map)::key_type) + sizeof(decltype(temp_map)::value_type))};
 
     // DisconnectedBlockTransactions that's just big enough for 1 transaction.
     {

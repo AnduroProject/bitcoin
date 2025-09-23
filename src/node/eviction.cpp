@@ -13,21 +13,22 @@
 #include <vector>
 
 
-static bool ReverseCompareNodeMinPingTime(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b)
+static bool ReverseCompareNodeMinPingTime(const NodeEvictionCandidate& a, const NodeEvictionCandidate& b)
 {
     return a.m_min_ping_time > b.m_min_ping_time;
 }
 
-static bool ReverseCompareNodeTimeConnected(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b)
+static bool ReverseCompareNodeTimeConnected(const NodeEvictionCandidate& a, const NodeEvictionCandidate& b)
 {
     return a.m_connected > b.m_connected;
 }
 
-static bool CompareNetGroupKeyed(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b) {
+static bool CompareNetGroupKeyed(const NodeEvictionCandidate& a, const NodeEvictionCandidate& b)
+{
     return a.nKeyedNetGroup < b.nKeyedNetGroup;
 }
 
-static bool CompareNodeBlockTime(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b)
+static bool CompareNodeBlockTime(const NodeEvictionCandidate& a, const NodeEvictionCandidate& b)
 {
     // There is a fall-through here because it is common for a node to have many peers which have not yet relayed a block.
     if (a.m_last_block_time != b.m_last_block_time) return a.m_last_block_time < b.m_last_block_time;
@@ -35,7 +36,7 @@ static bool CompareNodeBlockTime(const NodeEvictionCandidate &a, const NodeEvict
     return a.m_connected > b.m_connected;
 }
 
-static bool CompareNodeTXTime(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b)
+static bool CompareNodeTXTime(const NodeEvictionCandidate& a, const NodeEvictionCandidate& b)
 {
     // There is a fall-through here because it is common for a node to have more than a few peers that have not yet relayed txn.
     if (a.m_last_tx_time != b.m_last_tx_time) return a.m_last_tx_time < b.m_last_tx_time;
@@ -45,7 +46,7 @@ static bool CompareNodeTXTime(const NodeEvictionCandidate &a, const NodeEviction
 }
 
 // Pick out the potential block-relay only peers, and sort them by last block time.
-static bool CompareNodeBlockRelayOnlyTime(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b)
+static bool CompareNodeBlockRelayOnlyTime(const NodeEvictionCandidate& a, const NodeEvictionCandidate& b)
 {
     if (a.m_relay_txs != b.m_relay_txs) return a.m_relay_txs;
     if (a.m_last_block_time != b.m_last_block_time) return a.m_last_block_time < b.m_last_block_time;
@@ -115,7 +116,11 @@ void ProtectEvictionCandidatesByRatio(std::vector<NodeEvictionCandidate>& evicti
 
     // Disadvantaged networks to protect. In the case of equal counts, earlier array members
     // have the first opportunity to recover unused slots from the previous iteration.
-    struct Net { bool is_local; Network id; size_t count; };
+    struct Net {
+        bool is_local;
+        Network id;
+        size_t count;
+    };
     std::array<Net, 4> networks{
         {{false, NET_CJDNS, 0}, {false, NET_I2P, 0}, {/*localhost=*/true, NET_MAX, 0}, {false, NET_ONION, 0}}};
 
@@ -209,9 +214,10 @@ void ProtectEvictionCandidatesByRatio(std::vector<NodeEvictionCandidate>& evicti
     // If any remaining peers are preferred for eviction consider only them.
     // This happens after the other preferences since if a peer is really the best by other criteria (esp relaying blocks)
     //  then we probably don't want to evict it no matter what.
-    if (std::any_of(vEvictionCandidates.begin(),vEvictionCandidates.end(),[](NodeEvictionCandidate const &n){return n.prefer_evict;})) {
-        vEvictionCandidates.erase(std::remove_if(vEvictionCandidates.begin(),vEvictionCandidates.end(),
-                                  [](NodeEvictionCandidate const &n){return !n.prefer_evict;}),vEvictionCandidates.end());
+    if (std::any_of(vEvictionCandidates.begin(), vEvictionCandidates.end(), [](NodeEvictionCandidate const& n) { return n.prefer_evict; })) {
+        vEvictionCandidates.erase(std::remove_if(vEvictionCandidates.begin(), vEvictionCandidates.end(),
+                                                 [](NodeEvictionCandidate const& n) { return !n.prefer_evict; }),
+                                  vEvictionCandidates.end());
     }
 
     // Identify the network group with the most connections and youngest member.
@@ -219,9 +225,9 @@ void ProtectEvictionCandidatesByRatio(std::vector<NodeEvictionCandidate>& evicti
     uint64_t naMostConnections;
     unsigned int nMostConnections = 0;
     std::chrono::seconds nMostConnectionsTime{0};
-    std::map<uint64_t, std::vector<NodeEvictionCandidate> > mapNetGroupNodes;
-    for (const NodeEvictionCandidate &node : vEvictionCandidates) {
-        std::vector<NodeEvictionCandidate> &group = mapNetGroupNodes[node.nKeyedNetGroup];
+    std::map<uint64_t, std::vector<NodeEvictionCandidate>> mapNetGroupNodes;
+    for (const NodeEvictionCandidate& node : vEvictionCandidates) {
+        std::vector<NodeEvictionCandidate>& group = mapNetGroupNodes[node.nKeyedNetGroup];
         group.push_back(node);
         const auto grouptime{group[0].m_connected};
 

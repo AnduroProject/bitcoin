@@ -19,11 +19,11 @@
  *  zero. This is compatible with older versions which expect to see
  *  the transaction version there.
  */
-struct TxInUndoFormatter
-{
-    template<typename Stream>
-    void Ser(Stream &s, const Coin& txout) {
-        ::Serialize(s, VARINT(txout.nHeight * uint32_t{2} + txout.fCoinBase ));
+struct TxInUndoFormatter {
+    template <typename Stream>
+    void Ser(Stream& s, const Coin& txout)
+    {
+        ::Serialize(s, VARINT(txout.nHeight * uint32_t{2} + txout.fCoinBase));
         if (txout.nHeight > 0) {
             // Required to maintain compatibility with older undo format.
             ::Serialize(s, (unsigned char)0);
@@ -35,8 +35,9 @@ struct TxInUndoFormatter
         ::Serialize(s, Using<TxOutCompression>(txout.out));
     }
 
-    template<typename Stream>
-    void Unser(Stream &s, Coin& txout) {
+    template <typename Stream>
+    void Unser(Stream& s, Coin& txout)
+    {
         uint32_t nCode = 0;
         ::Unserialize(s, VARINT(nCode));
         txout.nHeight = nCode >> 1;

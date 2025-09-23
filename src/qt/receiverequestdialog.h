@@ -12,7 +12,7 @@
 class WalletModel;
 
 namespace Ui {
-    class ReceiveRequestDialog;
+class ReceiveRequestDialog;
 }
 
 class ReceiveRequestDialog : public QDialog
@@ -20,11 +20,11 @@ class ReceiveRequestDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ReceiveRequestDialog(QWidget *parent = nullptr);
+    explicit ReceiveRequestDialog(QWidget* parent = nullptr);
     ~ReceiveRequestDialog();
 
-    void setModel(WalletModel *model);
-    void setInfo(const SendCoinsRecipient &info);
+    void setModel(WalletModel* model);
+    void setInfo(const SendCoinsRecipient& info);
 
 private Q_SLOTS:
     void on_btnCopyURI_clicked();
@@ -32,7 +32,7 @@ private Q_SLOTS:
     void updateDisplayUnit();
 
 private:
-    Ui::ReceiveRequestDialog *ui;
+    Ui::ReceiveRequestDialog* ui;
     WalletModel* model{nullptr};
     SendCoinsRecipient info;
 };

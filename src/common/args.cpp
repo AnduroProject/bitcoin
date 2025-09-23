@@ -36,8 +36,8 @@
 #include <utility>
 #include <variant>
 
-const char * const BITCOIN_CONF_FILENAME = "bitcoin.conf";
-const char * const BITCOIN_SETTINGS_FILENAME = "settings.json";
+const char* const BITCOIN_CONF_FILENAME = "bitcoin.conf";
+const char* const BITCOIN_SETTINGS_FILENAME = "settings.json";
 
 ArgsManager gArgs;
 
@@ -105,7 +105,7 @@ KeyInfo InterpretKey(std::string key)
  * by a descriptive error string
  */
 std::optional<common::SettingsValue> InterpretValue(const KeyInfo& key, const std::string* value,
-                                                  unsigned int flags, std::string& error)
+                                                    unsigned int flags, std::string& error)
 {
     // Return negated settings as false values.
     if (key.negated) {
@@ -140,10 +140,10 @@ std::set<std::string> ArgsManager::GetUnsuitableSectionOnlyArgs() const
     LOCK(cs_args);
 
     // if there's no section selected, don't worry
-    if (m_network.empty()) return std::set<std::string> {};
+    if (m_network.empty()) return std::set<std::string>{};
 
     // if it's okay to use the default section for this network, don't worry
-    if (m_network == ChainTypeToString(ChainType::MAIN)) return std::set<std::string> {};
+    if (m_network == ChainTypeToString(ChainType::MAIN)) return std::set<std::string>{};
 
     for (const auto& arg : m_network_only_args) {
         if (OnlyHasDefaultSectionSetting(m_settings, m_network, SettingName(arg))) {
@@ -166,7 +166,7 @@ std::list<SectionInfo> ArgsManager::GetUnrecognizedSections() const
 
     LOCK(cs_args);
     std::list<SectionInfo> unrecognized = m_config_sections;
-    unrecognized.remove_if([](const SectionInfo& appeared){ return available_sections.find(appeared.m_name) != available_sections.end(); });
+    unrecognized.remove_if([](const SectionInfo& appeared) { return available_sections.find(appeared.m_name) != available_sections.end(); });
     return unrecognized;
 }
 
@@ -192,7 +192,7 @@ bool ArgsManager::ParseParameters(int argc, const char* const argv[], std::strin
         if (key.starts_with("-psn_")) continue;
 #endif
 
-        if (key == "-") break; //bitcoin-tx using stdin
+        if (key == "-") break; // bitcoin-tx using stdin
         std::optional<std::string> val;
         size_t is_index = key.find('=');
         if (is_index != std::string::npos) {
@@ -363,7 +363,8 @@ std::vector<std::string> ArgsManager::GetArgs(const std::string& strArg) const
 {
     std::vector<std::string> result;
     for (const common::SettingsValue& value : GetSettingsList(strArg)) {
-        result.push_back(value.isFalse() ? "0" : value.isTrue() ? "1" : value.get_str());
+        result.push_back(value.isFalse() ? "0" : value.isTrue() ? "1" :
+                                                                  value.get_str());
     }
     return result;
 }
@@ -446,7 +447,7 @@ common::SettingsValue ArgsManager::GetPersistentSetting(const std::string& name)
 {
     LOCK(cs_args);
     return common::GetSetting(m_settings, m_network, name, !UseDefaultSection("-" + name),
-        /*ignore_nonpersistent=*/true, /*get_chain_type=*/false);
+                              /*ignore_nonpersistent=*/true, /*get_chain_type=*/false);
 }
 
 bool ArgsManager::IsArgNegated(const std::string& strArg) const
@@ -613,54 +614,54 @@ std::string ArgsManager::GetHelpMessage() const
     std::string usage;
     LOCK(cs_args);
     for (const auto& arg_map : m_available_args) {
-        switch(arg_map.first) {
-            case OptionsCategory::OPTIONS:
-                usage += HelpMessageGroup("Options:");
-                break;
-            case OptionsCategory::CONNECTION:
-                usage += HelpMessageGroup("Connection options:");
-                break;
-            case OptionsCategory::ZMQ:
-                usage += HelpMessageGroup("ZeroMQ notification options:");
-                break;
-            case OptionsCategory::DEBUG_TEST:
-                usage += HelpMessageGroup("Debugging/Testing options:");
-                break;
-            case OptionsCategory::NODE_RELAY:
-                usage += HelpMessageGroup("Node relay options:");
-                break;
-            case OptionsCategory::BLOCK_CREATION:
-                usage += HelpMessageGroup("Block creation options:");
-                break;
-            case OptionsCategory::RPC:
-                usage += HelpMessageGroup("RPC server options:");
-                break;
-            case OptionsCategory::IPC:
-                usage += HelpMessageGroup("IPC interprocess connection options:");
-                break;
-            case OptionsCategory::WALLET:
-                usage += HelpMessageGroup("Wallet options:");
-                break;
-            case OptionsCategory::WALLET_DEBUG_TEST:
-                if (show_debug) usage += HelpMessageGroup("Wallet debugging/testing options:");
-                break;
-            case OptionsCategory::CHAINPARAMS:
-                usage += HelpMessageGroup("Chain selection options:");
-                break;
-            case OptionsCategory::GUI:
-                usage += HelpMessageGroup("UI Options:");
-                break;
-            case OptionsCategory::COMMANDS:
-                usage += HelpMessageGroup("Commands:");
-                break;
-            case OptionsCategory::REGISTER_COMMANDS:
-                usage += HelpMessageGroup("Register Commands:");
-                break;
-            case OptionsCategory::CLI_COMMANDS:
-                usage += HelpMessageGroup("CLI Commands:");
-                break;
-            default:
-                break;
+        switch (arg_map.first) {
+        case OptionsCategory::OPTIONS:
+            usage += HelpMessageGroup("Options:");
+            break;
+        case OptionsCategory::CONNECTION:
+            usage += HelpMessageGroup("Connection options:");
+            break;
+        case OptionsCategory::ZMQ:
+            usage += HelpMessageGroup("ZeroMQ notification options:");
+            break;
+        case OptionsCategory::DEBUG_TEST:
+            usage += HelpMessageGroup("Debugging/Testing options:");
+            break;
+        case OptionsCategory::NODE_RELAY:
+            usage += HelpMessageGroup("Node relay options:");
+            break;
+        case OptionsCategory::BLOCK_CREATION:
+            usage += HelpMessageGroup("Block creation options:");
+            break;
+        case OptionsCategory::RPC:
+            usage += HelpMessageGroup("RPC server options:");
+            break;
+        case OptionsCategory::IPC:
+            usage += HelpMessageGroup("IPC interprocess connection options:");
+            break;
+        case OptionsCategory::WALLET:
+            usage += HelpMessageGroup("Wallet options:");
+            break;
+        case OptionsCategory::WALLET_DEBUG_TEST:
+            if (show_debug) usage += HelpMessageGroup("Wallet debugging/testing options:");
+            break;
+        case OptionsCategory::CHAINPARAMS:
+            usage += HelpMessageGroup("Chain selection options:");
+            break;
+        case OptionsCategory::GUI:
+            usage += HelpMessageGroup("UI Options:");
+            break;
+        case OptionsCategory::COMMANDS:
+            usage += HelpMessageGroup("Commands:");
+            break;
+        case OptionsCategory::REGISTER_COMMANDS:
+            usage += HelpMessageGroup("Register Commands:");
+            break;
+        case OptionsCategory::CLI_COMMANDS:
+            usage += HelpMessageGroup("CLI Commands:");
+            break;
+        default:
+            break;
         }
 
         // When we get to the hidden options, stop
@@ -696,13 +697,15 @@ static const int screenWidth = 79;
 static const int optIndent = 2;
 static const int msgIndent = 7;
 
-std::string HelpMessageGroup(const std::string &message) {
+std::string HelpMessageGroup(const std::string& message)
+{
     return std::string(message) + std::string("\n\n");
 }
 
-std::string HelpMessageOpt(const std::string &option, const std::string &message) {
-    return std::string(optIndent,' ') + std::string(option) +
-           std::string("\n") + std::string(msgIndent,' ') +
+std::string HelpMessageOpt(const std::string& option, const std::string& message)
+{
+    return std::string(optIndent, ' ') + std::string(option) +
+           std::string("\n") + std::string(msgIndent, ' ') +
            FormatParagraph(message, screenWidth - msgIndent, msgIndent) +
            std::string("\n\n");
 }
@@ -791,14 +794,15 @@ std::variant<ChainType, std::string> ArgsManager::GetChainArg() const
     auto get_net = [&](const std::string& arg) {
         LOCK(cs_args);
         common::SettingsValue value = common::GetSetting(m_settings, /* section= */ "", SettingName(arg),
-            /* ignore_default_section_config= */ false,
-            /*ignore_nonpersistent=*/false,
-            /* get_chain_type= */ true);
-        return value.isNull() ? false : value.isBool() ? value.get_bool() : InterpretBool(value.get_str());
+                                                         /* ignore_default_section_config= */ false,
+                                                         /*ignore_nonpersistent=*/false,
+                                                         /* get_chain_type= */ true);
+        return value.isNull() ? false : value.isBool() ? value.get_bool() :
+                                                         InterpretBool(value.get_str());
     };
 
     const bool fRegTest = get_net("-regtest");
-    const bool fSigNet  = get_net("-signet");
+    const bool fSigNet = get_net("-signet");
     const bool fTestNet = get_net("-testnet");
     const bool fTestNet4 = get_net("-testnet4");
     const auto chain_arg = GetArg("-chain");

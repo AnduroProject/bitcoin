@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <util/feefrac.h>
 #include <random.h>
+#include <util/feefrac.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -66,21 +66,21 @@ BOOST_AUTO_TEST_CASE(feefrac_operators)
     BOOST_CHECK(p2 != p3);
 
     FeeFrac p4{3000, 300};
-    BOOST_CHECK(p1 == p4-p3);
+    BOOST_CHECK(p1 == p4 - p3);
     BOOST_CHECK(p1 + p3 == p4);
 
     // Fee-rate comparison
     BOOST_CHECK(p1 > p2);
     BOOST_CHECK(p1 >= p2);
-    BOOST_CHECK(p1 >= p4-p3);
+    BOOST_CHECK(p1 >= p4 - p3);
     BOOST_CHECK(!(p1 >> p3)); // not strictly better
-    BOOST_CHECK(p1 >> p2); // strictly greater feerate
+    BOOST_CHECK(p1 >> p2);    // strictly greater feerate
 
     BOOST_CHECK(p2 < p1);
     BOOST_CHECK(p2 <= p1);
-    BOOST_CHECK(p1 <= p4-p3);
+    BOOST_CHECK(p1 <= p4 - p3);
     BOOST_CHECK(!(p3 << p1)); // not strictly worse
-    BOOST_CHECK(p2 << p1); // strictly lower feerate
+    BOOST_CHECK(p2 << p1);    // strictly lower feerate
 
     // "empty" comparisons
     BOOST_CHECK(!(p1 >> empty)); // << will always result in false

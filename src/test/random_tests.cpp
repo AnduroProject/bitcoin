@@ -130,9 +130,9 @@ BOOST_AUTO_TEST_CASE(fastrandom_randbits)
 /** Verify that RandomMixin::randbits returns 0 and 1 for every requested bit. */
 BOOST_AUTO_TEST_CASE(randbits_test)
 {
-    FastRandomContext ctx_lens; //!< RNG for producing the lengths requested from ctx_test.
+    FastRandomContext ctx_lens;                         //!< RNG for producing the lengths requested from ctx_test.
     FastRandomContext ctx_test1(true), ctx_test2(true); //!< The RNGs being tested.
-    int ctx_test_bitsleft{0}; //!< (Assumed value of) ctx_test::bitbuf_len
+    int ctx_test_bitsleft{0};                           //!< (Assumed value of) ctx_test::bitbuf_len
 
     // Run the entire test 5 times.
     for (int i = 0; i < 5; ++i) {
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(randbits_test)
         // Check that each bit appears within 7.78 standard deviations of 50%
         // (each will fail with P < 1/(2080 * 64 * 10^9)).
         for (const auto& val : seen) {
-             assert(fabs(val.first * 0.5 - val.second) < sqrt(val.first * 0.25) * 7.78);
+            assert(fabs(val.first * 0.5 - val.second) < sqrt(val.first * 0.25) * 7.78);
         }
     }
 }

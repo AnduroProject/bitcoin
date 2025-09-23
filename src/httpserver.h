@@ -17,15 +17,15 @@ class SignalInterrupt;
 /**
  * The default value for `-rpcthreads`. This number of threads will be created at startup.
  */
-static const int DEFAULT_HTTP_THREADS=16;
+static const int DEFAULT_HTTP_THREADS = 16;
 
 /**
  * The default value for `-rpcworkqueue`. This is the maximum depth of the work queue,
  * we don't allocate this number of work queue items upfront.
  */
-static const int DEFAULT_HTTP_WORKQUEUE=64;
+static const int DEFAULT_HTTP_WORKQUEUE = 64;
 
-static const int DEFAULT_HTTP_SERVER_TIMEOUT=30;
+static const int DEFAULT_HTTP_SERVER_TIMEOUT = 30;
 
 struct evhttp_request;
 struct event_base;
@@ -50,14 +50,14 @@ void StopHTTPServer();
 void UpdateHTTPServerLogging(bool enable);
 
 /** Handler for requests to a certain HTTP path */
-typedef std::function<bool(HTTPRequest* req, const std::string &)> HTTPRequestHandler;
+typedef std::function<bool(HTTPRequest* req, const std::string&)> HTTPRequestHandler;
 /** Register handler for prefix.
  * If multiple handlers match a prefix, the first-registered one will
  * be invoked.
  */
-void RegisterHTTPHandler(const std::string &prefix, bool exactMatch, const HTTPRequestHandler &handler);
+void RegisterHTTPHandler(const std::string& prefix, bool exactMatch, const HTTPRequestHandler& handler);
 /** Unregister handler for prefix */
-void UnregisterHTTPHandler(const std::string &prefix, bool exactMatch);
+void UnregisterHTTPHandler(const std::string& prefix, bool exactMatch);
 
 /** Return evhttp event base. This can be used by submodules to
  * queue timers or custom events.
@@ -187,6 +187,7 @@ public:
 
     bool deleteWhenTriggered;
     std::function<void()> handler;
+
 private:
     struct event* ev;
 };

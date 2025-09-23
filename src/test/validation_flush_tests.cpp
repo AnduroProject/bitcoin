@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(getcoinscachesizestate)
 
     // Without any coins in the cache, we shouldn't need to flush.
     BOOST_TEST(
-        chainstate.GetCoinsCacheSizeState(MAX_COINS_CACHE_BYTES, /*max_mempool_size_bytes=*/ 0) != CoinsCacheSizeState::CRITICAL);
+        chainstate.GetCoinsCacheSizeState(MAX_COINS_CACHE_BYTES, /*max_mempool_size_bytes=*/0) != CoinsCacheSizeState::CRITICAL);
 
     // If the initial memory allocations of cacheCoins don't match these common
     // cases, we can't really continue to make assertions about memory usage.
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(getcoinscachesizestate)
         // adding first coin causes the MemoryResource to allocate one 256 KiB chunk of memory,
         // pushing us immediately over to LARGE
         BOOST_CHECK_EQUAL(
-            chainstate.GetCoinsCacheSizeState(MAX_COINS_CACHE_BYTES, /*max_mempool_size_bytes=*/ 0),
+            chainstate.GetCoinsCacheSizeState(MAX_COINS_CACHE_BYTES, /*max_mempool_size_bytes=*/0),
             CoinsCacheSizeState::LARGE);
     }
 
@@ -103,14 +103,14 @@ BOOST_AUTO_TEST_CASE(getcoinscachesizestate)
 
     // Passing non-zero max mempool usage (512 KiB) should allow us more headroom.
     BOOST_CHECK_EQUAL(
-        chainstate.GetCoinsCacheSizeState(MAX_COINS_CACHE_BYTES, /*max_mempool_size_bytes=*/ 1 << 19),
+        chainstate.GetCoinsCacheSizeState(MAX_COINS_CACHE_BYTES, /*max_mempool_size_bytes=*/1 << 19),
         CoinsCacheSizeState::OK);
 
     for (int i{0}; i < 3; ++i) {
         AddTestCoin(m_rng, view);
         print_view_mem_usage(view);
         BOOST_CHECK_EQUAL(
-            chainstate.GetCoinsCacheSizeState(MAX_COINS_CACHE_BYTES, /*max_mempool_size_bytes=*/ 1 << 19),
+            chainstate.GetCoinsCacheSizeState(MAX_COINS_CACHE_BYTES, /*max_mempool_size_bytes=*/1 << 19),
             CoinsCacheSizeState::OK);
     }
 

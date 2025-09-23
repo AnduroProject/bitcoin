@@ -12,7 +12,7 @@
 class WalletModel;
 
 namespace Ui {
-    class AskPassphraseDialog;
+class AskPassphraseDialog;
 }
 
 /** Multifunctional dialog to ask for passphrases. Used for encryption, unlocking, and changing the passphrase.
@@ -23,21 +23,21 @@ class AskPassphraseDialog : public QDialog
 
 public:
     enum Mode {
-        Encrypt,    /**< Ask passphrase twice and encrypt */
-        Unlock,     /**< Ask passphrase and unlock */
-        ChangePass, /**< Ask old passphrase + new passphrase twice */
+        Encrypt,         /**< Ask passphrase twice and encrypt */
+        Unlock,          /**< Ask passphrase and unlock */
+        ChangePass,      /**< Ask old passphrase + new passphrase twice */
         UnlockMigration, /**< Ask passphrase for unlocking during migration */
     };
 
-    explicit AskPassphraseDialog(Mode mode, QWidget *parent, SecureString* passphrase_out = nullptr);
+    explicit AskPassphraseDialog(Mode mode, QWidget* parent, SecureString* passphrase_out = nullptr);
     ~AskPassphraseDialog();
 
     void accept() override;
 
-    void setModel(WalletModel *model);
+    void setModel(WalletModel* model);
 
 private:
-    Ui::AskPassphraseDialog *ui;
+    Ui::AskPassphraseDialog* ui;
     Mode mode;
     WalletModel* model{nullptr};
     bool fCapsLock{false};
@@ -49,8 +49,8 @@ private Q_SLOTS:
     void toggleShowPassword(bool);
 
 protected:
-    bool event(QEvent *event) override;
-    bool eventFilter(QObject *object, QEvent *event) override;
+    bool event(QEvent* event) override;
+    bool eventFilter(QObject* object, QEvent* event) override;
 };
 
 #endif // BITCOIN_QT_ASKPASSPHRASEDIALOG_H

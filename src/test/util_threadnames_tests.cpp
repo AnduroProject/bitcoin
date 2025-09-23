@@ -41,7 +41,8 @@ std::set<std::string> RenameEnMasse(int num_threads)
         threads.emplace_back(RenameThisThread, i);
     }
 
-    for (std::thread& thread : threads) thread.join();
+    for (std::thread& thread : threads)
+        thread.join();
 
     return names;
 }
@@ -60,7 +61,6 @@ BOOST_AUTO_TEST_CASE(util_threadnames_test_rename_threaded)
     for (int i = 0; i < 100; ++i) {
         BOOST_CHECK(names.find(TEST_THREAD_NAME_BASE + ToString(i)) != names.end());
     }
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()

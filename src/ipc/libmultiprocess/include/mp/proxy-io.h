@@ -14,22 +14,20 @@
 
 #include <assert.h>
 #include <functional>
-#include <optional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 
 namespace mp {
 struct ThreadContext;
 
-struct InvokeContext
-{
+struct InvokeContext {
     Connection& connection;
 };
 
-struct ClientInvokeContext : InvokeContext
-{
+struct ClientInvokeContext : InvokeContext {
     ThreadContext& thread_context;
     ClientInvokeContext(Connection& conn, ThreadContext& thread_context)
         : InvokeContext{conn}, thread_context{thread_context}
@@ -38,8 +36,7 @@ struct ClientInvokeContext : InvokeContext
 };
 
 template <typename ProxyServer, typename CallContext_>
-struct ServerInvokeContext : InvokeContext
-{
+struct ServerInvokeContext : InvokeContext {
     using CallContext = CallContext_;
 
     ProxyServer& proxy_server;
@@ -56,8 +53,7 @@ template <typename Interface, typename Params, typename Results>
 using ServerContext = ServerInvokeContext<ProxyServer<Interface>, ::capnp::CallContext<Params, Results>>;
 
 template <>
-struct ProxyClient<Thread> : public ProxyClientBase<Thread, ::capnp::Void>
-{
+struct ProxyClient<Thread> : public ProxyClientBase<Thread, ::capnp::Void> {
     using ProxyClientBase::ProxyClientBase;
     // https://stackoverflow.com/questions/22357887/comparing-two-mapiterators-why-does-it-need-the-copy-constructor-of-stdpair
     ProxyClient(const ProxyClient&) = delete;
@@ -76,8 +72,7 @@ struct ProxyClient<Thread> : public ProxyClientBase<Thread, ::capnp::Void>
 };
 
 template <>
-struct ProxyServer<Thread> final : public Thread::Server
-{
+struct ProxyServer<Thread> final : public Thread::Server {
 public:
     ProxyServer(ThreadContext& thread_context, std::thread&& thread);
     ~ProxyServer();
@@ -240,8 +235,7 @@ public:
 //! client to run the request in the same thread, the same way code would run in
 //! single process, with the callback sharing same thread stack as the original
 //! call.
-struct Waiter
-{
+struct Waiter {
     Waiter() = default;
 
     template <typename Fn>
@@ -296,8 +290,8 @@ public:
         m_loop.addClient(lock);
     }
     Connection(EventLoop& loop,
-        kj::Own<kj::AsyncIoStream>&& stream_,
-        const std::function<::capnp::Capability::Client(Connection&)>& make_client)
+               kj::Own<kj::AsyncIoStream>&& stream_,
+               const std::function<::capnp::Capability::Client(Connection&)>& make_client)
         : m_loop(loop), m_stream(kj::mv(stream_)),
           m_network(*m_stream, ::capnp::rpc::twoparty::Side::SERVER, ::capnp::ReaderOptions()),
           m_rpc_system(::capnp::makeRpcServer(m_network, make_client(*this)))
@@ -366,8 +360,7 @@ public:
 //! is just a vat.
 //!
 //! See also: https://github.com/capnproto/capnproto/blob/9021f0c722b36cb11e3690b0860939255ebad39c/c%2B%2B/src/capnp/rpc.capnp#L42-L56
-struct ServerVatId
-{
+struct ServerVatId {
     ::capnp::word scratch[4]{};
     ::capnp::MallocMessageBuilder message{scratch};
     ::capnp::rpc::twoparty::VatId::Builder vat_id{message.getRoot<::capnp::rpc::twoparty::VatId>()};
@@ -376,8 +369,8 @@ struct ServerVatId
 
 template <typename Interface, typename Impl>
 ProxyClientBase<Interface, Impl>::ProxyClientBase(typename Interface::Client client,
-    Connection* connection,
-    bool destroy_connection)
+                                                  Connection* connection,
+                                                  bool destroy_connection)
     : m_client(std::move(client)), m_context(connection)
 
 {
@@ -410,35 +403,35 @@ ProxyClientBase<Interface, Impl>::ProxyClientBase(typename Interface::Client cli
     // The first case is handled here when m_context.connection is not null. The
     // second case is handled by the cleanup function, which sets m_context.connection to
     // null so nothing happens here.
-    m_context.cleanup_fns.emplace_front([this, destroy_connection, cleanup_it]{
-    if (m_context.connection) {
-        // Remove cleanup callback so it doesn't run and try to access
-        // this object after it's already destroyed.
-        m_context.connection->removeSyncCleanup(cleanup_it);
+    m_context.cleanup_fns.emplace_front([this, destroy_connection, cleanup_it] {
+        if (m_context.connection) {
+            // Remove cleanup callback so it doesn't run and try to access
+            // this object after it's already destroyed.
+            m_context.connection->removeSyncCleanup(cleanup_it);
 
-        // If the capnp interface defines a destroy method, call it to destroy
-        // the remote object, waiting for it to be deleted server side. If the
-        // capnp interface does not define a destroy method, this will just call
-        // an empty stub defined in the ProxyClientBase class and do nothing.
-        Sub::destroy(*this);
+            // If the capnp interface defines a destroy method, call it to destroy
+            // the remote object, waiting for it to be deleted server side. If the
+            // capnp interface does not define a destroy method, this will just call
+            // an empty stub defined in the ProxyClientBase class and do nothing.
+            Sub::destroy(*this);
 
-        // FIXME: Could just invoke removed addCleanup fn here instead of duplicating code
-        m_context.connection->m_loop.sync([&]() {
-            // Release client capability by move-assigning to temporary.
-            {
-                typename Interface::Client(std::move(m_client));
-            }
-            {
-                std::unique_lock<std::mutex> lock(m_context.connection->m_loop.m_mutex);
-                m_context.connection->m_loop.removeClient(lock);
-            }
+            // FIXME: Could just invoke removed addCleanup fn here instead of duplicating code
+            m_context.connection->m_loop.sync([&]() {
+                // Release client capability by move-assigning to temporary.
+                {
+                    typename Interface::Client(std::move(m_client));
+                }
+                {
+                    std::unique_lock<std::mutex> lock(m_context.connection->m_loop.m_mutex);
+                    m_context.connection->m_loop.removeClient(lock);
+                }
 
-            if (destroy_connection) {
-                delete m_context.connection;
-                m_context.connection = nullptr;
-            }
-        });
-    }
+                if (destroy_connection) {
+                    delete m_context.connection;
+                    m_context.connection = nullptr;
+                }
+            });
+        }
     });
     Sub::construct(*this);
 }
@@ -483,7 +476,7 @@ ProxyServerBase<Interface, Impl>::~ProxyServerBase()
         // connection is broken). Probably some refactoring of the destructor
         // and invokeDestroy function is possible to make this cleaner and more
         // consistent.
-        m_context.connection->addAsyncCleanup([impl=std::move(m_impl), fns=std::move(m_context.cleanup_fns)]() mutable {
+        m_context.connection->addAsyncCleanup([impl = std::move(m_impl), fns = std::move(m_context.cleanup_fns)]() mutable {
             impl.reset();
             CleanupRun(fns);
         });
@@ -525,8 +518,7 @@ using ConnThread = ConnThreads::iterator;
 // inserted bool.
 std::tuple<ConnThread, bool> SetThread(ConnThreads& threads, std::mutex& mutex, Connection* connection, const std::function<Thread::Client()>& make_thread);
 
-struct ThreadContext
-{
+struct ThreadContext {
     //! Identifying string for debug.
     std::string thread_name;
 
@@ -590,7 +582,7 @@ void _Serve(EventLoop& loop, kj::Own<kj::AsyncIoStream>&& stream, InitImpl& init
         // Disable deleter so proxy server object doesn't attempt to delete the
         // init implementation when the proxy client is destroyed or
         // disconnected.
-        return kj::heap<ProxyServer<InitInterface>>(std::shared_ptr<InitImpl>(&init, [](InitImpl*){}), connection);
+        return kj::heap<ProxyServer<InitInterface>>(std::shared_ptr<InitImpl>(&init, [](InitImpl*) {}), connection);
     });
     auto it = loop.m_incoming_connections.begin();
     it->onDisconnect([&loop, it] {
@@ -629,8 +621,8 @@ void ListenConnections(EventLoop& loop, int fd, InitImpl& init)
 {
     loop.sync([&]() {
         _Listen<InitInterface>(loop,
-            loop.m_io_context.lowLevelProvider->wrapListenSocketFd(fd, kj::LowLevelAsyncIoProvider::TAKE_OWNERSHIP),
-            init);
+                               loop.m_io_context.lowLevelProvider->wrapListenSocketFd(fd, kj::LowLevelAsyncIoProvider::TAKE_OWNERSHIP),
+                               init);
     });
 }
 

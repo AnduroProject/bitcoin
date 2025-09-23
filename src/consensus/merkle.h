@@ -7,8 +7,8 @@
 
 #include <vector>
 
-#include <primitives/block.h>
 #include <coordinate/signed_block.h>
+#include <primitives/block.h>
 #include <uint256.h>
 
 uint256 ComputeMerkleRoot(std::vector<uint256> hashes, bool* mutated = nullptr);
@@ -29,14 +29,14 @@ uint256 BlockMerkleRoot(const CBlock& block, bool* mutated = nullptr);
  *                  - 1: pegin – compute Merkle root over block.pegins
  *                  - 3: signedblock – compute Merkle root over block.signed_blocks or equivalent
  *
- * @param mutated   (Optional) Output parameter that will be set to true if a Merkle tree 
- *                  mutation was detected (i.e. duplicate subtrees producing the same hash), 
+ * @param mutated   (Optional) Output parameter that will be set to true if a Merkle tree
+ *                  mutation was detected (i.e. duplicate subtrees producing the same hash),
  *                  otherwise false. If nullptr is passed, the mutation check is skipped.
  *
  * @return          A uint256 representing the Merkle root hash of the selected data.
  *
  * @note
- *  - The mutation flag is useful for detecting Merkle tree malleability issues (as in 
+ *  - The mutation flag is useful for detecting Merkle tree malleability issues (as in
  *    Bitcoin Core’s GetMerkleRoot implementation).
  *  - For type 0 (vtx), this matches the standard Bitcoin block transaction Merkle root.
  *  - For type 1 (pegin), it commits to peg-in transactions relevant to sidechain/federated peg logic.

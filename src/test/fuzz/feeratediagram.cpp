@@ -6,8 +6,8 @@
 
 #include <vector>
 
-#include <util/feefrac.h>
 #include <policy/rbf.h>
+#include <util/feefrac.h>
 
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
@@ -94,7 +94,7 @@ void PopulateChunks(FuzzedDataProvider& fuzzed_data_provider, std::vector<FeeFra
 
     LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 50)
     {
-        chunks.emplace_back(fuzzed_data_provider.ConsumeIntegralInRange<int64_t>(INT32_MIN>>1, INT32_MAX>>1), fuzzed_data_provider.ConsumeIntegralInRange<int32_t>(1, 1000000));
+        chunks.emplace_back(fuzzed_data_provider.ConsumeIntegralInRange<int64_t>(INT32_MIN >> 1, INT32_MAX >> 1), fuzzed_data_provider.ConsumeIntegralInRange<int32_t>(1, 1000000));
     }
     return;
 }
@@ -122,7 +122,8 @@ FUZZ_TARGET(build_and_compare_feerate_diagram)
     assert(real == sim);
 
     // Do explicit evaluation at up to 1000 points, and verify consistency with the result.
-    LIMITED_WHILE(fuzzed_data_provider.remaining_bytes(), 1000) {
+    LIMITED_WHILE(fuzzed_data_provider.remaining_bytes(), 1000)
+    {
         int32_t size = fuzzed_data_provider.ConsumeIntegralInRange<int32_t>(0, diagram2.back().size);
         auto eval1 = EvaluateDiagram(size, diagram1);
         auto eval2 = EvaluateDiagram(size, diagram2);

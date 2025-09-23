@@ -30,8 +30,8 @@
 #endif
 
 #ifdef HAVE_IFADDRS
-#include <sys/types.h>
 #include <ifaddrs.h>
+#include <sys/types.h>
 #endif
 
 namespace {
@@ -76,9 +76,9 @@ std::optional<CNetAddr> QueryDefaultGatewayImpl(sa_family_t family)
 
     // Send request.
     struct {
-        nlmsghdr hdr; ///< Request header.
-        rtmsg data; ///< Request data, a "route message".
-        nlattr dst_hdr; ///< One attribute, conveying the route destination address.
+        nlmsghdr hdr;      ///< Request header.
+        rtmsg data;        ///< Request data, a "route message".
+        nlattr dst_hdr;    ///< One attribute, conveying the route destination address.
         char dst_data[16]; ///< Route destination address. To query the default route we use 0.0.0.0/0 or [::]/0. For IPv4 the first 4 bytes are used.
     } request{};
 
@@ -127,7 +127,7 @@ std::optional<CNetAddr> QueryDefaultGatewayImpl(sa_family_t family)
         int remaining_len = RTM_PAYLOAD(hdr);
 
         // Iterate over the attributes.
-        rtattr *rta_gateway = nullptr;
+        rtattr* rta_gateway = nullptr;
         int scope_id = 0;
         for (rtattr* attr = RTM_RTA(r); RTA_OK(attr, remaining_len); attr = RTA_NEXT(attr, remaining_len)) {
             if (attr->rta_type == RTA_GATEWAY) {
@@ -178,14 +178,14 @@ std::optional<CNetAddr> QueryDefaultGatewayImpl(sa_family_t family)
     status = GetBestRoute2(&interface_luid, best_if_idx, nullptr, &destination_address, 0, &best_route, &best_source_address);
     if (status != NO_ERROR) {
         LogPrintLevel(BCLog::NET, BCLog::Level::Error, "Could not get best route for default route for interface index %d: %s\n",
-                best_if_idx, NetworkErrorString(status));
+                      best_if_idx, NetworkErrorString(status));
         return std::nullopt;
     }
 
     Assume(best_route.NextHop.si_family == family);
     if (family == AF_INET) {
         return CNetAddr(best_route.NextHop.Ipv4.sin_addr);
-    } else if(family == AF_INET6) {
+    } else if (family == AF_INET6) {
         return CNetAddr(best_route.NextHop.Ipv6.sin6_addr, best_route.InterfaceIndex);
     }
     return std::nullopt;
@@ -213,7 +213,7 @@ std::optional<CNetAddr> QueryDefaultGatewayImpl(sa_family_t family)
         return std::nullopt;
     }
     // Iterate over messages (each message is a routing table entry).
-    for (size_t msg_pos = 0; msg_pos < buf.size(); ) {
+    for (size_t msg_pos = 0; msg_pos < buf.size();) {
         if ((msg_pos + sizeof(rt_msghdr)) > buf.size()) return std::nullopt;
         const struct rt_msghdr* rt = (const struct rt_msghdr*)(buf.data() + msg_pos);
         const size_t next_msg_pos = msg_pos + rt->rtm_msglen;
@@ -258,7 +258,7 @@ std::optional<CNetAddr> QueryDefaultGatewayImpl(sa_family_t)
 
 #endif
 
-}
+} // namespace
 
 std::optional<CNetAddr> QueryDefaultGateway(Network network)
 {
@@ -267,7 +267,7 @@ std::optional<CNetAddr> QueryDefaultGateway(Network network)
     sa_family_t family;
     if (network == NET_IPV4) {
         family = AF_INET;
-    } else if(network == NET_IPV6) {
+    } else if (network == NET_IPV6) {
         family = AF_INET6;
     } else {
         return std::nullopt;
@@ -290,11 +290,11 @@ std::vector<CNetAddr> GetLocalAddresses()
 #ifdef WIN32
     DWORD status = 0;
     constexpr size_t MAX_ADAPTER_ADDR_SIZE = 4 * 1000 * 1000; // Absolute maximum size of adapter addresses structure we're willing to handle, as a precaution.
-    std::vector<std::byte> out_buf(15000, {}); // Start with 15KB allocation as recommended in GetAdaptersAddresses documentation.
+    std::vector<std::byte> out_buf(15000, {});                // Start with 15KB allocation as recommended in GetAdaptersAddresses documentation.
     while (true) {
         ULONG out_buf_len = out_buf.size();
         status = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME,
-                nullptr, reinterpret_cast<PIP_ADAPTER_ADDRESSES>(out_buf.data()), &out_buf_len);
+                                      nullptr, reinterpret_cast<PIP_ADAPTER_ADDRESSES>(out_buf.data()), &out_buf_len);
         if (status == ERROR_BUFFER_OVERFLOW && out_buf.size() < MAX_ADAPTER_ADDR_SIZE) {
             // If status == ERROR_BUFFER_OVERFLOW, out_buf_len will contain the needed size.
             // Unfortunately, this cannot be fully relied on, because another process may have added interfaces.
@@ -333,8 +333,7 @@ std::vector<CNetAddr> GetLocalAddresses()
 #elif defined(HAVE_IFADDRS)
     struct ifaddrs* myaddrs;
     if (getifaddrs(&myaddrs) == 0) {
-        for (struct ifaddrs* ifa = myaddrs; ifa != nullptr; ifa = ifa->ifa_next)
-        {
+        for (struct ifaddrs* ifa = myaddrs; ifa != nullptr; ifa = ifa->ifa_next) {
             if (ifa->ifa_addr == nullptr) continue;
             if ((ifa->ifa_flags & IFF_UP) == 0) continue;
             if ((ifa->ifa_flags & IFF_LOOPBACK) != 0) continue;

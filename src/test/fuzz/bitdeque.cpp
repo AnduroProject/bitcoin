@@ -471,8 +471,7 @@ FUZZ_TARGET(bitdeque, .init = InitRandData)
                     bool val = ctx.randbool();
                     bool do_emplace = provider.ConsumeBool();
                     auto it = deq.insert(cdeq.begin() + before, val);
-                    auto bitit = do_emplace ? bitdeq.emplace(cbitdeq.begin() + before, val)
-                                            : bitdeq.insert(cbitdeq.begin() + before, val);
+                    auto bitit = do_emplace ? bitdeq.emplace(cbitdeq.begin() + before, val) : bitdeq.insert(cbitdeq.begin() + before, val);
                     assert(it == deq.begin() + before);
                     assert(bitit == bitdeq.begin() + before);
                 }

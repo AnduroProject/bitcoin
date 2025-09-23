@@ -18,8 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace bech32
-{
+namespace bech32 {
 
 static constexpr size_t CHECKSUM_SIZE = 6;
 static constexpr char SEPARATOR = '1';
@@ -36,15 +35,14 @@ enum class Encoding {
  *  convert the CharLimit::VALUE to an int. In practice, this should never happen since this CharLimit applies to an address encoding
  *  and we would never encode an address with such a massive value */
 enum CharLimit : size_t {
-    BECH32 = 90,            //!< BIP173/350 imposed character limit for Bech32(m) encoded addresses. This guarantees finding up to 4 errors.
+    BECH32 = 90, //!< BIP173/350 imposed character limit for Bech32(m) encoded addresses. This guarantees finding up to 4 errors.
 };
 
 /** Encode a Bech32 or Bech32m string. If hrp contains uppercase characters, this will cause an
  *  assertion error. Encoding must be one of BECH32 or BECH32M. */
 std::string Encode(Encoding encoding, const std::string& hrp, const std::vector<uint8_t>& values);
 
-struct DecodeResult
-{
+struct DecodeResult {
     Encoding encoding;         //!< What encoding was detected in the result; Encoding::INVALID if failed.
     std::string hrp;           //!< The human readable part
     std::vector<uint8_t> data; //!< The payload (excluding checksum)

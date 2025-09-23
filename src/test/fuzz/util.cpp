@@ -44,8 +44,8 @@ CMutableTransaction ConsumeTransaction(FuzzedDataProvider& fuzzed_data_provider,
     CMutableTransaction tx_mut;
     const auto p2wsh_op_true = fuzzed_data_provider.ConsumeBool();
     tx_mut.version = fuzzed_data_provider.ConsumeBool() ?
-                          CTransaction::CURRENT_VERSION :
-                          fuzzed_data_provider.ConsumeIntegral<uint32_t>();
+                         CTransaction::CURRENT_VERSION :
+                         fuzzed_data_provider.ConsumeIntegral<uint32_t>();
     tx_mut.nLockTime = fuzzed_data_provider.ConsumeIntegral<uint32_t>();
     const auto num_in = fuzzed_data_provider.ConsumeIntegralInRange<int>(0, max_num_in);
     const auto num_out = fuzzed_data_provider.ConsumeIntegralInRange<int>(0, max_num_out);
@@ -166,7 +166,8 @@ uint32_t ConsumeSequence(FuzzedDataProvider& fuzzed_data_provider) noexcept
 std::map<COutPoint, Coin> ConsumeCoins(FuzzedDataProvider& fuzzed_data_provider) noexcept
 {
     std::map<COutPoint, Coin> coins;
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000)
+    {
         const std::optional<COutPoint> outpoint{ConsumeDeserializable<COutPoint>(fuzzed_data_provider)};
         if (!outpoint) {
             break;
@@ -192,10 +193,9 @@ CTxDestination ConsumeTxDestination(FuzzedDataProvider& fuzzed_data_provider) no
         [&] {
             bool compressed = fuzzed_data_provider.ConsumeBool();
             CPubKey pk{ConstructPubKeyBytes(
-                    fuzzed_data_provider,
-                    ConsumeFixedLengthByteVector(fuzzed_data_provider, (compressed ? CPubKey::COMPRESSED_SIZE : CPubKey::SIZE)),
-                    compressed
-            )};
+                fuzzed_data_provider,
+                ConsumeFixedLengthByteVector(fuzzed_data_provider, (compressed ? CPubKey::COMPRESSED_SIZE : CPubKey::SIZE)),
+                compressed)};
             tx_destination = PubKeyDestination{pk};
         },
         [&] {

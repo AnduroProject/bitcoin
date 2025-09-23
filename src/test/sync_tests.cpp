@@ -26,11 +26,11 @@ void TestPotentialDeadLockDetected(MutexType& mutex1, MutexType& mutex2)
         error_thrown = true;
     }
     BOOST_CHECK(LockStackEmpty());
-    #ifdef DEBUG_LOCKORDER
+#ifdef DEBUG_LOCKORDER
     BOOST_CHECK(error_thrown);
-    #else
+#else
     BOOST_CHECK(!error_thrown);
-    #endif
+#endif
 }
 
 #ifdef DEBUG_LOCKORDER
@@ -81,10 +81,10 @@ BOOST_AUTO_TEST_SUITE(sync_tests)
 
 BOOST_AUTO_TEST_CASE(potential_deadlock_detected)
 {
-    #ifdef DEBUG_LOCKORDER
+#ifdef DEBUG_LOCKORDER
     bool prev = g_debug_lockorder_abort;
     g_debug_lockorder_abort = false;
-    #endif
+#endif
 
     RecursiveMutex rmutex1, rmutex2;
     TestPotentialDeadLockDetected(rmutex1, rmutex2);
@@ -96,9 +96,9 @@ BOOST_AUTO_TEST_CASE(potential_deadlock_detected)
     // The second test ensures that lock tracking data have not been broken by exception.
     TestPotentialDeadLockDetected(mutex1, mutex2);
 
-    #ifdef DEBUG_LOCKORDER
+#ifdef DEBUG_LOCKORDER
     g_debug_lockorder_abort = prev;
-    #endif
+#endif
 }
 
 /* Double lock would produce an undefined behavior. Thus, we only do that if

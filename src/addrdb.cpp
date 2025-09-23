@@ -59,7 +59,7 @@ bool SerializeFileDB(const std::string& prefix, const fs::path& path, const Data
 
     // open temp output file
     fs::path pathTmp = gArgs.GetDataDirNet() / fs::u8path(tmpfn);
-    FILE *file = fsbridge::fopen(pathTmp, "wb");
+    FILE* file = fsbridge::fopen(pathTmp, "wb");
     AutoFile fileout{file};
     if (fileout.IsNull()) {
         remove(pathTmp);

@@ -67,7 +67,7 @@ FUZZ_TARGET(p2p_transport_serialization, .init = initialize_p2p_transport_serial
         hasher.Write(payload_bytes);
         hasher.Finalize(hsh);
         for (size_t i = 0; i < CMessageHeader::CHECKSUM_SIZE; ++i) {
-           mutable_msg_bytes.push_back(hsh[i]);
+            mutable_msg_bytes.push_back(hsh[i]);
         }
     }
 
@@ -104,7 +104,7 @@ FUZZ_TARGET(p2p_transport_serialization, .init = initialize_p2p_transport_serial
 
 namespace {
 
-template<RandomNumberGenerator R>
+template <RandomNumberGenerator R>
 void SimulationTest(Transport& initiator, Transport& responder, R& rng, FuzzedDataProvider& provider)
 {
     // Simulation test with two Transport objects, which send messages to each other, with
@@ -173,8 +173,7 @@ void SimulationTest(Transport& initiator, Transport& responder, R& rng, FuzzedDa
     // The next message to be sent (initially version messages, but will be replaced once sent).
     std::array<CSerializedNetMsg, 2> next_msg = {
         make_msg_fn(/*first=*/true),
-        make_msg_fn(/*first=*/true)
-    };
+        make_msg_fn(/*first=*/true)};
 
     // Wrapper around transport[i]->GetBytesToSend() that performs sanity checks.
     auto bytes_to_send_fn = [&](int side) -> Transport::BytesToSend {
@@ -294,18 +293,15 @@ void SimulationTest(Transport& initiator, Transport& responder, R& rng, FuzzedDa
     };
 
     // Main loop, interleaving new messages, sends, and receives.
-    LIMITED_WHILE(provider.remaining_bytes(), 1000) {
+    LIMITED_WHILE(provider.remaining_bytes(), 1000)
+    {
         CallOneOf(provider,
-            // (Try to) give the next message to the transport.
-            [&] { new_msg_fn(/*side=*/0); },
-            [&] { new_msg_fn(/*side=*/1); },
-            // (Try to) send some bytes from the transport to the network.
-            [&] { send_fn(/*side=*/0); },
-            [&] { send_fn(/*side=*/1); },
-            // (Try to) receive bytes from the network, converting to messages.
-            [&] { recv_fn(/*side=*/0); },
-            [&] { recv_fn(/*side=*/1); }
-        );
+                  // (Try to) give the next message to the transport.
+                  [&] { new_msg_fn(/*side=*/0); }, [&] { new_msg_fn(/*side=*/1); },
+                  // (Try to) send some bytes from the transport to the network.
+                  [&] { send_fn(/*side=*/0); }, [&] { send_fn(/*side=*/1); },
+                  // (Try to) receive bytes from the network, converting to messages.
+                  [&] { recv_fn(/*side=*/0); }, [&] { recv_fn(/*side=*/1); });
     }
 
     // When we're done, perform sends and receives of existing messages to flush anything already
@@ -336,7 +332,7 @@ std::unique_ptr<Transport> MakeV1Transport(NodeId nodeid) noexcept
     return std::make_unique<V1Transport>(nodeid);
 }
 
-template<RandomNumberGenerator RNG>
+template <RandomNumberGenerator RNG>
 std::unique_ptr<Transport> MakeV2Transport(NodeId nodeid, bool initiator, RNG& rng, FuzzedDataProvider& provider)
 {
     // Retrieve key
@@ -363,9 +359,7 @@ std::unique_ptr<Transport> MakeV2Transport(NodeId nodeid, bool initiator, RNG& r
     // both non-randomly and dependently. Since the entropy is hashed anyway inside the ellswift
     // computation, no coverage should be lost by using a hash as entropy, and it removes the
     // possibility of garbage that happens to contain what is effectively a hash of the keys.
-    CSHA256().Write(UCharCast(ent.data()), ent.size())
-             .Write(garb.data(), garb.size())
-             .Finalize(UCharCast(ent.data()));
+    CSHA256().Write(UCharCast(ent.data()), ent.size()).Write(garb.data(), garb.size()).Finalize(UCharCast(ent.data()));
 
     return std::make_unique<V2Transport>(nodeid, initiator, key, ent, std::move(garb));
 }

@@ -34,7 +34,7 @@
 namespace bitset_detail {
 
 /** Count the number of bits set in an unsigned integer type. */
-template<typename I>
+template <typename I>
 unsigned inline constexpr PopCount(I v)
 {
     static_assert(std::is_integral_v<I> && std::is_unsigned_v<I> && std::numeric_limits<I>::radix == 2);
@@ -58,7 +58,7 @@ unsigned inline constexpr PopCount(I v)
 }
 
 /** A bitset implementation backed by a single integer of type I. */
-template<typename I>
+template <typename I>
 class IntBitSet
 {
     // Only binary, unsigned, integer, types allowed.
@@ -74,6 +74,7 @@ class IntBitSet
     {
         friend class IntBitSet;
         constexpr IteratorEnd() = default;
+
     public:
         constexpr IteratorEnd(const IteratorEnd&) = default;
     };
@@ -81,12 +82,13 @@ class IntBitSet
     class Iterator
     {
         friend class IntBitSet;
-        I m_val; /**< The original integer's remaining bits. */
+        I m_val;        /**< The original integer's remaining bits. */
         unsigned m_pos; /** Last reported 1 position (if m_pos != 0). */
         constexpr Iterator(I val) noexcept : m_val(val), m_pos(0)
         {
             if (m_val != 0) m_pos = std::countr_zero(m_val);
         }
+
     public:
         /** Do not allow external code to construct an Iterator. */
         Iterator() = delete;
@@ -122,7 +124,8 @@ public:
     /** Construct from a list of values. */
     constexpr IntBitSet(std::initializer_list<unsigned> ilist) noexcept : m_val(0)
     {
-        for (auto pos : ilist) Set(pos);
+        for (auto pos : ilist)
+            Set(pos);
     }
     /** Copy assign a bitset. */
     constexpr IntBitSet& operator=(const IntBitSet&) noexcept = default;
@@ -130,7 +133,8 @@ public:
     constexpr IntBitSet& operator=(std::initializer_list<unsigned> ilist) noexcept
     {
         m_val = 0;
-        for (auto pos : ilist) Set(pos);
+        for (auto pos : ilist)
+            Set(pos);
         return *this;
     }
     /** Construct a bitset with the singleton i. */
@@ -196,13 +200,29 @@ public:
         return std::bit_width(m_val) - 1;
     }
     /** Set this object's bits to be the binary AND between respective bits from this and a. */
-    constexpr IntBitSet& operator|=(const IntBitSet& a) noexcept { m_val |= a.m_val; return *this; }
+    constexpr IntBitSet& operator|=(const IntBitSet& a) noexcept
+    {
+        m_val |= a.m_val;
+        return *this;
+    }
     /** Set this object's bits to be the binary OR between respective bits from this and a. */
-    constexpr IntBitSet& operator&=(const IntBitSet& a) noexcept { m_val &= a.m_val; return *this; }
+    constexpr IntBitSet& operator&=(const IntBitSet& a) noexcept
+    {
+        m_val &= a.m_val;
+        return *this;
+    }
     /** Set this object's bits to be the binary AND NOT between respective bits from this and a. */
-    constexpr IntBitSet& operator-=(const IntBitSet& a) noexcept { m_val &= ~a.m_val; return *this; }
+    constexpr IntBitSet& operator-=(const IntBitSet& a) noexcept
+    {
+        m_val &= ~a.m_val;
+        return *this;
+    }
     /** Set this object's bits to be the binary XOR between respective bits from this as a. */
-    constexpr IntBitSet& operator^=(const IntBitSet& a) noexcept { m_val ^= a.m_val; return *this; }
+    constexpr IntBitSet& operator^=(const IntBitSet& a) noexcept
+    {
+        m_val ^= a.m_val;
+        return *this;
+    }
     /** Check if the intersection between two sets is non-empty. */
     constexpr bool Overlaps(const IntBitSet& a) const noexcept { return m_val & a.m_val; }
     /** Return an object with the binary AND between respective bits from a and b. */
@@ -224,7 +244,7 @@ public:
 };
 
 /** A bitset implementation backed by N integers of type I. */
-template<typename I, unsigned N>
+template <typename I, unsigned N>
 class MultiIntBitSet
 {
     // Only binary, unsigned, integer, types allowed.
@@ -244,6 +264,7 @@ class MultiIntBitSet
     {
         friend class MultiIntBitSet;
         constexpr IteratorEnd() = default;
+
     public:
         constexpr IteratorEnd(const IteratorEnd&) = default;
     };
@@ -252,9 +273,9 @@ class MultiIntBitSet
     {
         friend class MultiIntBitSet;
         const std::array<I, N>* m_ptr; /**< Pointer to array to fetch bits from. */
-        I m_val; /**< The remaining bits of (*m_ptr)[m_idx]. */
-        unsigned m_pos; /**< The last reported position. */
-        unsigned m_idx; /**< The index in *m_ptr currently being iterated over. */
+        I m_val;                       /**< The remaining bits of (*m_ptr)[m_idx]. */
+        unsigned m_pos;                /**< The last reported position. */
+        unsigned m_idx;                /**< The index in *m_ptr currently being iterated over. */
         constexpr Iterator(const std::array<I, N>& ref) noexcept : m_ptr(&ref), m_idx(0)
         {
             do {
@@ -264,7 +285,7 @@ class MultiIntBitSet
                     break;
                 }
                 ++m_idx;
-            } while(m_idx < N);
+            } while (m_idx < N);
         }
 
     public:
@@ -329,13 +350,15 @@ public:
     /** Construct a bitset from a list of values. */
     constexpr MultiIntBitSet(std::initializer_list<unsigned> ilist) noexcept : m_val{}
     {
-        for (auto pos : ilist) Set(pos);
+        for (auto pos : ilist)
+            Set(pos);
     }
     /** Set a bitset to a list of values. */
     constexpr MultiIntBitSet& operator=(std::initializer_list<unsigned> ilist) noexcept
     {
         m_val.fill(0);
-        for (auto pos : ilist) Set(pos);
+        for (auto pos : ilist)
+            Set(pos);
         return *this;
     }
     /** Set a bit to 0. */
@@ -379,7 +402,8 @@ public:
     unsigned constexpr Count() const noexcept
     {
         unsigned ret{0};
-        for (I v : m_val) ret += PopCount(v);
+        for (I v : m_val)
+            ret += PopCount(v);
         return ret;
     }
     /** Check if all bits are 0. */
@@ -519,9 +543,9 @@ public:
 // BitSet dispatches to IntBitSet or MultiIntBitSet as appropriate for the requested minimum number
 // of bits. Use IntBitSet up to 32-bit, or up to 64-bit on 64-bit platforms; above that, use a
 // MultiIntBitSet of size_t.
-template<unsigned BITS>
+template <unsigned BITS>
 using BitSet = std::conditional_t<(BITS <= 32), bitset_detail::IntBitSet<uint32_t>,
-               std::conditional_t<(BITS <= std::numeric_limits<size_t>::digits), bitset_detail::IntBitSet<size_t>,
-               bitset_detail::MultiIntBitSet<size_t, (BITS + std::numeric_limits<size_t>::digits - 1) / std::numeric_limits<size_t>::digits>>>;
+                                  std::conditional_t<(BITS <= std::numeric_limits<size_t>::digits), bitset_detail::IntBitSet<size_t>,
+                                                     bitset_detail::MultiIntBitSet<size_t, (BITS + std::numeric_limits<size_t>::digits - 1) / std::numeric_limits<size_t>::digits>>>;
 
 #endif // BITCOIN_UTIL_BITSET_H

@@ -4,8 +4,8 @@
 
 #include <qt/transactionfilterproxy.h>
 
-#include <qt/transactiontablemodel.h>
 #include <qt/transactionrecord.h>
+#include <qt/transactiontablemodel.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -18,7 +18,7 @@ TransactionFilterProxy::TransactionFilterProxy(QObject* parent)
 {
 }
 
-bool TransactionFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+bool TransactionFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
 {
     QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
 
@@ -38,8 +38,8 @@ bool TransactionFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex &
     QString label = index.data(TransactionTableModel::LabelRole).toString();
     QString txid = index.data(TransactionTableModel::TxHashRole).toString();
     if (!address.contains(m_search_string, Qt::CaseInsensitive) &&
-        !  label.contains(m_search_string, Qt::CaseInsensitive) &&
-        !   txid.contains(m_search_string, Qt::CaseInsensitive)) {
+        !label.contains(m_search_string, Qt::CaseInsensitive) &&
+        !txid.contains(m_search_string, Qt::CaseInsensitive)) {
         return false;
     }
 
@@ -57,7 +57,7 @@ void TransactionFilterProxy::setDateRange(const std::optional<QDateTime>& from, 
     invalidateFilter();
 }
 
-void TransactionFilterProxy::setSearchString(const QString &search_string)
+void TransactionFilterProxy::setSearchString(const QString& search_string)
 {
     if (m_search_string == search_string) return;
     m_search_string = search_string;

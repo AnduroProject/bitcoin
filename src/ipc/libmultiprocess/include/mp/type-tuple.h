@@ -11,10 +11,10 @@ namespace mp {
 // TODO: Should generalize this to work with arbitrary length tuples, not just length 2-tuples.
 template <typename KeyLocalType, typename ValueLocalType, typename Value, typename Output>
 void CustomBuildField(TypeList<std::tuple<KeyLocalType, ValueLocalType>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Value&& value,
-    Output&& output)
+                      Priority<1>,
+                      InvokeContext& invoke_context,
+                      Value&& value,
+                      Output&& output)
 {
     auto pair = output.init();
     using Accessors = typename ProxyStruct<typename decltype(pair)::Builds>::Accessors;
@@ -25,19 +25,19 @@ void CustomBuildField(TypeList<std::tuple<KeyLocalType, ValueLocalType>>,
 // TODO: Should generalize this to work with arbitrary length tuples, not just length 2-tuples.
 template <typename KeyLocalType, typename ValueLocalType, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<std::tuple<KeyLocalType, ValueLocalType>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Input&& input,
-    ReadDest&& read_dest)
+                               Priority<1>,
+                               InvokeContext& invoke_context,
+                               Input&& input,
+                               ReadDest&& read_dest)
 {
     return read_dest.update([&](auto& value) {
         const auto& pair = input.get();
         using Struct = ProxyStruct<typename Decay<decltype(pair)>::Reads>;
         using Accessors = typename Struct::Accessors;
         ReadField(TypeList<KeyLocalType>(), invoke_context, Make<StructField, std::tuple_element_t<0, Accessors>>(pair),
-            ReadDestUpdate(std::get<0>(value)));
+                  ReadDestUpdate(std::get<0>(value)));
         ReadField(TypeList<ValueLocalType>(), invoke_context, Make<StructField, std::tuple_element_t<1, Accessors>>(pair),
-            ReadDestUpdate(std::get<1>(value)));
+                  ReadDestUpdate(std::get<1>(value)));
     });
 }
 } // namespace mp

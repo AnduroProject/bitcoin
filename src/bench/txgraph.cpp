@@ -70,7 +70,7 @@ void BenchTxGraphTrim(benchmark::Bench& bench)
             top_refs.push_back(graph->AddTransaction(feerate));
             // Add internal dependencies linking the chain transactions together.
             if (chaintx > 0) {
-                 graph->AddDependency(*(top_refs.rbegin()), *(top_refs.rbegin() + 1));
+                graph->AddDependency(*(top_refs.rbegin()), *(top_refs.rbegin() + 1));
             }
         }
         // Remember the last transaction in each chain, to attach the bottom transactions to.

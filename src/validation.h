@@ -102,33 +102,33 @@ void PruneBlockFilesManual(Chainstate& active_chainstate, int nManualPruneHeight
 static const int MIN_MAINCHAIN_NODE_VERSION = 160300; // 0.16.3
 
 /**
-* Validation result for a transaction evaluated by MemPoolAccept (single or package).
-* Here are the expected fields and properties of a result depending on its ResultType, applicable to
-* results returned from package evaluation:
-*+---------------------------+----------------+-------------------+------------------+----------------+-------------------+
-*| Field or property         |    VALID       |                 INVALID              |  MEMPOOL_ENTRY | DIFFERENT_WITNESS |
-*|                           |                |--------------------------------------|                |                   |
-*|                           |                | TX_RECONSIDERABLE |     Other        |                |                   |
-*+---------------------------+----------------+-------------------+------------------+----------------+-------------------+
-*| txid in mempool?          | yes            | no                | no*              | yes            | yes               |
-*| wtxid in mempool?         | yes            | no                | no*              | yes            | no                |
-*| m_state                   | yes, IsValid() | yes, IsInvalid()  | yes, IsInvalid() | yes, IsValid() | yes, IsValid()    |
-*| m_vsize                   | yes            | no                | no               | yes            | no                |
-*| m_base_fees               | yes            | no                | no               | yes            | no                |
-*| m_effective_feerate       | yes            | yes               | no               | no             | no                |
-*| m_wtxids_fee_calculations | yes            | yes               | no               | no             | no                |
-*| m_other_wtxid             | no             | no                | no               | no             | yes               |
-*+---------------------------+----------------+-------------------+------------------+----------------+-------------------+
-* (*) Individual transaction acceptance doesn't return MEMPOOL_ENTRY and DIFFERENT_WITNESS. It returns
-* INVALID, with the errors txn-already-in-mempool and txn-same-nonwitness-data-in-mempool
-* respectively. In those cases, the txid or wtxid may be in the mempool for a TX_CONFLICT.
-*/
+ * Validation result for a transaction evaluated by MemPoolAccept (single or package).
+ * Here are the expected fields and properties of a result depending on its ResultType, applicable to
+ * results returned from package evaluation:
+ *+---------------------------+----------------+-------------------+------------------+----------------+-------------------+
+ *| Field or property         |    VALID       |                 INVALID              |  MEMPOOL_ENTRY | DIFFERENT_WITNESS |
+ *|                           |                |--------------------------------------|                |                   |
+ *|                           |                | TX_RECONSIDERABLE |     Other        |                |                   |
+ *+---------------------------+----------------+-------------------+------------------+----------------+-------------------+
+ *| txid in mempool?          | yes            | no                | no*              | yes            | yes               |
+ *| wtxid in mempool?         | yes            | no                | no*              | yes            | no                |
+ *| m_state                   | yes, IsValid() | yes, IsInvalid()  | yes, IsInvalid() | yes, IsValid() | yes, IsValid()    |
+ *| m_vsize                   | yes            | no                | no               | yes            | no                |
+ *| m_base_fees               | yes            | no                | no               | yes            | no                |
+ *| m_effective_feerate       | yes            | yes               | no               | no             | no                |
+ *| m_wtxids_fee_calculations | yes            | yes               | no               | no             | no                |
+ *| m_other_wtxid             | no             | no                | no               | no             | yes               |
+ *+---------------------------+----------------+-------------------+------------------+----------------+-------------------+
+ * (*) Individual transaction acceptance doesn't return MEMPOOL_ENTRY and DIFFERENT_WITNESS. It returns
+ * INVALID, with the errors txn-already-in-mempool and txn-same-nonwitness-data-in-mempool
+ * respectively. In those cases, the txid or wtxid may be in the mempool for a TX_CONFLICT.
+ */
 struct MempoolAcceptResult {
     /** Used to indicate the results of mempool validation. */
     enum class ResultType {
-        VALID, //!> Fully validated, valid.
-        INVALID, //!> Invalid.
-        MEMPOOL_ENTRY, //!> Valid, transaction was already in the mempool.
+        VALID,             //!> Fully validated, valid.
+        INVALID,           //!> Invalid.
+        MEMPOOL_ENTRY,     //!> Valid, transaction was already in the mempool.
         DIFFERENT_WITNESS, //!> Not validated. A same-txid-different-witness tx (see m_other_wtxid) already exists in the mempool and was not replaced.
     };
     /** Result type. Present in all MempoolAcceptResults. */
@@ -159,13 +159,15 @@ struct MempoolAcceptResult {
     /** The wtxid of the transaction in the mempool which has the same txid but different witness. */
     const std::optional<Wtxid> m_other_wtxid;
 
-    static MempoolAcceptResult Failure(TxValidationState state) {
+    static MempoolAcceptResult Failure(TxValidationState state)
+    {
         return MempoolAcceptResult(state);
     }
 
     static MempoolAcceptResult FeeFailure(TxValidationState state,
                                           CFeeRate effective_feerate,
-                                          const std::vector<Wtxid>& wtxids_fee_calculations) {
+                                          const std::vector<Wtxid>& wtxids_fee_calculations)
+    {
         return MempoolAcceptResult(state, effective_feerate, wtxids_fee_calculations);
     }
 
@@ -173,26 +175,30 @@ struct MempoolAcceptResult {
                                        int64_t vsize,
                                        CAmount fees,
                                        CFeeRate effective_feerate,
-                                       const std::vector<Wtxid>& wtxids_fee_calculations) {
+                                       const std::vector<Wtxid>& wtxids_fee_calculations)
+    {
         return MempoolAcceptResult(std::move(replaced_txns), vsize, fees,
                                    effective_feerate, wtxids_fee_calculations);
     }
 
-    static MempoolAcceptResult MempoolTx(int64_t vsize, CAmount fees) {
+    static MempoolAcceptResult MempoolTx(int64_t vsize, CAmount fees)
+    {
         return MempoolAcceptResult(vsize, fees);
     }
 
-    static MempoolAcceptResult MempoolTxDifferentWitness(const Wtxid& other_wtxid) {
+    static MempoolAcceptResult MempoolTxDifferentWitness(const Wtxid& other_wtxid)
+    {
         return MempoolAcceptResult(other_wtxid);
     }
 
-// Private constructors. Use static methods MempoolAcceptResult::Success, etc. to construct.
+    // Private constructors. Use static methods MempoolAcceptResult::Success, etc. to construct.
 private:
     /** Constructor for failure case */
     explicit MempoolAcceptResult(TxValidationState state)
-        : m_result_type(ResultType::INVALID), m_state(state) {
-            Assume(!state.IsValid()); // Can be invalid or error
-        }
+        : m_result_type(ResultType::INVALID), m_state(state)
+    {
+        Assume(!state.IsValid()); // Can be invalid or error
+    }
 
     /** Constructor for success case */
     explicit MempoolAcceptResult(std::list<CTransactionRef>&& replaced_txns,
@@ -201,20 +207,20 @@ private:
                                  CFeeRate effective_feerate,
                                  const std::vector<Wtxid>& wtxids_fee_calculations)
         : m_result_type(ResultType::VALID),
-        m_replaced_transactions(std::move(replaced_txns)),
-        m_vsize{vsize},
-        m_base_fees(fees),
-        m_effective_feerate(effective_feerate),
-        m_wtxids_fee_calculations(wtxids_fee_calculations) {}
+          m_replaced_transactions(std::move(replaced_txns)),
+          m_vsize{vsize},
+          m_base_fees(fees),
+          m_effective_feerate(effective_feerate),
+          m_wtxids_fee_calculations(wtxids_fee_calculations) {}
 
     /** Constructor for fee-related failure case */
     explicit MempoolAcceptResult(TxValidationState state,
                                  CFeeRate effective_feerate,
                                  const std::vector<Wtxid>& wtxids_fee_calculations)
         : m_result_type(ResultType::INVALID),
-        m_state(state),
-        m_effective_feerate(effective_feerate),
-        m_wtxids_fee_calculations(wtxids_fee_calculations) {}
+          m_state(state),
+          m_effective_feerate(effective_feerate),
+          m_wtxids_fee_calculations(wtxids_fee_calculations) {}
 
     /** Constructor for already-in-mempool case. It wouldn't replace any transactions. */
     explicit MempoolAcceptResult(int64_t vsize, CAmount fees)
@@ -226,17 +232,16 @@ private:
 };
 
 /**
-* Validation result for package mempool acceptance.
-*/
-struct PackageMempoolAcceptResult
-{
+ * Validation result for package mempool acceptance.
+ */
+struct PackageMempoolAcceptResult {
     PackageValidationState m_state;
     /**
-    * Map from wtxid to finished MempoolAcceptResults. The client is responsible
-    * for keeping track of the transaction objects themselves. If a result is not
-    * present, it means validation was unfinished for that transaction. If there
-    * was a package-wide error (see result in m_state), m_tx_results will be empty.
-    */
+     * Map from wtxid to finished MempoolAcceptResults. The client is responsible
+     * for keeping track of the transaction objects themselves. If a result is not
+     * present, it means validation was unfinished for that transaction. If there
+     * was a package-wide error (see result in m_state), m_tx_results will be empty.
+     */
     std::map<Wtxid, MempoolAcceptResult> m_tx_results;
 
     explicit PackageMempoolAcceptResult(PackageValidationState state,
@@ -249,7 +254,7 @@ struct PackageMempoolAcceptResult
 
     /** Constructor to create a PackageMempoolAcceptResult from a single MempoolAcceptResult */
     explicit PackageMempoolAcceptResult(const Wtxid& wtxid, const MempoolAcceptResult& result)
-        : m_tx_results{ {wtxid, result} } {}
+        : m_tx_results{{wtxid, result}} {}
 };
 
 /**
@@ -267,22 +272,22 @@ struct PackageMempoolAcceptResult
  * @returns a MempoolAcceptResult indicating whether the transaction was accepted/rejected with reason.
  */
 MempoolAcceptResult AcceptToMemoryPool(Chainstate& active_chainstate, const CTransactionRef& tx,
-                                       int64_t accept_time, bool bypass_limits, bool test_accept, bool is_preconf=false)
+                                       int64_t accept_time, bool bypass_limits, bool test_accept, bool is_preconf = false)
     EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /**
-* Validate (and maybe submit) a package to the mempool. See doc/policy/packages.md for full details
-* on package validation rules.
-* @param[in]    test_accept         When true, run validation checks but don't submit to mempool.
-* @param[in]    client_maxfeerate    If exceeded by an individual transaction, rest of (sub)package evaluation is aborted.
-*                                   Only for sanity checks against local submission of transactions.
-* @returns a PackageMempoolAcceptResult which includes a MempoolAcceptResult for each transaction.
-* If a transaction fails, validation will exit early and some results may be missing. It is also
-* possible for the package to be partially submitted.
-*/
+ * Validate (and maybe submit) a package to the mempool. See doc/policy/packages.md for full details
+ * on package validation rules.
+ * @param[in]    test_accept         When true, run validation checks but don't submit to mempool.
+ * @param[in]    client_maxfeerate    If exceeded by an individual transaction, rest of (sub)package evaluation is aborted.
+ *                                   Only for sanity checks against local submission of transactions.
+ * @returns a PackageMempoolAcceptResult which includes a MempoolAcceptResult for each transaction.
+ * If a transaction fails, validation will exit early and some results may be missing. It is also
+ * possible for the package to be partially submitted.
+ */
 PackageMempoolAcceptResult ProcessNewPackage(Chainstate& active_chainstate, CTxMemPool& pool,
-                                                   const Package& txns, bool test_accept, const std::optional<CFeeRate>& client_maxfeerate)
-                                                   EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+                                             const Package& txns, bool test_accept, const std::optional<CFeeRate>& client_maxfeerate)
+    EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /* Mempool validation helper functions */
 
@@ -334,16 +339,15 @@ class CScriptCheck
 {
 private:
     CTxOut m_tx_out;
-    const CTransaction *ptxTo;
+    const CTransaction* ptxTo;
     unsigned int nIn;
     unsigned int nFlags;
     bool cacheStore;
-    PrecomputedTransactionData *txdata;
+    PrecomputedTransactionData* txdata;
     SignatureCache* m_signature_cache;
 
 public:
-    CScriptCheck(const CTxOut& outIn, const CTransaction& txToIn, SignatureCache& signature_cache, unsigned int nInIn, unsigned int nFlagsIn, bool cacheIn, PrecomputedTransactionData* txdataIn) :
-        m_tx_out(outIn), ptxTo(&txToIn), nIn(nInIn), nFlags(nFlagsIn), cacheStore(cacheIn), txdata(txdataIn), m_signature_cache(&signature_cache) { }
+    CScriptCheck(const CTxOut& outIn, const CTransaction& txToIn, SignatureCache& signature_cache, unsigned int nInIn, unsigned int nFlagsIn, bool cacheIn, PrecomputedTransactionData* txdataIn) : m_tx_out(outIn), ptxTo(&txToIn), nIn(nInIn), nFlags(nFlagsIn), cacheStore(cacheIn), txdata(txdataIn), m_signature_cache(&signature_cache) {}
 
     CScriptCheck(const CScriptCheck&) = delete;
     CScriptCheck& operator=(const CScriptCheck&) = delete;
@@ -453,8 +457,7 @@ public:
         int nCheckDepth) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 };
 
-enum DisconnectResult
-{
+enum DisconnectResult {
     DISCONNECT_OK,      // All good.
     DISCONNECT_UNCLEAN, // Rolled back, but UTXO set was inconsistent with block.
     DISCONNECT_FAILED   // Something else went wrong.
@@ -464,7 +467,7 @@ class ConnectTrace;
 
 /** @see Chainstate::FlushStateToDisk */
 inline constexpr std::array FlushStateModeNames{"NONE", "IF_NEEDED", "PERIODIC", "ALWAYS"};
-enum class FlushStateMode: uint8_t {
+enum class FlushStateMode : uint8_t {
     NONE,
     IF_NEEDED,
     PERIODIC,
@@ -480,8 +483,8 @@ enum class FlushStateMode: uint8_t {
  * ultimately falling back on cache misses to the canonical store of UTXOs on
  * disk, `m_dbview`.
  */
-class CoinsViews {
-
+class CoinsViews
+{
 public:
     //! The lowest level of the CoinsViews cache hierarchy sits in a leveldb database on disk.
     //! All unspent coins reside in this store.
@@ -506,8 +509,7 @@ public:
     void InitCache() EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 };
 
-enum class CoinsCacheSizeState
-{
+enum class CoinsCacheSizeState {
     //! The coins cache is in immediate need of a flush.
     CRITICAL = 2,
     //! The cache is at >= 90% capacity.
@@ -561,19 +563,18 @@ protected:
     //!
     //! In the unlikely case that the snapshot chainstate is found to be invalid, this
     //! is set to true on the snapshot chainstate.
-    bool m_disabled GUARDED_BY(::cs_main) {false};
+    bool m_disabled GUARDED_BY(::cs_main){false};
 
     //! Cached result of LookupBlockIndex(*m_from_snapshot_blockhash)
     mutable const CBlockIndex* m_cached_snapshot_base GUARDED_BY(::cs_main){nullptr};
 
 public:
-
     std::unique_ptr<CoordinateAssetDB> passettree;
 
     std::unique_ptr<SignedBlocksDB> psignedblocktree;
 
     bool isAssetPrune;
-    
+
     //! Reference to a BlockManager instance which itself is shared across all
     //! Chainstate instances.
     node::BlockManager& m_blockman;
@@ -664,7 +665,6 @@ public:
     }
 
     CCoinsViewCache& UpdatedCoinsTip(CCoinsViewCache& view, int blockHeight) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
-
 
 
     //! @returns A reference to the on-disk UTXO set database.
@@ -759,7 +759,7 @@ public:
         BlockValidationState& state,
         std::shared_ptr<const CBlock> pblock = nullptr)
         EXCLUSIVE_LOCKS_REQUIRED(!m_chainstate_mutex)
-        LOCKS_EXCLUDED(::cs_main);
+            LOCKS_EXCLUDED(::cs_main);
 
     // Block (dis)connection on a given view:
     DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* pindex, CCoinsViewCache& view)
@@ -778,12 +778,12 @@ public:
      */
     bool PreciousBlock(BlockValidationState& state, CBlockIndex* pindex)
         EXCLUSIVE_LOCKS_REQUIRED(!m_chainstate_mutex)
-        LOCKS_EXCLUDED(::cs_main);
+            LOCKS_EXCLUDED(::cs_main);
 
     /** Mark a block as invalid. */
     bool InvalidateBlock(BlockValidationState& state, CBlockIndex* pindex)
         EXCLUSIVE_LOCKS_REQUIRED(!m_chainstate_mutex)
-        LOCKS_EXCLUDED(::cs_main);
+            LOCKS_EXCLUDED(::cs_main);
 
     /** Set invalidity status to all descendants of a block */
     void SetBlockFailureFlags(CBlockIndex* pindex) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
@@ -955,7 +955,7 @@ private:
 
     //! Points to either the ibd or snapshot chainstate; indicates our
     //! most-work chain.
-    Chainstate* m_active_chainstate GUARDED_BY(::cs_main) {nullptr};
+    Chainstate* m_active_chainstate GUARDED_BY(::cs_main){nullptr};
 
     CBlockIndex* m_best_invalid GUARDED_BY(::cs_main){nullptr};
 
@@ -998,7 +998,8 @@ private:
     //! This is false when a background validation chainstate has completed its
     //! validation of an assumed-valid chainstate, or when a snapshot
     //! chainstate has been found to be invalid.
-    bool IsUsable(const Chainstate* const cs) const EXCLUSIVE_LOCKS_REQUIRED(::cs_main) {
+    bool IsUsable(const Chainstate* const cs) const EXCLUSIVE_LOCKS_REQUIRED(::cs_main)
+    {
         return cs && !cs->m_disabled;
     }
 
@@ -1151,12 +1152,14 @@ public:
     CBlockIndex* ActiveTip() const EXCLUSIVE_LOCKS_REQUIRED(GetMutex()) { return ActiveChain().Tip(); }
 
     //! The state of a background sync (for net processing)
-    bool BackgroundSyncInProgress() const EXCLUSIVE_LOCKS_REQUIRED(GetMutex()) {
+    bool BackgroundSyncInProgress() const EXCLUSIVE_LOCKS_REQUIRED(GetMutex())
+    {
         return IsUsable(m_snapshot_chainstate.get()) && IsUsable(m_ibd_chainstate.get());
     }
 
     //! The tip of the background sync chain
-    const CBlockIndex* GetBackgroundSyncTip() const EXCLUSIVE_LOCKS_REQUIRED(GetMutex()) {
+    const CBlockIndex* GetBackgroundSyncTip() const EXCLUSIVE_LOCKS_REQUIRED(GetMutex())
+    {
         return BackgroundSyncInProgress() ? m_ibd_chainstate->m_chain.Tip() : nullptr;
     }
 
@@ -1289,7 +1292,7 @@ public:
      * @param[in]  tx              The transaction to submit for mempool acceptance.
      * @param[in]  test_accept     When true, run validation checks but don't submit to mempool.
      */
-    [[nodiscard]] MempoolAcceptResult ProcessTransaction(const CTransactionRef& tx, bool test_accept=false, bool is_preconf=false)
+    [[nodiscard]] MempoolAcceptResult ProcessTransaction(const CTransactionRef& tx, bool test_accept = false, bool is_preconf = false)
         EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
     //! Load the block tree and coins database from disk, initializing state if we're running with -reindex
@@ -1367,19 +1370,19 @@ public:
 };
 
 /** Deployment* info via ChainstateManager */
-template<typename DEP>
+template <typename DEP>
 bool DeploymentActiveAfter(const CBlockIndex* pindexPrev, const ChainstateManager& chainman, DEP dep)
 {
     return DeploymentActiveAfter(pindexPrev, chainman.GetConsensus(), dep, chainman.m_versionbitscache);
 }
 
-template<typename DEP>
+template <typename DEP>
 bool DeploymentActiveAt(const CBlockIndex& index, const ChainstateManager& chainman, DEP dep)
 {
     return DeploymentActiveAt(index, chainman.GetConsensus(), dep, chainman.m_versionbitscache);
 }
 
-template<typename DEP>
+template <typename DEP>
 bool DeploymentEnabled(const ChainstateManager& chainman, DEP dep)
 {
     return DeploymentEnabled(chainman.GetConsensus(), dep);

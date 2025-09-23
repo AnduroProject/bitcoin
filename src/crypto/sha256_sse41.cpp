@@ -19,9 +19,21 @@ __m128i inline Add(__m128i x, __m128i y) { return _mm_add_epi32(x, y); }
 __m128i inline Add(__m128i x, __m128i y, __m128i z) { return Add(Add(x, y), z); }
 __m128i inline Add(__m128i x, __m128i y, __m128i z, __m128i w) { return Add(Add(x, y), Add(z, w)); }
 __m128i inline Add(__m128i x, __m128i y, __m128i z, __m128i w, __m128i v) { return Add(Add(x, y, z), Add(w, v)); }
-__m128i inline Inc(__m128i& x, __m128i y) { x = Add(x, y); return x; }
-__m128i inline Inc(__m128i& x, __m128i y, __m128i z) { x = Add(x, y, z); return x; }
-__m128i inline Inc(__m128i& x, __m128i y, __m128i z, __m128i w) { x = Add(x, y, z, w); return x; }
+__m128i inline Inc(__m128i& x, __m128i y)
+{
+    x = Add(x, y);
+    return x;
+}
+__m128i inline Inc(__m128i& x, __m128i y, __m128i z)
+{
+    x = Add(x, y, z);
+    return x;
+}
+__m128i inline Inc(__m128i& x, __m128i y, __m128i z, __m128i w)
+{
+    x = Add(x, y, z, w);
+    return x;
+}
 __m128i inline Xor(__m128i x, __m128i y) { return _mm_xor_si128(x, y); }
 __m128i inline Xor(__m128i x, __m128i y, __m128i z) { return Xor(Xor(x, y), z); }
 __m128i inline Or(__m128i x, __m128i y) { return _mm_or_si128(x, y); }
@@ -45,17 +57,18 @@ void ALWAYS_INLINE Round(__m128i a, __m128i b, __m128i c, __m128i& d, __m128i e,
     h = Add(t1, t2);
 }
 
-__m128i inline Read4(const unsigned char* chunk, int offset) {
+__m128i inline Read4(const unsigned char* chunk, int offset)
+{
     __m128i ret = _mm_set_epi32(
         ReadLE32(chunk + 0 + offset),
         ReadLE32(chunk + 64 + offset),
         ReadLE32(chunk + 128 + offset),
-        ReadLE32(chunk + 192 + offset)
-    );
+        ReadLE32(chunk + 192 + offset));
     return _mm_shuffle_epi8(ret, _mm_set_epi32(0x0C0D0E0FUL, 0x08090A0BUL, 0x04050607UL, 0x00010203UL));
 }
 
-void inline Write4(unsigned char* out, int offset, __m128i v) {
+void inline Write4(unsigned char* out, int offset, __m128i v)
+{
     v = _mm_shuffle_epi8(v, _mm_set_epi32(0x0C0D0E0FUL, 0x08090A0BUL, 0x04050607UL, 0x00010203UL));
     WriteLE32(out + 0 + offset, _mm_extract_epi32(v, 3));
     WriteLE32(out + 32 + offset, _mm_extract_epi32(v, 2));
@@ -63,7 +76,7 @@ void inline Write4(unsigned char* out, int offset, __m128i v) {
     WriteLE32(out + 96 + offset, _mm_extract_epi32(v, 0));
 }
 
-}
+} // namespace
 
 void Transform_4way(unsigned char* out, const unsigned char* in)
 {
@@ -316,6 +329,6 @@ void Transform_4way(unsigned char* out, const unsigned char* in)
     Write4(out, 28, Add(h, K(0x5be0cd19ul)));
 }
 
-}
+} // namespace sha256d64_sse41
 
 #endif

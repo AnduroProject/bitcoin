@@ -96,8 +96,7 @@ using TestBitSet = BitSet<32>;
  *   while a bitmask would require ~N/2 bits per transaction.
  */
 
-struct DepGraphFormatter
-{
+struct DepGraphFormatter {
     /** Convert x>=0 to 2x (even), x<0 to -2x-1 (odd). */
     [[maybe_unused]] static uint64_t SignedToUnsigned(int64_t x) noexcept
     {
@@ -124,7 +123,8 @@ struct DepGraphFormatter
         /** Construct a topological order to serialize the transactions in. */
         std::vector<DepGraphIndex> topo_order;
         topo_order.reserve(depgraph.TxCount());
-        for (auto i : depgraph.Positions()) topo_order.push_back(i);
+        for (auto i : depgraph.Positions())
+            topo_order.push_back(i);
         std::sort(topo_order.begin(), topo_order.end(), [&](DepGraphIndex a, DepGraphIndex b) {
             auto anc_a = depgraph.Ancestors(a).Count(), anc_b = depgraph.Ancestors(b).Count();
             if (anc_a != anc_b) return anc_a < anc_b;
@@ -197,9 +197,9 @@ struct DepGraphFormatter
 
         // Read transactions in topological order.
         while (true) {
-            FeeFrac new_feerate; //!< The new transaction's fee and size.
+            FeeFrac new_feerate;   //!< The new transaction's fee and size.
             SetType new_ancestors; //!< The new transaction's ancestors (excluding itself).
-            uint64_t diff{0}; //!< How many potential parents/insertions we have to skip.
+            uint64_t diff{0};      //!< How many potential parents/insertions we have to skip.
             bool read_error{false};
             try {
                 // Read size. Size 0 signifies the end of the DepGraph.
@@ -263,7 +263,8 @@ struct DepGraphFormatter
                 // invalid input.
                 diff %= (SetType::Size() - reordering.size());
                 SetType holes = SetType::Fill(SetType::Size());
-                for (auto pos : reordering) holes.Reset(pos);
+                for (auto pos : reordering)
+                    holes.Reset(pos);
                 for (auto pos : holes) {
                     if (diff == 0) {
                         reordering.push_back(pos);
@@ -282,7 +283,7 @@ struct DepGraphFormatter
 };
 
 /** Perform a sanity/consistency check on a DepGraph. */
-template<typename SetType>
+template <typename SetType>
 void SanityCheck(const DepGraph<SetType>& depgraph)
 {
     // Verify Positions and PositionRange consistency.
@@ -358,7 +359,8 @@ void SanityCheck(const DepGraph<SetType>& depgraph)
             // Iteratively add parents of all transactions in the ancestor set to itself.
             while (true) {
                 const auto old_ancestors = ancestors;
-                for (auto j : ancestors) ancestors |= parents[j];
+                for (auto j : ancestors)
+                    ancestors |= parents[j];
                 // Stop when no more changes are being made.
                 if (old_ancestors == ancestors) break;
             }
@@ -369,7 +371,8 @@ void SanityCheck(const DepGraph<SetType>& depgraph)
             // Iteratively add children of all transactions in the descendant set to itself.
             while (true) {
                 const auto old_descendants = descendants;
-                for (auto j : descendants) descendants |= children[j];
+                for (auto j : descendants)
+                    descendants |= children[j];
                 // Stop when no more changes are being made.
                 if (old_descendants == descendants) break;
             }
@@ -379,7 +382,7 @@ void SanityCheck(const DepGraph<SetType>& depgraph)
 }
 
 /** Perform a sanity check on a linearization. */
-template<typename SetType>
+template <typename SetType>
 void SanityCheck(const DepGraph<SetType>& depgraph, std::span<const DepGraphIndex> linearization)
 {
     // Check completeness.
@@ -411,8 +414,7 @@ inline uint64_t MaxOptimalLinearizationIters(DepGraphIndex cluster_count)
         316629, 447712, 633086, 895241, 1265980, 1790280, 2531747, 3580335, 5063259, 7160424,
         10126257, 14320575, 20252230, 28640853, 40504150, 57281380, 81007962, 114562410, 162015557,
         229124437, 324030718, 458248463, 648061011, 916496483, 1296121563, 1832992493, 2592242635,
-        3665984477, 5184484745, 7331968412, 10368968930, 14663936244
-    };
+        3665984477, 5184484745, 7331968412, 10368968930, 14663936244};
     assert(cluster_count < sizeof(MAX_OPTIMAL_ITERS) / sizeof(MAX_OPTIMAL_ITERS[0]));
     return MAX_OPTIMAL_ITERS[cluster_count];
 }

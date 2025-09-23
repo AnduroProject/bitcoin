@@ -85,7 +85,7 @@ bool IsWellFormedPackage(const Package& txns, PackageValidationState& state, boo
     }
 
     const int64_t total_weight = std::accumulate(txns.cbegin(), txns.cend(), 0,
-                               [](int64_t sum, const auto& tx) { return sum + GetTransactionWeight(*tx); });
+                                                 [](int64_t sum, const auto& tx) { return sum + GetTransactionWeight(*tx); });
     // If the package only contains 1 tx, it's better to report the policy violation on individual tx weight.
     if (package_count > 1 && total_weight > MAX_PACKAGE_WEIGHT) {
         return state.Invalid(PackageValidationResult::PCKG_POLICY, "package-too-large");
@@ -118,7 +118,7 @@ bool IsWellFormedPackage(const Package& txns, PackageValidationState& state, boo
 
 bool IsChildWithParents(const Package& package)
 {
-    assert(std::all_of(package.cbegin(), package.cend(), [](const auto& tx){return tx != nullptr;}));
+    assert(std::all_of(package.cbegin(), package.cend(), [](const auto& tx) { return tx != nullptr; }));
     if (package.size() < 2) return false;
 
     // The package is expected to be sorted, so the last transaction is the child.
@@ -153,7 +153,7 @@ uint256 GetPackageHash(const std::vector<CTransactionRef>& transactions)
     // Create a vector of the wtxids.
     std::vector<Wtxid> wtxids_copy;
     std::transform(transactions.cbegin(), transactions.cend(), std::back_inserter(wtxids_copy),
-        [](const auto& tx){ return tx->GetWitnessHash(); });
+                   [](const auto& tx) { return tx->GetWitnessHash(); });
 
     // Sort in ascending order
     std::sort(wtxids_copy.begin(), wtxids_copy.end(), [](const auto& lhs, const auto& rhs) {

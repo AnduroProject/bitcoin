@@ -170,18 +170,18 @@ struct TestChain100Setup : public TestingSetup {
     void mineBlocks(int num_blocks);
 
     /**
-    * Create a transaction, optionally setting the fee based on the feerate.
-    * Note: The feerate may not be met exactly depending on whether the signatures can have different sizes.
-    *
-    * @param input_transactions   The transactions to spend
-    * @param inputs               Outpoints with which to construct transaction vin.
-    * @param input_height         The height of the block that included the input transactions.
-    * @param input_signing_keys   The keys to spend the input transactions.
-    * @param outputs              Transaction vout.
-    * @param feerate              The feerate the transaction should pay.
-    * @param fee_output           The index of the output to take the fee from.
-    * @return The transaction and the fee it pays
-    */
+     * Create a transaction, optionally setting the fee based on the feerate.
+     * Note: The feerate may not be met exactly depending on whether the signatures can have different sizes.
+     *
+     * @param input_transactions   The transactions to spend
+     * @param inputs               Outpoints with which to construct transaction vin.
+     * @param input_height         The height of the block that included the input transactions.
+     * @param input_signing_keys   The keys to spend the input transactions.
+     * @param outputs              Transaction vout.
+     * @param feerate              The feerate the transaction should pay.
+     * @param fee_output           The index of the output to take the fee from.
+     * @return The transaction and the fee it pays
+     */
     std::pair<CMutableTransaction, CAmount> CreateValidTransaction(const std::vector<CTransactionRef>& input_transactions,
                                                                    const std::vector<COutPoint>& inputs,
                                                                    int input_height,
@@ -250,7 +250,7 @@ struct TestChain100Setup : public TestingSetup {
     void MockMempoolMinFee(const CFeeRate& target_feerate);
 
     std::vector<CTransactionRef> m_coinbase_txns; // For convenience, coinbase transactions
-    CKey coinbaseKey; // private/public key needed to spend coinbase transactions
+    CKey coinbaseKey;                             // private/public key needed to spend coinbase transactions
 };
 
 /**
@@ -274,7 +274,8 @@ CBlock getBlock13b8a();
 
 // Make types usable in BOOST_CHECK_* @{
 namespace std {
-template <typename T> requires std::is_enum_v<T>
+template <typename T>
+    requires std::is_enum_v<T>
 inline std::ostream& operator<<(std::ostream& os, const T& e)
 {
     return os << static_cast<std::underlying_type_t<T>>(e);
@@ -283,8 +284,7 @@ inline std::ostream& operator<<(std::ostream& os, const T& e)
 template <typename T>
 inline std::ostream& operator<<(std::ostream& os, const std::optional<T>& v)
 {
-    return v ? os << *v
-             : os << "std::nullopt";
+    return v ? os << *v : os << "std::nullopt";
 }
 } // namespace std
 

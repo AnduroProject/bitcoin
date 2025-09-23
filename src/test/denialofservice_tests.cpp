@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(outbound_slow_chain_eviction)
 
     int64_t nStartTime = GetTime();
     // Wait 21 minutes
-    SetMockTime(nStartTime+21*60);
+    SetMockTime(nStartTime + 21 * 60);
     BOOST_CHECK(peerman.SendMessages(&dummyNode1)); // should result in getheaders
     {
         LOCK(dummyNode1.cs_vSend);
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(outbound_slow_chain_eviction)
         BOOST_CHECK(!to_send.empty());
     }
     // Wait 3 more minutes
-    SetMockTime(nStartTime+24*60);
+    SetMockTime(nStartTime + 24 * 60);
     BOOST_CHECK(peerman.SendMessages(&dummyNode1)); // should result in disconnect
     BOOST_CHECK(dummyNode1.fDisconnect == true);
 
@@ -107,36 +107,36 @@ BOOST_AUTO_TEST_CASE(outbound_slow_chain_eviction)
 }
 
 struct OutboundTest : TestingSetup {
-void AddRandomOutboundPeer(NodeId& id, std::vector<CNode*>& vNodes, PeerManager& peerLogic, ConnmanTestMsg& connman, ConnectionType connType, bool onion_peer = false)
-{
-    CAddress addr;
+    void AddRandomOutboundPeer(NodeId& id, std::vector<CNode*>& vNodes, PeerManager& peerLogic, ConnmanTestMsg& connman, ConnectionType connType, bool onion_peer = false)
+    {
+        CAddress addr;
 
-    if (onion_peer) {
-        auto tor_addr{m_rng.randbytes(ADDR_TORV3_SIZE)};
-        BOOST_REQUIRE(addr.SetSpecial(OnionToString(tor_addr)));
+        if (onion_peer) {
+            auto tor_addr{m_rng.randbytes(ADDR_TORV3_SIZE)};
+            BOOST_REQUIRE(addr.SetSpecial(OnionToString(tor_addr)));
+        }
+
+        while (!addr.IsRoutable()) {
+            addr = CAddress(ip(m_rng.randbits(32)), NODE_NONE);
+        }
+
+        vNodes.emplace_back(new CNode{id++,
+                                      /*sock=*/nullptr,
+                                      addr,
+                                      /*nKeyedNetGroupIn=*/0,
+                                      /*nLocalHostNonceIn=*/0,
+                                      CAddress(),
+                                      /*addrNameIn=*/"",
+                                      connType,
+                                      /*inbound_onion=*/false});
+        CNode& node = *vNodes.back();
+        node.SetCommonVersion(PROTOCOL_VERSION);
+
+        peerLogic.InitializeNode(node, ServiceFlags(NODE_NETWORK | NODE_WITNESS));
+        node.fSuccessfullyConnected = true;
+
+        connman.AddTestNode(node);
     }
-
-    while (!addr.IsRoutable()) {
-        addr = CAddress(ip(m_rng.randbits(32)), NODE_NONE);
-    }
-
-    vNodes.emplace_back(new CNode{id++,
-                                  /*sock=*/nullptr,
-                                  addr,
-                                  /*nKeyedNetGroupIn=*/0,
-                                  /*nLocalHostNonceIn=*/0,
-                                  CAddress(),
-                                  /*addrNameIn=*/"",
-                                  connType,
-                                  /*inbound_onion=*/false});
-    CNode &node = *vNodes.back();
-    node.SetCommonVersion(PROTOCOL_VERSION);
-
-    peerLogic.InitializeNode(node, ServiceFlags(NODE_NETWORK | NODE_WITNESS));
-    node.fSuccessfullyConnected = true;
-
-    connman.AddTestNode(node);
-}
 }; // struct OutboundTest
 
 BOOST_FIXTURE_TEST_CASE(block_relay_only_eviction, OutboundTest)

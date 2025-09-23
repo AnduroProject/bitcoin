@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <netaddress.h>
 #include <net.h>
+#include <netaddress.h>
 #include <test/util/net.h>
 #include <test/util/setup_common.h>
 
@@ -73,8 +73,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = NET_IPV4;
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 4, 5},
-        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11},
-        random_context));
+        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11}, random_context));
 
     // Verify in the opposite direction.
     BOOST_CHECK(IsProtected(
@@ -84,8 +83,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = NET_IPV6;
         },
         /*protected_peer_ids=*/{6, 7, 8, 9, 10, 11},
-        /*unprotected_peer_ids=*/{0, 1, 2, 3, 4, 5},
-        random_context));
+        /*unprotected_peer_ids=*/{0, 1, 2, 3, 4, 5}, random_context));
 
     // Test protection of onion, localhost, and I2P peers...
 
@@ -97,8 +95,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 3 || c.id == 8 || c.id == 9) ? NET_ONION : NET_IPV4;
         },
         /*protected_peer_ids=*/{3, 8, 9},
-        /*unprotected_peer_ids=*/{},
-        random_context));
+        /*unprotected_peer_ids=*/{}, random_context));
 
     // Expect 1/4 onion peers and 1/4 of the other peers to be protected,
     // sorted by longest uptime (lowest m_connected), if no localhost, I2P or CJDNS peers.
@@ -109,8 +106,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 3 || c.id > 7) ? NET_ONION : NET_IPV6;
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 8, 9},
-        /*unprotected_peer_ids=*/{4, 5, 6, 7, 10, 11},
-        random_context));
+        /*unprotected_peer_ids=*/{4, 5, 6, 7, 10, 11}, random_context));
 
     // Expect 1/4 localhost peers to be protected from eviction,
     // if no onion, I2P, or CJDNS peers.
@@ -120,8 +116,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = NET_IPV4;
         },
         /*protected_peer_ids=*/{1, 9, 11},
-        /*unprotected_peer_ids=*/{},
-        random_context));
+        /*unprotected_peer_ids=*/{}, random_context));
 
     // Expect 1/4 localhost peers and 1/4 of the other peers to be protected,
     // sorted by longest uptime (lowest m_connected), if no onion, I2P, or CJDNS peers.
@@ -132,8 +127,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = NET_IPV6;
         },
         /*protected_peer_ids=*/{0, 1, 2, 7, 8, 9},
-        /*unprotected_peer_ids=*/{3, 4, 5, 6, 10, 11},
-        random_context));
+        /*unprotected_peer_ids=*/{3, 4, 5, 6, 10, 11}, random_context));
 
     // Expect 1/4 I2P peers to be protected from eviction,
     // if no onion, localhost, or CJDNS peers.
@@ -143,8 +137,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 2 || c.id == 7 || c.id == 10) ? NET_I2P : NET_IPV4;
         },
         /*protected_peer_ids=*/{2, 7, 10},
-        /*unprotected_peer_ids=*/{},
-        random_context));
+        /*unprotected_peer_ids=*/{}, random_context));
 
     // Expect 1/4 I2P peers and 1/4 of the other peers to be protected, sorted
     // by longest uptime (lowest m_connected), if no onion, localhost, or CJDNS peers.
@@ -155,8 +148,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 4 || c.id > 8) ? NET_I2P : NET_IPV6;
         },
         /*protected_peer_ids=*/{0, 1, 2, 4, 9, 10},
-        /*unprotected_peer_ids=*/{3, 5, 6, 7, 8, 11},
-        random_context));
+        /*unprotected_peer_ids=*/{3, 5, 6, 7, 8, 11}, random_context));
 
     // Expect 1/4 CJDNS peers to be protected from eviction,
     // if no onion, localhost, or I2P peers.
@@ -166,8 +158,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 2 || c.id == 7 || c.id == 10) ? NET_CJDNS : NET_IPV4;
         },
         /*protected_peer_ids=*/{2, 7, 10},
-        /*unprotected_peer_ids=*/{},
-        random_context));
+        /*unprotected_peer_ids=*/{}, random_context));
 
     // Expect 1/4 CJDNS peers and 1/4 of the other peers to be protected, sorted
     // by longest uptime (lowest m_connected), if no onion, localhost, or I2P peers.
@@ -178,8 +169,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 4 || c.id > 8) ? NET_CJDNS : NET_IPV6;
         },
         /*protected_peer_ids=*/{0, 1, 2, 4, 9, 10},
-        /*unprotected_peer_ids=*/{3, 5, 6, 7, 8, 11},
-        random_context));
+        /*unprotected_peer_ids=*/{3, 5, 6, 7, 8, 11}, random_context));
 
     // Tests with 2 networks...
 
@@ -193,8 +183,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 3) ? NET_ONION : NET_IPV4;
         },
         /*protected_peer_ids=*/{0, 4},
-        /*unprotected_peer_ids=*/{1, 2},
-        random_context));
+        /*unprotected_peer_ids=*/{1, 2}, random_context));
 
     // Combined test: expect having 1 localhost and 1 onion peer out of 7 to
     // protect 1 localhost, 0 onion, and 2 other peers (3 total), sorted by
@@ -206,8 +195,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 5) ? NET_ONION : NET_IPV4;
         },
         /*protected_peer_ids=*/{0, 1, 6},
-        /*unprotected_peer_ids=*/{2, 3, 4, 5},
-        random_context));
+        /*unprotected_peer_ids=*/{2, 3, 4, 5}, random_context));
 
     // Combined test: expect having 1 localhost and 1 onion peer out of 8 to
     // protect protect 1 localhost, 1 onion and 2 other peers (4 total), sorted
@@ -219,8 +207,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 5) ? NET_ONION : NET_IPV4;
         },
         /*protected_peer_ids=*/{0, 1, 5, 6},
-        /*unprotected_peer_ids=*/{2, 3, 4, 7},
-        random_context));
+        /*unprotected_peer_ids=*/{2, 3, 4, 7}, random_context));
 
     // Combined test: expect having 3 localhost and 3 onion peers out of 12 to
     // protect 2 localhost and 1 onion, plus 3 other peers, sorted by longest
@@ -232,8 +219,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 7 || c.id == 8 || c.id == 10) ? NET_ONION : NET_IPV6;
         },
         /*protected_peer_ids=*/{0, 1, 2, 6, 7, 9},
-        /*unprotected_peer_ids=*/{3, 4, 5, 8, 10, 11},
-        random_context));
+        /*unprotected_peer_ids=*/{3, 4, 5, 8, 10, 11}, random_context));
 
     // Combined test: expect having 4 localhost and 1 onion peer out of 12 to
     // protect 2 localhost and 1 onion, plus 3 other peers, sorted by longest uptime.
@@ -244,8 +230,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 10) ? NET_ONION : NET_IPV4;
         },
         /*protected_peer_ids=*/{0, 1, 2, 5, 6, 10},
-        /*unprotected_peer_ids=*/{3, 4, 7, 8, 9, 11},
-        random_context));
+        /*unprotected_peer_ids=*/{3, 4, 7, 8, 9, 11}, random_context));
 
     // Combined test: expect having 4 localhost and 2 onion peers out of 16 to
     // protect 2 localhost and 2 onions, plus 4 other peers, sorted by longest uptime.
@@ -256,8 +241,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 8 || c.id == 10) ? NET_ONION : NET_IPV6;
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 6, 8, 9, 10},
-        /*unprotected_peer_ids=*/{4, 5, 7, 11, 12, 13, 14, 15},
-        random_context));
+        /*unprotected_peer_ids=*/{4, 5, 7, 11, 12, 13, 14, 15}, random_context));
 
     // Combined test: expect having 5 localhost and 1 onion peer out of 16 to
     // protect 3 localhost (recovering the unused onion slot), 1 onion, and 4
@@ -269,8 +253,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id == 10) ? NET_ONION : NET_IPV4;
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 10, 11, 12, 13},
-        /*unprotected_peer_ids=*/{4, 5, 6, 7, 8, 9, 14, 15},
-        random_context));
+        /*unprotected_peer_ids=*/{4, 5, 6, 7, 8, 9, 14, 15}, random_context));
 
     // Combined test: expect having 1 localhost and 4 onion peers out of 16 to
     // protect 1 localhost and 3 onions (recovering the unused localhost slot),
@@ -282,8 +265,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             c.m_network = (c.id > 6 && c.id < 11) ? NET_ONION : NET_IPV6;
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 7, 8, 9, 15},
-        /*unprotected_peer_ids=*/{5, 6, 10, 11, 12, 13, 14},
-        random_context));
+        /*unprotected_peer_ids=*/{5, 6, 10, 11, 12, 13, 14}, random_context));
 
     // Combined test: expect having 2 onion and 4 I2P out of 12 peers to protect
     // 2 onion (prioritized for having fewer candidates) and 1 I2P, plus 3
@@ -301,8 +283,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 2, 6, 8, 10},
-        /*unprotected_peer_ids=*/{3, 4, 5, 7, 9, 11},
-        random_context));
+        /*unprotected_peer_ids=*/{3, 4, 5, 7, 9, 11}, random_context));
 
     // Tests with 3 networks...
 
@@ -322,8 +303,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 3},
-        /*unprotected_peer_ids=*/{1, 2},
-        random_context));
+        /*unprotected_peer_ids=*/{1, 2}, random_context));
 
     // Combined test: expect having 1 localhost, 1 I2P and 1 onion peer out of 7
     // to protect 1 I2P, 0 localhost, 0 onion and 2 other peers (3 total) sorted
@@ -341,8 +321,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 6},
-        /*unprotected_peer_ids=*/{2, 3, 4, 5},
-        random_context));
+        /*unprotected_peer_ids=*/{2, 3, 4, 5}, random_context));
 
     // Combined test: expect having 1 localhost, 1 I2P and 1 onion peer out of 8
     // to protect 1 I2P, 1 localhost, 0 onion and 2 other peers (4 total) sorted
@@ -360,8 +339,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 5, 6},
-        /*unprotected_peer_ids=*/{2, 3, 4, 7},
-        random_context));
+        /*unprotected_peer_ids=*/{2, 3, 4, 7}, random_context));
 
     // Combined test: expect having 4 localhost, 2 I2P, and 2 onion peers out of
     // 16 to protect 1 localhost, 2 I2P, and 1 onion (4/16 total), plus 4 others
@@ -379,8 +357,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 6, 7, 9, 11},
-        /*unprotected_peer_ids=*/{4, 5, 8, 10, 12, 13, 14, 15},
-        random_context));
+        /*unprotected_peer_ids=*/{4, 5, 8, 10, 12, 13, 14, 15}, random_context));
 
     // Combined test: expect having 1 localhost, 8 I2P and 1 onion peer out of
     // 24 to protect 1, 4, and 1 (6 total), plus 6 others for 12/24 total,
@@ -398,8 +375,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 4, 5, 12, 15, 16, 17, 18, 23},
-        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11, 13, 14, 19, 20, 21, 22},
-        random_context));
+        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11, 13, 14, 19, 20, 21, 22}, random_context));
 
     // Combined test: expect having 1 localhost, 3 I2P and 6 onion peers out of
     // 24 to protect 1, 3, and 2 (6 total, I2P has fewer candidates and so gets the
@@ -417,8 +393,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 4, 5, 12, 14, 15, 17, 18, 19},
-        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11, 13, 16, 20, 21, 22, 23},
-        random_context));
+        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11, 13, 16, 20, 21, 22, 23}, random_context));
 
     // Combined test: expect having 1 localhost, 7 I2P and 4 onion peers out of
     // 24 to protect 1 localhost, 2 I2P, and 3 onions (6 total), plus 6 others
@@ -436,8 +411,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 17, 18},
-        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11, 16, 19, 20, 21, 22, 23},
-        random_context));
+        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11, 16, 19, 20, 21, 22, 23}, random_context));
 
     // Combined test: expect having 8 localhost, 4 CJDNS, and 3 onion peers out
     // of 24 to protect 2 of each (6 total), plus 6 others for 12/24 total,
@@ -455,8 +429,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 4, 5, 7, 8, 11, 12, 16, 17},
-        /*unprotected_peer_ids=*/{6, 9, 10, 13, 14, 15, 18, 19, 20, 21, 22, 23},
-        random_context));
+        /*unprotected_peer_ids=*/{6, 9, 10, 13, 14, 15, 18, 19, 20, 21, 22, 23}, random_context));
 
     // Tests with 4 networks...
 
@@ -479,8 +452,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 4},
-        /*unprotected_peer_ids=*/{1, 2, 3},
-        random_context));
+        /*unprotected_peer_ids=*/{1, 2, 3}, random_context));
 
     // Combined test: expect having 1 CJDNS, 1 I2P, 1 localhost and 1 onion peer
     // out of 7 to protect 1 CJDNS, 0, I2P, 0 localhost, 0 onion and 2 other
@@ -501,8 +473,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 6},
-        /*unprotected_peer_ids=*/{2, 3, 4, 5},
-        random_context));
+        /*unprotected_peer_ids=*/{2, 3, 4, 5}, random_context));
 
     // Combined test: expect having 1 CJDNS, 1 I2P, 1 localhost and 1 onion peer
     // out of 8 to protect 1 CJDNS, 1 I2P, 0 localhost, 0 onion and 2 other
@@ -523,8 +494,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 5, 6},
-        /*unprotected_peer_ids=*/{2, 3, 4, 7},
-        random_context));
+        /*unprotected_peer_ids=*/{2, 3, 4, 7}, random_context));
 
     // Combined test: expect having 2 CJDNS, 2 I2P, 4 localhost, and 2 onion
     // peers out of 16 to protect 1 CJDNS, 1 I2P, 1 localhost, 1 onion (4/16
@@ -544,8 +514,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 6, 8, 10, 11},
-        /*unprotected_peer_ids=*/{4, 5, 7, 9, 12, 13, 14, 15},
-        random_context));
+        /*unprotected_peer_ids=*/{4, 5, 7, 9, 12, 13, 14, 15}, random_context));
 
     // Combined test: expect having 6 CJDNS, 1 I2P, 1 localhost, and 4 onion
     // peers out of 24 to protect 2 CJDNS, 1 I2P, 1 localhost, and 2 onions (6
@@ -565,8 +534,7 @@ BOOST_AUTO_TEST_CASE(peer_protection_test)
             }
         },
         /*protected_peer_ids=*/{0, 1, 2, 3, 4, 5, 12, 13, 14, 17, 18, 19},
-        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11, 15, 16, 20, 21, 22, 23},
-        random_context));
+        /*unprotected_peer_ids=*/{6, 7, 8, 9, 10, 11, 15, 16, 20, 21, 22, 23}, random_context));
 }
 
 // Returns true if any of the node ids in node_ids are selected for eviction.
@@ -600,67 +568,67 @@ BOOST_AUTO_TEST_CASE(peer_eviction_test)
         // Four nodes with the highest keyed netgroup values should be
         // protected from eviction.
         BOOST_CHECK(!IsEvicted(
-                        number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
-                            candidate.nKeyedNetGroup = number_of_nodes - candidate.id;
-                        },
-                        {0, 1, 2, 3}, random_context));
+            number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
+                candidate.nKeyedNetGroup = number_of_nodes - candidate.id;
+            },
+            {0, 1, 2, 3}, random_context));
 
         // Eight nodes with the lowest minimum ping time should be protected
         // from eviction.
         BOOST_CHECK(!IsEvicted(
-                        number_of_nodes, [](NodeEvictionCandidate& candidate) {
-                            candidate.m_min_ping_time = std::chrono::microseconds{candidate.id};
-                        },
-                        {0, 1, 2, 3, 4, 5, 6, 7}, random_context));
+            number_of_nodes, [](NodeEvictionCandidate& candidate) {
+                candidate.m_min_ping_time = std::chrono::microseconds{candidate.id};
+            },
+            {0, 1, 2, 3, 4, 5, 6, 7}, random_context));
 
         // Four nodes that most recently sent us novel transactions accepted
         // into our mempool should be protected from eviction.
         BOOST_CHECK(!IsEvicted(
-                        number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
-                            candidate.m_last_tx_time = std::chrono::seconds{number_of_nodes - candidate.id};
-                        },
-                        {0, 1, 2, 3}, random_context));
+            number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
+                candidate.m_last_tx_time = std::chrono::seconds{number_of_nodes - candidate.id};
+            },
+            {0, 1, 2, 3}, random_context));
 
         // Up to eight non-tx-relay peers that most recently sent us novel
         // blocks should be protected from eviction.
         BOOST_CHECK(!IsEvicted(
-                        number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
-                            candidate.m_last_block_time = std::chrono::seconds{number_of_nodes - candidate.id};
-                            if (candidate.id <= 7) {
-                                candidate.m_relay_txs = false;
-                                candidate.fRelevantServices = true;
-                            }
-                        },
-                        {0, 1, 2, 3, 4, 5, 6, 7}, random_context));
+            number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
+                candidate.m_last_block_time = std::chrono::seconds{number_of_nodes - candidate.id};
+                if (candidate.id <= 7) {
+                    candidate.m_relay_txs = false;
+                    candidate.fRelevantServices = true;
+                }
+            },
+            {0, 1, 2, 3, 4, 5, 6, 7}, random_context));
 
         // Four peers that most recently sent us novel blocks should be
         // protected from eviction.
         BOOST_CHECK(!IsEvicted(
-                        number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
-                            candidate.m_last_block_time = std::chrono::seconds{number_of_nodes - candidate.id};
-                        },
-                        {0, 1, 2, 3}, random_context));
+            number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
+                candidate.m_last_block_time = std::chrono::seconds{number_of_nodes - candidate.id};
+            },
+            {0, 1, 2, 3}, random_context));
 
         // Combination of the previous two tests.
         BOOST_CHECK(!IsEvicted(
-                        number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
-                            candidate.m_last_block_time = std::chrono::seconds{number_of_nodes - candidate.id};
-                            if (candidate.id <= 7) {
-                                candidate.m_relay_txs = false;
-                                candidate.fRelevantServices = true;
-                            }
-                        },
-                        {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, random_context));
+            number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
+                candidate.m_last_block_time = std::chrono::seconds{number_of_nodes - candidate.id};
+                if (candidate.id <= 7) {
+                    candidate.m_relay_txs = false;
+                    candidate.fRelevantServices = true;
+                }
+            },
+            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, random_context));
 
         // Combination of all tests above.
         BOOST_CHECK(!IsEvicted(
-                        number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
-                            candidate.nKeyedNetGroup = number_of_nodes - candidate.id;           // 4 protected
-                            candidate.m_min_ping_time = std::chrono::microseconds{candidate.id}; // 8 protected
-                            candidate.m_last_tx_time = std::chrono::seconds{number_of_nodes - candidate.id};    // 4 protected
-                            candidate.m_last_block_time = std::chrono::seconds{number_of_nodes - candidate.id}; // 4 protected
-                        },
-                        {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, random_context));
+            number_of_nodes, [number_of_nodes](NodeEvictionCandidate& candidate) {
+                candidate.nKeyedNetGroup = number_of_nodes - candidate.id;                          // 4 protected
+                candidate.m_min_ping_time = std::chrono::microseconds{candidate.id};                // 8 protected
+                candidate.m_last_tx_time = std::chrono::seconds{number_of_nodes - candidate.id};    // 4 protected
+                candidate.m_last_block_time = std::chrono::seconds{number_of_nodes - candidate.id}; // 4 protected
+            },
+            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19}, random_context));
 
         // An eviction is expected given >= 29 random eviction candidates. The eviction logic protects at most
         // four peers by net group, eight by lowest ping time, four by last time of novel tx, up to eight non-tx-relay

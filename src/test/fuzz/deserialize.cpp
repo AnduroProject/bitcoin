@@ -47,7 +47,7 @@ void initialize_deserialize()
 }
 
 #define FUZZ_TARGET_DESERIALIZE(name, code)                \
-    FUZZ_TARGET(name, .init = initialize_deserialize)         \
+    FUZZ_TARGET(name, .init = initialize_deserialize)      \
     {                                                      \
         try {                                              \
             code                                           \

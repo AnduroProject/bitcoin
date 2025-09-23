@@ -9,19 +9,20 @@
 
 #include "eckey.h"
 
-#include "util.h"
-#include "scalar.h"
+#include "ecmult_gen.h"
 #include "field.h"
 #include "group.h"
-#include "ecmult_gen.h"
+#include "scalar.h"
+#include "util.h"
 
-static int secp256k1_eckey_pubkey_parse(secp256k1_ge *elem, const unsigned char *pub, size_t size) {
+static int secp256k1_eckey_pubkey_parse(secp256k1_ge* elem, const unsigned char* pub, size_t size)
+{
     if (size == 33 && (pub[0] == SECP256K1_TAG_PUBKEY_EVEN || pub[0] == SECP256K1_TAG_PUBKEY_ODD)) {
         secp256k1_fe x;
-        return secp256k1_fe_set_b32_limit(&x, pub+1) && secp256k1_ge_set_xo_var(elem, &x, pub[0] == SECP256K1_TAG_PUBKEY_ODD);
+        return secp256k1_fe_set_b32_limit(&x, pub + 1) && secp256k1_ge_set_xo_var(elem, &x, pub[0] == SECP256K1_TAG_PUBKEY_ODD);
     } else if (size == 65 && (pub[0] == SECP256K1_TAG_PUBKEY_UNCOMPRESSED || pub[0] == SECP256K1_TAG_PUBKEY_HYBRID_EVEN || pub[0] == SECP256K1_TAG_PUBKEY_HYBRID_ODD)) {
         secp256k1_fe x, y;
-        if (!secp256k1_fe_set_b32_limit(&x, pub+1) || !secp256k1_fe_set_b32_limit(&y, pub+33)) {
+        if (!secp256k1_fe_set_b32_limit(&x, pub + 1) || !secp256k1_fe_set_b32_limit(&y, pub + 33)) {
             return 0;
         }
         secp256k1_ge_set_xy(elem, &x, &y);
@@ -35,7 +36,8 @@ static int secp256k1_eckey_pubkey_parse(secp256k1_ge *elem, const unsigned char 
     }
 }
 
-static int secp256k1_eckey_pubkey_serialize(secp256k1_ge *elem, unsigned char *pub, size_t *size, int compressed) {
+static int secp256k1_eckey_pubkey_serialize(secp256k1_ge* elem, unsigned char* pub, size_t* size, int compressed)
+{
     VERIFY_CHECK(compressed == 0 || compressed == 1);
 
     if (secp256k1_ge_is_infinity(elem)) {
@@ -55,12 +57,14 @@ static int secp256k1_eckey_pubkey_serialize(secp256k1_ge *elem, unsigned char *p
     return 1;
 }
 
-static int secp256k1_eckey_privkey_tweak_add(secp256k1_scalar *key, const secp256k1_scalar *tweak) {
+static int secp256k1_eckey_privkey_tweak_add(secp256k1_scalar* key, const secp256k1_scalar* tweak)
+{
     secp256k1_scalar_add(key, key, tweak);
     return !secp256k1_scalar_is_zero(key);
 }
 
-static int secp256k1_eckey_pubkey_tweak_add(secp256k1_ge *key, const secp256k1_scalar *tweak) {
+static int secp256k1_eckey_pubkey_tweak_add(secp256k1_ge* key, const secp256k1_scalar* tweak)
+{
     secp256k1_gej pt;
     secp256k1_gej_set_ge(&pt, key);
     secp256k1_ecmult(&pt, &pt, &secp256k1_scalar_one, tweak);
@@ -72,7 +76,8 @@ static int secp256k1_eckey_pubkey_tweak_add(secp256k1_ge *key, const secp256k1_s
     return 1;
 }
 
-static int secp256k1_eckey_privkey_tweak_mul(secp256k1_scalar *key, const secp256k1_scalar *tweak) {
+static int secp256k1_eckey_privkey_tweak_mul(secp256k1_scalar* key, const secp256k1_scalar* tweak)
+{
     int ret;
     ret = !secp256k1_scalar_is_zero(tweak);
 
@@ -80,7 +85,8 @@ static int secp256k1_eckey_privkey_tweak_mul(secp256k1_scalar *key, const secp25
     return ret;
 }
 
-static int secp256k1_eckey_pubkey_tweak_mul(secp256k1_ge *key, const secp256k1_scalar *tweak) {
+static int secp256k1_eckey_pubkey_tweak_mul(secp256k1_ge* key, const secp256k1_scalar* tweak)
+{
     secp256k1_gej pt;
     if (secp256k1_scalar_is_zero(tweak)) {
         return 0;

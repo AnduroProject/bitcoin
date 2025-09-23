@@ -15,11 +15,10 @@ BOOST_AUTO_TEST_SUITE(base32_tests)
 
 BOOST_AUTO_TEST_CASE(base32_testvectors)
 {
-    static const std::string vstrIn[]  = {"","f","fo","foo","foob","fooba","foobar"};
-    static const std::string vstrOut[] = {"","my======","mzxq====","mzxw6===","mzxw6yq=","mzxw6ytb","mzxw6ytboi======"};
-    static const std::string vstrOutNoPadding[] = {"","my","mzxq","mzxw6","mzxw6yq","mzxw6ytb","mzxw6ytboi"};
-    for (unsigned int i=0; i<std::size(vstrIn); i++)
-    {
+    static const std::string vstrIn[] = {"", "f", "fo", "foo", "foob", "fooba", "foobar"};
+    static const std::string vstrOut[] = {"", "my======", "mzxq====", "mzxw6===", "mzxw6yq=", "mzxw6ytb", "mzxw6ytboi======"};
+    static const std::string vstrOutNoPadding[] = {"", "my", "mzxq", "mzxw6", "mzxw6yq", "mzxw6ytb", "mzxw6ytboi"};
+    for (unsigned int i = 0; i < std::size(vstrIn); i++) {
         std::string strEnc = EncodeBase32(vstrIn[i]);
         BOOST_CHECK_EQUAL(strEnc, vstrOut[i]);
         strEnc = EncodeBase32(vstrIn[i], false);
@@ -30,10 +29,10 @@ BOOST_AUTO_TEST_CASE(base32_testvectors)
     }
 
     BOOST_CHECK(!DecodeBase32("AWSX3VPPinvalid")); // invalid size
-    BOOST_CHECK( DecodeBase32("AWSX3VPP")); // valid
+    BOOST_CHECK(DecodeBase32("AWSX3VPP"));         // valid
 
     // Decoding strings with embedded NUL characters should fail
-    BOOST_CHECK(!DecodeBase32("invalid\0"sv)); // correct size, invalid due to \0
+    BOOST_CHECK(!DecodeBase32("invalid\0"sv));         // correct size, invalid due to \0
     BOOST_CHECK(!DecodeBase32("AWSX3VPP\0invalid"sv)); // correct size, invalid due to \0
 }
 
@@ -45,12 +44,12 @@ BOOST_AUTO_TEST_CASE(base32_padding)
     // Valid size
     BOOST_CHECK(!DecodeBase32("========"));
     BOOST_CHECK(!DecodeBase32("a======="));
-    BOOST_CHECK( DecodeBase32("aa======"));
+    BOOST_CHECK(DecodeBase32("aa======"));
     BOOST_CHECK(!DecodeBase32("aaa====="));
-    BOOST_CHECK( DecodeBase32("aaaa===="));
-    BOOST_CHECK( DecodeBase32("aaaaa==="));
+    BOOST_CHECK(DecodeBase32("aaaa===="));
+    BOOST_CHECK(DecodeBase32("aaaaa==="));
     BOOST_CHECK(!DecodeBase32("aaaaaa=="));
-    BOOST_CHECK( DecodeBase32("aaaaaaa="));
+    BOOST_CHECK(DecodeBase32("aaaaaaa="));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

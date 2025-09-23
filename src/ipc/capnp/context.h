@@ -14,8 +14,7 @@ namespace capnp {
 //! application state, so there aren't unnecessary differences between IPC
 //! protocols. But this specialized struct can be used to pass capnp-specific
 //! function and object types to capnp hooks.
-struct Context : ipc::Context
-{
+struct Context : ipc::Context {
 };
 } // namespace capnp
 } // namespace ipc

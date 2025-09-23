@@ -60,8 +60,8 @@
 #include <walletinitinterface.h>
 
 #include <algorithm>
-#include <future>
 #include <functional>
+#include <future>
 #include <stdexcept>
 
 using namespace util::hex_literals;
@@ -87,8 +87,7 @@ static const bool g_rng_temp_path_init{[] {
     return true;
 }()};
 
-struct NetworkSetup
-{
+struct NetworkSetup {
     NetworkSetup()
     {
         Assert(SetupNetworking());
@@ -116,7 +115,7 @@ BasicTestingSetup::BasicTestingSetup(const ChainType chainType, TestOpts opts)
         SeedRandomForTest(SeedRand::FIXED_SEED);
     }
     m_node.shutdown_signal = &m_interrupt;
-    m_node.shutdown_request = [this]{ return m_interrupt(); };
+    m_node.shutdown_request = [this] { return m_interrupt(); };
     m_node.args = &gArgs;
     std::vector<const char*> arguments = Cat(
         {
@@ -406,7 +405,8 @@ CBlock TestChain100Setup::CreateBlock(
     }
     RegenerateCommitments(block, *Assert(m_node.chainman));
 
-    while (!CheckProofOfWork(miningHeader.GetHash(), block.nBits, m_node.chainman->GetConsensus())) ++miningHeader.nNonce;
+    while (!CheckProofOfWork(miningHeader.GetHash(), block.nBits, m_node.chainman->GetConsensus()))
+        ++miningHeader.nNonce;
 
     return block;
 }
@@ -469,9 +469,9 @@ std::pair<CMutableTransaction, CAmount> TestChain100Setup::CreateValidTransactio
     std::map<int, bilingual_str> input_errors;
     assert(SignTransaction(mempool_txn, &keystore, input_coins, nHashType, input_errors));
     CAmount current_fee = inputs_amount - std::accumulate(outputs.begin(), outputs.end(), CAmount(0),
-        [](const CAmount& acc, const CTxOut& out) {
-        return acc + out.nValue;
-    });
+                                                          [](const CAmount& acc, const CTxOut& out) {
+                                                              return acc + out.nValue;
+                                                          });
     // Deduct fees from fee_output to meet feerate if set
     if (feerate.has_value()) {
         assert(fee_output.has_value());
@@ -531,7 +531,7 @@ std::vector<CTransactionRef> TestChain100Setup::PopulateMempool(FastRandomContex
     std::vector<CTransactionRef> mempool_transactions;
     std::deque<std::pair<COutPoint, CAmount>> unspent_prevouts;
     std::transform(m_coinbase_txns.begin(), m_coinbase_txns.end(), std::back_inserter(unspent_prevouts),
-        [](const auto& tx){ return std::make_pair(COutPoint(tx->GetHash(), 0), tx->vout[0].nValue); });
+                   [](const auto& tx) { return std::make_pair(COutPoint(tx->GetHash(), 0), tx->vout[0].nValue); });
     while (num_transactions > 0 && !unspent_prevouts.empty()) {
         // The number of inputs and outputs are random, between 1 and 24.
         CMutableTransaction mtx = CMutableTransaction();
@@ -567,8 +567,8 @@ std::vector<CTransactionRef> TestChain100Setup::PopulateMempool(FastRandomContex
             LockPoints lp;
             auto changeset = m_node.mempool->GetChangeSet();
             changeset->StageAddition(ptx, /*fee=*/(total_in - num_outputs * amount_per_output),
-                    /*time=*/0, /*entry_height=*/1, /*entry_sequence=*/0,
-                    /*spends_coinbase=*/false, /*sigops_cost=*/4, lp);
+                                     /*time=*/0, /*entry_height=*/1, /*entry_sequence=*/0,
+                                     /*spends_coinbase=*/false, /*sigops_cost=*/4, lp);
             changeset->Apply();
         }
         --num_transactions;
@@ -596,12 +596,12 @@ void TestChain100Setup::MockMempoolMinFee(const CFeeRate& target_feerate)
     LockPoints lp;
     // The new mempool min feerate is equal to the removed package's feerate + incremental feerate.
     const auto tx_fee = target_feerate.GetFee(GetVirtualTransactionSize(*tx)) -
-        m_node.mempool->m_opts.incremental_relay_feerate.GetFee(GetVirtualTransactionSize(*tx));
+                        m_node.mempool->m_opts.incremental_relay_feerate.GetFee(GetVirtualTransactionSize(*tx));
     {
         auto changeset = m_node.mempool->GetChangeSet();
         changeset->StageAddition(tx, /*fee=*/tx_fee,
-                /*time=*/0, /*entry_height=*/1, /*entry_sequence=*/0,
-                /*spends_coinbase=*/true, /*sigops_cost=*/1, lp);
+                                 /*time=*/0, /*entry_height=*/1, /*entry_sequence=*/0,
+                                 /*spends_coinbase=*/true, /*sigops_cost=*/1, lp);
         changeset->Apply();
     }
     m_node.mempool->TrimToSize(0);

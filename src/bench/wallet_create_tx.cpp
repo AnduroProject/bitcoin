@@ -39,12 +39,11 @@
 #include <utility>
 #include <vector>
 
-using wallet::CWallet;
 using wallet::CreateMockableWalletDatabase;
+using wallet::CWallet;
 using wallet::WALLET_FLAG_DESCRIPTORS;
 
-struct TipBlock
-{
+struct TipBlock {
     uint256 prev_block_hash;
     int64_t prev_block_time;
     int tip_height;
@@ -54,7 +53,7 @@ TipBlock getTip(const CChainParams& params, const node::NodeContext& context)
 {
     auto tip = WITH_LOCK(::cs_main, return context.chainman->ActiveTip());
     return (tip) ? TipBlock{tip->GetBlockHash(), tip->GetBlockTime(), tip->nHeight} :
-           TipBlock{params.GenesisBlock().GetHash(), params.GenesisBlock().GetBlockTime(), 0};
+                   TipBlock{params.GenesisBlock().GetHash(), params.GenesisBlock().GetBlockTime(), 0};
 }
 
 void generateFakeBlock(const CChainParams& params,
@@ -148,7 +147,7 @@ static void WalletCreateTx(benchmark::Bench& bench, const OutputType output_type
         filter_coins.max_count = preset_inputs->num_of_internal_inputs;
         const auto& res = WITH_LOCK(wallet.cs_wallet,
                                     return wallet::AvailableCoins(wallet, /*coinControl=*/nullptr, /*feerate=*/std::nullopt, filter_coins));
-        for (int i=0; i < preset_inputs->num_of_internal_inputs; i++) {
+        for (int i = 0; i < preset_inputs->num_of_internal_inputs; i++) {
             const auto& coin{res.coins.at(output_type)[i]};
             target += coin.txout.nValue;
             coin_control.Select(coin.outpoint);

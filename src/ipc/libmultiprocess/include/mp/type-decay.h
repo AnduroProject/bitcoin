@@ -10,10 +10,10 @@
 namespace mp {
 template <typename LocalType, typename Value, typename Output>
 void CustomBuildField(TypeList<const LocalType>,
-    Priority<0>,
-    InvokeContext& invoke_context,
-    Value&& value,
-    Output&& output)
+                      Priority<0>,
+                      InvokeContext& invoke_context,
+                      Value&& value,
+                      Output&& output)
 {
     BuildField(TypeList<LocalType>(), invoke_context, output, std::forward<Value>(value));
 }
@@ -26,10 +26,10 @@ void CustomBuildField(TypeList<LocalType&>, Priority<0>, InvokeContext& invoke_c
 
 template <typename LocalType, typename Value, typename Output>
 void CustomBuildField(TypeList<LocalType&&>,
-    Priority<0>,
-    InvokeContext& invoke_context,
-    Value&& value,
-    Output&& output)
+                      Priority<0>,
+                      InvokeContext& invoke_context,
+                      Value&& value,
+                      Output&& output)
 {
     BuildField(TypeList<LocalType>(), invoke_context, output, std::forward<Value>(value));
 }

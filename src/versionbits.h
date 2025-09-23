@@ -77,8 +77,8 @@ class VersionBitsCache
 {
 private:
     Mutex m_mutex;
-    std::array<ThresholdConditionCache,VERSIONBITS_NUM_BITS> m_warning_caches GUARDED_BY(m_mutex);
-    std::array<ThresholdConditionCache,Consensus::MAX_VERSION_BITS_DEPLOYMENTS> m_caches GUARDED_BY(m_mutex);
+    std::array<ThresholdConditionCache, VERSIONBITS_NUM_BITS> m_warning_caches GUARDED_BY(m_mutex);
+    std::array<ThresholdConditionCache, Consensus::MAX_VERSION_BITS_DEPLOYMENTS> m_caches GUARDED_BY(m_mutex);
 
 public:
     BIP9Info Info(const CBlockIndex& block_index, const Consensus::Params& params, Consensus::DeploymentPos id) EXCLUSIVE_LOCKS_REQUIRED(!m_mutex);
@@ -94,7 +94,7 @@ public:
     /** Check for unknown activations
      *  Returns a vector containing the bit number used for signalling and a bool
      *  indicating the deployment is likely to be ACTIVE, rather than merely LOCKED_IN. */
-    std::vector<std::pair<int,bool>> CheckUnknownActivations(const CBlockIndex* pindex, const CChainParams& chainparams) EXCLUSIVE_LOCKS_REQUIRED(!m_mutex);
+    std::vector<std::pair<int, bool>> CheckUnknownActivations(const CBlockIndex* pindex, const CChainParams& chainparams) EXCLUSIVE_LOCKS_REQUIRED(!m_mutex);
 
     void Clear() EXCLUSIVE_LOCKS_REQUIRED(!m_mutex);
 };

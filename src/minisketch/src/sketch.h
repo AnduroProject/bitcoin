@@ -21,7 +21,10 @@ public:
     Sketch(int implementation, int bits) : m_implementation(implementation), m_bits(bits) {}
 
     void Ready() { m_canary = 0x6d496e536b65LU; }
-    void Check() const { if (m_canary != 0x6d496e536b65LU) abort(); }
+    void Check() const
+    {
+        if (m_canary != 0x6d496e536b65LU) abort();
+    }
     void UnReady() { m_canary = 1; }
     int Implementation() const { return m_implementation; }
     int Bits() const { return m_bits; }

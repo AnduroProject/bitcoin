@@ -19,7 +19,7 @@ int CCrypter::BytesToKeySHA512AES(const std::span<const unsigned char> salt, con
     // greater than the aes256 block size (16b) + aes256 key size (32b),
     // there's no need to process more than once (D_0).
 
-    if(!count || !key || !iv)
+    if (!count || !key || !iv)
         return 0;
 
     unsigned char buf[CSHA512::OUTPUT_SIZE];
@@ -29,7 +29,7 @@ int CCrypter::BytesToKeySHA512AES(const std::span<const unsigned char> salt, con
     di.Write(salt.data(), salt.size());
     di.Finalize(buf);
 
-    for(int i = 0; i != count - 1; i++)
+    for (int i = 0; i != count - 1; i++)
         di.Reset().Write(buf, sizeof(buf)).Finalize(buf);
 
     memcpy(key, buf, WALLET_CRYPTO_KEY_SIZE);
@@ -49,8 +49,7 @@ bool CCrypter::SetKeyFromPassphrase(const SecureString& key_data, const std::spa
         i = BytesToKeySHA512AES(salt, key_data, rounds, vchKey.data(), vchIV.data());
     }
 
-    if (i != (int)WALLET_CRYPTO_KEY_SIZE)
-    {
+    if (i != (int)WALLET_CRYPTO_KEY_SIZE) {
         memory_cleanse(vchKey.data(), vchKey.size());
         memory_cleanse(vchIV.data(), vchIV.size());
         return false;
@@ -73,7 +72,7 @@ bool CCrypter::SetKey(const CKeyingMaterial& new_key, const std::span<const unsi
     return true;
 }
 
-bool CCrypter::Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char> &vchCiphertext) const
+bool CCrypter::Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char>& vchCiphertext) const
 {
     if (!fKeySet)
         return false;
@@ -84,7 +83,7 @@ bool CCrypter::Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned
 
     AES256CBCEncrypt enc(vchKey.data(), vchIV.data(), true);
     size_t nLen = enc.Encrypt(vchPlaintext.data(), vchPlaintext.size(), vchCiphertext.data());
-    if(nLen < vchPlaintext.size())
+    if (nLen < vchPlaintext.size())
         return false;
     vchCiphertext.resize(nLen);
 
@@ -108,12 +107,12 @@ bool CCrypter::Decrypt(const std::span<const unsigned char> ciphertext, CKeyingM
     return true;
 }
 
-bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial &vchPlaintext, const uint256& nIV, std::vector<unsigned char> &vchCiphertext)
+bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial& vchPlaintext, const uint256& nIV, std::vector<unsigned char>& vchCiphertext)
 {
     CCrypter cKeyCrypter;
     std::vector<unsigned char> chIV(WALLET_CRYPTO_IV_SIZE);
     memcpy(chIV.data(), &nIV, WALLET_CRYPTO_IV_SIZE);
-    if(!cKeyCrypter.SetKey(vMasterKey, chIV))
+    if (!cKeyCrypter.SetKey(vMasterKey, chIV))
         return false;
     return cKeyCrypter.Encrypt(vchPlaintext, vchCiphertext);
 }

@@ -5,9 +5,9 @@
 #ifndef BITCOIN_WALLET_CRYPTER_H
 #define BITCOIN_WALLET_CRYPTER_H
 
+#include <script/signingprovider.h>
 #include <serialize.h>
 #include <support/allocators/secure.h>
-#include <script/signingprovider.h>
 
 
 namespace wallet {
@@ -60,17 +60,16 @@ public:
     }
 };
 
-typedef std::vector<unsigned char, secure_allocator<unsigned char> > CKeyingMaterial;
+typedef std::vector<unsigned char, secure_allocator<unsigned char>> CKeyingMaterial;
 
-namespace wallet_crypto_tests
-{
-    class TestCrypter;
+namespace wallet_crypto_tests {
+class TestCrypter;
 }
 
 /** Encryption/decryption context with key information */
 class CCrypter
 {
-friend class wallet_crypto_tests::TestCrypter; // for test access to chKey/chIV
+    friend class wallet_crypto_tests::TestCrypter; // for test access to chKey/chIV
 private:
     std::vector<unsigned char, secure_allocator<unsigned char>> vchKey;
     std::vector<unsigned char, secure_allocator<unsigned char>> vchIV;
@@ -80,7 +79,7 @@ private:
 
 public:
     bool SetKeyFromPassphrase(const SecureString& key_data, std::span<const unsigned char> salt, const unsigned int rounds, const unsigned int derivation_method);
-    bool Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char> &vchCiphertext) const;
+    bool Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char>& vchCiphertext) const;
     bool Decrypt(std::span<const unsigned char> ciphertext, CKeyingMaterial& plaintext) const;
     bool SetKey(const CKeyingMaterial& new_key, std::span<const unsigned char> new_iv);
 
@@ -104,7 +103,7 @@ public:
     }
 };
 
-bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial &vchPlaintext, const uint256& nIV, std::vector<unsigned char> &vchCiphertext);
+bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial& vchPlaintext, const uint256& nIV, std::vector<unsigned char>& vchCiphertext);
 bool DecryptSecret(const CKeyingMaterial& master_key, std::span<const unsigned char> ciphertext, const uint256& iv, CKeyingMaterial& plaintext);
 bool DecryptKey(const CKeyingMaterial& master_key, std::span<const unsigned char> crypted_secret, const CPubKey& pub_key, CKey& key);
 } // namespace wallet

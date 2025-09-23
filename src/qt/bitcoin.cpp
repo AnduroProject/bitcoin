@@ -78,10 +78,10 @@ static void RegisterMetaTypes()
     qRegisterMetaType<bool*>();
     qRegisterMetaType<SynchronizationState>();
     qRegisterMetaType<SyncType>();
-  #ifdef ENABLE_WALLET
+#ifdef ENABLE_WALLET
     qRegisterMetaType<WalletModel*>();
     qRegisterMetaType<wallet::AddressPurpose>();
-  #endif // ENABLE_WALLET
+#endif // ENABLE_WALLET
     // Register typedefs (see https://doc.qt.io/qt-5/qmetatype.html#qRegisterMetaType)
     // IMPORTANT: if CAmount is no longer a typedef use the normal variant above (see https://doc.qt.io/qt-5/qmetatype.html#qRegisterMetaType-1)
     qRegisterMetaType<CAmount>("CAmount");
@@ -101,7 +101,7 @@ static QString GetLangTerritory()
     QString lang_territory = QLocale::system().name();
     // 2) Language from QSettings
     QString lang_territory_qsettings = settings.value("language", "").toString();
-    if(!lang_territory_qsettings.isEmpty())
+    if (!lang_territory_qsettings.isEmpty())
         lang_territory = lang_territory_qsettings;
     // 3) -lang command line argument
     lang_territory = QString::fromStdString(gArgs.GetArg("-lang", lang_territory.toStdString()));
@@ -109,7 +109,7 @@ static QString GetLangTerritory()
 }
 
 /** Set up translations */
-static void initTranslations(QTranslator &qtTranslatorBase, QTranslator &qtTranslator, QTranslator &translatorBase, QTranslator &translator)
+static void initTranslations(QTranslator& qtTranslatorBase, QTranslator& qtTranslator, QTranslator& translatorBase, QTranslator& translator)
 {
     // Remove old translators
     QApplication::removeTranslator(&qtTranslatorBase);
@@ -184,7 +184,7 @@ static void ErrorSettingsWrite(const bilingual_str& error, const std::vector<std
 }
 
 /* qDebug() message handler --> debug.log */
-void DebugMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg)
+void DebugMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
     Q_UNUSED(context);
     if (type == QtDebugMsg) {
@@ -257,20 +257,20 @@ bool BitcoinApplication::createOptionsModel(bool resetSettings)
     return true;
 }
 
-void BitcoinApplication::createWindow(const NetworkStyle *networkStyle)
+void BitcoinApplication::createWindow(const NetworkStyle* networkStyle)
 {
     window = new BitcoinGUI(node(), platformStyle, networkStyle, nullptr);
     connect(window, &BitcoinGUI::quitRequested, this, &BitcoinApplication::requestShutdown);
 
     pollShutdownTimer = new QTimer(window);
-    connect(pollShutdownTimer, &QTimer::timeout, [this]{
+    connect(pollShutdownTimer, &QTimer::timeout, [this] {
         if (!QApplication::activeModalWidget()) {
             window->detectShutdown();
         }
     });
 }
 
-void BitcoinApplication::createSplashScreen(const NetworkStyle *networkStyle)
+void BitcoinApplication::createSplashScreen(const NetworkStyle* networkStyle)
 {
     assert(!m_splash);
     m_splash = new SplashScreen(networkStyle);
@@ -429,12 +429,12 @@ void BitcoinApplication::initializeResult(bool success, interfaces::BlockAndHead
     }
 }
 
-void BitcoinApplication::handleRunawayException(const QString &message)
+void BitcoinApplication::handleRunawayException(const QString& message)
 {
     QMessageBox::critical(
         nullptr, tr("Runaway exception"),
         tr("A fatal error occurred. %1 can no longer continue safely and will quit.").arg(CLIENT_NAME) +
-        QLatin1String("<br><br>") + GUIUtil::MakeHtmlLink(message, CLIENT_BUGREPORT));
+            QLatin1String("<br><br>") + GUIUtil::MakeHtmlLink(message, CLIENT_BUGREPORT));
     ::exit(EXIT_FAILURE);
 }
 
@@ -444,8 +444,9 @@ void BitcoinApplication::handleNonFatalException(const QString& message)
     QMessageBox::warning(
         nullptr, tr("Internal error"),
         tr("An internal error occurred. %1 will attempt to continue safely. This is "
-           "an unexpected bug which can be reported as described below.").arg(CLIENT_NAME) +
-        QLatin1String("<br><br>") + GUIUtil::MakeHtmlLink(message, CLIENT_BUGREPORT));
+           "an unexpected bug which can be reported as described below.")
+                .arg(CLIENT_NAME) +
+            QLatin1String("<br><br>") + GUIUtil::MakeHtmlLink(message, CLIENT_BUGREPORT));
 }
 
 WId BitcoinApplication::getMainWinId() const
@@ -517,8 +518,8 @@ int GuiMain(int argc, char* argv[])
         InitError(Untranslated(strprintf("Error parsing command line arguments: %s", error)));
         // Create a message box, because the gui has neither been created nor has subscribed to core signals
         QMessageBox::critical(nullptr, CLIENT_NAME,
-            // message cannot be translated because translations have not been initialized
-            QString::fromStdString("Error parsing command line arguments: %1.").arg(QString::fromStdString(error)));
+                              // message cannot be translated because translations have not been initialized
+                              QString::fromStdString("Error parsing command line arguments: %1.").arg(QString::fromStdString(error)));
         return EXIT_FAILURE;
     }
 
@@ -579,7 +580,7 @@ int GuiMain(int argc, char* argv[])
     /// 5. Now that settings and translations are available, ask user for data directory
     // User language is set up: pick a data directory
     bool did_show_intro = false;
-    int64_t prune_MiB = 0;  // Intro dialog prune configuration
+    int64_t prune_MiB = 0; // Intro dialog prune configuration
     // Gracefully exit if the user cancels
     if (!Intro::showIfNeeded(did_show_intro, prune_MiB)) return EXIT_SUCCESS;
 
@@ -662,8 +663,7 @@ int GuiMain(int argc, char* argv[])
         app.InitPruneSetting(prune_MiB);
     }
 
-    try
-    {
+    try {
         app.createWindow(networkStyle.data());
         // Perform base initialization before spinning up initialization/shutdown thread
         // This is acceptable because this function only contains steps that are quick to execute,

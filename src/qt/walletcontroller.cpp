@@ -37,13 +37,7 @@ using wallet::WALLET_FLAG_DISABLE_PRIVATE_KEYS;
 using wallet::WALLET_FLAG_EXTERNAL_SIGNER;
 
 WalletController::WalletController(ClientModel& client_model, const PlatformStyle* platform_style, QObject* parent)
-    : QObject(parent)
-    , m_activity_thread(new QThread(this))
-    , m_activity_worker(new QObject)
-    , m_client_model(client_model)
-    , m_node(client_model.node())
-    , m_platform_style(platform_style)
-    , m_options_model(client_model.getOptionsModel())
+    : QObject(parent), m_activity_thread(new QThread(this)), m_activity_worker(new QObject), m_client_model(client_model), m_node(client_model.node()), m_platform_style(platform_style), m_options_model(client_model.getOptionsModel())
 {
     m_handler_load_wallet = m_node.walletLoader().handleLoadWallet([this](std::unique_ptr<interfaces::Wallet> wallet) {
         getOrCreateWallet(std::move(wallet));
@@ -93,7 +87,7 @@ void WalletController::closeWallet(WalletModel* wallet_model, QWidget* parent)
     box.setWindowTitle(tr("Close wallet"));
     box.setText(tr("Are you sure you wish to close the wallet <i>%1</i>?").arg(GUIUtil::HtmlEscape(wallet_model->getDisplayName())));
     box.setInformativeText(tr("Closing the wallet for too long can result in having to resync the entire chain if pruning is enabled."));
-    box.setStandardButtons(QMessageBox::Yes|QMessageBox::Cancel);
+    box.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     box.setDefaultButton(QMessageBox::Yes);
     if (box.exec() != QMessageBox::Yes) return;
 
@@ -103,9 +97,9 @@ void WalletController::closeWallet(WalletModel* wallet_model, QWidget* parent)
 void WalletController::closeAllWallets(QWidget* parent)
 {
     QMessageBox::StandardButton button = QMessageBox::question(parent, tr("Close all wallets"),
-        tr("Are you sure you wish to close all wallets?"),
-        QMessageBox::Yes|QMessageBox::Cancel,
-        QMessageBox::Yes);
+                                                               tr("Are you sure you wish to close all wallets?"),
+                                                               QMessageBox::Yes | QMessageBox::Cancel,
+                                                               QMessageBox::Yes);
     if (button != QMessageBox::Yes) return;
 
     QMutexLocker locker(&m_mutex);
@@ -139,9 +133,7 @@ WalletModel* WalletController::getOrCreateWallet(std::unique_ptr<interfaces::Wal
     // handled on the GUI event loop.
     wallet_model->moveToThread(thread());
     // setParent(parent) must be called in the thread which created the parent object. More details in #18948.
-    QMetaObject::invokeMethod(this, [wallet_model, this] {
-        wallet_model->setParent(this);
-    }, GUIUtil::blockingGUIThreadConnection());
+    QMetaObject::invokeMethod(this, [wallet_model, this] { wallet_model->setParent(this); }, GUIUtil::blockingGUIThreadConnection());
 
     m_wallets.push_back(wallet_model);
 
@@ -163,8 +155,7 @@ WalletModel* WalletController::getOrCreateWallet(std::unique_ptr<interfaces::Wal
             }, Qt::QueuedConnection);
         } else {
             removeAndDeleteWallet(wallet_model);
-        }
-    }, Qt::QueuedConnection);
+        } }, Qt::QueuedConnection);
 
     // Re-emit coinsSent signal from wallet model.
     connect(wallet_model, &WalletModel::coinsSent, this, &WalletController::coinsSent);
@@ -188,9 +179,7 @@ void WalletController::removeAndDeleteWallet(WalletModel* wallet_model)
 }
 
 WalletControllerActivity::WalletControllerActivity(WalletController* wallet_controller, QWidget* parent_widget)
-    : QObject(wallet_controller)
-    , m_wallet_controller(wallet_controller)
-    , m_parent_widget(parent_widget)
+    : QObject(wallet_controller), m_wallet_controller(wallet_controller), m_parent_widget(parent_widget)
 {
     connect(this, &WalletControllerActivity::finished, this, &QObject::deleteLater);
 }
@@ -446,12 +435,12 @@ void MigrateWalletActivity::migrate(const std::string& name)
     box.setWindowTitle(tr("Migrate wallet"));
     box.setText(tr("Are you sure you wish to migrate the wallet <i>%1</i>?").arg(GUIUtil::HtmlEscape(GUIUtil::WalletDisplayName(name))));
     box.setInformativeText(tr("Migrating the wallet will convert this wallet to one or more descriptor wallets. A new wallet backup will need to be made.\n"
-                "If this wallet contains any watchonly scripts, a new wallet will be created which contains those watchonly scripts.\n"
-                "If this wallet contains any solvable but not watched scripts, a different and new wallet will be created which contains those scripts.\n\n"
-                "The migration process will create a backup of the wallet before migrating. This backup file will be named "
-                "<wallet name>-<timestamp>.legacy.bak and can be found in the directory for this wallet. In the event of "
-                "an incorrect migration, the backup can be restored with the \"Restore Wallet\" functionality."));
-    box.setStandardButtons(QMessageBox::Yes|QMessageBox::Cancel);
+                              "If this wallet contains any watchonly scripts, a new wallet will be created which contains those watchonly scripts.\n"
+                              "If this wallet contains any solvable but not watched scripts, a different and new wallet will be created which contains those scripts.\n\n"
+                              "The migration process will create a backup of the wallet before migrating. This backup file will be named "
+                              "<wallet name>-<timestamp>.legacy.bak and can be found in the directory for this wallet. In the event of "
+                              "an incorrect migration, the backup can be restored with the \"Restore Wallet\" functionality."));
+    box.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     box.setDefaultButton(QMessageBox::Yes);
     if (box.exec() != QMessageBox::Yes) return;
 

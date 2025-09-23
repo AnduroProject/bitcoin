@@ -7,23 +7,25 @@
 #ifndef SECP256K1_SCRATCH_IMPL_H
 #define SECP256K1_SCRATCH_IMPL_H
 
-#include "util.h"
 #include "scratch.h"
+#include "util.h"
 
-static secp256k1_scratch* secp256k1_scratch_create(const secp256k1_callback* error_callback, size_t size) {
+static secp256k1_scratch* secp256k1_scratch_create(const secp256k1_callback* error_callback, size_t size)
+{
     const size_t base_alloc = ROUND_TO_ALIGN(sizeof(secp256k1_scratch));
-    void *alloc = checked_malloc(error_callback, base_alloc + size);
-    secp256k1_scratch* ret = (secp256k1_scratch *)alloc;
+    void* alloc = checked_malloc(error_callback, base_alloc + size);
+    secp256k1_scratch* ret = (secp256k1_scratch*)alloc;
     if (ret != NULL) {
         memset(ret, 0, sizeof(*ret));
         memcpy(ret->magic, "scratch", 8);
-        ret->data = (void *) ((char *) alloc + base_alloc);
+        ret->data = (void*)((char*)alloc + base_alloc);
         ret->max_size = size;
     }
     return ret;
 }
 
-static void secp256k1_scratch_destroy(const secp256k1_callback* error_callback, secp256k1_scratch* scratch) {
+static void secp256k1_scratch_destroy(const secp256k1_callback* error_callback, secp256k1_scratch* scratch)
+{
     if (scratch != NULL) {
         if (secp256k1_memcmp_var(scratch->magic, "scratch", 8) != 0) {
             secp256k1_callback_call(error_callback, "invalid scratch space");
@@ -35,7 +37,8 @@ static void secp256k1_scratch_destroy(const secp256k1_callback* error_callback, 
     }
 }
 
-static size_t secp256k1_scratch_checkpoint(const secp256k1_callback* error_callback, const secp256k1_scratch* scratch) {
+static size_t secp256k1_scratch_checkpoint(const secp256k1_callback* error_callback, const secp256k1_scratch* scratch)
+{
     if (secp256k1_memcmp_var(scratch->magic, "scratch", 8) != 0) {
         secp256k1_callback_call(error_callback, "invalid scratch space");
         return 0;
@@ -43,7 +46,8 @@ static size_t secp256k1_scratch_checkpoint(const secp256k1_callback* error_callb
     return scratch->alloc_size;
 }
 
-static void secp256k1_scratch_apply_checkpoint(const secp256k1_callback* error_callback, secp256k1_scratch* scratch, size_t checkpoint) {
+static void secp256k1_scratch_apply_checkpoint(const secp256k1_callback* error_callback, secp256k1_scratch* scratch, size_t checkpoint)
+{
     if (secp256k1_memcmp_var(scratch->magic, "scratch", 8) != 0) {
         secp256k1_callback_call(error_callback, "invalid scratch space");
         return;
@@ -55,13 +59,14 @@ static void secp256k1_scratch_apply_checkpoint(const secp256k1_callback* error_c
     scratch->alloc_size = checkpoint;
 }
 
-static size_t secp256k1_scratch_max_allocation(const secp256k1_callback* error_callback, const secp256k1_scratch* scratch, size_t objects) {
+static size_t secp256k1_scratch_max_allocation(const secp256k1_callback* error_callback, const secp256k1_scratch* scratch, size_t objects)
+{
     if (secp256k1_memcmp_var(scratch->magic, "scratch", 8) != 0) {
         secp256k1_callback_call(error_callback, "invalid scratch space");
         return 0;
     }
     /* Ensure that multiplication will not wrap around */
-    if (ALIGNMENT > 1 && objects > SIZE_MAX/(ALIGNMENT - 1)) {
+    if (ALIGNMENT > 1 && objects > SIZE_MAX / (ALIGNMENT - 1)) {
         return 0;
     }
     if (scratch->max_size - scratch->alloc_size <= objects * (ALIGNMENT - 1)) {
@@ -70,8 +75,9 @@ static size_t secp256k1_scratch_max_allocation(const secp256k1_callback* error_c
     return scratch->max_size - scratch->alloc_size - objects * (ALIGNMENT - 1);
 }
 
-static void *secp256k1_scratch_alloc(const secp256k1_callback* error_callback, secp256k1_scratch* scratch, size_t size) {
-    void *ret;
+static void* secp256k1_scratch_alloc(const secp256k1_callback* error_callback, secp256k1_scratch* scratch, size_t size)
+{
+    void* ret;
     size_t rounded_size;
 
     rounded_size = ROUND_TO_ALIGN(size);
@@ -89,7 +95,7 @@ static void *secp256k1_scratch_alloc(const secp256k1_callback* error_callback, s
     if (size > scratch->max_size - scratch->alloc_size) {
         return NULL;
     }
-    ret = (void *) ((char *) scratch->data + scratch->alloc_size);
+    ret = (void*)((char*)scratch->data + scratch->alloc_size);
     memset(ret, 0, size);
     scratch->alloc_size += size;
 

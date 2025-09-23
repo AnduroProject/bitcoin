@@ -91,7 +91,7 @@ static constexpr bool DEFAULT_FORCEDNSSEED{false};
 static constexpr bool DEFAULT_DNSSEED{true};
 static constexpr bool DEFAULT_FIXEDSEEDS{true};
 static const size_t DEFAULT_MAXRECEIVEBUFFER = 5 * 1000;
-static const size_t DEFAULT_MAXSENDBUFFER    = 1 * 1000;
+static const size_t DEFAULT_MAXSENDBUFFER = 1 * 1000;
 
 static constexpr bool DEFAULT_V2_TRANSPORT{true};
 
@@ -144,8 +144,7 @@ void Discover();
 
 uint16_t GetListenPort();
 
-enum
-{
+enum {
     LOCAL_NONE,   // unknown
     LOCAL_IF,     // address a local interface listens on
     LOCAL_BIND,   // address explicit bound to
@@ -252,12 +251,12 @@ public:
 };
 
 /** The Transport converts one connection's sent messages to wire bytes, and received bytes back. */
-class Transport {
+class Transport
+{
 public:
     virtual ~Transport() = default;
 
-    struct Info
-    {
+    struct Info {
         TransportProtocolType transport_type;
         std::optional<uint256> session_id;
     };
@@ -309,7 +308,7 @@ public:
         std::span<const uint8_t> /*to_send*/,
         bool /*more*/,
         const std::string& /*m_type*/
-    >;
+        >;
 
     /** Get bytes to send on the wire, if any, along with other information about it.
      *
@@ -369,14 +368,14 @@ class V1Transport final : public Transport
 {
 private:
     const MessageStartChars m_magic_bytes;
-    const NodeId m_node_id; // Only for logging
+    const NodeId m_node_id;     // Only for logging
     mutable Mutex m_recv_mutex; //!< Lock for receive state
     mutable CHash256 hasher GUARDED_BY(m_recv_mutex);
     mutable uint256 data_hash GUARDED_BY(m_recv_mutex);
-    bool in_data GUARDED_BY(m_recv_mutex); // parsing header (false) or data (true)
+    bool in_data GUARDED_BY(m_recv_mutex);        // parsing header (false) or data (true)
     DataStream hdrbuf GUARDED_BY(m_recv_mutex){}; // partially received header
-    CMessageHeader hdr GUARDED_BY(m_recv_mutex); // complete header
-    DataStream vRecv GUARDED_BY(m_recv_mutex){}; // received message data
+    CMessageHeader hdr GUARDED_BY(m_recv_mutex);  // complete header
+    DataStream vRecv GUARDED_BY(m_recv_mutex){};  // received message data
     unsigned int nHdrPos GUARDED_BY(m_recv_mutex);
     unsigned int nDataPos GUARDED_BY(m_recv_mutex);
 
@@ -384,7 +383,8 @@ private:
     int readHeader(std::span<const uint8_t> msg_bytes) EXCLUSIVE_LOCKS_REQUIRED(m_recv_mutex);
     int readData(std::span<const uint8_t> msg_bytes) EXCLUSIVE_LOCKS_REQUIRED(m_recv_mutex);
 
-    void Reset() EXCLUSIVE_LOCKS_REQUIRED(m_recv_mutex) {
+    void Reset() EXCLUSIVE_LOCKS_REQUIRED(m_recv_mutex)
+    {
         AssertLockHeld(m_recv_mutex);
         vRecv.clear();
         hdrbuf.clear();
@@ -410,9 +410,9 @@ private:
     /** The data of the message currently being sent. */
     CSerializedNetMsg m_message_to_send GUARDED_BY(m_send_mutex);
     /** Whether we're currently sending header bytes or message bytes. */
-    bool m_sending_header GUARDED_BY(m_send_mutex) {false};
+    bool m_sending_header GUARDED_BY(m_send_mutex){false};
     /** How many bytes have been sent so far (from m_header_to_send, or from m_message_to_send.data). */
-    size_t m_bytes_sent GUARDED_BY(m_send_mutex) {0};
+    size_t m_bytes_sent GUARDED_BY(m_send_mutex){0};
 
 public:
     explicit V1Transport(const NodeId node_id) noexcept;
@@ -586,7 +586,7 @@ private:
     mutable Mutex m_recv_mutex ACQUIRED_BEFORE(m_send_mutex);
     /** In {VERSION, APP}, the decrypted packet length, if m_recv_buffer.size() >=
      *  BIP324Cipher::LENGTH_LEN. Unspecified otherwise. */
-    uint32_t m_recv_len GUARDED_BY(m_recv_mutex) {0};
+    uint32_t m_recv_len GUARDED_BY(m_recv_mutex){0};
     /** Receive buffer; meaning is determined by m_recv_state. */
     std::vector<uint8_t> m_recv_buffer GUARDED_BY(m_recv_mutex);
     /** AAD expected in next received packet (currently used only for garbage). */
@@ -602,7 +602,7 @@ private:
     /** The send buffer; meaning is determined by m_send_state. */
     std::vector<uint8_t> m_send_buffer GUARDED_BY(m_send_mutex);
     /** How many bytes from the send buffer have been sent so far. */
-    uint32_t m_send_pos GUARDED_BY(m_send_mutex) {0};
+    uint32_t m_send_pos GUARDED_BY(m_send_mutex){0};
     /** The garbage sent, or to be sent (MAYBE_V1 and AWAITING_KEY state only). */
     std::vector<uint8_t> m_send_garbage GUARDED_BY(m_send_mutex);
     /** Type of the message being sent. */
@@ -610,7 +610,7 @@ private:
     /** Current sender state. */
     SendState m_send_state GUARDED_BY(m_send_mutex);
     /** Whether we've sent at least 24 bytes (which would trigger disconnect for V1 peers). */
-    bool m_sent_v1_header_worth GUARDED_BY(m_send_mutex) {false};
+    bool m_sent_v1_header_worth GUARDED_BY(m_send_mutex){false};
 
     /** Change the receive state. */
     void SetReceiveState(RecvState recv_state) noexcept EXCLUSIVE_LOCKS_REQUIRED(m_recv_mutex);
@@ -660,8 +660,7 @@ public:
     Info GetInfo() const noexcept override EXCLUSIVE_LOCKS_REQUIRED(!m_recv_mutex);
 };
 
-struct CNodeOptions
-{
+struct CNodeOptions {
     NetPermissionFlags permission_flags = NetPermissionFlags::None;
     std::unique_ptr<i2p::sam::Session> i2p_sam_session = nullptr;
     bool prefer_evict = false;
@@ -722,7 +721,8 @@ public:
      */
     std::string cleanSubVer GUARDED_BY(m_subver_mutex){};
     const bool m_prefer_evict{false}; // This peer is preferred for eviction.
-    bool HasPermission(NetPermissionFlags permission) const {
+    bool HasPermission(NetPermissionFlags permission) const
+    {
         return NetPermissions::HasFlag(m_permission_flags, permission);
     }
     /** fSuccessfullyConnected is set to true on receiving VERACK from the peer. */
@@ -758,26 +758,29 @@ public:
         mapSendBytesPerMsgType[msg_type] += sent_bytes;
     }
 
-    bool IsOutboundOrBlockRelayConn() const {
+    bool IsOutboundOrBlockRelayConn() const
+    {
         switch (m_conn_type) {
-            case ConnectionType::OUTBOUND_FULL_RELAY:
-            case ConnectionType::BLOCK_RELAY:
-                return true;
-            case ConnectionType::INBOUND:
-            case ConnectionType::MANUAL:
-            case ConnectionType::ADDR_FETCH:
-            case ConnectionType::FEELER:
-                return false;
+        case ConnectionType::OUTBOUND_FULL_RELAY:
+        case ConnectionType::BLOCK_RELAY:
+            return true;
+        case ConnectionType::INBOUND:
+        case ConnectionType::MANUAL:
+        case ConnectionType::ADDR_FETCH:
+        case ConnectionType::FEELER:
+            return false;
         } // no default case, so the compiler can warn about missing cases
 
         assert(false);
     }
 
-    bool IsFullOutboundConn() const {
+    bool IsFullOutboundConn() const
+    {
         return m_conn_type == ConnectionType::OUTBOUND_FULL_RELAY;
     }
 
-    bool IsManualConn() const {
+    bool IsManualConn() const
+    {
         return m_conn_type == ConnectionType::MANUAL;
     }
 
@@ -788,41 +791,46 @@ public:
         case ConnectionType::FEELER:
         case ConnectionType::BLOCK_RELAY:
         case ConnectionType::ADDR_FETCH:
-                return false;
+            return false;
         case ConnectionType::OUTBOUND_FULL_RELAY:
         case ConnectionType::MANUAL:
-                return true;
+            return true;
         } // no default case, so the compiler can warn about missing cases
 
         assert(false);
     }
 
-    bool IsBlockOnlyConn() const {
+    bool IsBlockOnlyConn() const
+    {
         return m_conn_type == ConnectionType::BLOCK_RELAY;
     }
 
-    bool IsFeelerConn() const {
+    bool IsFeelerConn() const
+    {
         return m_conn_type == ConnectionType::FEELER;
     }
 
-    bool IsAddrFetchConn() const {
+    bool IsAddrFetchConn() const
+    {
         return m_conn_type == ConnectionType::ADDR_FETCH;
     }
 
-    bool IsInboundConn() const {
+    bool IsInboundConn() const
+    {
         return m_conn_type == ConnectionType::INBOUND;
     }
 
-    bool ExpectServicesFromConn() const {
+    bool ExpectServicesFromConn() const
+    {
         switch (m_conn_type) {
-            case ConnectionType::INBOUND:
-            case ConnectionType::MANUAL:
-            case ConnectionType::FEELER:
-                return false;
-            case ConnectionType::OUTBOUND_FULL_RELAY:
-            case ConnectionType::BLOCK_RELAY:
-            case ConnectionType::ADDR_FETCH:
-                return true;
+        case ConnectionType::INBOUND:
+        case ConnectionType::MANUAL:
+        case ConnectionType::FEELER:
+            return false;
+        case ConnectionType::OUTBOUND_FULL_RELAY:
+        case ConnectionType::BLOCK_RELAY:
+        case ConnectionType::ADDR_FETCH:
+            return true;
         } // no default case, so the compiler can warn about missing cases
 
         assert(false);
@@ -892,11 +900,13 @@ public:
     CNode(const CNode&) = delete;
     CNode& operator=(const CNode&) = delete;
 
-    NodeId GetId() const {
+    NodeId GetId() const
+    {
         return id;
     }
 
-    uint64_t GetLocalNonce() const {
+    uint64_t GetLocalNonce() const
+    {
         return nLocalHostNonce;
     }
 
@@ -965,7 +975,8 @@ public:
     std::string DisconnectMsg(bool log_ip) const;
 
     /** A ping-pong round trip has completed successfully. Update latest and minimum ping times. */
-    void PongReceived(std::chrono::microseconds ping_time) {
+    void PongReceived(std::chrono::microseconds ping_time)
+    {
         m_last_ping_time = ping_time;
         m_min_ping_time = std::min(m_min_ping_time.load(), ping_time);
     }
@@ -1024,20 +1035,20 @@ public:
     virtual bool HasAllDesirableServiceFlags(ServiceFlags services) const = 0;
 
     /**
-    * Process protocol messages received from a given node
-    *
-    * @param[in]   pnode           The node which we have received messages from.
-    * @param[in]   interrupt       Interrupt condition for processing threads
-    * @return                      True if there is more work to be done
-    */
+     * Process protocol messages received from a given node
+     *
+     * @param[in]   pnode           The node which we have received messages from.
+     * @param[in]   interrupt       Interrupt condition for processing threads
+     * @return                      True if there is more work to be done
+     */
     virtual bool ProcessMessages(CNode* pnode, std::atomic<bool>& interrupt) EXCLUSIVE_LOCKS_REQUIRED(g_msgproc_mutex) = 0;
 
     /**
-    * Send queued protocol messages to a given node.
-    *
-    * @param[in]   pnode           The node which we are sending messages to.
-    * @return                      True if there is more work to be done
-    */
+     * Send queued protocol messages to a given node.
+     *
+     * @param[in]   pnode           The node which we are sending messages to.
+     * @return                      True if there is more work to be done
+     */
     virtual bool SendMessages(CNode* pnode) EXCLUSIVE_LOCKS_REQUIRED(g_msgproc_mutex) = 0;
 
     virtual void NewSignedBlockTimer(uint32_t nTime) EXCLUSIVE_LOCKS_REQUIRED(g_msgproc_mutex) = 0;
@@ -1053,9 +1064,7 @@ protected:
 class CConnman
 {
 public:
-
-    struct Options
-    {
+    struct Options {
         ServiceFlags m_local_services = NODE_NONE;
         int m_max_automatic_connections = 0;
         CClientUIInterface* uiInterface = nullptr;
@@ -1376,8 +1385,8 @@ private:
     bool AlreadyConnectedToAddress(const CAddress& addr);
 
     bool AttemptToEvictConnection();
-    CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool fCountFailure, ConnectionType conn_type, bool use_v2transport) EXCLUSIVE_LOCKS_REQUIRED(!m_unused_i2p_sessions_mutex);
-    void AddWhitelistPermissionFlags(NetPermissionFlags& flags, const CNetAddr &addr, const std::vector<NetWhitelistPermissions>& ranges) const;
+    CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool fCountFailure, ConnectionType conn_type, bool use_v2transport) EXCLUSIVE_LOCKS_REQUIRED(!m_unused_i2p_sessions_mutex);
+    void AddWhitelistPermissionFlags(NetPermissionFlags& flags, const CNetAddr& addr, const std::vector<NetWhitelistPermissions>& ranges) const;
 
     void DeleteNode(CNode* pnode);
 
@@ -1424,11 +1433,11 @@ private:
     // Network usage totals
     mutable Mutex m_total_bytes_sent_mutex;
     std::atomic<uint64_t> nTotalBytesRecv{0};
-    uint64_t nTotalBytesSent GUARDED_BY(m_total_bytes_sent_mutex) {0};
+    uint64_t nTotalBytesSent GUARDED_BY(m_total_bytes_sent_mutex){0};
 
     // outbound limit & stats
-    uint64_t nMaxOutboundTotalBytesSentInCycle GUARDED_BY(m_total_bytes_sent_mutex) {0};
-    std::chrono::seconds nMaxOutboundCycleStartTime GUARDED_BY(m_total_bytes_sent_mutex) {0};
+    uint64_t nMaxOutboundTotalBytesSentInCycle GUARDED_BY(m_total_bytes_sent_mutex){0};
+    std::chrono::seconds nMaxOutboundCycleStartTime GUARDED_BY(m_total_bytes_sent_mutex){0};
     uint64_t nMaxOutboundLimit GUARDED_BY(m_total_bytes_sent_mutex);
 
     // P2P timeout in seconds
@@ -1624,8 +1633,7 @@ private:
     Mutex m_reconnections_mutex;
 
     /** Struct for entries in m_reconnections. */
-    struct ReconnectionInfo
-    {
+    struct ReconnectionInfo {
         CAddress addr_connect;
         CountingSemaphoreGrant<> grant;
         std::string destination;

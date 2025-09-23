@@ -11,10 +11,10 @@
 namespace mp {
 template <typename LocalType, typename Value, typename Output>
 void CustomBuildField(TypeList<std::vector<LocalType>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Value&& value,
-    Output&& output)
+                      Priority<1>,
+                      InvokeContext& invoke_context,
+                      Value&& value,
+                      Output&& output)
 {
     // FIXME dedup with set handler below
     auto list = output.init(value.size());
@@ -31,10 +31,10 @@ inline static bool BuildPrimitive(InvokeContext& invoke_context, std::vector<boo
 
 template <typename LocalType, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<std::vector<LocalType>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Input&& input,
-    ReadDest&& read_dest)
+                               Priority<1>,
+                               InvokeContext& invoke_context,
+                               Input&& input,
+                               ReadDest&& read_dest)
 {
     return read_dest.update([&](auto& value) {
         auto data = input.get();
@@ -42,10 +42,10 @@ decltype(auto) CustomReadField(TypeList<std::vector<LocalType>>,
         value.reserve(data.size());
         for (auto item : data) {
             ReadField(TypeList<LocalType>(), invoke_context, Make<ValueField>(item),
-                ReadDestEmplace(TypeList<LocalType>(), [&](auto&&... args) -> auto& {
-                    value.emplace_back(std::forward<decltype(args)>(args)...);
-                    return value.back();
-                }));
+                      ReadDestEmplace(TypeList<LocalType>(), [&](auto&&... args) -> auto& {
+                          value.emplace_back(std::forward<decltype(args)>(args)...);
+                          return value.back();
+                      }));
         }
     });
 }

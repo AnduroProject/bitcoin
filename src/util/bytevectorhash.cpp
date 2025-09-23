@@ -8,9 +8,8 @@
 
 #include <vector>
 
-ByteVectorHash::ByteVectorHash() :
-    m_k0(FastRandomContext().rand64()),
-    m_k1(FastRandomContext().rand64())
+ByteVectorHash::ByteVectorHash() : m_k0(FastRandomContext().rand64()),
+                                   m_k1(FastRandomContext().rand64())
 {
 }
 

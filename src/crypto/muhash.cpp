@@ -132,8 +132,7 @@ void Num3072::FullReduce()
 
 namespace {
 /** A type representing a number in signed limb representation. */
-struct Num3072Signed
-{
+struct Num3072Signed {
     /** The represented value is sum(limbs[i]*2^(SIGNED_LIMB_SIZE*i), i=0..SIGNED_LIMBS-1).
      *  Note that limbs may be negative, or exceed 2^SIGNED_LIMB_SIZE-1. */
     signed_limb_t limbs[SIGNED_LIMBS];
@@ -191,7 +190,7 @@ struct Num3072Signed
     void Normalize(bool negate)
     {
         // Add modulus if this was negative. This brings the range of *this to 1-2^3072..2^3072-1.
-        signed_limb_t cond_add = limbs[SIGNED_LIMBS-1] >> (LIMB_SIZE-1); // -1 if this is negative; 0 otherwise
+        signed_limb_t cond_add = limbs[SIGNED_LIMBS - 1] >> (LIMB_SIZE - 1); // -1 if this is negative; 0 otherwise
         limbs[0] += signed_limb_t(-MAX_PRIME_DIFF) & cond_add;
         limbs[FINAL_LIMB_POSITION] += (signed_limb_t(1) << FINAL_LIMB_MODULUS_BITS) & cond_add;
         // Next negate all limbs if negate was set. This does not change the range of *this.
@@ -205,7 +204,7 @@ struct Num3072Signed
             limbs[i] &= MAX_SIGNED_LIMB;
         }
         // Again add modulus if *this was negative. This brings the range of *this to 0..2^3072-1.
-        cond_add = limbs[SIGNED_LIMBS-1] >> (LIMB_SIZE-1); // -1 if this is negative; 0 otherwise
+        cond_add = limbs[SIGNED_LIMBS - 1] >> (LIMB_SIZE - 1); // -1 if this is negative; 0 otherwise
         limbs[0] += signed_limb_t(-MAX_PRIME_DIFF) & cond_add;
         limbs[FINAL_LIMB_POSITION] += (signed_limb_t(1) << FINAL_LIMB_MODULUS_BITS) & cond_add;
         // Perform another carry. Now all limbs are in range 0..2^SIGNED_LIMB_SIZE-1.
@@ -217,8 +216,7 @@ struct Num3072Signed
 };
 
 /** 2x2 transformation matrix with signed_limb_t elements. */
-struct SignedMatrix
-{
+struct SignedMatrix {
     signed_limb_t u, v, q, r;
 };
 
@@ -244,8 +242,7 @@ inline limb_t ComputeDivstepMatrix(signed_limb_t eta, limb_t f, limb_t g, Signed
         0x67, 0xFD, 0xDB, 0xB1, 0xAF, 0x85, 0x63, 0xF9, 0x77, 0x8D, 0x6B, 0xC1,
         0xBF, 0x15, 0xF3, 0x09, 0x87, 0x1D, 0xFB, 0xD1, 0xCF, 0xA5, 0x83, 0x19,
         0x97, 0xAD, 0x8B, 0xE1, 0xDF, 0x35, 0x13, 0x29, 0xA7, 0x3D, 0x1B, 0xF1,
-        0xEF, 0xC5, 0xA3, 0x39, 0xB7, 0xCD, 0xAB, 0x01
-    };
+        0xEF, 0xC5, 0xA3, 0x39, 0xB7, 0xCD, 0xAB, 0x01};
     // Coefficients of returned SignedMatrix; starts off as identity matrix. */
     limb_t u = 1, v = 0, q = 0, r = 1;
     // The number of divsteps still left.
@@ -259,15 +256,21 @@ inline limb_t ComputeDivstepMatrix(signed_limb_t eta, limb_t f, limb_t g, Signed
         v <<= zeros;
         eta -= zeros;
         i -= zeros;
-         /* We're done once we've performed SIGNED_LIMB_SIZE divsteps. */
+        /* We're done once we've performed SIGNED_LIMB_SIZE divsteps. */
         if (i == 0) break;
         /* If eta is negative, negate it and replace f,g with g,-f. */
         if (eta < 0) {
             limb_t tmp;
             eta = -eta;
-            tmp = f; f = g; g = -tmp;
-            tmp = u; u = q; q = -tmp;
-            tmp = v; v = r; r = -tmp;
+            tmp = f;
+            f = g;
+            g = -tmp;
+            tmp = u;
+            u = q;
+            q = -tmp;
+            tmp = v;
+            v = r;
+            r = -tmp;
         }
         /* eta is now >= 0. In what follows we're going to cancel out the bottom bits of g. No more
          * than i can be cancelled out (as we'd be done before that point), and no more than eta+1
@@ -295,7 +298,7 @@ inline limb_t ComputeDivstepMatrix(signed_limb_t eta, limb_t f, limb_t g, Signed
  */
 inline void UpdateDE(Num3072Signed& d, Num3072Signed& e, const SignedMatrix& t)
 {
-    const signed_limb_t u = t.u, v=t.v, q=t.q, r=t.r;
+    const signed_limb_t u = t.u, v = t.v, q = t.q, r = t.r;
 
     /* [md,me] start as zero; plus [u,q] if d is negative; plus [v,r] if e is negative. */
     signed_limb_t sd = d.limbs[SIGNED_LIMBS - 1] >> (LIMB_SIZE - 1);
@@ -325,8 +328,10 @@ inline void UpdateDE(Num3072Signed& d, Num3072Signed& e, const SignedMatrix& t)
         ei = e.limbs[i];
         cd += (signed_double_limb_t)u * di + (signed_double_limb_t)v * ei;
         ce += (signed_double_limb_t)q * di + (signed_double_limb_t)r * ei;
-        d.limbs[i - 1] = (signed_limb_t)cd & MAX_SIGNED_LIMB; cd >>= SIGNED_LIMB_SIZE;
-        e.limbs[i - 1] = (signed_limb_t)ce & MAX_SIGNED_LIMB; ce >>= SIGNED_LIMB_SIZE;
+        d.limbs[i - 1] = (signed_limb_t)cd & MAX_SIGNED_LIMB;
+        cd >>= SIGNED_LIMB_SIZE;
+        e.limbs[i - 1] = (signed_limb_t)ce & MAX_SIGNED_LIMB;
+        ce >>= SIGNED_LIMB_SIZE;
     }
     /* Compute limb SIGNED_LIMBS-1 of t*[d,e]+modulus*[md,me], and store it in output limb SIGNED_LIMBS-2. */
     di = d.limbs[SIGNED_LIMBS - 1];
@@ -335,8 +340,10 @@ inline void UpdateDE(Num3072Signed& d, Num3072Signed& e, const SignedMatrix& t)
     ce += (signed_double_limb_t)q * di + (signed_double_limb_t)r * ei;
     cd += (signed_double_limb_t)md << FINAL_LIMB_MODULUS_BITS;
     ce += (signed_double_limb_t)me << FINAL_LIMB_MODULUS_BITS;
-    d.limbs[SIGNED_LIMBS - 2] = (signed_limb_t)cd & MAX_SIGNED_LIMB; cd >>= SIGNED_LIMB_SIZE;
-    e.limbs[SIGNED_LIMBS - 2] = (signed_limb_t)ce & MAX_SIGNED_LIMB; ce >>= SIGNED_LIMB_SIZE;
+    d.limbs[SIGNED_LIMBS - 2] = (signed_limb_t)cd & MAX_SIGNED_LIMB;
+    cd >>= SIGNED_LIMB_SIZE;
+    e.limbs[SIGNED_LIMBS - 2] = (signed_limb_t)ce & MAX_SIGNED_LIMB;
+    ce >>= SIGNED_LIMB_SIZE;
     /* What remains goes into output limb SINGED_LIMBS-1 */
     d.limbs[SIGNED_LIMBS - 1] = (signed_limb_t)cd;
     e.limbs[SIGNED_LIMBS - 1] = (signed_limb_t)ce;
@@ -349,7 +356,7 @@ inline void UpdateDE(Num3072Signed& d, Num3072Signed& e, const SignedMatrix& t)
  */
 inline void UpdateFG(Num3072Signed& f, Num3072Signed& g, const SignedMatrix& t, int len)
 {
-    const signed_limb_t u = t.u, v=t.v, q=t.q, r=t.r;
+    const signed_limb_t u = t.u, v = t.v, q = t.q, r = t.r;
 
     signed_limb_t fi, gi;
     signed_double_limb_t cf, cg;
@@ -370,13 +377,14 @@ inline void UpdateFG(Num3072Signed& f, Num3072Signed& g, const SignedMatrix& t, 
         gi = g.limbs[i];
         cf += (signed_double_limb_t)u * fi + (signed_double_limb_t)v * gi;
         cg += (signed_double_limb_t)q * fi + (signed_double_limb_t)r * gi;
-        f.limbs[i - 1] = (signed_limb_t)cf & MAX_SIGNED_LIMB; cf >>= SIGNED_LIMB_SIZE;
-        g.limbs[i - 1] = (signed_limb_t)cg & MAX_SIGNED_LIMB; cg >>= SIGNED_LIMB_SIZE;
+        f.limbs[i - 1] = (signed_limb_t)cf & MAX_SIGNED_LIMB;
+        cf >>= SIGNED_LIMB_SIZE;
+        g.limbs[i - 1] = (signed_limb_t)cg & MAX_SIGNED_LIMB;
+        cg >>= SIGNED_LIMB_SIZE;
     }
     /* What remains is limb SIGNED_LIMBS of t*[f,g]; store it as output limb SIGNED_LIMBS-1. */
     f.limbs[len - 1] = (signed_limb_t)cf;
     g.limbs[len - 1] = (signed_limb_t)cg;
-
 }
 } // namespace
 
@@ -446,7 +454,7 @@ Num3072 Num3072::GetInverse() const
     // As we've maintained the invariant that f = d * x mod modulus, we get d/f mod modulus is the
     // modular inverse of x we're looking for. As f is 1 or -1, it is also true that d/f = d*f.
     // Normalize d to prepare it for output, while negating it if f is negative.
-    d.Normalize(f.limbs[len - 1] >> (LIMB_SIZE  - 1));
+    d.Normalize(f.limbs[len - 1] >> (LIMB_SIZE - 1));
     Num3072 ret;
     d.ToNum3072(ret);
     return ret;
@@ -461,15 +469,18 @@ void Num3072::Multiply(const Num3072& a)
     for (int j = 0; j < LIMBS - 1; ++j) {
         limb_t d0 = 0, d1 = 0, d2 = 0;
         mul(d0, d1, this->limbs[1 + j], a.limbs[LIMBS + j - (1 + j)]);
-        for (int i = 2 + j; i < LIMBS; ++i) muladd3(d0, d1, d2, this->limbs[i], a.limbs[LIMBS + j - i]);
+        for (int i = 2 + j; i < LIMBS; ++i)
+            muladd3(d0, d1, d2, this->limbs[i], a.limbs[LIMBS + j - i]);
         mulnadd3(c0, c1, c2, d0, d1, d2, MAX_PRIME_DIFF);
-        for (int i = 0; i < j + 1; ++i) muladd3(c0, c1, c2, this->limbs[i], a.limbs[j - i]);
+        for (int i = 0; i < j + 1; ++i)
+            muladd3(c0, c1, c2, this->limbs[i], a.limbs[j - i]);
         extract3(c0, c1, c2, tmp.limbs[j]);
     }
 
     /* Compute limb N-1 of a*b into tmp. */
     assert(c2 == 0);
-    for (int i = 0; i < LIMBS; ++i) muladd3(c0, c1, c2, this->limbs[i], a.limbs[LIMBS - 1 - i]);
+    for (int i = 0; i < LIMBS; ++i)
+        muladd3(c0, c1, c2, this->limbs[i], a.limbs[LIMBS - 1 - i]);
     extract3(c0, c1, c2, tmp.limbs[LIMBS - 1]);
 
     /* Perform a second reduction. */
@@ -492,7 +503,8 @@ void Num3072::Multiply(const Num3072& a)
 void Num3072::SetToOne()
 {
     this->limbs[0] = 1;
-    for (int i = 1; i < LIMBS; ++i) this->limbs[i] = 0;
+    for (int i = 1; i < LIMBS; ++i)
+        this->limbs[i] = 0;
 }
 
 void Num3072::Divide(const Num3072& a)
@@ -512,7 +524,8 @@ void Num3072::Divide(const Num3072& a)
     if (this->IsOverflow()) this->FullReduce();
 }
 
-Num3072::Num3072(const unsigned char (&data)[BYTE_SIZE]) {
+Num3072::Num3072(const unsigned char (&data)[BYTE_SIZE])
+{
     for (int i = 0; i < LIMBS; ++i) {
         if (sizeof(limb_t) == 4) {
             this->limbs[i] = ReadLE32(data + 4 * i);
@@ -522,7 +535,8 @@ Num3072::Num3072(const unsigned char (&data)[BYTE_SIZE]) {
     }
 }
 
-void Num3072::ToBytes(unsigned char (&out)[BYTE_SIZE]) {
+void Num3072::ToBytes(unsigned char (&out)[BYTE_SIZE])
+{
     for (int i = 0; i < LIMBS; ++i) {
         if (sizeof(limb_t) == 4) {
             WriteLE32(out + i * 4, this->limbs[i]);
@@ -532,7 +546,8 @@ void Num3072::ToBytes(unsigned char (&out)[BYTE_SIZE]) {
     }
 }
 
-Num3072 MuHash3072::ToNum3072(std::span<const unsigned char> in) {
+Num3072 MuHash3072::ToNum3072(std::span<const unsigned char> in)
+{
     unsigned char tmp[Num3072::BYTE_SIZE];
 
     uint256 hashed_in{(HashWriter{} << in).GetSHA256()};
@@ -551,7 +566,7 @@ MuHash3072::MuHash3072(std::span<const unsigned char> in) noexcept
 void MuHash3072::Finalize(uint256& out) noexcept
 {
     m_numerator.Divide(m_denominator);
-    m_denominator.SetToOne();  // Needed to keep the MuHash object valid
+    m_denominator.SetToOne(); // Needed to keep the MuHash object valid
 
     unsigned char data[Num3072::BYTE_SIZE];
     m_numerator.ToBytes(data);
@@ -573,12 +588,14 @@ MuHash3072& MuHash3072::operator/=(const MuHash3072& div) noexcept
     return *this;
 }
 
-MuHash3072& MuHash3072::Insert(std::span<const unsigned char> in) noexcept {
+MuHash3072& MuHash3072::Insert(std::span<const unsigned char> in) noexcept
+{
     m_numerator.Multiply(ToNum3072(in));
     return *this;
 }
 
-MuHash3072& MuHash3072::Remove(std::span<const unsigned char> in) noexcept {
+MuHash3072& MuHash3072::Remove(std::span<const unsigned char> in) noexcept
+{
     m_denominator.Multiply(ToNum3072(in));
     return *this;
 }

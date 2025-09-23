@@ -163,7 +163,7 @@ bool DumpMempool(const CTxMemPool& pool, const fs::path& dump_path, FopenFn mock
 
     {
         LOCK(pool.cs);
-        for (const auto &i : pool.mapDeltas) {
+        for (const auto& i : pool.mapDeltas) {
             mapDeltas[i.first] = i.second;
         }
         vinfo = pool.infoAll();
@@ -219,9 +219,9 @@ bool DumpMempool(const CTxMemPool& pool, const fs::path& dump_path, FopenFn mock
         auto last = SteadyClock::now();
 
         LogInfo("Dumped mempool: %.3fs to copy, %.3fs to dump, %d bytes dumped to file\n",
-                  Ticks<SecondsDouble>(mid - start),
-                  Ticks<SecondsDouble>(last - mid),
-                  fs::file_size(dump_path));
+                Ticks<SecondsDouble>(mid - start),
+                Ticks<SecondsDouble>(last - mid),
+                fs::file_size(dump_path));
     } catch (const std::exception& e) {
         LogInfo("Failed to dump mempool: %s. Continuing anyway.\n", e.what());
         (void)file.fclose();

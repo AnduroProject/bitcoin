@@ -10,7 +10,8 @@
 
 BOOST_FIXTURE_TEST_SUITE(merkle_tests, TestingSetup)
 
-static uint256 ComputeMerkleRootFromBranch(const uint256& leaf, const std::vector<uint256>& vMerkleBranch, uint32_t nIndex) {
+static uint256 ComputeMerkleRootFromBranch(const uint256& leaf, const std::vector<uint256>& vMerkleBranch, uint32_t nIndex)
+{
     uint256 hash = leaf;
     for (std::vector<uint256>::const_iterator it = vMerkleBranch.begin(); it != vMerkleBranch.end(); ++it) {
         if (nIndex & 1) {
@@ -32,16 +33,14 @@ static uint256 BlockBuildMerkleTree(const CBlock& block, bool* fMutated, std::ve
         vMerkleTree.push_back((*it)->GetHash());
     int j = 0;
     bool mutated = false;
-    for (int nSize = block.vtx.size(); nSize > 1; nSize = (nSize + 1) / 2)
-    {
-        for (int i = 0; i < nSize; i += 2)
-        {
-            int i2 = std::min(i+1, nSize-1);
-            if (i2 == i + 1 && i2 + 1 == nSize && vMerkleTree[j+i] == vMerkleTree[j+i2]) {
+    for (int nSize = block.vtx.size(); nSize > 1; nSize = (nSize + 1) / 2) {
+        for (int i = 0; i < nSize; i += 2) {
+            int i2 = std::min(i + 1, nSize - 1);
+            if (i2 == i + 1 && i2 + 1 == nSize && vMerkleTree[j + i] == vMerkleTree[j + i2]) {
                 // Two identical hashes at the end of the list at a particular level.
                 mutated = true;
             }
-            vMerkleTree.push_back(Hash(vMerkleTree[j+i], vMerkleTree[j+i2]));
+            vMerkleTree.push_back(Hash(vMerkleTree[j + i], vMerkleTree[j + i2]));
         }
         j += nSize;
     }
@@ -56,17 +55,17 @@ static std::vector<uint256> BlockGetMerkleBranch(const CBlock& block, const std:
 {
     std::vector<uint256> vMerkleBranch;
     int j = 0;
-    for (int nSize = block.vtx.size(); nSize > 1; nSize = (nSize + 1) / 2)
-    {
-        int i = std::min(nIndex^1, nSize-1);
-        vMerkleBranch.push_back(vMerkleTree[j+i]);
+    for (int nSize = block.vtx.size(); nSize > 1; nSize = (nSize + 1) / 2) {
+        int i = std::min(nIndex ^ 1, nSize - 1);
+        vMerkleBranch.push_back(vMerkleTree[j + i]);
         nIndex >>= 1;
         j += nSize;
     }
     return vMerkleBranch;
 }
 
-static inline int ctz(uint32_t i) {
+static inline int ctz(uint32_t i)
+{
     if (i == 0) return 0;
     int j = 0;
     while (!(i & 1)) {
@@ -83,9 +82,9 @@ BOOST_AUTO_TEST_CASE(merkle_test)
         int ntx = (i <= 16) ? i : 17 + (m_rng.randrange(4000));
         // Try up to 3 mutations.
         for (int mutate = 0; mutate <= 3; mutate++) {
-            int duplicate1 = mutate >= 1 ? 1 << ctz(ntx) : 0; // The last how many transactions to duplicate first.
-            if (duplicate1 >= ntx) break; // Duplication of the entire tree results in a different root (it adds a level).
-            int ntx1 = ntx + duplicate1; // The resulting number of transactions after the first duplication.
+            int duplicate1 = mutate >= 1 ? 1 << ctz(ntx) : 0;  // The last how many transactions to duplicate first.
+            if (duplicate1 >= ntx) break;                      // Duplication of the entire tree results in a different root (it adds a level).
+            int ntx1 = ntx + duplicate1;                       // The resulting number of transactions after the first duplication.
             int duplicate2 = mutate >= 2 ? 1 << ctz(ntx1) : 0; // Likewise for the second mutation.
             if (duplicate2 >= ntx1) break;
             int ntx2 = ntx1 + duplicate2;

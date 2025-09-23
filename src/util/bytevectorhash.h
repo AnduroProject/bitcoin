@@ -5,8 +5,8 @@
 #ifndef BITCOIN_UTIL_BYTEVECTORHASH_H
 #define BITCOIN_UTIL_BYTEVECTORHASH_H
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 /**

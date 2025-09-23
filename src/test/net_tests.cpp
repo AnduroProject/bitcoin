@@ -1015,13 +1015,13 @@ class V2TransportTester
 {
     FastRandomContext& m_rng;
     V2Transport m_transport; //!< V2Transport being tested
-    BIP324Cipher m_cipher; //!< Cipher to help with the other side
-    bool m_test_initiator; //!< Whether m_transport is the initiator (true) or responder (false)
+    BIP324Cipher m_cipher;   //!< Cipher to help with the other side
+    bool m_test_initiator;   //!< Whether m_transport is the initiator (true) or responder (false)
 
-    std::vector<uint8_t> m_sent_garbage; //!< The garbage we've sent to m_transport.
-    std::vector<uint8_t> m_recv_garbage; //!< The garbage we've received from m_transport.
-    std::vector<uint8_t> m_to_send; //!< Bytes we have queued up to send to m_transport.
-    std::vector<uint8_t> m_received; //!< Bytes we have received from m_transport.
+    std::vector<uint8_t> m_sent_garbage;         //!< The garbage we've sent to m_transport.
+    std::vector<uint8_t> m_recv_garbage;         //!< The garbage we've received from m_transport.
+    std::vector<uint8_t> m_to_send;              //!< Bytes we have queued up to send to m_transport.
+    std::vector<uint8_t> m_received;             //!< Bytes we have received from m_transport.
     std::deque<CSerializedNetMsg> m_msg_to_send; //!< Messages to be sent *by* m_transport to us.
     bool m_sent_aad{false};
 
@@ -1138,7 +1138,7 @@ public:
     /** Schedule garbage (with valid random length) to be sent to the transport. */
     void SendGarbage()
     {
-         SendGarbage(m_rng.randrange(V2Transport::MAX_GARBAGE_LEN + 1));
+        SendGarbage(m_rng.randrange(V2Transport::MAX_GARBAGE_LEN + 1));
     }
 
     /** Schedule a message to be sent to us by the transport. */

@@ -25,8 +25,7 @@
 // Old script.cpp SignatureHash function
 uint256 static SignatureHashOld(CScript scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType)
 {
-    if (nIn >= txTo.vin.size())
-    {
+    if (nIn >= txTo.vin.size()) {
         return uint256::ONE;
     }
     CMutableTransaction txTmp(txTo);
@@ -41,8 +40,7 @@ uint256 static SignatureHashOld(CScript scriptCode, const CTransaction& txTo, un
     txTmp.vin[nIn].scriptSig = scriptCode;
 
     // Blank out some of the outputs
-    if ((nHashType & 0x1f) == SIGHASH_NONE)
-    {
+    if ((nHashType & 0x1f) == SIGHASH_NONE) {
         // Wildcard payee
         txTmp.vout.clear();
 
@@ -50,16 +48,13 @@ uint256 static SignatureHashOld(CScript scriptCode, const CTransaction& txTo, un
         for (unsigned int i = 0; i < txTmp.vin.size(); i++)
             if (i != nIn)
                 txTmp.vin[i].nSequence = 0;
-    }
-    else if ((nHashType & 0x1f) == SIGHASH_SINGLE)
-    {
+    } else if ((nHashType & 0x1f) == SIGHASH_SINGLE) {
         // Only lock-in the txout payee at same index as txin
         unsigned int nOut = nIn;
-        if (nOut >= txTmp.vout.size())
-        {
+        if (nOut >= txTmp.vout.size()) {
             return uint256::ONE;
         }
-        txTmp.vout.resize(nOut+1);
+        txTmp.vout.resize(nOut + 1);
         for (unsigned int i = 0; i < nOut; i++)
             txTmp.vout[i].SetNull();
 
@@ -70,8 +65,7 @@ uint256 static SignatureHashOld(CScript scriptCode, const CTransaction& txTo, un
     }
 
     // Blank out other inputs completely, not recommended for open transactions
-    if (nHashType & SIGHASH_ANYONECANPAY)
-    {
+    if (nHashType & SIGHASH_ANYONECANPAY) {
         txTmp.vin[0] = txTmp.vin[nIn];
         txTmp.vin.resize(1);
     }
@@ -83,51 +77,52 @@ uint256 static SignatureHashOld(CScript scriptCode, const CTransaction& txTo, un
 }
 
 struct SigHashTest : BasicTestingSetup {
-void RandomScript(CScript &script) {
-    static const opcodetype oplist[] = {OP_FALSE, OP_1, OP_2, OP_3, OP_CHECKSIG, OP_IF, OP_VERIF, OP_RETURN, OP_CODESEPARATOR};
-    script = CScript();
-    int ops = (m_rng.randrange(10));
-    for (int i=0; i<ops; i++)
-        script << oplist[m_rng.randrange(std::size(oplist))];
-}
+    void RandomScript(CScript& script)
+    {
+        static const opcodetype oplist[] = {OP_FALSE, OP_1, OP_2, OP_3, OP_CHECKSIG, OP_IF, OP_VERIF, OP_RETURN, OP_CODESEPARATOR};
+        script = CScript();
+        int ops = (m_rng.randrange(10));
+        for (int i = 0; i < ops; i++)
+            script << oplist[m_rng.randrange(std::size(oplist))];
+    }
 
-void RandomTransaction(CMutableTransaction& tx, bool fSingle)
-{
-    tx.version = m_rng.rand32();
-    tx.vin.clear();
-    tx.vout.clear();
-    tx.nLockTime = (m_rng.randbool()) ? m_rng.rand32() : 0;
-    int ins = (m_rng.randbits(2)) + 1;
-    int outs = fSingle ? ins : (m_rng.randbits(2)) + 1;
-    for (int in = 0; in < ins; in++) {
-        tx.vin.emplace_back();
-        CTxIn &txin = tx.vin.back();
-        txin.prevout.hash = Txid::FromUint256(m_rng.rand256());
-        txin.prevout.n = m_rng.randbits(2);
-        RandomScript(txin.scriptSig);
-        txin.nSequence = (m_rng.randbool()) ? m_rng.rand32() : std::numeric_limits<uint32_t>::max();
+    void RandomTransaction(CMutableTransaction& tx, bool fSingle)
+    {
+        tx.version = m_rng.rand32();
+        tx.vin.clear();
+        tx.vout.clear();
+        tx.nLockTime = (m_rng.randbool()) ? m_rng.rand32() : 0;
+        int ins = (m_rng.randbits(2)) + 1;
+        int outs = fSingle ? ins : (m_rng.randbits(2)) + 1;
+        for (int in = 0; in < ins; in++) {
+            tx.vin.emplace_back();
+            CTxIn& txin = tx.vin.back();
+            txin.prevout.hash = Txid::FromUint256(m_rng.rand256());
+            txin.prevout.n = m_rng.randbits(2);
+            RandomScript(txin.scriptSig);
+            txin.nSequence = (m_rng.randbool()) ? m_rng.rand32() : std::numeric_limits<uint32_t>::max();
+        }
+        for (int out = 0; out < outs; out++) {
+            tx.vout.emplace_back();
+            CTxOut& txout = tx.vout.back();
+            txout.nValue = RandMoney(m_rng);
+            RandomScript(txout.scriptPubKey);
+        }
     }
-    for (int out = 0; out < outs; out++) {
-        tx.vout.emplace_back();
-        CTxOut &txout = tx.vout.back();
-        txout.nValue = RandMoney(m_rng);
-        RandomScript(txout.scriptPubKey);
-    }
-}
 }; // struct SigHashTest
 
 BOOST_FIXTURE_TEST_SUITE(sighash_tests, SigHashTest)
 
 BOOST_AUTO_TEST_CASE(sighash_test)
 {
-    #if defined(PRINT_SIGHASH_JSON)
+#if defined(PRINT_SIGHASH_JSON)
     std::cout << "[\n";
     std::cout << "\t[\"raw_transaction, script, input_index, hashType, signature_hash (result)\"],\n";
     int nRandomTests = 500;
-    #else
+#else
     int nRandomTests = 50000;
-    #endif
-    for (int i=0; i<nRandomTests; i++) {
+#endif
+    for (int i = 0; i < nRandomTests; i++) {
         int nHashType{int(m_rng.rand32())};
         CMutableTransaction txTo;
         RandomTransaction(txTo, (nHashType & 0x1f) == SIGHASH_SINGLE);
@@ -138,26 +133,26 @@ BOOST_AUTO_TEST_CASE(sighash_test)
         uint256 sh, sho;
         sho = SignatureHashOld(scriptCode, CTransaction(txTo), nIn, nHashType);
         sh = SignatureHash(scriptCode, txTo, nIn, nHashType, 0, SigVersion::BASE);
-        #if defined(PRINT_SIGHASH_JSON)
+#if defined(PRINT_SIGHASH_JSON)
         DataStream ss;
         ss << TX_WITH_WITNESS(txTo);
 
-        std::cout << "\t[\"" ;
+        std::cout << "\t[\"";
         std::cout << HexStr(ss) << "\", \"";
         std::cout << HexStr(scriptCode) << "\", ";
         std::cout << nIn << ", ";
         std::cout << nHashType << ", \"";
         std::cout << sho.GetHex() << "\"]";
-        if (i+1 != nRandomTests) {
-          std::cout << ",";
+        if (i + 1 != nRandomTests) {
+            std::cout << ",";
         }
         std::cout << "\n";
-        #endif
+#endif
         BOOST_CHECK(sh == sho);
     }
-    #if defined(PRINT_SIGHASH_JSON)
+#if defined(PRINT_SIGHASH_JSON)
     std::cout << "]\n";
-    #endif
+#endif
 }
 
 // Goal: check that SignatureHash generates correct hash
@@ -182,25 +177,25 @@ BOOST_AUTO_TEST_CASE(sighash_from_data)
         CScript scriptCode = CScript();
 
         try {
-          // deserialize test data
-          raw_tx = test[0].get_str();
-          raw_script = test[1].get_str();
-          nIn = test[2].getInt<int>();
-          nHashType = test[3].getInt<int>();
-          sigHashHex = test[4].get_str();
+            // deserialize test data
+            raw_tx = test[0].get_str();
+            raw_script = test[1].get_str();
+            nIn = test[2].getInt<int>();
+            nHashType = test[3].getInt<int>();
+            sigHashHex = test[4].get_str();
 
-          DataStream stream(ParseHex(raw_tx));
-          stream >> TX_WITH_WITNESS(tx);
+            DataStream stream(ParseHex(raw_tx));
+            stream >> TX_WITH_WITNESS(tx);
 
-          TxValidationState state;
-          BOOST_CHECK_MESSAGE(CheckTransaction(*tx, state), strTest);
-          BOOST_CHECK(state.IsValid());
+            TxValidationState state;
+            BOOST_CHECK_MESSAGE(CheckTransaction(*tx, state), strTest);
+            BOOST_CHECK(state.IsValid());
 
-          std::vector<unsigned char> raw = ParseHex(raw_script);
-          scriptCode.insert(scriptCode.end(), raw.begin(), raw.end());
+            std::vector<unsigned char> raw = ParseHex(raw_script);
+            scriptCode.insert(scriptCode.end(), raw.begin(), raw.end());
         } catch (...) {
-          BOOST_ERROR("Bad test, couldn't deserialize data: " << strTest);
-          continue;
+            BOOST_ERROR("Bad test, couldn't deserialize data: " << strTest);
+            continue;
         }
 
         sh = SignatureHash(scriptCode, *tx, nIn, nHashType, 0, SigVersion::BASE);

@@ -28,7 +28,7 @@ class TransactionTableModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    explicit TransactionTableModel(const PlatformStyle *platformStyle, WalletModel *parent = nullptr);
+    explicit TransactionTableModel(const PlatformStyle* platformStyle, WalletModel* parent = nullptr);
     ~TransactionTableModel();
 
     enum ColumnIndex {
@@ -71,39 +71,39 @@ public:
         RawDecorationRole,
     };
 
-    int rowCount(const QModelIndex &parent) const override;
-    int columnCount(const QModelIndex &parent) const override;
-    QVariant data(const QModelIndex &index, int role) const override;
+    int rowCount(const QModelIndex& parent) const override;
+    int columnCount(const QModelIndex& parent) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
-    QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const override;
+    QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     bool processingQueuedTransactions() const { return fProcessingQueuedTransactions; }
 
 private:
-    WalletModel *walletModel;
+    WalletModel* walletModel;
     std::unique_ptr<interfaces::Handler> m_handler_transaction_changed;
     std::unique_ptr<interfaces::Handler> m_handler_show_progress;
     QStringList columns;
-    TransactionTablePriv *priv;
+    TransactionTablePriv* priv;
     bool fProcessingQueuedTransactions{false};
-    const PlatformStyle *platformStyle;
+    const PlatformStyle* platformStyle;
 
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
 
-    QString lookupAddress(const std::string &address, bool tooltip) const;
-    QVariant addressColor(const TransactionRecord *wtx) const;
-    QString formatTxStatus(const TransactionRecord *wtx) const;
-    QString formatTxDate(const TransactionRecord *wtx) const;
-    QString formatTxType(const TransactionRecord *wtx) const;
-    QString formatTxToAddress(const TransactionRecord *wtx, bool tooltip) const;
-    QString formatTxAmount(const TransactionRecord *wtx, bool showUnconfirmed=true, BitcoinUnits::SeparatorStyle separators=BitcoinUnits::SeparatorStyle::STANDARD) const;
-    QString formatTooltip(const TransactionRecord *rec) const;
-    QVariant txStatusDecoration(const TransactionRecord *wtx) const;
-    QVariant txAddressDecoration(const TransactionRecord *wtx) const;
+    QString lookupAddress(const std::string& address, bool tooltip) const;
+    QVariant addressColor(const TransactionRecord* wtx) const;
+    QString formatTxStatus(const TransactionRecord* wtx) const;
+    QString formatTxDate(const TransactionRecord* wtx) const;
+    QString formatTxType(const TransactionRecord* wtx) const;
+    QString formatTxToAddress(const TransactionRecord* wtx, bool tooltip) const;
+    QString formatTxAmount(const TransactionRecord* wtx, bool showUnconfirmed = true, BitcoinUnits::SeparatorStyle separators = BitcoinUnits::SeparatorStyle::STANDARD) const;
+    QString formatTooltip(const TransactionRecord* rec) const;
+    QVariant txStatusDecoration(const TransactionRecord* wtx) const;
+    QVariant txAddressDecoration(const TransactionRecord* wtx) const;
 
 public Q_SLOTS:
     /* New transaction, or transaction changed status */
-    void updateTransaction(const QString &hash, int status, bool showTransaction);
+    void updateTransaction(const QString& hash, int status, bool showTransaction);
     void updateConfirmations();
     void updateDisplayUnit();
     /** Updates the column title to "Amount (DisplayUnit)" and emits headerDataChanged() signal for table headers to react. */

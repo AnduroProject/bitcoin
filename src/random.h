@@ -69,7 +69,7 @@
  * output of a deterministic RNG. This deterministic RNG does not gather entropy, and is
  * unaffected by RandAddPeriodic() or RandAddEvent(). It produces pseudorandom data that
  * only depends on the seed it was initialized with, possibly until it is reinitialized.
-*/
+ */
 
 
 /* ============================= INITIALIZATION AND ADDING ENTROPY ============================= */
@@ -139,11 +139,11 @@ void GetStrongRandBytes(std::span<unsigned char> bytes) noexcept;
  */
 
 // Forward declaration of RandomMixin, used in RandomNumberGenerator concept.
-template<typename T>
+template <typename T>
 class RandomMixin;
 
 /** A concept for RandomMixin-based random number generators. */
-template<typename T>
+template <typename T>
 concept RandomNumberGenerator = requires(T& rng, std::span<std::byte> s) {
     // A random number generator must provide rand64().
     { rng.rand64() } noexcept -> std::same_as<uint64_t>;
@@ -152,9 +152,9 @@ concept RandomNumberGenerator = requires(T& rng, std::span<std::byte> s) {
 };
 
 /** A concept for C++ std::chrono durations. */
-template<typename T>
+template <typename T>
 concept StdChronoDuration = requires {
-    []<class Rep, class Period>(std::type_identity<std::chrono::duration<Rep, Period>>){}(
+    []<class Rep, class Period>(std::type_identity<std::chrono::duration<Rep, Period>>) {}(
         std::type_identity<T>());
 };
 
@@ -170,7 +170,7 @@ double MakeExponentiallyDistributed(uint64_t uniform) noexcept;
  *
  * The derived class must satisfy the RandomNumberGenerator concept.
  */
-template<typename T>
+template <typename T>
 class RandomMixin
 {
 private:
@@ -226,7 +226,7 @@ public:
     }
 
     /** Same as above, but with compile-time fixed bits count. */
-    template<int Bits>
+    template <int Bits>
     uint64_t randbits() noexcept
     {
         static_assert(Bits >= 0 && Bits <= 64);
@@ -250,7 +250,7 @@ public:
     }
 
     /** Generate a random integer in the range [0..range), with range > 0. */
-    template<std::integral I>
+    template <std::integral I>
     I randrange(I range) noexcept
     {
         static_assert(std::numeric_limits<I>::max() <= std::numeric_limits<uint64_t>::max());
@@ -283,7 +283,7 @@ public:
     }
 
     /** Generate a random integer in its entire (non-negative) range. */
-    template<std::integral I>
+    template <std::integral I>
     I rand() noexcept
     {
         static_assert(std::numeric_limits<I>::max() <= std::numeric_limits<uint64_t>::max());
@@ -332,7 +332,8 @@ public:
     }
 
     /** Generate a uniform random duration in the range from 0 (inclusive) to range (exclusive). */
-    template <typename Chrono> requires StdChronoDuration<typename Chrono::duration>
+    template <typename Chrono>
+        requires StdChronoDuration<typename Chrono::duration>
     typename Chrono::duration rand_uniform_duration(typename Chrono::duration range) noexcept
     {
         using Dur = typename Chrono::duration;

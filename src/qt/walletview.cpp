@@ -41,13 +41,13 @@ WalletView::WalletView(WalletModel* wallet_model, const PlatformStyle* _platform
     overviewPage->setWalletModel(walletModel);
 
     transactionsPage = new QWidget(this);
-    QVBoxLayout *vbox = new QVBoxLayout();
-    QHBoxLayout *hbox_buttons = new QHBoxLayout();
+    QVBoxLayout* vbox = new QVBoxLayout();
+    QHBoxLayout* hbox_buttons = new QHBoxLayout();
     transactionView = new TransactionView(platformStyle, this);
     transactionView->setModel(walletModel);
 
     vbox->addWidget(transactionView);
-    QPushButton *exportButton = new QPushButton(tr("&Export"), this);
+    QPushButton* exportButton = new QPushButton(tr("&Export"), this);
     exportButton->setToolTip(tr("Export the data in the current tab to a file"));
     if (platformStyle->getImagesOnButtons()) {
         exportButton->setIcon(platformStyle->SingleColorIcon(":/icons/export"));
@@ -113,7 +113,7 @@ WalletView::WalletView(WalletModel* wallet_model, const PlatformStyle* _platform
 
 WalletView::~WalletView() = default;
 
-void WalletView::setClientModel(ClientModel *_clientModel)
+void WalletView::setClientModel(ClientModel* _clientModel)
 {
     this->clientModel = _clientModel;
 
@@ -129,7 +129,7 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
         return;
     }
 
-    TransactionTableModel *ttm = walletModel->getTransactionTableModel();
+    TransactionTableModel* ttm = walletModel->getTransactionTableModel();
     if (!ttm || ttm->processingQueuedTransactions())
         return;
 
@@ -169,7 +169,7 @@ void WalletView::gotoSendCoinsPage(QString addr)
 void WalletView::gotoSignMessageTab(QString addr)
 {
     // calls show() in showTab_SM()
-    SignVerifyMessageDialog *signVerifyMessageDialog = new SignVerifyMessageDialog(platformStyle, this);
+    SignVerifyMessageDialog* signVerifyMessageDialog = new SignVerifyMessageDialog(platformStyle, this);
     signVerifyMessageDialog->setAttribute(Qt::WA_DeleteOnClose);
     signVerifyMessageDialog->setModel(walletModel);
     signVerifyMessageDialog->showTab_SM(true);
@@ -181,7 +181,7 @@ void WalletView::gotoSignMessageTab(QString addr)
 void WalletView::gotoVerifyMessageTab(QString addr)
 {
     // calls show() in showTab_VM()
-    SignVerifyMessageDialog *signVerifyMessageDialog = new SignVerifyMessageDialog(platformStyle, this);
+    SignVerifyMessageDialog* signVerifyMessageDialog = new SignVerifyMessageDialog(platformStyle, this);
     signVerifyMessageDialog->setAttribute(Qt::WA_DeleteOnClose);
     signVerifyMessageDialog->setModel(walletModel);
     signVerifyMessageDialog->showTab_VM(true);
@@ -211,20 +211,19 @@ void WalletView::encryptWallet()
 void WalletView::backupWallet()
 {
     QString filename = GUIUtil::getSaveFileName(this,
-        tr("Backup Wallet"), QString(),
-        //: Name of the wallet data file format.
-        tr("Wallet Data") + QLatin1String(" (*.dat)"), nullptr);
+                                                tr("Backup Wallet"), QString(),
+                                                //: Name of the wallet data file format.
+                                                tr("Wallet Data") + QLatin1String(" (*.dat)"), nullptr);
 
     if (filename.isEmpty())
         return;
 
     if (!walletModel->wallet().backupWallet(filename.toLocal8Bit().data())) {
         Q_EMIT message(tr("Backup Failed"), tr("There was an error trying to save the wallet data to %1.").arg(filename),
-            CClientUIInterface::MSG_ERROR);
-        }
-    else {
+                       CClientUIInterface::MSG_ERROR);
+    } else {
         Q_EMIT message(tr("Backup Successful"), tr("The wallet data was successfully saved to %1.").arg(filename),
-            CClientUIInterface::MSG_INFORMATION);
+                       CClientUIInterface::MSG_INFORMATION);
     }
 }
 
@@ -257,7 +256,7 @@ void WalletView::usedReceivingAddresses()
     GUIUtil::bringToFront(usedReceivingAddressesPage);
 }
 
-void WalletView::showProgress(const QString &title, int nProgress)
+void WalletView::showProgress(const QString& title, int nProgress)
 {
     if (nProgress == 0) {
         progressDialog = new QProgressDialog(title, tr("Cancel"), 0, 100);

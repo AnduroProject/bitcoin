@@ -6,8 +6,10 @@
 #define STORAGE_LEVELDB_UTIL_TESTUTIL_H_
 
 #include "helpers/memenv/memenv.h"
+
 #include "leveldb/env.h"
 #include "leveldb/slice.h"
+
 #include "util/random.h"
 
 namespace leveldb {

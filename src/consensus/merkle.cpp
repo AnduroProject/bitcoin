@@ -43,7 +43,8 @@
 */
 
 
-uint256 ComputeMerkleRoot(std::vector<uint256> hashes, bool* mutated) {
+uint256 ComputeMerkleRoot(std::vector<uint256> hashes, bool* mutated)
+{
     bool mutation = false;
     while (hashes.size() > 1) {
         if (mutated) {
@@ -67,7 +68,7 @@ uint256 BlockRawMerkleRoot(const CBlock& block, uint16_t type, bool* mutated)
 {
     std::vector<uint256> leafs;
     size_t leafs_size = 0;
-    if(type == 0)  {
+    if (type == 0) {
         leafs_size = block.vtx.size();
     } else if (type == 1) {
         leafs_size = block.preconfBlock.size();
@@ -76,7 +77,7 @@ uint256 BlockRawMerkleRoot(const CBlock& block, uint16_t type, bool* mutated)
     }
     leafs.resize(leafs_size);
 
-    if(type == 0)  {
+    if (type == 0) {
         for (size_t s = 0; s < block.vtx.size(); s++) {
             leafs[s] = block.vtx[s]->GetHash();
         }
@@ -89,9 +90,10 @@ uint256 BlockRawMerkleRoot(const CBlock& block, uint16_t type, bool* mutated)
             for (size_t s = 1; s < block.vtx.size(); s++) {
                 preconfTxLeaves[s] = block.preconfBlock[s].vtx[s]->GetHash();
             }
-            leafs[s] = ComputeMerkleRoot(std::move(preconfTxLeaves), mutated);;
+            leafs[s] = ComputeMerkleRoot(std::move(preconfTxLeaves), mutated);
+            ;
         }
-    }  else {
+    } else {
         for (size_t s = 0; s < block.pegins.size(); s++) {
             leafs[s] = block.pegins[s]->GetHash();
         }
@@ -121,7 +123,8 @@ uint256 BlockMerkleRoot(const CBlock& block, bool* mutated)
         for (size_t s = 1; s < block.vtx.size(); s++) {
             preconfTxLeaves[s] = block.preconfBlock[s].vtx[s]->GetHash();
         }
-        preconfBlockLeaves[s] = ComputeMerkleRoot(std::move(preconfTxLeaves), mutated);;
+        preconfBlockLeaves[s] = ComputeMerkleRoot(std::move(preconfTxLeaves), mutated);
+        ;
     }
     leaves[0] = ComputeMerkleRoot(std::move(preconfBlockLeaves));
 
@@ -143,15 +146,15 @@ uint256 BlockMerkleRoot(const CBlock& block, bool* mutated)
     invalidTxLeaves.resize(block.reconciliationBlock.nTx + 1);
     invalidTxLeaves[0] = block.reconciliationBlock.reconcileMerkleRoot;
     for (size_t s = 0; s < block.reconciliationBlock.nTx; s++) {
-        auto it = std::find_if(block.reconciliationBlock.tx.begin(), block.reconciliationBlock.tx.end(), 
-        [s] (const ReconciliationInvalidTx& tx) { 
-            return tx.pos == s;
-        });
+        auto it = std::find_if(block.reconciliationBlock.tx.begin(), block.reconciliationBlock.tx.end(),
+                               [s](const ReconciliationInvalidTx& tx) {
+                                   return tx.pos == s;
+                               });
         if (it == block.reconciliationBlock.tx.end()) {
-            invalidTxLeaves[s+1].SetNull();
+            invalidTxLeaves[s + 1].SetNull();
         } else {
             ReconciliationInvalidTx tx = std::move(*it);
-            invalidTxLeaves[s+1] = tx.txHash;
+            invalidTxLeaves[s + 1] = tx.txHash;
         }
     }
     leaves[3] = ComputeMerkleRoot(std::move(invalidTxLeaves));
@@ -177,7 +180,8 @@ uint256 BlockWitnessMerkleRoot(const CBlock& block, bool* mutated)
         for (size_t s = 1; s < block.vtx.size(); s++) {
             preconfTxLeaves[s] = block.preconfBlock[s].vtx[s]->GetWitnessHash();
         }
-        preconfBlockLeaves[s] = ComputeMerkleRoot(std::move(preconfTxLeaves), mutated);;
+        preconfBlockLeaves[s] = ComputeMerkleRoot(std::move(preconfTxLeaves), mutated);
+        ;
     }
     leaves[0] = ComputeMerkleRoot(std::move(preconfBlockLeaves));
 
@@ -202,15 +206,15 @@ uint256 BlockWitnessMerkleRoot(const CBlock& block, bool* mutated)
     invalidTxLeaves.resize(block.reconciliationBlock.nTx + 1);
     invalidTxLeaves[0] = block.reconciliationBlock.reconcileMerkleRoot;
     for (size_t s = 0; s < block.reconciliationBlock.nTx; s++) {
-        auto it = std::find_if(block.reconciliationBlock.tx.begin(), block.reconciliationBlock.tx.end(), 
-        [s] (const ReconciliationInvalidTx& tx) { 
-            return tx.pos == s;
-        });
+        auto it = std::find_if(block.reconciliationBlock.tx.begin(), block.reconciliationBlock.tx.end(),
+                               [s](const ReconciliationInvalidTx& tx) {
+                                   return tx.pos == s;
+                               });
         if (it == block.reconciliationBlock.tx.end()) {
-            invalidTxLeaves[s+1].SetNull();
+            invalidTxLeaves[s + 1].SetNull();
         } else {
             ReconciliationInvalidTx tx = std::move(*it);
-            invalidTxLeaves[s+1] = tx.txHash;
+            invalidTxLeaves[s + 1] = tx.txHash;
         }
     }
     leaves[3] = ComputeMerkleRoot(std::move(invalidTxLeaves));
@@ -218,8 +222,6 @@ uint256 BlockWitnessMerkleRoot(const CBlock& block, bool* mutated)
 
     return ComputeMerkleRoot(std::move(leaves));
 }
-
-
 
 
 uint256 SignedBlockMerkleRoot(const SignedBlock& block, bool* mutated)
@@ -334,7 +336,8 @@ static void MerkleComputation(const std::vector<uint256>& leaves, uint256* proot
     if (proot) *proot = h;
 }
 
-static std::vector<uint256> ComputeMerklePath(const std::vector<uint256>& leaves, uint32_t position) {
+static std::vector<uint256> ComputeMerklePath(const std::vector<uint256>& leaves, uint32_t position)
+{
     std::vector<uint256> ret;
     MerkleComputation(leaves, nullptr, nullptr, position, &ret);
     return ret;

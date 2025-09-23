@@ -56,9 +56,9 @@ struct AssumeutxoData {
  * See also: CChainParams::TxData, GuessVerificationProgress.
  */
 struct ChainTxData {
-    int64_t nTime;    //!< UNIX timestamp of last known number of transactions
+    int64_t nTime;     //!< UNIX timestamp of last known number of transactions
     uint64_t tx_count; //!< total number of transactions between genesis and that timestamp
-    double dTxRate;   //!< estimated number of transactions per second after that timestamp
+    double dTxRate;    //!< estimated number of transactions per second after that timestamp
 };
 
 /**

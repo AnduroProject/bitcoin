@@ -45,7 +45,8 @@ bool ExternalSignerScriptPubKeyMan::SetupDescriptor(WalletBatch& batch, std::uni
     return true;
 }
 
- util::Result<ExternalSigner> ExternalSignerScriptPubKeyMan::GetExternalSigner() {
+util::Result<ExternalSigner> ExternalSignerScriptPubKeyMan::GetExternalSigner()
+{
     const std::string command = gArgs.GetArg("-signer", "");
     if (command == "") return util::Error{Untranslated("restart bitcoind with -signer=<cmd>")};
     std::vector<ExternalSigner> signers;
@@ -56,7 +57,7 @@ bool ExternalSignerScriptPubKeyMan::SetupDescriptor(WalletBatch& batch, std::uni
     return signers[0];
 }
 
-util::Result<void> ExternalSignerScriptPubKeyMan::DisplayAddress(const CTxDestination& dest, const ExternalSigner &signer) const
+util::Result<void> ExternalSignerScriptPubKeyMan::DisplayAddress(const CTxDestination& dest, const ExternalSigner& signer) const
 {
     // TODO: avoid the need to infer a descriptor from inside a descriptor wallet
     const CScript& scriptPubKey = GetScriptForDestination(dest);
@@ -100,7 +101,7 @@ std::optional<PSBTError> ExternalSignerScriptPubKeyMan::FillPSBT(PartiallySigned
     }
 
     std::string failure_reason;
-    if(!signer->SignTransaction(psbt, failure_reason)) {
+    if (!signer->SignTransaction(psbt, failure_reason)) {
         LogWarning("Failed to sign: %s\n", failure_reason);
         return PSBTError::EXTERNAL_SIGNER_FAILED;
     }

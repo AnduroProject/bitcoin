@@ -4,11 +4,11 @@
 
 #include <key.h>
 #include <key_io.h>
-#include <test/util/setup_common.h>
 #include <script/solver.h>
+#include <test/util/setup_common.h>
 #include <wallet/scriptpubkeyman.h>
-#include <wallet/wallet.h>
 #include <wallet/test/util.h>
+#include <wallet/wallet.h>
 
 #include <boost/test/unit_test.hpp>
 

@@ -23,8 +23,8 @@
 #include <QTest>
 #include <QTextEdit>
 #include <QtGlobal>
-#include <QtTest/QtTestWidgets>
 #include <QtTest/QtTestGui>
+#include <QtTest/QtTestWidgets>
 
 namespace {
 //! Regex find a string group inside of the console output

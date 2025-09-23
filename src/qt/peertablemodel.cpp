@@ -57,10 +57,10 @@ int PeerTableModel::columnCount(const QModelIndex& parent) const
 
 QVariant PeerTableModel::data(const QModelIndex& index, int role) const
 {
-    if(!index.isValid())
+    if (!index.isValid())
         return QVariant();
 
-    CNodeCombinedStats *rec = static_cast<CNodeCombinedStats*>(index.internalPointer());
+    CNodeCombinedStats* rec = static_cast<CNodeCombinedStats*>(index.internalPointer());
 
     const auto column = static_cast<ColumnIndex>(index.column());
     if (role == Qt::DisplayRole) {
@@ -119,17 +119,15 @@ QVariant PeerTableModel::data(const QModelIndex& index, int role) const
 
 QVariant PeerTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if(orientation == Qt::Horizontal)
-    {
-        if(role == Qt::DisplayRole && section < columns.size())
-        {
+    if (orientation == Qt::Horizontal) {
+        if (role == Qt::DisplayRole && section < columns.size()) {
             return columns[section];
         }
     }
     return QVariant();
 }
 
-Qt::ItemFlags PeerTableModel::flags(const QModelIndex &index) const
+Qt::ItemFlags PeerTableModel::flags(const QModelIndex& index) const
 {
     if (!index.isValid()) return Qt::NoItemFlags;
 

@@ -270,15 +270,15 @@ std::string PermsToSymbolicString(fs::perms p)
         }
     };
 
-    set_perm(0, fs::perms::owner_read,   'r');
-    set_perm(1, fs::perms::owner_write,  'w');
-    set_perm(2, fs::perms::owner_exec,   'x');
-    set_perm(3, fs::perms::group_read,   'r');
-    set_perm(4, fs::perms::group_write,  'w');
-    set_perm(5, fs::perms::group_exec,   'x');
-    set_perm(6, fs::perms::others_read,  'r');
+    set_perm(0, fs::perms::owner_read, 'r');
+    set_perm(1, fs::perms::owner_write, 'w');
+    set_perm(2, fs::perms::owner_exec, 'x');
+    set_perm(3, fs::perms::group_read, 'r');
+    set_perm(4, fs::perms::group_write, 'w');
+    set_perm(5, fs::perms::group_exec, 'x');
+    set_perm(6, fs::perms::others_read, 'r');
     set_perm(7, fs::perms::others_write, 'w');
-    set_perm(8, fs::perms::others_exec,  'x');
+    set_perm(8, fs::perms::others_exec, 'x');
 
     return perm_str;
 }

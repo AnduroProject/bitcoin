@@ -8,8 +8,8 @@
 #include <node/blockstorage.h>
 #include <node/context.h>
 #include <node/kernel_notifications.h>
-#include <script/solver.h>
 #include <primitives/block.h>
+#include <script/solver.h>
 #include <util/chaintype.h>
 #include <validation.h>
 
@@ -17,17 +17,17 @@
 #include <test/util/logging.h>
 #include <test/util/setup_common.h>
 
-using node::STORAGE_HEADER_BYTES;
 using node::BlockManager;
 using node::KernelNotifications;
 using node::MAX_BLOCKFILE_SIZE;
+using node::STORAGE_HEADER_BYTES;
 
 // use BasicTestingSetup here for the data directory configuration, setup, and cleanup
 BOOST_FIXTURE_TEST_SUITE(blockmanager_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(blockmanager_find_block_pos)
 {
-    const auto params {CreateChainParams(ArgsManager{}, ChainType::MAIN)};
+    const auto params{CreateChainParams(ArgsManager{}, ChainType::MAIN)};
     KernelNotifications notifications{Assert(m_node.shutdown_request), m_node.exit_status, *Assert(m_node.warnings)};
     const BlockManager::Options blockman_opts{
         .chainparams = *params,
@@ -107,8 +107,7 @@ BOOST_FIXTURE_TEST_CASE(blockmanager_block_data_availability, TestChain100Setup)
     const CBlockIndex& tip = *chainman->ActiveTip();
 
     // Function to prune all blocks from 'last_pruned_block' down to the genesis block
-    const auto& func_prune_blocks = [&](CBlockIndex* last_pruned_block)
-    {
+    const auto& func_prune_blocks = [&](CBlockIndex* last_pruned_block) {
         LOCK(::cs_main);
         CBlockIndex* it = last_pruned_block;
         while (it != nullptr && it->nStatus & BLOCK_HAVE_DATA) {

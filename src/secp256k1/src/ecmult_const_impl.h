@@ -7,27 +7,27 @@
 #ifndef SECP256K1_ECMULT_CONST_IMPL_H
 #define SECP256K1_ECMULT_CONST_IMPL_H
 
-#include "scalar.h"
-#include "group.h"
 #include "ecmult_const.h"
 #include "ecmult_impl.h"
+#include "group.h"
+#include "scalar.h"
 
 #if defined(EXHAUSTIVE_TEST_ORDER)
 /* We need 2^ECMULT_CONST_GROUP_SIZE - 1 to be less than EXHAUSTIVE_TEST_ORDER, because
  * the tables cannot have infinities in them (this breaks the effective-affine technique's
  * z-ratio tracking) */
-#  if EXHAUSTIVE_TEST_ORDER == 199
-#    define ECMULT_CONST_GROUP_SIZE 4
-#  elif EXHAUSTIVE_TEST_ORDER == 13
-#    define ECMULT_CONST_GROUP_SIZE 3
-#  elif EXHAUSTIVE_TEST_ORDER == 7
-#    define ECMULT_CONST_GROUP_SIZE 2
-#  else
-#    error "Unknown EXHAUSTIVE_TEST_ORDER"
-#  endif
+#if EXHAUSTIVE_TEST_ORDER == 199
+#define ECMULT_CONST_GROUP_SIZE 4
+#elif EXHAUSTIVE_TEST_ORDER == 13
+#define ECMULT_CONST_GROUP_SIZE 3
+#elif EXHAUSTIVE_TEST_ORDER == 7
+#define ECMULT_CONST_GROUP_SIZE 2
+#else
+#error "Unknown EXHAUSTIVE_TEST_ORDER"
+#endif
 #else
 /* Group size 4 or 5 appears optimal. */
-#  define ECMULT_CONST_GROUP_SIZE 5
+#define ECMULT_CONST_GROUP_SIZE 5
 #endif
 
 #define ECMULT_CONST_TABLE_SIZE (1L << (ECMULT_CONST_GROUP_SIZE - 1))
@@ -41,7 +41,8 @@
  *
  *  'pre' must be an array of size ECMULT_CONST_TABLE_SIZE.
  */
-static void secp256k1_ecmult_const_odd_multiples_table_globalz(secp256k1_ge *pre, secp256k1_fe *globalz, const secp256k1_gej *a) {
+static void secp256k1_ecmult_const_odd_multiples_table_globalz(secp256k1_ge* pre, secp256k1_fe* globalz, const secp256k1_gej* a)
+{
     secp256k1_fe zr[ECMULT_CONST_TABLE_SIZE];
 
     secp256k1_ecmult_odd_multiples_table(ECMULT_CONST_TABLE_SIZE, pre, zr, globalz, a);
@@ -58,49 +59,50 @@ static void secp256k1_ecmult_const_odd_multiples_table_globalz(secp256k1_ge *pre
  * [ -(2^3) + (2^2) - (2^1) - (2^0) ]*P = -7*P. Every valid n translates to an odd number in range [-15,15],
  * which means we just need to look up one of the precomputed values, and optionally negate it.
  */
-#define ECMULT_CONST_TABLE_GET_GE(r,pre,n) do { \
-    unsigned int m = 0; \
-    /* If the top bit of n is 0, we want the negation. */ \
-    volatile unsigned int negative = ((n) >> (ECMULT_CONST_GROUP_SIZE - 1)) ^ 1; \
-    /* Let n[i] be the i-th bit of n, then the index is
-     *     sum(cnot(n[i]) * 2^i, i=0..l-2)
-     * where cnot(b) = b if n[l-1] = 1 and 1 - b otherwise.
-     * For example, if n = 4, in binary 0100, the index is 3, in binary 011.
-     *
-     * Proof:
-     *     Let
-     *         x = sum((2*n[i] - 1)*2^i, i=0..l-1)
-     *           = 2*sum(n[i] * 2^i, i=0..l-1) - 2^l + 1
-     *     be the value represented by n.
-     *     The index is (x - 1)/2 if x > 0 and -(x + 1)/2 otherwise.
-     *     Case x > 0:
-     *         n[l-1] = 1
-     *         index = sum(n[i] * 2^i, i=0..l-1) - 2^(l-1)
-     *               = sum(n[i] * 2^i, i=0..l-2)
-     *     Case x <= 0:
-     *         n[l-1] = 0
-     *          index = -(2*sum(n[i] * 2^i, i=0..l-1) - 2^l + 2)/2
-     *                = 2^(l-1) - 1 - sum(n[i] * 2^i, i=0..l-1)
-     *                = sum((1 - n[i]) * 2^i, i=0..l-2)
-     */ \
-    unsigned int index = ((unsigned int)(-negative) ^ n) & ((1U << (ECMULT_CONST_GROUP_SIZE - 1)) - 1U); \
-    secp256k1_fe neg_y; \
-    VERIFY_CHECK((n) < (1U << ECMULT_CONST_GROUP_SIZE)); \
-    VERIFY_CHECK(index < (1U << (ECMULT_CONST_GROUP_SIZE - 1))); \
-    /* Unconditionally set r->x = (pre)[m].x. r->y = (pre)[m].y. because it's either the correct one
-     * or will get replaced in the later iterations, this is needed to make sure `r` is initialized. */ \
-    (r)->x = (pre)[m].x; \
-    (r)->y = (pre)[m].y; \
-    for (m = 1; m < ECMULT_CONST_TABLE_SIZE; m++) { \
-        /* This loop is used to avoid secret data in array indices. See
-         * the comment in ecmult_gen_impl.h for rationale. */ \
-        secp256k1_fe_cmov(&(r)->x, &(pre)[m].x, m == index); \
-        secp256k1_fe_cmov(&(r)->y, &(pre)[m].y, m == index); \
-    } \
-    (r)->infinity = 0; \
-    secp256k1_fe_negate(&neg_y, &(r)->y, 1); \
-    secp256k1_fe_cmov(&(r)->y, &neg_y, negative); \
-} while(0)
+#define ECMULT_CONST_TABLE_GET_GE(r, pre, n)                                                                 \
+    do {                                                                                                     \
+        unsigned int m = 0;                                                                                  \
+        /* If the top bit of n is 0, we want the negation. */                                                \
+        volatile unsigned int negative = ((n) >> (ECMULT_CONST_GROUP_SIZE - 1)) ^ 1;                         \
+        /* Let n[i] be the i-th bit of n, then the index is                                                  \
+         *     sum(cnot(n[i]) * 2^i, i=0..l-2)                                                               \
+         * where cnot(b) = b if n[l-1] = 1 and 1 - b otherwise.                                              \
+         * For example, if n = 4, in binary 0100, the index is 3, in binary 011.                             \
+         *                                                                                                   \
+         * Proof:                                                                                            \
+         *     Let                                                                                           \
+         *         x = sum((2*n[i] - 1)*2^i, i=0..l-1)                                                       \
+         *           = 2*sum(n[i] * 2^i, i=0..l-1) - 2^l + 1                                                 \
+         *     be the value represented by n.                                                                \
+         *     The index is (x - 1)/2 if x > 0 and -(x + 1)/2 otherwise.                                     \
+         *     Case x > 0:                                                                                   \
+         *         n[l-1] = 1                                                                                \
+         *         index = sum(n[i] * 2^i, i=0..l-1) - 2^(l-1)                                               \
+         *               = sum(n[i] * 2^i, i=0..l-2)                                                         \
+         *     Case x <= 0:                                                                                  \
+         *         n[l-1] = 0                                                                                \
+         *          index = -(2*sum(n[i] * 2^i, i=0..l-1) - 2^l + 2)/2                                       \
+         *                = 2^(l-1) - 1 - sum(n[i] * 2^i, i=0..l-1)                                          \
+         *                = sum((1 - n[i]) * 2^i, i=0..l-2)                                                  \
+         */                                                                                                  \
+        unsigned int index = ((unsigned int)(-negative) ^ n) & ((1U << (ECMULT_CONST_GROUP_SIZE - 1)) - 1U); \
+        secp256k1_fe neg_y;                                                                                  \
+        VERIFY_CHECK((n) < (1U << ECMULT_CONST_GROUP_SIZE));                                                 \
+        VERIFY_CHECK(index < (1U << (ECMULT_CONST_GROUP_SIZE - 1)));                                         \
+        /* Unconditionally set r->x = (pre)[m].x. r->y = (pre)[m].y. because it's either the correct one     \
+         * or will get replaced in the later iterations, this is needed to make sure `r` is initialized. */  \
+        (r)->x = (pre)[m].x;                                                                                 \
+        (r)->y = (pre)[m].y;                                                                                 \
+        for (m = 1; m < ECMULT_CONST_TABLE_SIZE; m++) {                                                      \
+            /* This loop is used to avoid secret data in array indices. See                                  \
+             * the comment in ecmult_gen_impl.h for rationale. */                                            \
+            secp256k1_fe_cmov(&(r)->x, &(pre)[m].x, m == index);                                             \
+            secp256k1_fe_cmov(&(r)->y, &(pre)[m].y, m == index);                                             \
+        }                                                                                                    \
+        (r)->infinity = 0;                                                                                   \
+        secp256k1_fe_negate(&neg_y, &(r)->y, 1);                                                             \
+        secp256k1_fe_cmov(&(r)->y, &neg_y, negative);                                                        \
+    } while (0)
 
 /* For K as defined in the comment of secp256k1_ecmult_const, we have several precomputed
  * formulas/constants.
@@ -118,10 +120,11 @@ static const secp256k1_scalar secp256k1_ecmult_const_K = SECP256K1_SCALAR_CONST(
 /* For GROUP_SIZE = 4,6 */
 static const secp256k1_scalar secp256k1_ecmult_const_K = SECP256K1_SCALAR_CONST(0x76b1d93dul, 0x0fae3c6bul, 0x3215874bul, 0x94e93813ul, 0x7937fe0dul, 0xb66bcaaful, 0xb3749ca5ul, 0xd7b6171bul);
 #else
-#  error "Unknown ECMULT_CONST_BITS"
+#error "Unknown ECMULT_CONST_BITS"
 #endif
 
-static void secp256k1_ecmult_const(secp256k1_gej *r, const secp256k1_ge *a, const secp256k1_scalar *q) {
+static void secp256k1_ecmult_const(secp256k1_gej* r, const secp256k1_ge* a, const secp256k1_scalar* q)
+{
     /* The approach below combines the signed-digit logic from Mike Hamburg's
      * "Fast and compact elliptic-curve cryptography" (https://eprint.iacr.org/2012/309)
      * Section 3.3, with the GLV endomorphism.
@@ -267,8 +270,8 @@ static void secp256k1_ecmult_const(secp256k1_gej *r, const secp256k1_ge *a, cons
     secp256k1_fe_mul(&r->z, &r->z, &global_z);
 }
 
-static int secp256k1_ecmult_const_xonly(secp256k1_fe* r, const secp256k1_fe *n, const secp256k1_fe *d, const secp256k1_scalar *q, int known_on_curve) {
-
+static int secp256k1_ecmult_const_xonly(secp256k1_fe* r, const secp256k1_fe* n, const secp256k1_fe* d, const secp256k1_scalar* q, int known_on_curve)
+{
     /* This algorithm is a generalization of Peter Dettman's technique for
      * avoiding the square root in a random-basepoint x-only multiplication
      * on a Weierstrass curve:

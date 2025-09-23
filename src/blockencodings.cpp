@@ -17,11 +17,11 @@
 
 #include <unordered_map>
 
-CBlockHeaderAndShortTxIDs::CBlockHeaderAndShortTxIDs(const CBlock& block, const uint64_t nonce) :
-        nonce(nonce),
-        shorttxids(block.vtx.size() - 1), prefilledtxn(1), header(block) {
+CBlockHeaderAndShortTxIDs::CBlockHeaderAndShortTxIDs(const CBlock& block, const uint64_t nonce) : nonce(nonce),
+                                                                                                  shorttxids(block.vtx.size() - 1), prefilledtxn(1), header(block)
+{
     FillShortTxIDSelector();
-    //TODO: Use our mempool prior to block acceptance to predictively fill more than just the coinbase
+    // TODO: Use our mempool prior to block acceptance to predictively fill more than just the coinbase
     prefilledtxn[0] = {0, block.vtx[0]};
     for (size_t i = 1; i < block.vtx.size(); i++) {
         const CTransaction& tx = *block.vtx[i];
@@ -29,7 +29,8 @@ CBlockHeaderAndShortTxIDs::CBlockHeaderAndShortTxIDs(const CBlock& block, const 
     }
 }
 
-void CBlockHeaderAndShortTxIDs::FillShortTxIDSelector() const {
+void CBlockHeaderAndShortTxIDs::FillShortTxIDSelector() const
+{
     DataStream stream{};
     stream << header << nonce;
     CSHA256 hasher;
@@ -40,12 +41,14 @@ void CBlockHeaderAndShortTxIDs::FillShortTxIDSelector() const {
     shorttxidk1 = shorttxidhash.GetUint64(1);
 }
 
-uint64_t CBlockHeaderAndShortTxIDs::GetShortID(const Wtxid& wtxid) const {
+uint64_t CBlockHeaderAndShortTxIDs::GetShortID(const Wtxid& wtxid) const
+{
     static_assert(SHORTTXIDS_LENGTH == 6, "shorttxids calculation assumes 6-byte shorttxids");
     return SipHashUint256(shorttxidk0, shorttxidk1, wtxid) & 0xffffffffffffL;
 }
 
-ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& cmpctblock, const std::vector<CTransactionRef>& extra_txn) {
+ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& cmpctblock, const std::vector<CTransactionRef>& extra_txn)
+{
     LogDebug(BCLog::CMPCTBLOCK, "Initializing PartiallyDownloadedBlock for block %s using a cmpctblock of %u bytes\n", cmpctblock.header.GetHash().ToString(), GetSerializeSize(cmpctblock));
     if (cmpctblock.header.IsNull() || (cmpctblock.shorttxids.empty() && cmpctblock.prefilledtxn.empty()))
         return READ_STATUS_INVALID;
@@ -62,7 +65,7 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
         if (cmpctblock.prefilledtxn[i].tx->IsNull())
             return READ_STATUS_INVALID;
 
-        lastprefilledindex += cmpctblock.prefilledtxn[i].index + 1; //index is a uint16_t, so can't overflow here
+        lastprefilledindex += cmpctblock.prefilledtxn[i].index + 1; // index is a uint16_t, so can't overflow here
         if (lastprefilledindex > std::numeric_limits<uint16_t>::max())
             return READ_STATUS_INVALID;
         if ((uint32_t)lastprefilledindex > cmpctblock.shorttxids.size() + i) {
@@ -105,31 +108,31 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
 
     std::vector<bool> have_txn(txn_available.size());
     {
-    LOCK(pool->cs);
-    for (const auto& tx : pool->txns_randomized) {
-        uint64_t shortid = cmpctblock.GetShortID(tx->GetWitnessHash());
-        std::unordered_map<uint64_t, uint16_t>::iterator idit = shorttxids.find(shortid);
-        if (idit != shorttxids.end()) {
-            if (!have_txn[idit->second]) {
-                txn_available[idit->second] = tx;
-                have_txn[idit->second]  = true;
-                mempool_count++;
-            } else {
-                // If we find two mempool txn that match the short id, just request it.
-                // This should be rare enough that the extra bandwidth doesn't matter,
-                // but eating a round-trip due to FillBlock failure would be annoying
-                if (txn_available[idit->second]) {
-                    txn_available[idit->second].reset();
-                    mempool_count--;
+        LOCK(pool->cs);
+        for (const auto& tx : pool->txns_randomized) {
+            uint64_t shortid = cmpctblock.GetShortID(tx->GetWitnessHash());
+            std::unordered_map<uint64_t, uint16_t>::iterator idit = shorttxids.find(shortid);
+            if (idit != shorttxids.end()) {
+                if (!have_txn[idit->second]) {
+                    txn_available[idit->second] = tx;
+                    have_txn[idit->second] = true;
+                    mempool_count++;
+                } else {
+                    // If we find two mempool txn that match the short id, just request it.
+                    // This should be rare enough that the extra bandwidth doesn't matter,
+                    // but eating a round-trip due to FillBlock failure would be annoying
+                    if (txn_available[idit->second]) {
+                        txn_available[idit->second].reset();
+                        mempool_count--;
+                    }
                 }
             }
+            // Though ideally we'd continue scanning for the two-txn-match-shortid case,
+            // the performance win of an early exit here is too good to pass up and worth
+            // the extra risk.
+            if (mempool_count == shorttxids.size())
+                break;
         }
-        // Though ideally we'd continue scanning for the two-txn-match-shortid case,
-        // the performance win of an early exit here is too good to pass up and worth
-        // the extra risk.
-        if (mempool_count == shorttxids.size())
-            break;
-    }
     }
 
     for (size_t i = 0; i < extra_txn.size(); i++) {
@@ -141,7 +144,7 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
         if (idit != shorttxids.end()) {
             if (!have_txn[idit->second]) {
                 txn_available[idit->second] = extra_txn[i];
-                have_txn[idit->second]  = true;
+                have_txn[idit->second] = true;
                 mempool_count++;
                 extra_count++;
             } else {
@@ -152,7 +155,7 @@ ReadStatus PartiallyDownloadedBlock::InitData(const CBlockHeaderAndShortTxIDs& c
                 // Note that we don't want duplication between extra_txn and mempool to
                 // trigger this case, so we compare witness hashes first
                 if (txn_available[idit->second] &&
-                        txn_available[idit->second]->GetWitnessHash() != extra_txn[i]->GetWitnessHash()) {
+                    txn_available[idit->second]->GetWitnessHash() != extra_txn[i]->GetWitnessHash()) {
                     txn_available[idit->second].reset();
                     mempool_count--;
                     extra_count--;
@@ -209,7 +212,7 @@ ReadStatus PartiallyDownloadedBlock::FillBlock(CBlock& block, const std::vector<
     // Check for possible mutations early now that we have a seemingly good block
     IsBlockMutatedFn check_mutated{m_check_block_mutated_mock ? m_check_block_mutated_mock : IsBlockMutated};
     if (check_mutated(/*block=*/block,
-                       /*check_witness_root=*/segwit_active)) {
+                      /*check_witness_root=*/segwit_active)) {
         return READ_STATUS_FAILED; // Possible Short ID collision
     }
 

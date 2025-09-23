@@ -32,10 +32,10 @@ void TestChainstateManager::JumpOutOfIbd()
 }
 
 void ValidationInterfaceTest::BlockConnected(
-        ChainstateRole role,
-        CValidationInterface& obj,
-        const std::shared_ptr<const CBlock>& block,
-        const CBlockIndex* pindex)
+    ChainstateRole role,
+    CValidationInterface& obj,
+    const std::shared_ptr<const CBlock>& block,
+    const CBlockIndex* pindex)
 {
     obj.BlockConnected(role, block, pindex);
 }

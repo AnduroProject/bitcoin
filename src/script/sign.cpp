@@ -77,7 +77,7 @@ bool MutableTransactionSignatureCreator::CreateSchnorrSig(const SigningProvider&
     if (sigversion == SigVersion::TAPSCRIPT) {
         execdata.m_codeseparator_pos_init = true;
         execdata.m_codeseparator_pos = 0xFFFFFFFF; // Only support non-OP_CODESEPARATOR BIP342 signing for now.
-        if (!leaf_hash) return false; // BIP342 signing needs leaf hash.
+        if (!leaf_hash) return false;              // BIP342 signing needs leaf hash.
         execdata.m_tapleaf_hash_init = true;
         execdata.m_tapleaf_hash = *leaf_hash;
     }
@@ -176,7 +176,7 @@ static bool CreateTaprootScriptSig(const BaseSignatureCreator& creator, Signatur
     return false;
 }
 
-template<typename M, typename K, typename V>
+template <typename M, typename K, typename V>
 miniscript::Availability MsLookupHelper(const M& map, const K& key, V& value)
 {
     auto it = map.find(key);
@@ -191,7 +191,7 @@ miniscript::Availability MsLookupHelper(const M& map, const K& key, V& value)
  * Context for solving a Miniscript.
  * If enough material (access to keys, hash preimages, ..) is given, produces a valid satisfaction.
  */
-template<typename Pk>
+template <typename Pk>
 struct Satisfier {
     using Key = Pk;
 
@@ -211,13 +211,15 @@ struct Satisfier {
                                                                    m_witness_script(witscript),
                                                                    m_script_ctx(script_ctx) {}
 
-    static bool KeyCompare(const Key& a, const Key& b) {
+    static bool KeyCompare(const Key& a, const Key& b)
+    {
         return a < b;
     }
 
     //! Get a CPubKey from a key hash. Note the key hash may be of an xonly pubkey.
-    template<typename I>
-    std::optional<CPubKey> CPubFromPKHBytes(I first, I last) const {
+    template <typename I>
+    std::optional<CPubKey> CPubFromPKHBytes(I first, I last) const
+    {
         assert(last - first == 20);
         CPubKey pubkey;
         CKeyID key_id;
@@ -235,46 +237,54 @@ struct Satisfier {
     bool CheckOlder(uint32_t value) const { return m_creator.Checker().CheckSequence(CScriptNum(value)); }
 
     //! Hash preimage satisfactions.
-    miniscript::Availability SatSHA256(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage) const {
+    miniscript::Availability SatSHA256(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage) const
+    {
         return MsLookupHelper(m_sig_data.sha256_preimages, hash, preimage);
     }
-    miniscript::Availability SatRIPEMD160(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage) const {
+    miniscript::Availability SatRIPEMD160(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage) const
+    {
         return MsLookupHelper(m_sig_data.ripemd160_preimages, hash, preimage);
     }
-    miniscript::Availability SatHASH256(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage) const {
+    miniscript::Availability SatHASH256(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage) const
+    {
         return MsLookupHelper(m_sig_data.hash256_preimages, hash, preimage);
     }
-    miniscript::Availability SatHASH160(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage) const {
+    miniscript::Availability SatHASH160(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage) const
+    {
         return MsLookupHelper(m_sig_data.hash160_preimages, hash, preimage);
     }
 
-    miniscript::MiniscriptContext MsContext() const {
+    miniscript::MiniscriptContext MsContext() const
+    {
         return m_script_ctx;
     }
 };
 
 /** Miniscript satisfier specific to P2WSH context. */
-struct WshSatisfier: Satisfier<CPubKey> {
+struct WshSatisfier : Satisfier<CPubKey> {
     explicit WshSatisfier(const SigningProvider& provider LIFETIMEBOUND, SignatureData& sig_data LIFETIMEBOUND,
                           const BaseSignatureCreator& creator LIFETIMEBOUND, const CScript& witscript LIFETIMEBOUND)
-                          : Satisfier(provider, sig_data, creator, witscript, miniscript::MiniscriptContext::P2WSH) {}
+        : Satisfier(provider, sig_data, creator, witscript, miniscript::MiniscriptContext::P2WSH) {}
 
     //! Conversion from a raw compressed public key.
     template <typename I>
-    std::optional<CPubKey> FromPKBytes(I first, I last) const {
+    std::optional<CPubKey> FromPKBytes(I first, I last) const
+    {
         CPubKey pubkey{first, last};
         if (pubkey.IsValid()) return pubkey;
         return {};
     }
 
     //! Conversion from a raw compressed public key hash.
-    template<typename I>
-    std::optional<CPubKey> FromPKHBytes(I first, I last) const {
+    template <typename I>
+    std::optional<CPubKey> FromPKHBytes(I first, I last) const
+    {
         return Satisfier::CPubFromPKHBytes(first, last);
     }
 
     //! Satisfy an ECDSA signature check.
-    miniscript::Availability Sign(const CPubKey& key, std::vector<unsigned char>& sig) const {
+    miniscript::Availability Sign(const CPubKey& key, std::vector<unsigned char>& sig) const
+    {
         if (CreateSig(m_creator, m_sig_data, m_provider, sig, key, m_witness_script, SigVersion::WITNESS_V0)) {
             return miniscript::Availability::YES;
         }
@@ -283,18 +293,19 @@ struct WshSatisfier: Satisfier<CPubKey> {
 };
 
 /** Miniscript satisfier specific to Tapscript context. */
-struct TapSatisfier: Satisfier<XOnlyPubKey> {
+struct TapSatisfier : Satisfier<XOnlyPubKey> {
     const uint256& m_leaf_hash;
 
     explicit TapSatisfier(const SigningProvider& provider LIFETIMEBOUND, SignatureData& sig_data LIFETIMEBOUND,
                           const BaseSignatureCreator& creator LIFETIMEBOUND, const CScript& script LIFETIMEBOUND,
                           const uint256& leaf_hash LIFETIMEBOUND)
-                          : Satisfier(provider, sig_data, creator, script, miniscript::MiniscriptContext::TAPSCRIPT),
-                            m_leaf_hash(leaf_hash) {}
+        : Satisfier(provider, sig_data, creator, script, miniscript::MiniscriptContext::TAPSCRIPT),
+          m_leaf_hash(leaf_hash) {}
 
     //! Conversion from a raw xonly public key.
     template <typename I>
-    std::optional<XOnlyPubKey> FromPKBytes(I first, I last) const {
+    std::optional<XOnlyPubKey> FromPKBytes(I first, I last) const
+    {
         if (last - first != 32) return {};
         XOnlyPubKey pubkey;
         std::copy(first, last, pubkey.begin());
@@ -302,14 +313,16 @@ struct TapSatisfier: Satisfier<XOnlyPubKey> {
     }
 
     //! Conversion from a raw xonly public key hash.
-    template<typename I>
-    std::optional<XOnlyPubKey> FromPKHBytes(I first, I last) const {
+    template <typename I>
+    std::optional<XOnlyPubKey> FromPKHBytes(I first, I last) const
+    {
         if (auto pubkey = Satisfier::CPubFromPKHBytes(first, last)) return XOnlyPubKey{*pubkey};
         return {};
     }
 
     //! Satisfy a BIP340 signature check.
-    miniscript::Availability Sign(const XOnlyPubKey& key, std::vector<unsigned char>& sig) const {
+    miniscript::Availability Sign(const XOnlyPubKey& key, std::vector<unsigned char>& sig) const
+    {
         if (CreateTaprootScriptSig(m_creator, m_sig_data, m_provider, sig, key, m_leaf_hash, SigVersion::TAPSCRIPT)) {
             return miniscript::Availability::YES;
         }
@@ -377,7 +390,7 @@ static bool SignTaproot(const SigningProvider& provider, const BaseSignatureCrea
         std::vector<std::vector<unsigned char>> result_stack;
         if (SignTaprootScript(provider, creator, sigdata, leaf_ver, script, result_stack)) {
             result_stack.emplace_back(std::begin(script), std::end(script)); // Push the script
-            result_stack.push_back(*control_blocks.begin()); // Push the smallest control block
+            result_stack.push_back(*control_blocks.begin());                 // Push the smallest control block
             if (smallest_result_stack.size() == 0 ||
                 GetSerializeSize(result_stack) < GetSerializeSize(smallest_result_stack)) {
                 smallest_result_stack = std::move(result_stack);
@@ -509,8 +522,7 @@ bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreato
     bool P2SH = false;
     CScript subscript;
 
-    if (solved && whichType == TxoutType::SCRIPTHASH)
-    {
+    if (solved && whichType == TxoutType::SCRIPTHASH) {
         // Solver returns the subscript that needs to be evaluated;
         // the final scriptSig is the signatures from that
         // and then the serialized subscript:
@@ -520,8 +532,7 @@ bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreato
         P2SH = true;
     }
 
-    if (solved && whichType == TxoutType::WITNESS_V0_KEYHASH)
-    {
+    if (solved && whichType == TxoutType::WITNESS_V0_KEYHASH) {
         CScript witnessscript;
         witnessscript << OP_DUP << OP_HASH160 << ToByteVector(result[0]) << OP_EQUALVERIFY << OP_CHECKSIG;
         TxoutType subType;
@@ -529,9 +540,7 @@ bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreato
         sigdata.scriptWitness.stack = result;
         sigdata.witness = true;
         result.clear();
-    }
-    else if (solved && whichType == TxoutType::WITNESS_V0_SCRIPTHASH)
-    {
+    } else if (solved && whichType == TxoutType::WITNESS_V0_SCRIPTHASH) {
         CScript witnessscript(result[0].begin(), result[0].end());
         sigdata.witness_script = witnessscript;
 
@@ -593,18 +602,18 @@ public:
     }
 };
 
-struct Stacks
-{
+struct Stacks {
     std::vector<valtype> script;
     std::vector<valtype> witness;
 
     Stacks() = delete;
     Stacks(const Stacks&) = delete;
-    explicit Stacks(const SignatureData& data) : witness(data.scriptWitness.stack) {
+    explicit Stacks(const SignatureData& data) : witness(data.scriptWitness.stack)
+    {
         EvalScript(script, data.scriptSig, SCRIPT_VERIFY_STRICTENC, BaseSignatureChecker(), SigVersion::BASE);
     }
 };
-}
+} // namespace
 
 // Extracts signatures and scripts from incomplete scriptSigs. Please do not extend this, use PSBT instead
 SignatureData DataFromTransaction(const CMutableTransaction& tx, unsigned int nIn, const CTxOut& txout)
@@ -655,11 +664,11 @@ SignatureData DataFromTransaction(const CMutableTransaction& tx, unsigned int nI
     if (script_type == TxoutType::MULTISIG && !stack.script.empty()) {
         // Build a map of pubkey -> signature by matching sigs to pubkeys:
         assert(solutions.size() > 1);
-        unsigned int num_pubkeys = solutions.size()-2;
+        unsigned int num_pubkeys = solutions.size() - 2;
         unsigned int last_success_key = 0;
         for (const valtype& sig : stack.script) {
             for (unsigned int i = last_success_key; i < num_pubkeys; ++i) {
-                const valtype& pubkey = solutions[i+1];
+                const valtype& pubkey = solutions[i + 1];
                 // We either have a signature for this pubkey, or we have found a signature and it is valid
                 if (data.signatures.count(CPubKey(pubkey).GetID()) || extractor_checker.CheckECDSASignature(sig, pubkey, next_script, sigversion)) {
                     last_success_key = i + 1;
@@ -705,15 +714,17 @@ public:
     bool CheckLockTime(const CScriptNum& nLockTime) const override { return true; }
     bool CheckSequence(const CScriptNum& nSequence) const override { return true; }
 };
-}
+} // namespace
 
 const BaseSignatureChecker& DUMMY_CHECKER = DummySignatureChecker();
 
 namespace {
-class DummySignatureCreator final : public BaseSignatureCreator {
+class DummySignatureCreator final : public BaseSignatureCreator
+{
 private:
     char m_r_len = 32;
     char m_s_len = 32;
+
 public:
     DummySignatureCreator(char r_len, char s_len) : m_r_len(r_len), m_s_len(s_len) {}
     const BaseSignatureChecker& Checker() const override { return DUMMY_CHECKER; }
@@ -739,7 +750,7 @@ public:
     }
 };
 
-}
+} // namespace
 
 const BaseSignatureCreator& DUMMY_SIGNATURE_CREATOR = DummySignatureCreator(32, 32);
 const BaseSignatureCreator& DUMMY_MAXIMUM_SIGNATURE_CREATOR = DummySignatureCreator(33, 32);

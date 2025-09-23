@@ -42,7 +42,7 @@ bool VerifyWallets(WalletContext& context)
         } else if (!fs::is_directory(canonical_wallet_dir)) {
             chain.initError(strprintf(_("Specified -walletdir \"%s\" is not a directory"), fs::PathToString(wallet_dir)));
             return false;
-        // The canonical path transforms relative paths into absolute ones, so we check the non-canonical version
+            // The canonical path transforms relative paths into absolute ones, so we check the non-canonical version
         } else if (!wallet_dir.is_absolute()) {
             chain.initError(strprintf(_("Specified -walletdir \"%s\" is a relative path"), fs::PathToString(wallet_dir)));
             return false;

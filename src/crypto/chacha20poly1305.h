@@ -111,8 +111,7 @@ public:
     FSChaCha20Poly1305& operator=(FSChaCha20Poly1305&&) = delete;
 
     /** Construct an FSChaCha20Poly1305 cipher that rekeys every rekey_interval operations. */
-    FSChaCha20Poly1305(std::span<const std::byte> key, uint32_t rekey_interval) noexcept :
-        m_aead(key), m_rekey_interval(rekey_interval) {}
+    FSChaCha20Poly1305(std::span<const std::byte> key, uint32_t rekey_interval) noexcept : m_aead(key), m_rekey_interval(rekey_interval) {}
 
     /** Encrypt a message with a specified aad.
      *

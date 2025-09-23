@@ -5,8 +5,8 @@
 #ifndef BITCOIN_TXREQUEST_H
 #define BITCOIN_TXREQUEST_H
 
-#include <primitives/transaction.h>
 #include <net.h>
+#include <primitives/transaction.h>
 #include <uint256.h>
 
 #include <chrono>
@@ -97,7 +97,8 @@
  * - In an earlier version of the transaction request logic it was possible for a peer to prevent us from seeing a
  *   specific transaction. See https://bitcoincore.org/en/2024/07/03/disclose_already_asked_for.
  */
-class TxRequestTracker {
+class TxRequestTracker
+{
     // Avoid littering this header file with implementation details.
     class Impl;
     const std::unique_ptr<Impl> m_impl;

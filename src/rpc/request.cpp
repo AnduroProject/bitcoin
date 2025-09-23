@@ -83,7 +83,7 @@ static const std::string COOKIEAUTH_USER = "__cookie__";
 static const char* const COOKIEAUTH_FILE = ".cookie";
 
 /** Get name of RPC authentication cookie file */
-static fs::path GetAuthCookieFile(bool temp=false)
+static fs::path GetAuthCookieFile(bool temp = false)
 {
     fs::path arg = gArgs.GetPathArg("-rpccookiefile", COOKIEAUTH_FILE);
     if (arg.empty()) {
@@ -145,7 +145,7 @@ GenerateAuthCookieResult GenerateAuthCookie(const std::optional<fs::perms>& cook
     return GenerateAuthCookieResult::OK;
 }
 
-bool GetAuthCookie(std::string *cookie_out)
+bool GetAuthCookie(std::string* cookie_out)
 {
     std::ifstream file;
     std::string cookie;
@@ -181,7 +181,7 @@ std::vector<UniValue> JSONRPCProcessBatchReply(const UniValue& in)
     if (!in.isArray()) {
         throw std::runtime_error("Batch must be an array");
     }
-    const size_t num {in.size()};
+    const size_t num{in.size()};
     std::vector<UniValue> batch(num);
     for (const UniValue& rec : in.getValues()) {
         if (!rec.isObject()) {
@@ -238,7 +238,7 @@ void JSONRPCRequest::parse(const UniValue& valRequest)
     strMethod = valMethod.get_str();
     if (fLogIPs)
         LogDebug(BCLog::RPC, "ThreadRPCServer method=%s user=%s peeraddr=%s\n", SanitizeString(strMethod),
-            this->authUser, this->peerAddr);
+                 this->authUser, this->peerAddr);
     else
         LogDebug(BCLog::RPC, "ThreadRPCServer method=%s user=%s\n", SanitizeString(strMethod), this->authUser);
 

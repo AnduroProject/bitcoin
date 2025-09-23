@@ -23,12 +23,12 @@
 
 namespace fsbridge {
 
-FILE *fopen(const fs::path& p, const char *mode)
+FILE* fopen(const fs::path& p, const char* mode)
 {
 #ifndef WIN32
     return ::fopen(p.c_str(), mode);
 #else
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>,wchar_t> utf8_cvt;
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_cvt;
     return ::_wfopen(p.wstring().c_str(), utf8_cvt.from_bytes(mode).c_str());
 #endif
 }
@@ -81,14 +81,15 @@ bool FileLock::TryLock()
 }
 #else
 
-static std::string GetErrorReason() {
+static std::string GetErrorReason()
+{
     return Win32ErrorString(GetLastError());
 }
 
 FileLock::FileLock(const fs::path& file)
 {
-    hFile = CreateFileW(file.wstring().c_str(),  GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    hFile = CreateFileW(file.wstring().c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hFile == INVALID_HANDLE_VALUE) {
         reason = GetErrorReason();
     }

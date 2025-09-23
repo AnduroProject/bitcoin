@@ -28,28 +28,28 @@ struct Behaviors {
     bool m_ignore_inv_wtxid;
 
     // Constructor. We are passing and casting ints because they are more readable in a table (see expected_behaviors).
-    Behaviors(bool txid_rejects, bool wtxid_rejects, bool txid_recon, bool wtxid_recon, bool keep, bool txid_inv, bool wtxid_inv) :
-        m_txid_in_rejects(txid_rejects),
-        m_wtxid_in_rejects(wtxid_rejects),
-        m_txid_in_rejects_recon(txid_recon),
-        m_wtxid_in_rejects_recon(wtxid_recon),
-        m_keep_for_compact(keep),
-        m_ignore_inv_txid(txid_inv),
-        m_ignore_inv_wtxid(wtxid_inv)
-    {}
+    Behaviors(bool txid_rejects, bool wtxid_rejects, bool txid_recon, bool wtxid_recon, bool keep, bool txid_inv, bool wtxid_inv) : m_txid_in_rejects(txid_rejects),
+                                                                                                                                    m_wtxid_in_rejects(wtxid_rejects),
+                                                                                                                                    m_txid_in_rejects_recon(txid_recon),
+                                                                                                                                    m_wtxid_in_rejects_recon(wtxid_recon),
+                                                                                                                                    m_keep_for_compact(keep),
+                                                                                                                                    m_ignore_inv_txid(txid_inv),
+                                                                                                                                    m_ignore_inv_wtxid(wtxid_inv)
+    {
+    }
 
     void CheckEqual(const Behaviors& other, bool segwit)
     {
-        BOOST_CHECK_EQUAL(other.m_wtxid_in_rejects,       m_wtxid_in_rejects);
+        BOOST_CHECK_EQUAL(other.m_wtxid_in_rejects, m_wtxid_in_rejects);
         BOOST_CHECK_EQUAL(other.m_wtxid_in_rejects_recon, m_wtxid_in_rejects_recon);
-        BOOST_CHECK_EQUAL(other.m_keep_for_compact,       m_keep_for_compact);
-        BOOST_CHECK_EQUAL(other.m_ignore_inv_wtxid,       m_ignore_inv_wtxid);
+        BOOST_CHECK_EQUAL(other.m_keep_for_compact, m_keep_for_compact);
+        BOOST_CHECK_EQUAL(other.m_ignore_inv_wtxid, m_ignore_inv_wtxid);
 
         // false negatives for nonsegwit transactions, since txid == wtxid.
         if (segwit) {
-            BOOST_CHECK_EQUAL(other.m_txid_in_rejects,        m_txid_in_rejects);
-            BOOST_CHECK_EQUAL(other.m_txid_in_rejects_recon,  m_txid_in_rejects_recon);
-            BOOST_CHECK_EQUAL(other.m_ignore_inv_txid,        m_ignore_inv_txid);
+            BOOST_CHECK_EQUAL(other.m_txid_in_rejects, m_txid_in_rejects);
+            BOOST_CHECK_EQUAL(other.m_txid_in_rejects_recon, m_txid_in_rejects_recon);
+            BOOST_CHECK_EQUAL(other.m_ignore_inv_txid, m_ignore_inv_txid);
         }
     }
 };
@@ -57,18 +57,18 @@ struct Behaviors {
 // Map from failure reason to expected behavior for a segwit tx that fails
 // Txid and Wtxid are assumed to be different here. For a nonsegwit transaction, use the wtxid results.
 static std::map<TxValidationResult, Behaviors> expected_behaviors{
-    {TxValidationResult::TX_CONSENSUS,               {/*txid_rejects*/0,/*wtxid_rejects*/1,/*txid_recon*/0,/*wtxid_recon*/0,/*keep*/1,/*txid_inv*/0,/*wtxid_inv*/1}},
-    {TxValidationResult::TX_INPUTS_NOT_STANDARD,     {                1,                 1,              0,               0,        1,            1,             1}},
-    {TxValidationResult::TX_NOT_STANDARD,            {                0,                 1,              0,               0,        1,            0,             1}},
-    {TxValidationResult::TX_MISSING_INPUTS,          {                0,                 0,              0,               0,        1,            0,             1}},
-    {TxValidationResult::TX_PREMATURE_SPEND,         {                0,                 1,              0,               0,        1,            0,             1}},
-    {TxValidationResult::TX_WITNESS_MUTATED,         {                0,                 1,              0,               0,        1,            0,             1}},
-    {TxValidationResult::TX_WITNESS_STRIPPED,        {                0,                 0,              0,               0,        0,            0,             0}},
-    {TxValidationResult::TX_CONFLICT,                {                0,                 1,              0,               0,        1,            0,             1}},
-    {TxValidationResult::TX_MEMPOOL_POLICY,          {                0,                 1,              0,               0,        1,            0,             1}},
-    {TxValidationResult::TX_NO_MEMPOOL,              {                0,                 1,              0,               0,        1,            0,             1}},
-    {TxValidationResult::TX_RECONSIDERABLE,          {                0,                 0,              0,               1,        1,            0,             1}},
-    {TxValidationResult::TX_UNKNOWN,                 {                0,                 1,              0,               0,        1,            0,             1}},
+    {TxValidationResult::TX_CONSENSUS, {/*txid_rejects*/ 0, /*wtxid_rejects*/ 1, /*txid_recon*/ 0, /*wtxid_recon*/ 0, /*keep*/ 1, /*txid_inv*/ 0, /*wtxid_inv*/ 1}},
+    {TxValidationResult::TX_INPUTS_NOT_STANDARD, {1, 1, 0, 0, 1, 1, 1}},
+    {TxValidationResult::TX_NOT_STANDARD, {0, 1, 0, 0, 1, 0, 1}},
+    {TxValidationResult::TX_MISSING_INPUTS, {0, 0, 0, 0, 1, 0, 1}},
+    {TxValidationResult::TX_PREMATURE_SPEND, {0, 1, 0, 0, 1, 0, 1}},
+    {TxValidationResult::TX_WITNESS_MUTATED, {0, 1, 0, 0, 1, 0, 1}},
+    {TxValidationResult::TX_WITNESS_STRIPPED, {0, 0, 0, 0, 0, 0, 0}},
+    {TxValidationResult::TX_CONFLICT, {0, 1, 0, 0, 1, 0, 1}},
+    {TxValidationResult::TX_MEMPOOL_POLICY, {0, 1, 0, 0, 1, 0, 1}},
+    {TxValidationResult::TX_NO_MEMPOOL, {0, 1, 0, 0, 1, 0, 1}},
+    {TxValidationResult::TX_RECONSIDERABLE, {0, 0, 0, 1, 1, 0, 1}},
+    {TxValidationResult::TX_UNKNOWN, {0, 1, 0, 0, 1, 0, 1}},
 };
 
 static bool CheckOrphanBehavior(node::TxDownloadManagerImpl& txdownload_impl, const CTransactionRef& tx, const node::RejectedTxTodo& ret, std::string& err_msg,

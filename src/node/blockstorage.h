@@ -139,8 +139,10 @@ class BlockManager
 {
     friend Chainstate;
     friend ChainstateManager;
+
 public:
     const Consensus::Params& GetConsensus() const { return m_opts.chainparams.GetConsensus(); }
+
 private:
     const CChainParams& GetParams() const { return m_opts.chainparams; }
     /**
@@ -393,8 +395,7 @@ public:
     const CBlockIndex* GetFirstBlock(
         const CBlockIndex& upper_block LIFETIMEBOUND,
         uint32_t status_mask,
-        const CBlockIndex* lower_block = nullptr
-    ) const EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+        const CBlockIndex* lower_block = nullptr) const EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 
     /** True if any block files have ever been pruned. */
     bool m_have_pruned = false;

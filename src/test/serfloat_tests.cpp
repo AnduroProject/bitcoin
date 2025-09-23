@@ -3,11 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <hash.h>
+#include <serialize.h>
+#include <streams.h>
 #include <test/util/random.h>
 #include <test/util/setup_common.h>
 #include <util/serfloat.h>
-#include <serialize.h>
-#include <streams.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -18,7 +18,8 @@ BOOST_FIXTURE_TEST_SUITE(serfloat_tests, BasicTestingSetup)
 
 namespace {
 
-uint64_t TestDouble(double f) {
+uint64_t TestDouble(double f)
+{
     uint64_t i = EncodeDouble(f);
     double f2 = DecodeDouble(i);
     if (std::isnan(f)) {
@@ -36,7 +37,8 @@ uint64_t TestDouble(double f) {
 
 } // namespace
 
-BOOST_AUTO_TEST_CASE(double_serfloat_tests) {
+BOOST_AUTO_TEST_CASE(double_serfloat_tests)
+{
     // Test specific values against their expected encoding.
     BOOST_CHECK_EQUAL(TestDouble(0.0), 0U);
     BOOST_CHECK_EQUAL(TestDouble(-0.0), 0x8000000000000000);

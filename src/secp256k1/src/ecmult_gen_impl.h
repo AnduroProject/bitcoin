@@ -7,23 +7,26 @@
 #ifndef SECP256K1_ECMULT_GEN_IMPL_H
 #define SECP256K1_ECMULT_GEN_IMPL_H
 
-#include "util.h"
-#include "scalar.h"
-#include "group.h"
 #include "ecmult_gen.h"
+#include "group.h"
 #include "hash_impl.h"
 #include "precomputed_ecmult_gen.h"
+#include "scalar.h"
+#include "util.h"
 
-static void secp256k1_ecmult_gen_context_build(secp256k1_ecmult_gen_context *ctx) {
+static void secp256k1_ecmult_gen_context_build(secp256k1_ecmult_gen_context* ctx)
+{
     secp256k1_ecmult_gen_blind(ctx, NULL);
     ctx->built = 1;
 }
 
-static int secp256k1_ecmult_gen_context_is_built(const secp256k1_ecmult_gen_context* ctx) {
+static int secp256k1_ecmult_gen_context_is_built(const secp256k1_ecmult_gen_context* ctx)
+{
     return ctx->built;
 }
 
-static void secp256k1_ecmult_gen_context_clear(secp256k1_ecmult_gen_context *ctx) {
+static void secp256k1_ecmult_gen_context_clear(secp256k1_ecmult_gen_context* ctx)
+{
     ctx->built = 0;
     secp256k1_scalar_clear(&ctx->scalar_offset);
     secp256k1_ge_clear(&ctx->ge_offset);
@@ -33,7 +36,8 @@ static void secp256k1_ecmult_gen_context_clear(secp256k1_ecmult_gen_context *ctx
 /* Compute the scalar (2^COMB_BITS - 1) / 2, the difference between the gn argument to
  * secp256k1_ecmult_gen, and the scalar whose encoding the table lookup bits are drawn
  * from (before applying blinding). */
-static void secp256k1_ecmult_gen_scalar_diff(secp256k1_scalar* diff) {
+static void secp256k1_ecmult_gen_scalar_diff(secp256k1_scalar* diff)
+{
     int i;
 
     /* Compute scalar -1/2. */
@@ -51,7 +55,8 @@ static void secp256k1_ecmult_gen_scalar_diff(secp256k1_scalar* diff) {
     secp256k1_scalar_add(diff, diff, &neghalf);
 }
 
-static void secp256k1_ecmult_gen(const secp256k1_ecmult_gen_context *ctx, secp256k1_gej *r, const secp256k1_scalar *gn) {
+static void secp256k1_ecmult_gen(const secp256k1_ecmult_gen_context* ctx, secp256k1_gej* r, const secp256k1_scalar* gn)
+{
     uint32_t comb_off;
     secp256k1_ge add;
     secp256k1_fe neg;
@@ -282,7 +287,8 @@ static void secp256k1_ecmult_gen(const secp256k1_ecmult_gen_context *ctx, secp25
 }
 
 /* Setup blinding values for secp256k1_ecmult_gen. */
-static void secp256k1_ecmult_gen_blind(secp256k1_ecmult_gen_context *ctx, const unsigned char *seed32) {
+static void secp256k1_ecmult_gen_blind(secp256k1_ecmult_gen_context* ctx, const unsigned char* seed32)
+{
     secp256k1_scalar b;
     secp256k1_scalar diff;
     secp256k1_gej gb;

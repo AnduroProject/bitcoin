@@ -238,7 +238,7 @@ struct SnapshotTestSetup : TestChain100Setup {
                 (void)ReadCompactSize(auto_infile);
                 Coin coin;
                 auto_infile >> coin;
-        }));
+            }));
 
         BOOST_CHECK(!node::FindSnapshotChainstateDir(chainman.m_options.datadir));
 
@@ -246,22 +246,22 @@ struct SnapshotTestSetup : TestChain100Setup {
             this, [](AutoFile& auto_infile, SnapshotMetadata& metadata) {
                 // Coins count is larger than coins in file
                 metadata.m_coins_count += 1;
-        }));
+            }));
         BOOST_REQUIRE(!CreateAndActivateUTXOSnapshot(
             this, [](AutoFile& auto_infile, SnapshotMetadata& metadata) {
                 // Coins count is smaller than coins in file
                 metadata.m_coins_count -= 1;
-        }));
+            }));
         BOOST_REQUIRE(!CreateAndActivateUTXOSnapshot(
             this, [](AutoFile& auto_infile, SnapshotMetadata& metadata) {
                 // Wrong hash
                 metadata.m_base_blockhash = uint256::ZERO;
-        }));
+            }));
         BOOST_REQUIRE(!CreateAndActivateUTXOSnapshot(
             this, [](AutoFile& auto_infile, SnapshotMetadata& metadata) {
                 // Wrong hash
                 metadata.m_base_blockhash = uint256::ONE;
-        }));
+            }));
 
         BOOST_REQUIRE(CreateAndActivateUTXOSnapshot(this));
         BOOST_CHECK(fs::exists(*node::FindSnapshotChainstateDir(chainman.m_options.datadir)));
@@ -315,7 +315,7 @@ struct SnapshotTestSetup : TestChain100Setup {
                     total_coins++;
                 }
 
-                BOOST_CHECK_EQUAL(initial_size , coinscache.GetCacheSize());
+                BOOST_CHECK_EQUAL(initial_size, coinscache.GetCacheSize());
                 BOOST_CHECK_EQUAL(total_coins, initial_total_coins);
                 chains_tested++;
             }
@@ -325,7 +325,7 @@ struct SnapshotTestSetup : TestChain100Setup {
 
         // Mine some new blocks on top of the activated snapshot chainstate.
         constexpr size_t new_coins{100};
-        mineBlocks(new_coins);  // Defined in TestChain100Setup.
+        mineBlocks(new_coins); // Defined in TestChain100Setup.
 
         {
             LOCK(::cs_main);

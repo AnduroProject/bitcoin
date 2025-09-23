@@ -33,8 +33,7 @@ extern "C" {
  *  In:      flags:    which parts of the context to initialize.
  */
 SECP256K1_API size_t secp256k1_context_preallocated_size(
-    unsigned int flags
-) SECP256K1_WARN_UNUSED_RESULT;
+    unsigned int flags) SECP256K1_WARN_UNUSED_RESULT;
 
 /** Create a secp256k1 context object in caller-provided memory.
  *
@@ -63,10 +62,9 @@ SECP256K1_API size_t secp256k1_context_preallocated_size(
  *  See also secp256k1_context_randomize (in secp256k1.h)
  *  and secp256k1_context_preallocated_destroy.
  */
-SECP256K1_API secp256k1_context *secp256k1_context_preallocated_create(
-    void *prealloc,
-    unsigned int flags
-) SECP256K1_ARG_NONNULL(1) SECP256K1_WARN_UNUSED_RESULT;
+SECP256K1_API secp256k1_context* secp256k1_context_preallocated_create(
+    void* prealloc,
+    unsigned int flags) SECP256K1_ARG_NONNULL(1) SECP256K1_WARN_UNUSED_RESULT;
 
 /** Determine the memory size of a secp256k1 context object to be copied into
  *  caller-provided memory.
@@ -75,8 +73,7 @@ SECP256K1_API secp256k1_context *secp256k1_context_preallocated_create(
  *  In:      ctx: pointer to a context to copy.
  */
 SECP256K1_API size_t secp256k1_context_preallocated_clone_size(
-    const secp256k1_context *ctx
-) SECP256K1_ARG_NONNULL(1) SECP256K1_WARN_UNUSED_RESULT;
+    const secp256k1_context* ctx) SECP256K1_ARG_NONNULL(1) SECP256K1_WARN_UNUSED_RESULT;
 
 /** Copy a secp256k1 context object into caller-provided memory.
  *
@@ -97,10 +94,9 @@ SECP256K1_API size_t secp256k1_context_preallocated_clone_size(
  *                     size at least secp256k1_context_preallocated_size(flags)
  *                     bytes, as detailed above.
  */
-SECP256K1_API secp256k1_context *secp256k1_context_preallocated_clone(
-    const secp256k1_context *ctx,
-    void *prealloc
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_WARN_UNUSED_RESULT;
+SECP256K1_API secp256k1_context* secp256k1_context_preallocated_clone(
+    const secp256k1_context* ctx,
+    void* prealloc) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_WARN_UNUSED_RESULT;
 
 /** Destroy a secp256k1 context object that has been created in
  *  caller-provided memory.
@@ -124,8 +120,7 @@ SECP256K1_API secp256k1_context *secp256k1_context_preallocated_clone(
  *               (i.e., not secp256k1_context_static).
  */
 SECP256K1_API void secp256k1_context_preallocated_destroy(
-    secp256k1_context *ctx
-) SECP256K1_ARG_NONNULL(1);
+    secp256k1_context* ctx) SECP256K1_ARG_NONNULL(1);
 
 #ifdef __cplusplus
 }

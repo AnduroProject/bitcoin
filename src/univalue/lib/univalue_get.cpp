@@ -16,20 +16,19 @@
 #include <string>
 #include <vector>
 
-namespace
-{
+namespace {
 static bool ParsePrechecks(const std::string& str)
 {
     if (str.empty()) // No empty string allowed
         return false;
-    if (str.size() >= 1 && (json_isspace(str[0]) || json_isspace(str[str.size()-1]))) // No padding allowed
+    if (str.size() >= 1 && (json_isspace(str[0]) || json_isspace(str[str.size() - 1]))) // No padding allowed
         return false;
     if (str.size() != strlen(str.c_str())) // No embedded NUL characters allowed
         return false;
     return true;
 }
 
-bool ParseDouble(const std::string& str, double *out)
+bool ParseDouble(const std::string& str, double* out)
 {
     if (!ParsePrechecks(str))
         return false;
@@ -39,10 +38,10 @@ bool ParseDouble(const std::string& str, double *out)
     text.imbue(std::locale::classic());
     double result;
     text >> result;
-    if(out) *out = result;
+    if (out) *out = result;
     return text.eof() && !text.fail();
 }
-}
+} // namespace
 
 const std::vector<std::string>& UniValue::getKeys() const
 {

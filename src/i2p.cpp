@@ -453,9 +453,9 @@ void Session::CreateIfNotCreatedAlready()
     m_control_sock = std::move(sock);
 
     LogPrintLevel(BCLog::I2P, BCLog::Level::Info, "%s SAM session %s created, my address=%s\n",
-        Capitalize(session_type),
-        m_session_id,
-        m_my_addr.ToStringAddrPort());
+                  Capitalize(session_type),
+                  m_session_id,
+                  m_my_addr.ToStringAddrPort());
 }
 
 std::unique_ptr<Sock> Session::StreamAccept()

@@ -2,21 +2,21 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <boost/test/unit_test.hpp>
 #include <test/util/random.h>
 #include <test/util/setup_common.h>
-#include <boost/test/unit_test.hpp>
 
 #include <addresstype.h>
 #include <core_io.h>
-#include <hash.h>
-#include <pubkey.h>
-#include <uint256.h>
 #include <crypto/ripemd160.h>
 #include <crypto/sha256.h>
+#include <hash.h>
+#include <pubkey.h>
 #include <script/interpreter.h>
 #include <script/miniscript.h>
 #include <script/script_error.h>
 #include <script/signingprovider.h>
+#include <uint256.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -134,12 +134,14 @@ struct KeyConverter {
 
     constexpr KeyConverter(miniscript::MiniscriptContext ctx) noexcept : m_script_ctx{ctx} {}
 
-    bool KeyCompare(const Key& a, const Key& b) const {
+    bool KeyCompare(const Key& a, const Key& b) const
+    {
         return a < b;
     }
 
     //! Convert a public key to bytes.
-    std::vector<unsigned char> ToPKBytes(const CPubKey& key) const {
+    std::vector<unsigned char> ToPKBytes(const CPubKey& key) const
+    {
         if (!miniscript::IsTapscript(m_script_ctx)) {
             return {key.begin(), key.end()};
         }
@@ -148,7 +150,8 @@ struct KeyConverter {
     }
 
     //! Convert a public key to its Hash160 bytes (precomputed).
-    std::vector<unsigned char> ToPKHBytes(const CPubKey& key) const {
+    std::vector<unsigned char> ToPKHBytes(const CPubKey& key) const
+    {
         if (!miniscript::IsTapscript(m_script_ctx)) {
             auto hash = g_testdata->pkhashes.at(key);
             return {hash.begin(), hash.end()};
@@ -159,16 +162,18 @@ struct KeyConverter {
     }
 
     //! Parse a public key from a range of hex characters.
-    template<typename I>
-    std::optional<Key> FromString(I first, I last) const {
+    template <typename I>
+    std::optional<Key> FromString(I first, I last) const
+    {
         auto bytes = ParseHex(std::string(first, last));
         Key key{bytes.begin(), bytes.end()};
         if (key.IsValid()) return key;
         return {};
     }
 
-    template<typename I>
-    std::optional<Key> FromPKBytes(I first, I last) const {
+    template <typename I>
+    std::optional<Key> FromPKBytes(I first, I last) const
+    {
         if (!miniscript::IsTapscript(m_script_ctx)) {
             Key key{first, last};
             if (key.IsValid()) return key;
@@ -180,43 +185,48 @@ struct KeyConverter {
         return xonly_pubkey.GetEvenCorrespondingCPubKey();
     }
 
-    template<typename I>
-    std::optional<Key> FromPKHBytes(I first, I last) const {
+    template <typename I>
+    std::optional<Key> FromPKHBytes(I first, I last) const
+    {
         assert(last - first == 20);
         CKeyID keyid;
         std::copy(first, last, keyid.begin());
         return g_testdata->pkmap.at(keyid);
     }
 
-    std::optional<std::string> ToString(const Key& key) const {
+    std::optional<std::string> ToString(const Key& key) const
+    {
         return HexStr(ToPKBytes(key));
     }
 
-    miniscript::MiniscriptContext MsContext() const {
+    miniscript::MiniscriptContext MsContext() const
+    {
         return m_script_ctx;
     }
 };
 
 /** A class that encapsulates all signing/hash revealing operations. */
 struct Satisfier : public KeyConverter {
-
     Satisfier(miniscript::MiniscriptContext ctx) noexcept : KeyConverter{ctx} {}
 
     //! Which keys/timelocks/hash preimages are available.
     std::set<Challenge> supported;
 
     //! Implement simplified CLTV logic: stack value must exactly match an entry in `supported`.
-    bool CheckAfter(uint32_t value) const {
+    bool CheckAfter(uint32_t value) const
+    {
         return supported.count(Challenge(ChallengeType::AFTER, value));
     }
 
     //! Implement simplified CSV logic: stack value must exactly match an entry in `supported`.
-    bool CheckOlder(uint32_t value) const {
+    bool CheckOlder(uint32_t value) const
+    {
         return supported.count(Challenge(ChallengeType::OLDER, value));
     }
 
     //! Produce a signature for the given key.
-    miniscript::Availability Sign(const CPubKey& key, std::vector<unsigned char>& sig) const {
+    miniscript::Availability Sign(const CPubKey& key, std::vector<unsigned char>& sig) const
+    {
         if (supported.count(Challenge(ChallengeType::PK, ChallengeNumber(key)))) {
             if (!miniscript::IsTapscript(m_script_ctx)) {
                 auto it = g_testdata->signatures.find(key);
@@ -233,13 +243,14 @@ struct Satisfier : public KeyConverter {
     }
 
     //! Helper function for the various hash based satisfactions.
-    miniscript::Availability SatHash(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage, ChallengeType chtype) const {
+    miniscript::Availability SatHash(const std::vector<unsigned char>& hash, std::vector<unsigned char>& preimage, ChallengeType chtype) const
+    {
         if (!supported.count(Challenge(chtype, ChallengeNumber(hash)))) return miniscript::Availability::NO;
         const auto& m =
-            chtype == ChallengeType::SHA256 ? g_testdata->sha256_preimages :
-            chtype == ChallengeType::HASH256 ? g_testdata->hash256_preimages :
+            chtype == ChallengeType::SHA256    ? g_testdata->sha256_preimages :
+            chtype == ChallengeType::HASH256   ? g_testdata->hash256_preimages :
             chtype == ChallengeType::RIPEMD160 ? g_testdata->ripemd160_preimages :
-            g_testdata->hash160_preimages;
+                                                 g_testdata->hash160_preimages;
         auto it = m.find(hash);
         if (it == m.end()) return miniscript::Availability::NO;
         preimage = it->second;
@@ -257,13 +268,15 @@ struct Satisfier : public KeyConverter {
  *
  * It holds a pointer to a Satisfier object, to determine which timelocks are supposed to be available.
  */
-class TestSignatureChecker : public BaseSignatureChecker {
+class TestSignatureChecker : public BaseSignatureChecker
+{
     const Satisfier& ctx;
 
 public:
     TestSignatureChecker(const Satisfier& in_ctx LIFETIMEBOUND) : ctx(in_ctx) {}
 
-    bool CheckECDSASignature(const std::vector<unsigned char>& sig, const std::vector<unsigned char>& pubkey, const CScript& scriptcode, SigVersion sigversion) const override {
+    bool CheckECDSASignature(const std::vector<unsigned char>& sig, const std::vector<unsigned char>& pubkey, const CScript& scriptcode, SigVersion sigversion) const override
+    {
         CPubKey pk(pubkey);
         if (!pk.IsValid()) return false;
         // Instead of actually running signature validation, check if the signature matches the precomputed one for this key.
@@ -273,19 +286,22 @@ public:
     }
 
     bool CheckSchnorrSignature(std::span<const unsigned char> sig, std::span<const unsigned char> pubkey, SigVersion,
-                               ScriptExecutionData&, ScriptError*) const override {
+                               ScriptExecutionData&, ScriptError*) const override
+    {
         XOnlyPubKey pk{pubkey};
         auto it = g_testdata->schnorr_signatures.find(pk);
         if (it == g_testdata->schnorr_signatures.end()) return false;
         return std::ranges::equal(sig, it->second);
     }
 
-    bool CheckLockTime(const CScriptNum& locktime) const override {
+    bool CheckLockTime(const CScriptNum& locktime) const override
+    {
         // Delegate to Satisfier.
         return ctx.CheckAfter(locktime.GetInt64());
     }
 
-    bool CheckSequence(const CScriptNum& sequence) const override {
+    bool CheckSequence(const CScriptNum& sequence) const override
+    {
         // Delegate to Satisfier.
         return ctx.CheckOlder(sequence.GetInt64());
     }
@@ -336,7 +352,8 @@ CScript ScriptPubKey(miniscript::MiniscriptContext ctx, const CScript& script, T
 }
 
 //! Fill the witness with the data additional to the script satisfaction.
-void SatisfactionToWitness(miniscript::MiniscriptContext ctx, CScriptWitness& witness, const CScript& script, TaprootBuilder& builder) {
+void SatisfactionToWitness(miniscript::MiniscriptContext ctx, CScriptWitness& witness, const CScript& script, TaprootBuilder& builder)
+{
     // For P2WSH, it's only the witness script.
     witness.stack.emplace_back(script.begin(), script.end());
     if (!miniscript::IsTapscript(ctx)) return;
@@ -345,154 +362,155 @@ void SatisfactionToWitness(miniscript::MiniscriptContext ctx, CScriptWitness& wi
 }
 
 struct MiniScriptTest : BasicTestingSetup {
-/** Run random satisfaction tests. */
-void TestSatisfy(const KeyConverter& converter, const std::string& testcase, const NodeRef& node) {
-    auto script = node->ToScript(converter);
-    const auto challenges{FindChallenges(node.get())}; // Find all challenges in the generated miniscript.
-    std::vector<Challenge> challist(challenges.begin(), challenges.end());
-    for (int iter = 0; iter < 3; ++iter) {
-        std::shuffle(challist.begin(), challist.end(), m_rng);
-        Satisfier satisfier(converter.MsContext());
-        TestSignatureChecker checker(satisfier);
-        bool prev_mal_success = false, prev_nonmal_success = false;
-        // Go over all challenges involved in this miniscript in random order.
-        for (int add = -1; add < (int)challist.size(); ++add) {
-            if (add >= 0) satisfier.supported.insert(challist[add]); // The first iteration does not add anything
+    /** Run random satisfaction tests. */
+    void TestSatisfy(const KeyConverter& converter, const std::string& testcase, const NodeRef& node)
+    {
+        auto script = node->ToScript(converter);
+        const auto challenges{FindChallenges(node.get())}; // Find all challenges in the generated miniscript.
+        std::vector<Challenge> challist(challenges.begin(), challenges.end());
+        for (int iter = 0; iter < 3; ++iter) {
+            std::shuffle(challist.begin(), challist.end(), m_rng);
+            Satisfier satisfier(converter.MsContext());
+            TestSignatureChecker checker(satisfier);
+            bool prev_mal_success = false, prev_nonmal_success = false;
+            // Go over all challenges involved in this miniscript in random order.
+            for (int add = -1; add < (int)challist.size(); ++add) {
+                if (add >= 0) satisfier.supported.insert(challist[add]); // The first iteration does not add anything
 
-            // Get the ScriptPubKey for this script, filling spend data if it's Taproot.
-            TaprootBuilder builder;
-            const CScript script_pubkey{ScriptPubKey(converter.MsContext(), script, builder)};
+                // Get the ScriptPubKey for this script, filling spend data if it's Taproot.
+                TaprootBuilder builder;
+                const CScript script_pubkey{ScriptPubKey(converter.MsContext(), script, builder)};
 
-            // Run malleable satisfaction algorithm.
-            CScriptWitness witness_mal;
-            const bool mal_success = node->Satisfy(satisfier, witness_mal.stack, false) == miniscript::Availability::YES;
-            SatisfactionToWitness(converter.MsContext(), witness_mal, script, builder);
+                // Run malleable satisfaction algorithm.
+                CScriptWitness witness_mal;
+                const bool mal_success = node->Satisfy(satisfier, witness_mal.stack, false) == miniscript::Availability::YES;
+                SatisfactionToWitness(converter.MsContext(), witness_mal, script, builder);
 
-            // Run non-malleable satisfaction algorithm.
-            CScriptWitness witness_nonmal;
-            const bool nonmal_success = node->Satisfy(satisfier, witness_nonmal.stack, true) == miniscript::Availability::YES;
-            // Compute witness size (excluding script push, control block, and witness count encoding).
-            const size_t wit_size = GetSerializeSize(witness_nonmal.stack) - GetSizeOfCompactSize(witness_nonmal.stack.size());
-            SatisfactionToWitness(converter.MsContext(), witness_nonmal, script, builder);
+                // Run non-malleable satisfaction algorithm.
+                CScriptWitness witness_nonmal;
+                const bool nonmal_success = node->Satisfy(satisfier, witness_nonmal.stack, true) == miniscript::Availability::YES;
+                // Compute witness size (excluding script push, control block, and witness count encoding).
+                const size_t wit_size = GetSerializeSize(witness_nonmal.stack) - GetSizeOfCompactSize(witness_nonmal.stack.size());
+                SatisfactionToWitness(converter.MsContext(), witness_nonmal, script, builder);
 
-            if (nonmal_success) {
-                // Non-malleable satisfactions are bounded by the satisfaction size plus:
-                // - For P2WSH spends, the witness script
-                // - For Tapscript spends, both the witness script and the control block
-                const size_t max_stack_size{*node->GetStackSize() + 1 + miniscript::IsTapscript(converter.MsContext())};
-                BOOST_CHECK(witness_nonmal.stack.size() <= max_stack_size);
-                // If a non-malleable satisfaction exists, the malleable one must also exist, and be identical to it.
-                BOOST_CHECK(mal_success);
-                BOOST_CHECK(witness_nonmal.stack == witness_mal.stack);
-                assert(wit_size <= *node->GetWitnessSize());
+                if (nonmal_success) {
+                    // Non-malleable satisfactions are bounded by the satisfaction size plus:
+                    // - For P2WSH spends, the witness script
+                    // - For Tapscript spends, both the witness script and the control block
+                    const size_t max_stack_size{*node->GetStackSize() + 1 + miniscript::IsTapscript(converter.MsContext())};
+                    BOOST_CHECK(witness_nonmal.stack.size() <= max_stack_size);
+                    // If a non-malleable satisfaction exists, the malleable one must also exist, and be identical to it.
+                    BOOST_CHECK(mal_success);
+                    BOOST_CHECK(witness_nonmal.stack == witness_mal.stack);
+                    assert(wit_size <= *node->GetWitnessSize());
 
-                // Test non-malleable satisfaction.
-                ScriptError serror;
-                bool res = VerifyScript(CScript(), script_pubkey, &witness_nonmal, STANDARD_SCRIPT_VERIFY_FLAGS, checker, &serror);
-                // Non-malleable satisfactions are guaranteed to be valid if ValidSatisfactions().
-                if (node->ValidSatisfactions()) BOOST_CHECK(res);
-                // More detailed: non-malleable satisfactions must be valid, or could fail with ops count error (if CheckOpsLimit failed),
-                // or with a stack size error (if CheckStackSize check fails).
-                BOOST_CHECK(res ||
-                            (!node->CheckOpsLimit() && serror == ScriptError::SCRIPT_ERR_OP_COUNT) ||
-                            (!node->CheckStackSize() && serror == ScriptError::SCRIPT_ERR_STACK_SIZE));
+                    // Test non-malleable satisfaction.
+                    ScriptError serror;
+                    bool res = VerifyScript(CScript(), script_pubkey, &witness_nonmal, STANDARD_SCRIPT_VERIFY_FLAGS, checker, &serror);
+                    // Non-malleable satisfactions are guaranteed to be valid if ValidSatisfactions().
+                    if (node->ValidSatisfactions()) BOOST_CHECK(res);
+                    // More detailed: non-malleable satisfactions must be valid, or could fail with ops count error (if CheckOpsLimit failed),
+                    // or with a stack size error (if CheckStackSize check fails).
+                    BOOST_CHECK(res ||
+                                (!node->CheckOpsLimit() && serror == ScriptError::SCRIPT_ERR_OP_COUNT) ||
+                                (!node->CheckStackSize() && serror == ScriptError::SCRIPT_ERR_STACK_SIZE));
+                }
+
+                if (mal_success && (!nonmal_success || witness_mal.stack != witness_nonmal.stack)) {
+                    // Test malleable satisfaction only if it's different from the non-malleable one.
+                    ScriptError serror;
+                    bool res = VerifyScript(CScript(), script_pubkey, &witness_mal, STANDARD_SCRIPT_VERIFY_FLAGS, checker, &serror);
+                    // Malleable satisfactions are not guaranteed to be valid under any conditions, but they can only
+                    // fail due to stack or ops limits.
+                    BOOST_CHECK(res || serror == ScriptError::SCRIPT_ERR_OP_COUNT || serror == ScriptError::SCRIPT_ERR_STACK_SIZE);
+                }
+
+                if (node->IsSane()) {
+                    // For sane nodes, the two algorithms behave identically.
+                    BOOST_CHECK_EQUAL(mal_success, nonmal_success);
+                }
+
+                // Adding more satisfied conditions can never remove our ability to produce a satisfaction.
+                BOOST_CHECK(mal_success >= prev_mal_success);
+                // For nonmalleable solutions this is only true if the added condition is PK;
+                // for other conditions, adding one may make an valid satisfaction become malleable. If the script
+                // is sane, this cannot happen however.
+                if (node->IsSane() || add < 0 || challist[add].first == ChallengeType::PK) {
+                    BOOST_CHECK(nonmal_success >= prev_nonmal_success);
+                }
+                // Remember results for the next added challenge.
+                prev_mal_success = mal_success;
+                prev_nonmal_success = nonmal_success;
             }
 
-            if (mal_success && (!nonmal_success || witness_mal.stack != witness_nonmal.stack)) {
-                // Test malleable satisfaction only if it's different from the non-malleable one.
-                ScriptError serror;
-                bool res = VerifyScript(CScript(), script_pubkey, &witness_mal, STANDARD_SCRIPT_VERIFY_FLAGS, checker, &serror);
-                // Malleable satisfactions are not guaranteed to be valid under any conditions, but they can only
-                // fail due to stack or ops limits.
-                BOOST_CHECK(res || serror == ScriptError::SCRIPT_ERR_OP_COUNT || serror == ScriptError::SCRIPT_ERR_STACK_SIZE);
-            }
-
-            if (node->IsSane()) {
-                // For sane nodes, the two algorithms behave identically.
-                BOOST_CHECK_EQUAL(mal_success, nonmal_success);
-            }
-
-            // Adding more satisfied conditions can never remove our ability to produce a satisfaction.
-            BOOST_CHECK(mal_success >= prev_mal_success);
-            // For nonmalleable solutions this is only true if the added condition is PK;
-            // for other conditions, adding one may make an valid satisfaction become malleable. If the script
-            // is sane, this cannot happen however.
-            if (node->IsSane() || add < 0 || challist[add].first == ChallengeType::PK) {
-                BOOST_CHECK(nonmal_success >= prev_nonmal_success);
-            }
-            // Remember results for the next added challenge.
-            prev_mal_success = mal_success;
-            prev_nonmal_success = nonmal_success;
+            bool satisfiable = node->IsSatisfiable([](const Node&) { return true; });
+            // If the miniscript was satisfiable at all, a satisfaction must be found after all conditions are added.
+            BOOST_CHECK_EQUAL(prev_mal_success, satisfiable);
+            // If the miniscript is sane and satisfiable, a nonmalleable satisfaction must eventually be found.
+            if (node->IsSane()) BOOST_CHECK_EQUAL(prev_nonmal_success, satisfiable);
         }
-
-        bool satisfiable = node->IsSatisfiable([](const Node&) { return true; });
-        // If the miniscript was satisfiable at all, a satisfaction must be found after all conditions are added.
-        BOOST_CHECK_EQUAL(prev_mal_success, satisfiable);
-        // If the miniscript is sane and satisfiable, a nonmalleable satisfaction must eventually be found.
-        if (node->IsSane()) BOOST_CHECK_EQUAL(prev_nonmal_success, satisfiable);
     }
-}
 
-enum TestMode : int {
-    //! Invalid under any context
-    TESTMODE_INVALID = 0,
-    //! Valid under any context unless overridden
-    TESTMODE_VALID = 1,
-    TESTMODE_NONMAL = 2,
-    TESTMODE_NEEDSIG = 4,
-    TESTMODE_TIMELOCKMIX = 8,
-    //! Invalid only under P2WSH context
-    TESTMODE_P2WSH_INVALID = 16,
-    //! Invalid only under Tapscript context
-    TESTMODE_TAPSCRIPT_INVALID = 32,
-};
+    enum TestMode : int {
+        //! Invalid under any context
+        TESTMODE_INVALID = 0,
+        //! Valid under any context unless overridden
+        TESTMODE_VALID = 1,
+        TESTMODE_NONMAL = 2,
+        TESTMODE_NEEDSIG = 4,
+        TESTMODE_TIMELOCKMIX = 8,
+        //! Invalid only under P2WSH context
+        TESTMODE_P2WSH_INVALID = 16,
+        //! Invalid only under Tapscript context
+        TESTMODE_TAPSCRIPT_INVALID = 32,
+    };
 
-void Test(const std::string& ms, const std::string& hexscript, int mode, const KeyConverter& converter,
-          int opslimit = -1, int stacklimit = -1, std::optional<uint32_t> max_wit_size = std::nullopt,
-          std::optional<uint32_t> stack_exec = {})
-{
-    auto node = miniscript::FromString(ms, converter);
-    const bool is_tapscript{miniscript::IsTapscript(converter.MsContext())};
-    if (mode == TESTMODE_INVALID || ((mode & TESTMODE_P2WSH_INVALID) && !is_tapscript) || ((mode & TESTMODE_TAPSCRIPT_INVALID) && is_tapscript)) {
-        BOOST_CHECK_MESSAGE(!node || !node->IsValid(), "Unexpectedly valid: " + ms);
-    } else {
-        BOOST_CHECK_MESSAGE(node, "Unparseable: " + ms);
-        BOOST_CHECK_MESSAGE(node->IsValid(), "Invalid: " + ms);
-        BOOST_CHECK_MESSAGE(node->IsValidTopLevel(), "Invalid top level: " + ms);
-        auto computed_script = node->ToScript(converter);
-        BOOST_CHECK_MESSAGE(node->ScriptSize() == computed_script.size(), "Script size mismatch: " + ms);
-        if (hexscript != "?") BOOST_CHECK_MESSAGE(HexStr(computed_script) == hexscript, "Script mismatch: " + ms + " (" + HexStr(computed_script) + " vs " + hexscript + ")");
-        BOOST_CHECK_MESSAGE(node->IsNonMalleable() == !!(mode & TESTMODE_NONMAL), "Malleability mismatch: " + ms);
-        BOOST_CHECK_MESSAGE(node->NeedsSignature() == !!(mode & TESTMODE_NEEDSIG), "Signature necessity mismatch: " + ms);
-        BOOST_CHECK_MESSAGE((node->GetType() << "k"_mst) == !(mode & TESTMODE_TIMELOCKMIX), "Timelock mix mismatch: " + ms);
-        auto inferred_miniscript = miniscript::FromScript(computed_script, converter);
-        BOOST_CHECK_MESSAGE(inferred_miniscript, "Cannot infer miniscript from script: " + ms);
-        BOOST_CHECK_MESSAGE(inferred_miniscript->ToScript(converter) == computed_script, "Roundtrip failure: miniscript->script != miniscript->script->miniscript->script: " + ms);
-        if (opslimit != -1) BOOST_CHECK_MESSAGE((int)*node->GetOps() == opslimit, "Ops limit mismatch: " << ms << " (" << *node->GetOps() << " vs " << opslimit << ")");
-        if (stacklimit != -1) BOOST_CHECK_MESSAGE((int)*node->GetStackSize() == stacklimit, "Stack limit mismatch: " << ms << " (" << *node->GetStackSize() << " vs " << stacklimit << ")");
-        if (max_wit_size) BOOST_CHECK_MESSAGE(*node->GetWitnessSize() == *max_wit_size, "Witness size limit mismatch: " << ms << " (" << *node->GetWitnessSize() << " vs " << *max_wit_size << ")");
-        if (stack_exec) BOOST_CHECK_MESSAGE(*node->GetExecStackSize() == *stack_exec, "Stack execution limit mismatch: " << ms << " (" << *node->GetExecStackSize() << " vs " << *stack_exec << ")");
-        TestSatisfy(converter, ms, node);
+    void Test(const std::string& ms, const std::string& hexscript, int mode, const KeyConverter& converter,
+              int opslimit = -1, int stacklimit = -1, std::optional<uint32_t> max_wit_size = std::nullopt,
+              std::optional<uint32_t> stack_exec = {})
+    {
+        auto node = miniscript::FromString(ms, converter);
+        const bool is_tapscript{miniscript::IsTapscript(converter.MsContext())};
+        if (mode == TESTMODE_INVALID || ((mode & TESTMODE_P2WSH_INVALID) && !is_tapscript) || ((mode & TESTMODE_TAPSCRIPT_INVALID) && is_tapscript)) {
+            BOOST_CHECK_MESSAGE(!node || !node->IsValid(), "Unexpectedly valid: " + ms);
+        } else {
+            BOOST_CHECK_MESSAGE(node, "Unparseable: " + ms);
+            BOOST_CHECK_MESSAGE(node->IsValid(), "Invalid: " + ms);
+            BOOST_CHECK_MESSAGE(node->IsValidTopLevel(), "Invalid top level: " + ms);
+            auto computed_script = node->ToScript(converter);
+            BOOST_CHECK_MESSAGE(node->ScriptSize() == computed_script.size(), "Script size mismatch: " + ms);
+            if (hexscript != "?") BOOST_CHECK_MESSAGE(HexStr(computed_script) == hexscript, "Script mismatch: " + ms + " (" + HexStr(computed_script) + " vs " + hexscript + ")");
+            BOOST_CHECK_MESSAGE(node->IsNonMalleable() == !!(mode & TESTMODE_NONMAL), "Malleability mismatch: " + ms);
+            BOOST_CHECK_MESSAGE(node->NeedsSignature() == !!(mode & TESTMODE_NEEDSIG), "Signature necessity mismatch: " + ms);
+            BOOST_CHECK_MESSAGE((node->GetType() << "k"_mst) == !(mode & TESTMODE_TIMELOCKMIX), "Timelock mix mismatch: " + ms);
+            auto inferred_miniscript = miniscript::FromScript(computed_script, converter);
+            BOOST_CHECK_MESSAGE(inferred_miniscript, "Cannot infer miniscript from script: " + ms);
+            BOOST_CHECK_MESSAGE(inferred_miniscript->ToScript(converter) == computed_script, "Roundtrip failure: miniscript->script != miniscript->script->miniscript->script: " + ms);
+            if (opslimit != -1) BOOST_CHECK_MESSAGE((int)*node->GetOps() == opslimit, "Ops limit mismatch: " << ms << " (" << *node->GetOps() << " vs " << opslimit << ")");
+            if (stacklimit != -1) BOOST_CHECK_MESSAGE((int)*node->GetStackSize() == stacklimit, "Stack limit mismatch: " << ms << " (" << *node->GetStackSize() << " vs " << stacklimit << ")");
+            if (max_wit_size) BOOST_CHECK_MESSAGE(*node->GetWitnessSize() == *max_wit_size, "Witness size limit mismatch: " << ms << " (" << *node->GetWitnessSize() << " vs " << *max_wit_size << ")");
+            if (stack_exec) BOOST_CHECK_MESSAGE(*node->GetExecStackSize() == *stack_exec, "Stack execution limit mismatch: " << ms << " (" << *node->GetExecStackSize() << " vs " << *stack_exec << ")");
+            TestSatisfy(converter, ms, node);
+        }
     }
-}
 
-void Test(const std::string& ms, const std::string& hexscript, const std::string& hextapscript, int mode,
-          int opslimit, int stacklimit, std::optional<uint32_t> max_wit_size,
-          std::optional<uint32_t> max_tap_wit_size,
-          std::optional<uint32_t> stack_exec)
-{
-    KeyConverter wsh_converter(miniscript::MiniscriptContext::P2WSH);
-    Test(ms, hexscript, mode, wsh_converter, opslimit, stacklimit, max_wit_size, stack_exec);
-    KeyConverter tap_converter(miniscript::MiniscriptContext::TAPSCRIPT);
-    Test(ms, hextapscript == "=" ? hexscript : hextapscript, mode, tap_converter, opslimit, stacklimit, max_tap_wit_size, stack_exec);
-}
+    void Test(const std::string& ms, const std::string& hexscript, const std::string& hextapscript, int mode,
+              int opslimit, int stacklimit, std::optional<uint32_t> max_wit_size,
+              std::optional<uint32_t> max_tap_wit_size,
+              std::optional<uint32_t> stack_exec)
+    {
+        KeyConverter wsh_converter(miniscript::MiniscriptContext::P2WSH);
+        Test(ms, hexscript, mode, wsh_converter, opslimit, stacklimit, max_wit_size, stack_exec);
+        KeyConverter tap_converter(miniscript::MiniscriptContext::TAPSCRIPT);
+        Test(ms, hextapscript == "=" ? hexscript : hextapscript, mode, tap_converter, opslimit, stacklimit, max_tap_wit_size, stack_exec);
+    }
 
-void Test(const std::string& ms, const std::string& hexscript, const std::string& hextapscript, int mode)
-{
-    Test(ms, hexscript, hextapscript, mode,
-         /*opslimit=*/-1, /*stacklimit=*/-1,
-         /*max_wit_size=*/std::nullopt, /*max_tap_wit_size=*/std::nullopt, /*stack_exec=*/std::nullopt);
-}
+    void Test(const std::string& ms, const std::string& hexscript, const std::string& hextapscript, int mode)
+    {
+        Test(ms, hexscript, hextapscript, mode,
+             /*opslimit=*/-1, /*stacklimit=*/-1,
+             /*max_wit_size=*/std::nullopt, /*max_tap_wit_size=*/std::nullopt, /*stack_exec=*/std::nullopt);
+    }
 }; // struct MiniScriptTest
 
 } // namespace
@@ -504,60 +522,60 @@ BOOST_AUTO_TEST_CASE(fixed_tests)
     g_testdata.reset(new TestData());
 
     // Validity rules
-    Test("l:older(1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // older(1): valid
-    Test("l:older(0)", "?", "?", TESTMODE_INVALID); // older(0): k must be at least 1
-    Test("l:older(2147483647)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // older(2147483647): valid
-    Test("l:older(2147483648)", "?", "?", TESTMODE_INVALID); // older(2147483648): k must be below 2^31
-    Test("u:after(1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // after(1): valid
-    Test("u:after(0)", "?", "?", TESTMODE_INVALID); // after(0): k must be at least 1
-    Test("u:after(2147483647)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // after(2147483647): valid
-    Test("u:after(2147483648)", "?", "?", TESTMODE_INVALID); // after(2147483648): k must be below 2^31
-    Test("andor(0,1,1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // andor(Bdu,B,B): valid
-    Test("andor(a:0,1,1)", "?", "?", TESTMODE_INVALID); // andor(Wdu,B,B): X must be B
-    Test("andor(0,a:1,a:1)", "?", "?", TESTMODE_INVALID); // andor(Bdu,W,W): Y and Z must be B/V/K
-    Test("andor(1,1,1)", "?", "?", TESTMODE_INVALID); // andor(Bu,B,B): X must be d
-    Test("andor(n:or_i(0,after(1)),1,1)", "?", "?", TESTMODE_VALID); // andor(Bdu,B,B): valid
-    Test("andor(or_i(0,after(1)),1,1)", "?", "?", TESTMODE_INVALID); // andor(Bd,B,B): X must be u
-    Test("c:andor(0,pk_k(03a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7),pk_k(036d2b085e9e382ed10b69fc311a03f8641ccfff21574de0927513a49d9a688a00))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG); // andor(Bdu,K,K): valid
-    Test("t:andor(0,v:1,v:1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // andor(Bdu,V,V): valid
-    Test("and_v(v:1,1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // and_v(V,B): valid
-    Test("t:and_v(v:1,v:1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // and_v(V,V): valid
-    Test("c:and_v(v:1,pk_k(036d2b085e9e382ed10b69fc311a03f8641ccfff21574de0927513a49d9a688a00))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG); // and_v(V,K): valid
-    Test("and_v(1,1)", "?", "?", TESTMODE_INVALID); // and_v(B,B): X must be V
-    Test("and_v(pk_k(02352bbf4a4cdd12564f93fa332ce333301d9ad40271f8107181340aef25be59d5),1)", "?", "?", TESTMODE_INVALID); // and_v(K,B): X must be V
-    Test("and_v(v:1,a:1)", "?", "?", TESTMODE_INVALID); // and_v(K,W): Y must be B/V/K
-    Test("and_b(1,a:1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // and_b(B,W): valid
-    Test("and_b(1,1)", "?", "?", TESTMODE_INVALID); // and_b(B,B): Y must W
-    Test("and_b(v:1,a:1)", "?", "?", TESTMODE_INVALID); // and_b(V,W): X must be B
-    Test("and_b(a:1,a:1)", "?", "?", TESTMODE_INVALID); // and_b(W,W): X must be B
-    Test("and_b(pk_k(025601570cb47f238d2b0286db4a990fa0f3ba28d1a319f5e7cf55c2a2444da7cc),a:1)", "?", "?", TESTMODE_INVALID); // and_b(K,W): X must be B
-    Test("or_b(0,a:0)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG); // or_b(Bd,Wd): valid
-    Test("or_b(1,a:0)", "?", "?", TESTMODE_INVALID); // or_b(B,Wd): X must be d
-    Test("or_b(0,a:1)", "?", "?", TESTMODE_INVALID); // or_b(Bd,W): Y must be d
-    Test("or_b(0,0)", "?", "?", TESTMODE_INVALID); // or_b(Bd,Bd): Y must W
-    Test("or_b(v:0,a:0)", "?", "?", TESTMODE_INVALID); // or_b(V,Wd): X must be B
-    Test("or_b(a:0,a:0)", "?", "?", TESTMODE_INVALID); // or_b(Wd,Wd): X must be B
-    Test("or_b(pk_k(025601570cb47f238d2b0286db4a990fa0f3ba28d1a319f5e7cf55c2a2444da7cc),a:0)", "?", "?", TESTMODE_INVALID); // or_b(Kd,Wd): X must be B
-    Test("t:or_c(0,v:1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // or_c(Bdu,V): valid
-    Test("t:or_c(a:0,v:1)", "?", "?", TESTMODE_INVALID); // or_c(Wdu,V): X must be B
-    Test("t:or_c(1,v:1)", "?", "?", TESTMODE_INVALID); // or_c(Bu,V): X must be d
-    Test("t:or_c(n:or_i(0,after(1)),v:1)", "?", "?", TESTMODE_VALID); // or_c(Bdu,V): valid
-    Test("t:or_c(or_i(0,after(1)),v:1)", "?", "?", TESTMODE_INVALID); // or_c(Bd,V): X must be u
-    Test("t:or_c(0,1)", "?", "?", TESTMODE_INVALID); // or_c(Bdu,B): Y must be V
-    Test("or_d(0,1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // or_d(Bdu,B): valid
-    Test("or_d(a:0,1)", "?", "?", TESTMODE_INVALID); // or_d(Wdu,B): X must be B
-    Test("or_d(1,1)", "?", "?", TESTMODE_INVALID); // or_d(Bu,B): X must be d
-    Test("or_d(n:or_i(0,after(1)),1)", "?", "?", TESTMODE_VALID); // or_d(Bdu,B): valid
-    Test("or_d(or_i(0,after(1)),1)", "?", "?", TESTMODE_INVALID); // or_d(Bd,B): X must be u
-    Test("or_d(0,v:1)", "?", "?", TESTMODE_INVALID); // or_d(Bdu,V): Y must be B
-    Test("or_i(1,1)", "?", "?", TESTMODE_VALID); // or_i(B,B): valid
-    Test("t:or_i(v:1,v:1)", "?", "?", TESTMODE_VALID); // or_i(V,V): valid
-    Test("c:or_i(pk_k(03a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7),pk_k(036d2b085e9e382ed10b69fc311a03f8641ccfff21574de0927513a49d9a688a00))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG); // or_i(K,K): valid
-    Test("or_i(a:1,a:1)", "?", "?", TESTMODE_INVALID); // or_i(W,W): X and Y must be B/V/K
-    Test("or_b(l:after(100),al:after(1000000000))", "?", "?", TESTMODE_VALID); // or_b(timelock, heighlock) valid
-    Test("and_b(after(100),a:after(1000000000))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_TIMELOCKMIX); // and_b(timelock, heighlock) invalid
+    Test("l:older(1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                        // older(1): valid
+    Test("l:older(0)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                        // older(0): k must be at least 1
+    Test("l:older(2147483647)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                               // older(2147483647): valid
+    Test("l:older(2147483648)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                               // older(2147483648): k must be below 2^31
+    Test("u:after(1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                        // after(1): valid
+    Test("u:after(0)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                        // after(0): k must be at least 1
+    Test("u:after(2147483647)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                               // after(2147483647): valid
+    Test("u:after(2147483648)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                               // after(2147483648): k must be below 2^31
+    Test("andor(0,1,1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                      // andor(Bdu,B,B): valid
+    Test("andor(a:0,1,1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                    // andor(Wdu,B,B): X must be B
+    Test("andor(0,a:1,a:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                  // andor(Bdu,W,W): Y and Z must be B/V/K
+    Test("andor(1,1,1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                      // andor(Bu,B,B): X must be d
+    Test("andor(n:or_i(0,after(1)),1,1)", "?", "?", TESTMODE_VALID);                                                                                                                                                                                                                       // andor(Bdu,B,B): valid
+    Test("andor(or_i(0,after(1)),1,1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                       // andor(Bd,B,B): X must be u
+    Test("c:andor(0,pk_k(03a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7),pk_k(036d2b085e9e382ed10b69fc311a03f8641ccfff21574de0927513a49d9a688a00))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG);                                                   // andor(Bdu,K,K): valid
+    Test("t:andor(0,v:1,v:1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                // andor(Bdu,V,V): valid
+    Test("and_v(v:1,1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                      // and_v(V,B): valid
+    Test("t:and_v(v:1,v:1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                  // and_v(V,V): valid
+    Test("c:and_v(v:1,pk_k(036d2b085e9e382ed10b69fc311a03f8641ccfff21574de0927513a49d9a688a00))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG);                                                                                                                          // and_v(V,K): valid
+    Test("and_v(1,1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                        // and_v(B,B): X must be V
+    Test("and_v(pk_k(02352bbf4a4cdd12564f93fa332ce333301d9ad40271f8107181340aef25be59d5),1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                 // and_v(K,B): X must be V
+    Test("and_v(v:1,a:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                    // and_v(K,W): Y must be B/V/K
+    Test("and_b(1,a:1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                      // and_b(B,W): valid
+    Test("and_b(1,1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                        // and_b(B,B): Y must W
+    Test("and_b(v:1,a:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                    // and_b(V,W): X must be B
+    Test("and_b(a:1,a:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                    // and_b(W,W): X must be B
+    Test("and_b(pk_k(025601570cb47f238d2b0286db4a990fa0f3ba28d1a319f5e7cf55c2a2444da7cc),a:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                               // and_b(K,W): X must be B
+    Test("or_b(0,a:0)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG);                                                                                                                                                                                                    // or_b(Bd,Wd): valid
+    Test("or_b(1,a:0)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                       // or_b(B,Wd): X must be d
+    Test("or_b(0,a:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                       // or_b(Bd,W): Y must be d
+    Test("or_b(0,0)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                         // or_b(Bd,Bd): Y must W
+    Test("or_b(v:0,a:0)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                     // or_b(V,Wd): X must be B
+    Test("or_b(a:0,a:0)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                     // or_b(Wd,Wd): X must be B
+    Test("or_b(pk_k(025601570cb47f238d2b0286db4a990fa0f3ba28d1a319f5e7cf55c2a2444da7cc),a:0)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                // or_b(Kd,Wd): X must be B
+    Test("t:or_c(0,v:1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                     // or_c(Bdu,V): valid
+    Test("t:or_c(a:0,v:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                   // or_c(Wdu,V): X must be B
+    Test("t:or_c(1,v:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                     // or_c(Bu,V): X must be d
+    Test("t:or_c(n:or_i(0,after(1)),v:1)", "?", "?", TESTMODE_VALID);                                                                                                                                                                                                                      // or_c(Bdu,V): valid
+    Test("t:or_c(or_i(0,after(1)),v:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                      // or_c(Bd,V): X must be u
+    Test("t:or_c(0,1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                       // or_c(Bdu,B): Y must be V
+    Test("or_d(0,1)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                                                                                                                                                                                         // or_d(Bdu,B): valid
+    Test("or_d(a:0,1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                       // or_d(Wdu,B): X must be B
+    Test("or_d(1,1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                         // or_d(Bu,B): X must be d
+    Test("or_d(n:or_i(0,after(1)),1)", "?", "?", TESTMODE_VALID);                                                                                                                                                                                                                          // or_d(Bdu,B): valid
+    Test("or_d(or_i(0,after(1)),1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                          // or_d(Bd,B): X must be u
+    Test("or_d(0,v:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                       // or_d(Bdu,V): Y must be B
+    Test("or_i(1,1)", "?", "?", TESTMODE_VALID);                                                                                                                                                                                                                                           // or_i(B,B): valid
+    Test("t:or_i(v:1,v:1)", "?", "?", TESTMODE_VALID);                                                                                                                                                                                                                                     // or_i(V,V): valid
+    Test("c:or_i(pk_k(03a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7),pk_k(036d2b085e9e382ed10b69fc311a03f8641ccfff21574de0927513a49d9a688a00))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG);                                                      // or_i(K,K): valid
+    Test("or_i(a:1,a:1)", "?", "?", TESTMODE_INVALID);                                                                                                                                                                                                                                     // or_i(W,W): X and Y must be B/V/K
+    Test("or_b(l:after(100),al:after(1000000000))", "?", "?", TESTMODE_VALID);                                                                                                                                                                                                             // or_b(timelock, heighlock) valid
+    Test("and_b(after(100),a:after(1000000000))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_TIMELOCKMIX);                                                                                                                                                                      // and_b(timelock, heighlock) invalid
     Test("pk(03d30199d74fb5a22d47b6e054e2f378cedacffcb89904a61d75d0dbd407143e65)", "2103d30199d74fb5a22d47b6e054e2f378cedacffcb89904a61d75d0dbd407143e65ac", "20d30199d74fb5a22d47b6e054e2f378cedacffcb89904a61d75d0dbd407143e65ac", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG); // alias to c:pk_k
-    Test("pkh(03d30199d74fb5a22d47b6e054e2f378cedacffcb89904a61d75d0dbd407143e65)", "76a914fcd35ddacad9f2d5be5e464639441c6065e6955d88ac", "76a914fd1690c37fa3b0f04395ddc9415b220ab1ccc59588ac", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG); // alias to c:pk_h
+    Test("pkh(03d30199d74fb5a22d47b6e054e2f378cedacffcb89904a61d75d0dbd407143e65)", "76a914fcd35ddacad9f2d5be5e464639441c6065e6955d88ac", "76a914fd1690c37fa3b0f04395ddc9415b220ab1ccc59588ac", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG);                                      // alias to c:pk_h
 
     // Randomly generated test set that covers the majority of type and node type combinations
     Test("lltvln:after(1231488000)", "6300676300676300670400046749b1926869516868", "=", TESTMODE_VALID | TESTMODE_NONMAL, 12, 3, 3, 3, 3);
@@ -619,7 +637,7 @@ BOOST_AUTO_TEST_CASE(fixed_tests)
     Test("thresh(2,dv:older(42),s:pk(025cbdf0646e5db4eaa398f365f2ea7a0e3d419b7e0330e39ce92bddedcac4f9bc),s:pk(03d30199d74fb5a22d47b6e054e2f378cedacffcb89904a61d75d0dbd407143e65))", "?", "7663012ab269687c205cbdf0646e5db4eaa398f365f2ea7a0e3d419b7e0330e39ce92bddedcac4f9bcac937c20d30199d74fb5a22d47b6e054e2f378cedacffcb89904a61d75d0dbd407143e65ac935287", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_NEEDSIG | TESTMODE_P2WSH_INVALID, 12, 3, {}, {}, 4);
     // We can have a script that has more than 201 ops (n = 99), that needs a stack size > 100 (n = 110), or has a
     // script that is larger than 3600 bytes (n = 200). All that can't be under P2WSH.
-    for (const auto pk_count: {99, 110, 200}) {
+    for (const auto pk_count : {99, 110, 200}) {
         std::string ms_str_large;
         for (auto i = 0; i < pk_count - 1; ++i) {
             ms_str_large += "and_b(pk(" + HexStr(g_testdata->pubkeys[i]) + "),a:";
@@ -668,7 +686,7 @@ BOOST_AUTO_TEST_CASE(fixed_tests)
     // For CHECKMULTISIG the OP cost is the number of keys, but the stack size is the number of sigs (+1)
     const auto ms_multi = miniscript::FromString("multi(1,03d30199d74fb5a22d47b6e054e2f378cedacffcb89904a61d75d0dbd407143e65,03fff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556,0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798)", wsh_converter);
     BOOST_CHECK(ms_multi);
-    BOOST_CHECK_EQUAL(*ms_multi->GetOps(), 4); // 3 pubkeys + CMS
+    BOOST_CHECK_EQUAL(*ms_multi->GetOps(), 4);       // 3 pubkeys + CMS
     BOOST_CHECK_EQUAL(*ms_multi->GetStackSize(), 2); // 1 sig + dummy elem
     // The 'd:' wrapper leaves on the stack what was DUP'ed at the beginning of its execution.
     // Since it contains an OP_IF just after on the same element, we can make sure that the element
@@ -712,9 +730,9 @@ BOOST_AUTO_TEST_CASE(fixed_tests)
     BOOST_CHECK(!miniscript::FromString("multi(+1,03cdabb7f2dce7bfbd8a0b9570c6fd1e712e5d64045e9d6b517b3d5072251dc204)", wsh_converter));
 
     // Timelock tests
-    Test("after(100)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // only heightlock
-    Test("after(1000000000)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL); // only timelock
-    Test("or_b(l:after(100),al:after(1000000000))", "?", "?", TESTMODE_VALID); // or_b(timelock, heighlock) valid
+    Test("after(100)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                                   // only heightlock
+    Test("after(1000000000)", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL);                                            // only timelock
+    Test("or_b(l:after(100),al:after(1000000000))", "?", "?", TESTMODE_VALID);                                        // or_b(timelock, heighlock) valid
     Test("and_b(after(100),a:after(1000000000))", "?", "?", TESTMODE_VALID | TESTMODE_NONMAL | TESTMODE_TIMELOCKMIX); // and_b(timelock, heighlock) invalid
     /* This is correctly detected as non-malleable but for the wrong reason. The type system assumes that branches 1 and 2
        can be spent together to create a non-malleble witness, but because of mixing of timelocks they cannot be spent together.

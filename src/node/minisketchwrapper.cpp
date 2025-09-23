@@ -35,10 +35,10 @@ uint32_t FindBestImplementation()
             Minisketch sketch(BITS, impl, 32);
             auto start = SteadyClock::now();
             for (uint64_t e = 0; e < 100; ++e) {
-                sketch.Add(e*1337 + b*13337 + offset);
+                sketch.Add(e * 1337 + b * 13337 + offset);
             }
             for (uint64_t e = 0; e < 84; ++e) {
-                sketch.Add(e*1337 + b*13337 + offset);
+                sketch.Add(e * 1337 + b * 13337 + offset);
             }
             offset += (*sketch.Decode(32))[0];
             auto stop = SteadyClock::now();

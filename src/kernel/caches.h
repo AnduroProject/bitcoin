@@ -41,7 +41,7 @@ struct CacheSizes {
 
         signed_block_db = std::min(total_cache / 2, MAX_SIGNED_BLOCK_DB_CACHE);
         total_cache -= signed_block_db;
-        
+
         coins = total_cache; // the rest goes to the coins cache
     }
 };

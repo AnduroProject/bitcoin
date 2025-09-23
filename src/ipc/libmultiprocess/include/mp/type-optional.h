@@ -10,10 +10,10 @@
 namespace mp {
 template <typename LocalType, typename Value, typename Output>
 void CustomBuildField(TypeList<std::optional<LocalType>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Value&& value,
-    Output&& output)
+                      Priority<1>,
+                      InvokeContext& invoke_context,
+                      Value&& value,
+                      Output&& output)
 {
     if (value) {
         output.setHas();
@@ -24,10 +24,10 @@ void CustomBuildField(TypeList<std::optional<LocalType>>,
 
 template <typename LocalType, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<std::optional<LocalType>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Input&& input,
-    ReadDest&& read_dest)
+                               Priority<1>,
+                               InvokeContext& invoke_context,
+                               Input&& input,
+                               ReadDest&& read_dest)
 {
     return read_dest.update([&](auto& value) {
         if (!input.has()) {
@@ -36,10 +36,10 @@ decltype(auto) CustomReadField(TypeList<std::optional<LocalType>>,
             ReadField(TypeList<LocalType>(), invoke_context, input, ReadDestUpdate(*value));
         } else {
             ReadField(TypeList<LocalType>(), invoke_context, input,
-                ReadDestEmplace(TypeList<LocalType>(), [&](auto&&... args) -> auto& {
-                    value.emplace(std::forward<decltype(args)>(args)...);
-                    return *value;
-                }));
+                      ReadDestEmplace(TypeList<LocalType>(), [&](auto&&... args) -> auto& {
+                          value.emplace(std::forward<decltype(args)>(args)...);
+                          return *value;
+                      }));
         }
     });
 }

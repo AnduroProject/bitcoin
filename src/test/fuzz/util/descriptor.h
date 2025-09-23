@@ -6,9 +6,9 @@
 #define BITCOIN_TEST_FUZZ_UTIL_DESCRIPTOR_H
 
 #include <key_io.h>
-#include <util/strencodings.h>
 #include <script/descriptor.h>
 #include <test/fuzz/fuzz.h>
+#include <util/strencodings.h>
 
 #include <functional>
 
@@ -18,7 +18,8 @@
  * as an index in a list of pre-generated keys. This list contains keys of the various types
  * accepted in descriptor keys expressions.
  */
-class MockedDescriptorConverter {
+class MockedDescriptorConverter
+{
 private:
     //! Types are raw (un)compressed pubkeys, raw xonly pubkeys, raw privkeys (WIF), xpubs, xprvs.
     static constexpr uint8_t KEY_TYPES_COUNT{6};

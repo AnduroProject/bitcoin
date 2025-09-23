@@ -5,8 +5,8 @@
 #include <bitcoin-build-config.h> // IWYU pragma: keep
 
 #include <clientversion.h>
-#include <util/fs.h>
 #include <util/exec.h>
+#include <util/fs.h>
 #include <util/strencodings.h>
 #include <util/translation.h>
 
@@ -164,7 +164,7 @@ static void ExecCommand(const std::vector<const char*>& args, std::string_view w
     auto try_exec = [&](fs::path exe_path, bool allow_notfound = true) {
         std::string exe_path_str{fs::PathToString(exe_path)};
         exec_args[0] = exe_path_str.c_str();
-        if (util::ExecVp(exec_args[0], (char*const*)exec_args.data()) == -1) {
+        if (util::ExecVp(exec_args[0], (char* const*)exec_args.data()) == -1) {
             if (allow_notfound && errno == ENOENT) return false;
             throw std::system_error(errno, std::system_category(), strprintf("execvp failed to execute '%s'", exec_args[0]));
         }
@@ -194,11 +194,11 @@ static void ExecCommand(const std::vector<const char*>& args, std::string_view w
     // in libexec/
     (wrapper_dir.filename() == "bin" && try_exec(fs::path{wrapper_dir.parent_path()} / "libexec" / arg0.filename())) ||
 #ifdef WIN32
-    // Otherwise check the "daemon" subdirectory in a windows install.
-    (!wrapper_dir.empty() && try_exec(wrapper_dir / "daemon" / arg0.filename())) ||
+        // Otherwise check the "daemon" subdirectory in a windows install.
+        (!wrapper_dir.empty() && try_exec(wrapper_dir / "daemon" / arg0.filename())) ||
 #endif
-    // Otherwise look for target executable next to current wrapper
-    (!wrapper_dir.empty() && try_exec(wrapper_dir / arg0.filename(), fallback_os_search)) ||
-    // Otherwise just look on the system path.
-    (fallback_os_search && try_exec(arg0.filename(), false));
+        // Otherwise look for target executable next to current wrapper
+        (!wrapper_dir.empty() && try_exec(wrapper_dir / arg0.filename(), fallback_os_search)) ||
+        // Otherwise just look on the system path.
+        (fallback_os_search && try_exec(arg0.filename(), false));
 }

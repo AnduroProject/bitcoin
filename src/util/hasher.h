@@ -23,7 +23,8 @@ private:
 public:
     SaltedTxidHasher();
 
-    size_t operator()(const uint256& txid) const {
+    size_t operator()(const uint256& txid) const
+    {
         return SipHashUint256(k0, k1, txid);
     }
 };
@@ -46,13 +47,13 @@ public:
      *
      * @see https://gcc.gnu.org/onlinedocs/gcc-13.2.0/libstdc++/manual/manual/unordered_associative.html
      */
-    size_t operator()(const COutPoint& id) const noexcept {
+    size_t operator()(const COutPoint& id) const noexcept
+    {
         return SipHashUint256Extra(k0, k1, id.hash, id.n);
     }
 };
 
-struct FilterHeaderHasher
-{
+struct FilterHeaderHasher {
     size_t operator()(const uint256& hash) const { return ReadLE64(hash.begin()); }
 };
 
@@ -70,15 +71,14 @@ public:
     template <uint8_t hash_select>
     uint32_t operator()(const uint256& key) const
     {
-        static_assert(hash_select <8, "SignatureCacheHasher only has 8 hashes available.");
+        static_assert(hash_select < 8, "SignatureCacheHasher only has 8 hashes available.");
         uint32_t u;
-        std::memcpy(&u, key.begin()+4*hash_select, 4);
+        std::memcpy(&u, key.begin() + 4 * hash_select, 4);
         return u;
     }
 };
 
-struct BlockHasher
-{
+struct BlockHasher {
     // this used to call `GetCheapHash()` in uint256, which was later moved; the
     // cheap hash function simply calls ReadLE64() however, so the end result is
     // identical

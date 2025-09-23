@@ -29,8 +29,7 @@ public:
 };
 
 template <typename Accessor, typename Struct>
-struct StructField
-{
+struct StructField {
     template <typename S>
     StructField(S& struct_) : m_struct(struct_)
     {
@@ -39,45 +38,52 @@ struct StructField
 
     decltype(auto) get() const { return Accessor::get(this->m_struct); }
 
-    bool has() const {
-      if constexpr (Accessor::optional) {
-        return Accessor::getHas(m_struct);
-      } else if constexpr (Accessor::boxed) {
-        return Accessor::has(m_struct);
-      } else {
-        return true;
-      }
+    bool has() const
+    {
+        if constexpr (Accessor::optional) {
+            return Accessor::getHas(m_struct);
+        } else if constexpr (Accessor::boxed) {
+            return Accessor::has(m_struct);
+        } else {
+            return true;
+        }
     }
 
-    bool want() const {
-      if constexpr (Accessor::requested) {
-        return Accessor::getWant(m_struct);
-      } else {
-        return true;
-      }
+    bool want() const
+    {
+        if constexpr (Accessor::requested) {
+            return Accessor::getWant(m_struct);
+        } else {
+            return true;
+        }
     }
 
-    template <typename... Args> decltype(auto) set(Args &&...args) const {
-      return Accessor::set(this->m_struct, std::forward<Args>(args)...);
+    template <typename... Args>
+    decltype(auto) set(Args&&... args) const
+    {
+        return Accessor::set(this->m_struct, std::forward<Args>(args)...);
     }
 
-    template <typename... Args> decltype(auto) init(Args &&...args) const {
-      return Accessor::init(this->m_struct, std::forward<Args>(args)...);
+    template <typename... Args>
+    decltype(auto) init(Args&&... args) const
+    {
+        return Accessor::init(this->m_struct, std::forward<Args>(args)...);
     }
 
-    void setHas() const {
-      if constexpr (Accessor::optional) {
-        Accessor::setHas(m_struct);
-      }
+    void setHas() const
+    {
+        if constexpr (Accessor::optional) {
+            Accessor::setHas(m_struct);
+        }
     }
 
-    void setWant() const {
-      if constexpr (Accessor::requested) {
-        Accessor::setWant(m_struct);
-      }
+    void setWant() const
+    {
+        if constexpr (Accessor::requested) {
+            Accessor::setWant(m_struct);
+        }
     }
 };
-
 
 
 // Destination parameter type that can be passed to ReadField function as an
@@ -90,8 +96,7 @@ struct StructField
 // constructor via the operator or make_shared or emplace or just return a
 // temporary string that is moved from.
 template <typename LocalType, typename EmplaceFn>
-struct ReadDestEmplace
-{
+struct ReadDestEmplace {
     ReadDestEmplace(TypeList<LocalType>, EmplaceFn&& emplace_fn) : m_emplace_fn(emplace_fn) {}
 
     //! Simple case. If ReadField impementation calls this construct() method
@@ -132,8 +137,8 @@ template <typename LocalType>
 auto ReadDestTemp()
 {
     return ReadDestEmplace{TypeList<LocalType>(), [&](auto&&... args) -> decltype(auto) {
-        return LocalType{std::forward<decltype(args)>(args)...};
-    }};
+                               return LocalType{std::forward<decltype(args)>(args)...};
+                           }};
 }
 
 //! Destination parameter type that can be passed to ReadField function as an
@@ -141,8 +146,7 @@ auto ReadDestTemp()
 //! construct a new value, it just takes a reference to an existing value and
 //! assigns a new value to it.
 template <typename Value>
-struct ReadDestUpdate
-{
+struct ReadDestUpdate {
     ReadDestUpdate(Value& value) : m_value(value) {}
 
     //! Simple case. If ReadField works by calling update() just forward arguments to update_fn.
@@ -176,8 +180,7 @@ template <typename LocalType, typename Input>
 void ThrowField(TypeList<LocalType>, InvokeContext& invoke_context, Input&& input)
 {
     ReadField(
-        TypeList<LocalType>(), invoke_context, input, ReadDestEmplace(TypeList<LocalType>(),
-            [](auto&& ...args) -> const LocalType& { throw LocalType{std::forward<decltype(args)>(args)...}; }));
+        TypeList<LocalType>(), invoke_context, input, ReadDestEmplace(TypeList<LocalType>(), [](auto&&... args) -> const LocalType& { throw LocalType{std::forward<decltype(args)>(args)...}; }));
 }
 
 //! Special case for generic std::exception. It's an abstract type so it can't
@@ -201,7 +204,7 @@ void BuildField(TypeList<LocalTypes...>, Context& context, Output&& output, Valu
 {
     if (CustomHasValue(context, std::forward<Values>(values)...)) {
         CustomBuildField(TypeList<LocalTypes...>(), Priority<3>(), context, std::forward<Values>(values)...,
-            std::forward<Output>(output));
+                         std::forward<Output>(output));
     }
 }
 
@@ -214,8 +217,7 @@ template <typename ListType>
 struct ListOutput;
 
 template <typename T, ::capnp::Kind kind>
-struct ListOutput<::capnp::List<T, kind>>
-{
+struct ListOutput<::capnp::List<T, kind>> {
     using Builder = typename ::capnp::List<T, kind>::Builder;
 
     ListOutput(Builder& builder, size_t index) : m_builder(builder), m_index(index) {}
@@ -295,10 +297,10 @@ void PassField(Priority<0>, TypeList<LocalType>, ServerContext& server_context, 
     std::optional<ArgType> param;
     const auto& params = server_context.call_context.getParams();
     MaybeReadField(std::integral_constant<bool, Accessor::in>(), TypeList<ArgType>(), invoke_context,
-        Make<StructField, Accessor>(params), ReadDestEmplace(TypeList<ArgType>(), [&](auto&&... args) -> auto& {
-            param.emplace(std::forward<decltype(args)>(args)...);
-            return *param;
-        }));
+                   Make<StructField, Accessor>(params), ReadDestEmplace(TypeList<ArgType>(), [&](auto&&... args) -> auto& {
+                       param.emplace(std::forward<decltype(args)>(args)...);
+                       return *param;
+                   }));
     if constexpr (Accessor::in) {
         assert(param);
     } else {
@@ -307,7 +309,7 @@ void PassField(Priority<0>, TypeList<LocalType>, ServerContext& server_context, 
     fn.invoke(server_context, std::forward<Args>(args)..., static_cast<LocalType&&>(*param));
     auto&& results = server_context.call_context.getResults();
     MaybeBuildField(std::integral_constant<bool, Accessor::out>(), TypeList<LocalType>(), invoke_context,
-        Make<StructField, Accessor>(results), *param);
+                    Make<StructField, Accessor>(results), *param);
 }
 
 //! Default PassField implementation for count(0) arguments, calling ReadField/BuildField
@@ -323,15 +325,14 @@ void PassField(Priority<0>, TypeList<>, ServerContext& server_context, const Fn&
 }
 
 template <typename Derived, size_t N = 0>
-struct IterateFieldsHelper
-{
+struct IterateFieldsHelper {
     template <typename Arg1, typename Arg2, typename ParamList, typename NextFn, typename... NextFnArgs>
     void handleChain(Arg1&& arg1, Arg2&& arg2, ParamList, NextFn&& next_fn, NextFnArgs&&... next_fn_args)
     {
         using S = Split<N, ParamList>;
         handleChain(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2), typename S::First());
         next_fn.handleChain(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2), typename S::Second(),
-            std::forward<NextFnArgs>(next_fn_args)...);
+                            std::forward<NextFnArgs>(next_fn_args)...);
     }
 
     template <typename Arg1, typename Arg2, typename ParamList>
@@ -339,13 +340,13 @@ struct IterateFieldsHelper
     {
         static_cast<Derived*>(this)->handleField(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2), ParamList());
     }
+
 private:
     IterateFieldsHelper() = default;
     friend Derived;
 };
 
-struct IterateFields : IterateFieldsHelper<IterateFields, 0>
-{
+struct IterateFields : IterateFieldsHelper<IterateFields, 0> {
     template <typename Arg1, typename Arg2, typename ParamList>
     void handleField(Arg1&&, Arg2&&, ParamList)
     {
@@ -353,10 +354,8 @@ struct IterateFields : IterateFieldsHelper<IterateFields, 0>
 };
 
 template <typename Exception, typename Accessor>
-struct ClientException
-{
-    struct BuildParams : IterateFieldsHelper<BuildParams, 0>
-    {
+struct ClientException {
+    struct BuildParams : IterateFieldsHelper<BuildParams, 0> {
         template <typename Params, typename ParamList>
         void handleField(InvokeContext& invoke_context, Params& params, ParamList)
         {
@@ -366,8 +365,7 @@ struct ClientException
         ClientException* m_client_exception;
     };
 
-    struct ReadResults : IterateFieldsHelper<ReadResults, 0>
-    {
+    struct ReadResults : IterateFieldsHelper<ReadResults, 0> {
         template <typename Results, typename ParamList>
         void handleField(InvokeContext& invoke_context, Results& results, ParamList)
         {
@@ -383,18 +381,16 @@ struct ClientException
 };
 
 template <typename Accessor, typename... Types>
-struct ClientParam
-{
+struct ClientParam {
     ClientParam(Types&&... values) : m_values{std::forward<Types>(values)...} {}
 
-    struct BuildParams : IterateFieldsHelper<BuildParams, sizeof...(Types)>
-    {
+    struct BuildParams : IterateFieldsHelper<BuildParams, sizeof...(Types)> {
         template <typename Params, typename ParamList>
         void handleField(ClientInvokeContext& invoke_context, Params& params, ParamList)
         {
             auto const fun = [&]<typename... Values>(Values&&... values) {
                 MaybeBuildField(std::integral_constant<bool, Accessor::in>(), ParamList(), invoke_context,
-                    Make<StructField, Accessor>(params), std::forward<Values>(values)...);
+                                Make<StructField, Accessor>(params), std::forward<Values>(values)...);
                 MaybeSetWant(
                     ParamList(), Priority<1>(), std::forward<Values>(values)..., Make<StructField, Accessor>(params));
             };
@@ -413,14 +409,13 @@ struct ClientParam
         ClientParam* m_client_param;
     };
 
-    struct ReadResults : IterateFieldsHelper<ReadResults, sizeof...(Types)>
-    {
+    struct ReadResults : IterateFieldsHelper<ReadResults, sizeof...(Types)> {
         template <typename Results, typename... Params>
         void handleField(ClientInvokeContext& invoke_context, Results& results, TypeList<Params...>)
         {
             auto const fun = [&]<typename... Values>(Values&&... values) {
                 MaybeReadField(std::integral_constant<bool, Accessor::out>(), TypeList<Decay<Params>...>(), invoke_context,
-                    Make<StructField, Accessor>(results), ReadDestUpdate(values)...);
+                               Make<StructField, Accessor>(results), ReadDestUpdate(values)...);
             };
 
             std::apply(fun, m_client_param->m_values);
@@ -439,8 +434,7 @@ ClientParam<Accessor, Types...> MakeClientParam(Types&&... values)
     return {std::forward<Types>(values)...};
 }
 
-struct ServerCall
-{
+struct ServerCall {
     // FIXME: maybe call call_context.releaseParams()
     template <typename ServerContext, typename... Args>
     decltype(auto) invoke(ServerContext& server_context, TypeList<>, Args&&... args) const
@@ -451,8 +445,7 @@ struct ServerCall
     }
 };
 
-struct ServerDestroy
-{
+struct ServerDestroy {
     template <typename ServerContext, typename... Args>
     void invoke(ServerContext& server_context, TypeList<>, Args&&... args) const
     {
@@ -461,8 +454,7 @@ struct ServerDestroy
 };
 
 template <typename Accessor, typename Parent>
-struct ServerRet : Parent
-{
+struct ServerRet : Parent {
     ServerRet(Parent parent) : Parent(parent) {}
 
     template <typename ServerContext, typename... Args>
@@ -472,13 +464,12 @@ struct ServerRet : Parent
         auto&& results = server_context.call_context.getResults();
         InvokeContext& invoke_context = server_context;
         BuildField(TypeList<decltype(result)>(), invoke_context, Make<StructField, Accessor>(results),
-            std::forward<decltype(result)>(result));
+                   std::forward<decltype(result)>(result));
     }
 };
 
 template <typename Exception, typename Accessor, typename Parent>
-struct ServerExcept : Parent
-{
+struct ServerExcept : Parent {
     ServerExcept(Parent parent) : Parent(parent) {}
 
     template <typename ServerContext, typename... Args>
@@ -527,8 +518,7 @@ auto PassField(Priority<2>, Args&&... args) -> decltype(CustomPassField<Accessor
 };
 
 template <int argc, typename Accessor, typename Parent>
-struct ServerField : Parent
-{
+struct ServerField : Parent {
     ServerField(Parent parent) : Parent(parent) {}
 
     const Parent& parent() const { return *this; }
@@ -537,11 +527,11 @@ struct ServerField : Parent
     decltype(auto) invoke(ServerContext& server_context, ArgTypes, Args&&... args) const
     {
         return PassField<Accessor>(Priority<2>(),
-            typename Split<argc, ArgTypes>::First(),
-            server_context,
-            this->parent(),
-            typename Split<argc, ArgTypes>::Second(),
-            std::forward<Args>(args)...);
+                                   typename Split<argc, ArgTypes>::First(),
+                                   server_context,
+                                   this->parent(),
+                                   typename Split<argc, ArgTypes>::Second(),
+                                   std::forward<Args>(args)...);
     }
 };
 
@@ -555,8 +545,7 @@ template <typename Request>
 struct CapRequestTraits;
 
 template <typename _Params, typename _Results>
-struct CapRequestTraits<::capnp::Request<_Params, _Results>>
-{
+struct CapRequestTraits<::capnp::Request<_Params, _Results>> {
     using Params = _Params;
     using Results = _Results;
 };
@@ -688,7 +677,7 @@ kj::Promise<void> serverInvoke(Server& server, CallContext& call_context, Fn fn)
 
     int req = ++server_reqs;
     server.m_context.connection->m_loop.log() << "IPC server recv request  #" << req << " "
-                                     << TypeName<typename Params::Reads>() << " " << LogEscape(params.toString());
+                                              << TypeName<typename Params::Reads>() << " " << LogEscape(params.toString());
 
     try {
         using ServerContext = ServerInvokeContext<Server, CallContext>;
@@ -702,10 +691,10 @@ kj::Promise<void> serverInvoke(Server& server, CallContext& call_context, Fn fn)
         // overload returns a promise executing the request in a worker thread
         // and waiting for it to complete.
         return ReplaceVoid([&]() { return fn.invoke(server_context, ArgList()); },
-            [&]() { return kj::Promise<CallContext>(kj::mv(call_context)); })
+                           [&]() { return kj::Promise<CallContext>(kj::mv(call_context)); })
             .then([&server, req](CallContext call_context) {
                 server.m_context.connection->m_loop.log() << "IPC server send response #" << req << " " << TypeName<Results>()
-                                                 << " " << LogEscape(call_context.getResults().toString());
+                                                          << " " << LogEscape(call_context.getResults().toString());
             });
     } catch (const std::exception& e) {
         server.m_context.connection->m_loop.log() << "IPC server unhandled exception: " << e.what();
@@ -719,12 +708,17 @@ kj::Promise<void> serverInvoke(Server& server, CallContext& call_context, Fn fn)
 //! Map to convert client interface pointers to ProxyContext struct references
 //! at runtime using typeids.
 struct ProxyTypeRegister {
-    template<typename Interface>
-    ProxyTypeRegister(TypeList<Interface>) {
+    template <typename Interface>
+    ProxyTypeRegister(TypeList<Interface>)
+    {
         types().emplace(typeid(Interface), [](void* iface) -> ProxyContext& { return static_cast<typename mp::ProxyType<Interface>::Client&>(*static_cast<Interface*>(iface)).m_context; });
     }
-    using Types = std::map<std::type_index, ProxyContext&(*)(void*)>;
-    static Types& types() { static Types types; return types; }
+    using Types = std::map<std::type_index, ProxyContext& (*)(void*)>;
+    static Types& types()
+    {
+        static Types types;
+        return types;
+    }
 };
 
 } // namespace mp

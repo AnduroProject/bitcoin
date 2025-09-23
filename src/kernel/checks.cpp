@@ -21,4 +21,4 @@ util::Result<void> SanityChecks(const Context&)
     return {};
 }
 
-}
+} // namespace kernel

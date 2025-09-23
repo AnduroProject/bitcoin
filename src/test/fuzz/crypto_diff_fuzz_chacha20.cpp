@@ -23,8 +23,8 @@ typedef unsigned char u8;
 #define U8C(v) (v##U)
 #define U32C(v) (v##U)
 
-#define U8V(v) ((u8)(v)&U8C(0xFF))
-#define U32V(v) ((u32)(v)&U32C(0xFFFFFFFF))
+#define U8V(v) ((u8)(v) & U8C(0xFF))
+#define U32V(v) ((u32)(v) & U32C(0xFFFFFFFF))
 
 #define ROTL32(v, n) (U32V((v) << (n)) | ((v) >> (32 - (n))))
 
@@ -84,10 +84,14 @@ void ECRYPT_keystream_bytes(
 #define PLUSONE(v) (PLUS((v), 1))
 
 #define QUARTERROUND(a, b, c, d) \
-    a = PLUS(a, b); d = ROTATE(XOR(d, a), 16);   \
-    c = PLUS(c, d); b = ROTATE(XOR(b, c), 12);   \
-    a = PLUS(a, b); d = ROTATE(XOR(d, a), 8);    \
-    c = PLUS(c, d); b = ROTATE(XOR(b, c), 7);
+    a = PLUS(a, b);              \
+    d = ROTATE(XOR(d, a), 16);   \
+    c = PLUS(c, d);              \
+    b = ROTATE(XOR(b, c), 12);   \
+    a = PLUS(a, b);              \
+    d = ROTATE(XOR(d, a), 8);    \
+    c = PLUS(c, d);              \
+    b = ROTATE(XOR(b, c), 7);
 
 static const char sigma[] = "expand 32-byte k";
 static const char tau[] = "expand 16-byte k";
@@ -281,7 +285,8 @@ FUZZ_TARGET(crypto_diff_fuzz_chacha20)
     uint32_t counter{0};
     ECRYPT_ivsetup(&ctx, iv);
 
-    LIMITED_WHILE (fuzzed_data_provider.ConsumeBool(), 3000) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 3000)
+    {
         CallOneOf(
             fuzzed_data_provider,
             [&] {

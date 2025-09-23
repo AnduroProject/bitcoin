@@ -44,9 +44,8 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
     if (wtx.is_coinbase) {
         fAllFromMe = ISMINE_NO;
     } else {
-        for (const isminetype mine : wtx.txin_is_mine)
-        {
-            if(fAllFromMe > mine) fAllFromMe = mine;
+        for (const isminetype mine : wtx.txin_is_mine) {
+            if (fAllFromMe > mine) fAllFromMe = mine;
             if (mine) any_from_me = true;
         }
     }
@@ -54,8 +53,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
     if (fAllFromMe || !any_from_me) {
         CAmount nTxFee = nDebit - wtx.tx->GetValueOut();
 
-        for(unsigned int i = 0; i < wtx.tx->vout.size(); i++)
-        {
+        for (unsigned int i = 0; i < wtx.tx->vout.size(); i++) {
             const CTxOut& txout = wtx.tx->vout[i];
 
             if (fAllFromMe) {
@@ -72,14 +70,11 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
                 TransactionRecord sub(hash, nTime);
                 sub.idx = i;
 
-                if (!std::get_if<CNoDestination>(&wtx.txout_address[i]))
-                {
+                if (!std::get_if<CNoDestination>(&wtx.txout_address[i])) {
                     // Sent to Bitcoin Address
                     sub.type = TransactionRecord::SendToAddress;
                     sub.address = EncodeDestination(wtx.txout_address[i]);
-                }
-                else
-                {
+                } else {
                     // Sent to IP, or other non-address transaction like OP_EVAL
                     sub.type = TransactionRecord::SendToOther;
                     sub.address = mapValue["to"];
@@ -87,8 +82,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
 
                 CAmount nValue = txout.nValue;
                 /* Add fee to first output */
-                if (nTxFee > 0)
-                {
+                if (nTxFee > 0) {
                     nValue += nTxFee;
                     nTxFee = 0;
                 }
@@ -98,8 +92,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
             }
 
             isminetype mine = wtx.txout_is_mine[i];
-            if(mine)
-            {
+            if (mine) {
                 //
                 // Credit
                 //
@@ -107,20 +100,16 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
                 TransactionRecord sub(hash, nTime);
                 sub.idx = i; // vout index
                 sub.credit = txout.nValue;
-                if (wtx.txout_address_is_mine[i])
-                {
+                if (wtx.txout_address_is_mine[i]) {
                     // Received by Bitcoin Address
                     sub.type = TransactionRecord::RecvWithAddress;
                     sub.address = EncodeDestination(wtx.txout_address[i]);
-                }
-                else
-                {
+                } else {
                     // Received by IP connection (deprecated features), or a multisignature or other non-simple transaction
                     sub.type = TransactionRecord::RecvFromOther;
                     sub.address = mapValue["from"];
                 }
-                if (wtx.is_coinbase)
-                {
+                if (wtx.is_coinbase) {
                     // Generated
                     sub.type = TransactionRecord::Generated;
                 }
@@ -145,61 +134,50 @@ void TransactionRecord::updateStatus(const interfaces::WalletTxStatus& wtx, cons
     // Sort order, unrecorded transactions sort to the top
     int typesort;
     switch (type) {
-    case SendToAddress: case SendToOther:
-        typesort = 2; break;
-    case RecvWithAddress: case RecvFromOther:
-        typesort = 3; break;
+    case SendToAddress:
+    case SendToOther:
+        typesort = 2;
+        break;
+    case RecvWithAddress:
+    case RecvFromOther:
+        typesort = 3;
+        break;
     default:
         typesort = 9;
     }
     status.sortKey = strprintf("%010d-%01d-%010u-%03d-%d",
-        wtx.block_height,
-        wtx.is_coinbase ? 1 : 0,
-        wtx.time_received,
-        idx,
-        typesort);
+                               wtx.block_height,
+                               wtx.is_coinbase ? 1 : 0,
+                               wtx.time_received,
+                               idx,
+                               typesort);
     status.countsForBalance = wtx.is_trusted && !(wtx.blocks_to_maturity > 0);
     status.depth = wtx.depth_in_main_chain;
     status.m_cur_block_hash = block_hash;
 
     // For generated transactions, determine maturity
     if (type == TransactionRecord::Generated) {
-        if (wtx.blocks_to_maturity > 0)
-        {
+        if (wtx.blocks_to_maturity > 0) {
             status.status = TransactionStatus::Immature;
 
-            if (wtx.is_in_main_chain)
-            {
+            if (wtx.is_in_main_chain) {
                 status.matures_in = wtx.blocks_to_maturity;
-            }
-            else
-            {
+            } else {
                 status.status = TransactionStatus::NotAccepted;
             }
-        }
-        else
-        {
+        } else {
             status.status = TransactionStatus::Confirmed;
         }
-    }
-    else
-    {
-        if (status.depth < 0)
-        {
+    } else {
+        if (status.depth < 0) {
             status.status = TransactionStatus::Conflicted;
-        }
-        else if (status.depth == 0)
-        {
+        } else if (status.depth == 0) {
             status.status = TransactionStatus::Unconfirmed;
             if (wtx.is_abandoned)
                 status.status = TransactionStatus::Abandoned;
-        }
-        else if (status.depth < RecommendedNumConfirmations)
-        {
+        } else if (status.depth < RecommendedNumConfirmations) {
             status.status = TransactionStatus::Confirming;
-        }
-        else
-        {
+        } else {
             status.status = TransactionStatus::Confirmed;
         }
     }

@@ -14,7 +14,7 @@ class Node;
 
 class WalletTests : public QObject
 {
- public:
+public:
     explicit WalletTests(interfaces::Node& node) : m_node(node) {}
     interfaces::Node& m_node;
 

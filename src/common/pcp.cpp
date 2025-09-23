@@ -85,12 +85,12 @@ constexpr uint8_t NATPMP_RESULT_NO_RESOURCES = 4;
 
 //! Mapping of NATPMP result code to string (RFC6886 3.5). Result codes <=2 match PCP.
 const std::map<uint16_t, std::string> NATPMP_RESULT_STR{
-    {0,  "SUCCESS"},
-    {1,  "UNSUPP_VERSION"},
-    {2,  "NOT_AUTHORIZED"},
-    {3,  "NETWORK_FAILURE"},
-    {4,  "NO_RESOURCES"},
-    {5,  "UNSUPP_OPCODE"},
+    {0, "SUCCESS"},
+    {1, "UNSUPP_VERSION"},
+    {2, "NOT_AUTHORIZED"},
+    {3, "NETWORK_FAILURE"},
+    {4, "NO_RESOURCES"},
+    {5, "UNSUPP_OPCODE"},
 };
 
 // PCP (v2) protocol constants.
@@ -148,16 +148,16 @@ constexpr uint8_t PCP_RESULT_NO_RESOURCES = 8;
 
 //! Mapping of PCP result code to string (RFC6887 7.4). Result codes <=2 match NAT-PMP.
 const std::map<uint8_t, std::string> PCP_RESULT_STR{
-    {0,  "SUCCESS"},
-    {1,  "UNSUPP_VERSION"},
-    {2,  "NOT_AUTHORIZED"},
-    {3,  "MALFORMED_REQUEST"},
-    {4,  "UNSUPP_OPCODE"},
-    {5,  "UNSUPP_OPTION"},
-    {6,  "MALFORMED_OPTION"},
-    {7,  "NETWORK_FAILURE"},
-    {8,  "NO_RESOURCES"},
-    {9,  "UNSUPP_PROTOCOL"},
+    {0, "SUCCESS"},
+    {1, "UNSUPP_VERSION"},
+    {2, "NOT_AUTHORIZED"},
+    {3, "MALFORMED_REQUEST"},
+    {4, "UNSUPP_OPCODE"},
+    {5, "UNSUPP_OPTION"},
+    {6, "MALFORMED_OPTION"},
+    {7, "NETWORK_FAILURE"},
+    {8, "NO_RESOURCES"},
+    {9, "UNSUPP_PROTOCOL"},
     {10, "USER_EX_QUOTA"},
     {11, "CANNOT_PROVIDE_EXTERNAL"},
     {12, "ADDRESS_MISMATCH"},
@@ -168,18 +168,18 @@ const std::map<uint8_t, std::string> PCP_RESULT_STR{
 std::string NATPMPResultString(uint16_t result_code)
 {
     auto result_i = NATPMP_RESULT_STR.find(result_code);
-    return strprintf("%s (code %d)", result_i == NATPMP_RESULT_STR.end() ? "(unknown)" : result_i->second,  result_code);
+    return strprintf("%s (code %d)", result_i == NATPMP_RESULT_STR.end() ? "(unknown)" : result_i->second, result_code);
 }
 
 //! Return human-readable string from PCP result code.
 std::string PCPResultString(uint8_t result_code)
 {
     auto result_i = PCP_RESULT_STR.find(result_code);
-    return strprintf("%s (code %d)", result_i == PCP_RESULT_STR.end() ? "(unknown)" : result_i->second,  result_code);
+    return strprintf("%s (code %d)", result_i == PCP_RESULT_STR.end() ? "(unknown)" : result_i->second, result_code);
 }
 
 //! Wrap address in IPv6 according to RFC6887. wrapped_addr needs to be able to store 16 bytes.
-[[nodiscard]] bool PCPWrapAddress(std::span<uint8_t> wrapped_addr, const CNetAddr &addr)
+[[nodiscard]] bool PCPWrapAddress(std::span<uint8_t> wrapped_addr, const CNetAddr& addr)
 {
     Assume(wrapped_addr.size() == ADDR_IPV6_SIZE);
     if (addr.IsIPv4()) {
@@ -215,9 +215,9 @@ CNetAddr PCPUnwrapAddress(std::span<const uint8_t> wrapped_addr)
 }
 
 //! PCP or NAT-PMP send-receive loop.
-std::optional<std::vector<uint8_t>> PCPSendRecv(Sock &sock, const std::string &protocol, std::span<const uint8_t> request, int num_tries,
-        std::chrono::milliseconds timeout_per_try,
-        std::function<bool(std::span<const uint8_t>)> check_packet)
+std::optional<std::vector<uint8_t>> PCPSendRecv(Sock& sock, const std::string& protocol, std::span<const uint8_t> request, int num_tries,
+                                                std::chrono::milliseconds timeout_per_try,
+                                                std::function<bool(std::span<const uint8_t>)> check_packet)
 {
     using namespace std::chrono;
     // UDP is a potentially lossy protocol, so we try to send again a few times.
@@ -269,9 +269,9 @@ std::optional<std::vector<uint8_t>> PCPSendRecv(Sock &sock, const std::string &p
     return std::vector<uint8_t>(response, response + recvsz);
 }
 
-}
+} // namespace
 
-std::variant<MappingResult, MappingError> NATPMPRequestPortMap(const CNetAddr &gateway, uint16_t port, uint32_t lifetime, int num_tries, std::chrono::milliseconds timeout_per_try)
+std::variant<MappingResult, MappingError> NATPMPRequestPortMap(const CNetAddr& gateway, uint16_t port, uint32_t lifetime, int num_tries, std::chrono::milliseconds timeout_per_try)
 {
     struct sockaddr_storage dest_addr;
     socklen_t dest_addrlen = sizeof(struct sockaddr_storage);
@@ -309,17 +309,17 @@ std::variant<MappingResult, MappingError> NATPMPRequestPortMap(const CNetAddr &g
     request[NATPMP_HDR_OP_OFS] = NATPMP_REQUEST | NATPMP_OP_GETEXTERNAL;
 
     auto recv_res = PCPSendRecv(*sock, "natpmp", request, num_tries, timeout_per_try,
-        [&](const std::span<const uint8_t> response) -> bool {
-            if (response.size() < NATPMP_GETEXTERNAL_RESPONSE_SIZE) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response too small\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            if (response[NATPMP_HDR_VERSION_OFS] != NATPMP_VERSION || response[NATPMP_HDR_OP_OFS] != (NATPMP_RESPONSE | NATPMP_OP_GETEXTERNAL)) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response to wrong command\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            return true;
-        });
+                                [&](const std::span<const uint8_t> response) -> bool {
+                                    if (response.size() < NATPMP_GETEXTERNAL_RESPONSE_SIZE) {
+                                        LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response too small\n");
+                                        return false; // Wasn't response to what we expected, try receiving next packet.
+                                    }
+                                    if (response[NATPMP_HDR_VERSION_OFS] != NATPMP_VERSION || response[NATPMP_HDR_OP_OFS] != (NATPMP_RESPONSE | NATPMP_OP_GETEXTERNAL)) {
+                                        LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response to wrong command\n");
+                                        return false; // Wasn't response to what we expected, try receiving next packet.
+                                    }
+                                    return true;
+                                });
 
     struct in_addr external_addr;
     if (recv_res) {
@@ -346,22 +346,22 @@ std::variant<MappingResult, MappingError> NATPMPRequestPortMap(const CNetAddr &g
     WriteBE32(request.data() + NATPMP_MAP_REQUEST_LIFETIME_OFS, lifetime);
 
     recv_res = PCPSendRecv(*sock, "natpmp", request, num_tries, timeout_per_try,
-        [&](const std::span<const uint8_t> response) -> bool {
-            if (response.size() < NATPMP_MAP_RESPONSE_SIZE) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response too small\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            if (response[0] != NATPMP_VERSION || response[1] != (NATPMP_RESPONSE | NATPMP_OP_MAP_TCP)) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response to wrong command\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            uint16_t internal_port = ReadBE16(response.data() + NATPMP_MAP_RESPONSE_INTERNAL_PORT_OFS);
-            if (internal_port != port) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response port doesn't match request\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            return true;
-        });
+                           [&](const std::span<const uint8_t> response) -> bool {
+                               if (response.size() < NATPMP_MAP_RESPONSE_SIZE) {
+                                   LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response too small\n");
+                                   return false; // Wasn't response to what we expected, try receiving next packet.
+                               }
+                               if (response[0] != NATPMP_VERSION || response[1] != (NATPMP_RESPONSE | NATPMP_OP_MAP_TCP)) {
+                                   LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response to wrong command\n");
+                                   return false; // Wasn't response to what we expected, try receiving next packet.
+                               }
+                               uint16_t internal_port = ReadBE16(response.data() + NATPMP_MAP_RESPONSE_INTERNAL_PORT_OFS);
+                               if (internal_port != port) {
+                                   LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "natpmp: Response port doesn't match request\n");
+                                   return false; // Wasn't response to what we expected, try receiving next packet.
+                               }
+                               return true;
+                           });
 
     if (recv_res) {
         const std::span<uint8_t> response = *recv_res;
@@ -384,7 +384,7 @@ std::variant<MappingResult, MappingError> NATPMPRequestPortMap(const CNetAddr &g
     }
 }
 
-std::variant<MappingResult, MappingError> PCPRequestPortMap(const PCPMappingNonce &nonce, const CNetAddr &gateway, const CNetAddr &bind, uint16_t port, uint32_t lifetime, int num_tries, std::chrono::milliseconds timeout_per_try)
+std::variant<MappingResult, MappingError> PCPRequestPortMap(const PCPMappingNonce& nonce, const CNetAddr& gateway, const CNetAddr& bind, uint16_t port, uint32_t lifetime, int num_tries, std::chrono::milliseconds timeout_per_try)
 {
     struct sockaddr_storage dest_addr, bind_addr;
     socklen_t dest_addrlen = sizeof(struct sockaddr_storage), bind_addrlen = sizeof(struct sockaddr_storage);
@@ -457,34 +457,34 @@ std::variant<MappingResult, MappingError> PCPRequestPortMap(const PCPMappingNonc
     // Receive loop.
     bool is_natpmp = false;
     auto recv_res = PCPSendRecv(*sock, "pcp", request, num_tries, timeout_per_try,
-        [&](const std::span<const uint8_t> response) -> bool {
-            // Unsupported version according to RFC6887 appendix A and RFC6886 section 3.5, can fall back to NAT-PMP.
-            if (response.size() == NATPMP_RESPONSE_HDR_SIZE && response[PCP_HDR_VERSION_OFS] == NATPMP_VERSION && response[PCP_RESPONSE_HDR_RESULT_OFS] == NATPMP_RESULT_UNSUPP_VERSION) {
-                is_natpmp = true;
-                return true; // Let it through to caller.
-            }
-            if (response.size() < (PCP_HDR_SIZE + PCP_MAP_SIZE)) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "pcp: Response too small\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            if (response[PCP_HDR_VERSION_OFS] != PCP_VERSION || response[PCP_HDR_OP_OFS] != (PCP_RESPONSE | PCP_OP_MAP)) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "pcp: Response to wrong command\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            // Handle MAP opcode response. See RFC6887 Figure 10.
-            // Check that returned mapping nonce matches our request.
-            if (!std::ranges::equal(response.subspan(PCP_HDR_SIZE + PCP_MAP_NONCE_OFS, PCP_MAP_NONCE_SIZE), nonce)) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "pcp: Mapping nonce mismatch\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            uint8_t protocol = response[PCP_HDR_SIZE + 12];
-            uint16_t internal_port = ReadBE16(response.data() + PCP_HDR_SIZE + 16);
-            if (protocol != PCP_PROTOCOL_TCP || internal_port != port) {
-                LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "pcp: Response protocol or port doesn't match request\n");
-                return false; // Wasn't response to what we expected, try receiving next packet.
-            }
-            return true;
-        });
+                                [&](const std::span<const uint8_t> response) -> bool {
+                                    // Unsupported version according to RFC6887 appendix A and RFC6886 section 3.5, can fall back to NAT-PMP.
+                                    if (response.size() == NATPMP_RESPONSE_HDR_SIZE && response[PCP_HDR_VERSION_OFS] == NATPMP_VERSION && response[PCP_RESPONSE_HDR_RESULT_OFS] == NATPMP_RESULT_UNSUPP_VERSION) {
+                                        is_natpmp = true;
+                                        return true; // Let it through to caller.
+                                    }
+                                    if (response.size() < (PCP_HDR_SIZE + PCP_MAP_SIZE)) {
+                                        LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "pcp: Response too small\n");
+                                        return false; // Wasn't response to what we expected, try receiving next packet.
+                                    }
+                                    if (response[PCP_HDR_VERSION_OFS] != PCP_VERSION || response[PCP_HDR_OP_OFS] != (PCP_RESPONSE | PCP_OP_MAP)) {
+                                        LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "pcp: Response to wrong command\n");
+                                        return false; // Wasn't response to what we expected, try receiving next packet.
+                                    }
+                                    // Handle MAP opcode response. See RFC6887 Figure 10.
+                                    // Check that returned mapping nonce matches our request.
+                                    if (!std::ranges::equal(response.subspan(PCP_HDR_SIZE + PCP_MAP_NONCE_OFS, PCP_MAP_NONCE_SIZE), nonce)) {
+                                        LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "pcp: Mapping nonce mismatch\n");
+                                        return false; // Wasn't response to what we expected, try receiving next packet.
+                                    }
+                                    uint8_t protocol = response[PCP_HDR_SIZE + 12];
+                                    uint16_t internal_port = ReadBE16(response.data() + PCP_HDR_SIZE + 16);
+                                    if (protocol != PCP_PROTOCOL_TCP || internal_port != port) {
+                                        LogPrintLevel(BCLog::NET, BCLog::Level::Warning, "pcp: Response protocol or port doesn't match request\n");
+                                        return false; // Wasn't response to what we expected, try receiving next packet.
+                                    }
+                                    return true;
+                                });
 
     if (!recv_res) {
         return MappingError::NETWORK_ERROR;
@@ -516,9 +516,8 @@ std::string MappingResult::ToString() const
 {
     Assume(version == NATPMP_VERSION || version == PCP_VERSION);
     return strprintf("%s:%s -> %s (for %ds)",
-            version == NATPMP_VERSION ? "natpmp" : "pcp",
-            external.ToStringAddrPort(),
-            internal.ToStringAddrPort(),
-            lifetime
-        );
+                     version == NATPMP_VERSION ? "natpmp" : "pcp",
+                     external.ToStringAddrPort(),
+                     internal.ToStringAddrPort(),
+                     lifetime);
 }

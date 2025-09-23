@@ -39,58 +39,62 @@
 #define SECP256K1_CHECKMEM_H
 
 /* Define a statement-like macro that ignores the arguments. */
-#define SECP256K1_CHECKMEM_NOOP(p, len) do { (void)(p); (void)(len); } while(0)
+#define SECP256K1_CHECKMEM_NOOP(p, len) \
+    do {                                \
+        (void)(p);                      \
+        (void)(len);                    \
+    } while (0)
 
 /* If compiling under msan, map the SECP256K1_CHECKMEM_* functionality to msan.
  * Choose this preferentially, even when VALGRIND is defined, as msan-compiled
  * binaries can't be run under valgrind anyway. */
 #if defined(__has_feature)
-#  if __has_feature(memory_sanitizer)
-#    include <sanitizer/msan_interface.h>
-#    define SECP256K1_CHECKMEM_ENABLED 1
-#    define SECP256K1_CHECKMEM_UNDEFINE(p, len) __msan_allocated_memory((p), (len))
-#    define SECP256K1_CHECKMEM_DEFINE(p, len) __msan_unpoison((p), (len))
-#    define SECP256K1_CHECKMEM_MSAN_DEFINE(p, len) __msan_unpoison((p), (len))
-#    define SECP256K1_CHECKMEM_CHECK(p, len) __msan_check_mem_is_initialized((p), (len))
-#    define SECP256K1_CHECKMEM_RUNNING() (1)
-#  endif
+#if __has_feature(memory_sanitizer)
+#include <sanitizer/msan_interface.h>
+#define SECP256K1_CHECKMEM_ENABLED 1
+#define SECP256K1_CHECKMEM_UNDEFINE(p, len) __msan_allocated_memory((p), (len))
+#define SECP256K1_CHECKMEM_DEFINE(p, len) __msan_unpoison((p), (len))
+#define SECP256K1_CHECKMEM_MSAN_DEFINE(p, len) __msan_unpoison((p), (len))
+#define SECP256K1_CHECKMEM_CHECK(p, len) __msan_check_mem_is_initialized((p), (len))
+#define SECP256K1_CHECKMEM_RUNNING() (1)
+#endif
 #endif
 
 #if !defined SECP256K1_CHECKMEM_MSAN_DEFINE
-#  define SECP256K1_CHECKMEM_MSAN_DEFINE(p, len) SECP256K1_CHECKMEM_NOOP((p), (len))
+#define SECP256K1_CHECKMEM_MSAN_DEFINE(p, len) SECP256K1_CHECKMEM_NOOP((p), (len))
 #endif
 
 /* If valgrind integration is desired (through the VALGRIND define), implement the
  * SECP256K1_CHECKMEM_* macros using valgrind. */
 #if !defined SECP256K1_CHECKMEM_ENABLED
-#  if defined VALGRIND
-#    include <stddef.h>
-#  if defined(__clang__) && defined(__APPLE__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wreserved-identifier"
-#  endif
-#    include <valgrind/memcheck.h>
-#  if defined(__clang__) && defined(__APPLE__)
-#    pragma clang diagnostic pop
-#  endif
-#    define SECP256K1_CHECKMEM_ENABLED 1
-#    define SECP256K1_CHECKMEM_UNDEFINE(p, len) VALGRIND_MAKE_MEM_UNDEFINED((p), (len))
-#    define SECP256K1_CHECKMEM_DEFINE(p, len) VALGRIND_MAKE_MEM_DEFINED((p), (len))
-#    define SECP256K1_CHECKMEM_CHECK(p, len) VALGRIND_CHECK_MEM_IS_DEFINED((p), (len))
-     /* VALGRIND_MAKE_MEM_DEFINED returns 0 iff not running on memcheck.
-      * This is more precise than the RUNNING_ON_VALGRIND macro, which
-      * checks for valgrind in general instead of memcheck specifically. */
-#    define SECP256K1_CHECKMEM_RUNNING() (VALGRIND_MAKE_MEM_DEFINED(NULL, 0) != 0)
-#  endif
+#if defined VALGRIND
+#include <stddef.h>
+#if defined(__clang__) && defined(__APPLE__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+#include <valgrind/memcheck.h>
+#if defined(__clang__) && defined(__APPLE__)
+#pragma clang diagnostic pop
+#endif
+#define SECP256K1_CHECKMEM_ENABLED 1
+#define SECP256K1_CHECKMEM_UNDEFINE(p, len) VALGRIND_MAKE_MEM_UNDEFINED((p), (len))
+#define SECP256K1_CHECKMEM_DEFINE(p, len) VALGRIND_MAKE_MEM_DEFINED((p), (len))
+#define SECP256K1_CHECKMEM_CHECK(p, len) VALGRIND_CHECK_MEM_IS_DEFINED((p), (len))
+/* VALGRIND_MAKE_MEM_DEFINED returns 0 iff not running on memcheck.
+ * This is more precise than the RUNNING_ON_VALGRIND macro, which
+ * checks for valgrind in general instead of memcheck specifically. */
+#define SECP256K1_CHECKMEM_RUNNING() (VALGRIND_MAKE_MEM_DEFINED(NULL, 0) != 0)
+#endif
 #endif
 
 /* As a fall-back, map these macros to dummy statements. */
 #if !defined SECP256K1_CHECKMEM_ENABLED
-#  define SECP256K1_CHECKMEM_ENABLED 0
-#  define SECP256K1_CHECKMEM_UNDEFINE(p, len) SECP256K1_CHECKMEM_NOOP((p), (len))
-#  define SECP256K1_CHECKMEM_DEFINE(p, len) SECP256K1_CHECKMEM_NOOP((p), (len))
-#  define SECP256K1_CHECKMEM_CHECK(p, len) SECP256K1_CHECKMEM_NOOP((p), (len))
-#  define SECP256K1_CHECKMEM_RUNNING() (0)
+#define SECP256K1_CHECKMEM_ENABLED 0
+#define SECP256K1_CHECKMEM_UNDEFINE(p, len) SECP256K1_CHECKMEM_NOOP((p), (len))
+#define SECP256K1_CHECKMEM_DEFINE(p, len) SECP256K1_CHECKMEM_NOOP((p), (len))
+#define SECP256K1_CHECKMEM_CHECK(p, len) SECP256K1_CHECKMEM_NOOP((p), (len))
+#define SECP256K1_CHECKMEM_RUNNING() (0)
 #endif
 
 #if defined VERIFY

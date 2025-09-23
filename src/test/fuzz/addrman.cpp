@@ -129,7 +129,8 @@ FUZZ_TARGET(addrman, .init = initialize_addrman)
         }
     }
     AddrManDeterministic& addr_man = *addr_man_ptr;
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000)
+    {
         CallOneOf(
             fuzzed_data_provider,
             [&] {
@@ -140,7 +141,8 @@ FUZZ_TARGET(addrman, .init = initialize_addrman)
             },
             [&] {
                 std::vector<CAddress> addresses;
-                LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000) {
+                LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000)
+                {
                     addresses.push_back(ConsumeAddress(fuzzed_data_provider));
                 }
                 auto net_addr = ConsumeNetAddr(fuzzed_data_provider);

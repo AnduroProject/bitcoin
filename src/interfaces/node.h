@@ -46,8 +46,7 @@ class WalletLoader;
 struct BlockTip;
 
 //! Block and header tip information
-struct BlockAndHeaderTipInfo
-{
+struct BlockAndHeaderTipInfo {
     int block_height;
     int64_t block_time;
     int header_height;
@@ -224,9 +223,9 @@ public:
 
     //! Register handler for question messages.
     using QuestionFn = std::function<bool(const bilingual_str& message,
-        const std::string& non_interactive_message,
-        const std::string& caption,
-        unsigned int style)>;
+                                          const std::string& non_interactive_message,
+                                          const std::string& caption,
+                                          unsigned int style)>;
     virtual std::unique_ptr<Handler> handleQuestion(QuestionFn fn) = 0;
 
     //! Register handler for progress messages.
@@ -266,7 +265,7 @@ public:
     //! Get and set internal node context. Useful for testing, but not
     //! accessible across processes.
     virtual node::NodeContext* context() { return nullptr; }
-    virtual void setContext(node::NodeContext* context) { }
+    virtual void setContext(node::NodeContext* context) {}
 };
 
 //! Return implementation of Node interface.

@@ -15,7 +15,7 @@ WalletTestingSetup::WalletTestingSetup(const ChainType chainType)
       m_wallet(m_node.chain.get(), "", CreateMockableWalletDatabase())
 {
     m_wallet.LoadWallet();
-    m_chain_notifications_handler = m_node.chain->handleNotifications({ &m_wallet, [](CWallet*) {} });
+    m_chain_notifications_handler = m_node.chain->handleNotifications({&m_wallet, [](CWallet*) {}});
     m_wallet_loader->registerRpcs();
 }
 

@@ -49,15 +49,15 @@ CBlockLocator GetLocator(interfaces::Chain& chain, const uint256& block_hash)
     return locator;
 }
 
-BaseIndex::DB::DB(const fs::path& path, size_t n_cache_size, bool f_memory, bool f_wipe, bool f_obfuscate) :
-    CDBWrapper{DBParams{
-        .path = path,
-        .cache_bytes = n_cache_size,
-        .memory_only = f_memory,
-        .wipe_data = f_wipe,
-        .obfuscate = f_obfuscate,
-        .options = [] { DBOptions options; node::ReadDatabaseArgs(gArgs, options); return options; }()}}
-{}
+BaseIndex::DB::DB(const fs::path& path, size_t n_cache_size, bool f_memory, bool f_wipe, bool f_obfuscate) : CDBWrapper{DBParams{
+                                                                                                                 .path = path,
+                                                                                                                 .cache_bytes = n_cache_size,
+                                                                                                                 .memory_only = f_memory,
+                                                                                                                 .wipe_data = f_wipe,
+                                                                                                                 .obfuscate = f_obfuscate,
+                                                                                                                 .options = [] { DBOptions options; node::ReadDatabaseArgs(gArgs, options); return options; }()}}
+{
+}
 
 bool BaseIndex::DB::ReadBestBlock(CBlockLocator& locator) const
 {
@@ -92,7 +92,7 @@ bool BaseIndex::Init()
     // m_chainstate member gives indexing code access to node internals. It is
     // removed in followup https://github.com/bitcoin/bitcoin/pull/24230
     m_chainstate = WITH_LOCK(::cs_main,
-        return &m_chain->context()->chainman->GetChainstateForIndexing());
+                             return &m_chain->context()->chainman->GetChainstateForIndexing());
     // Register to validation interface before setting the 'm_synced' flag, so that
     // callbacks are not missed once m_synced is true.
     m_chain->context()->validation_signals->RegisterValidationInterface(this);
@@ -232,7 +232,7 @@ void BaseIndex::Sync()
             auto current_time{std::chrono::steady_clock::now()};
             if (last_log_time + SYNC_LOG_INTERVAL < current_time) {
                 LogInfo("Syncing %s with block chain from height %d",
-                          GetName(), pindex->nHeight);
+                        GetName(), pindex->nHeight);
                 last_log_time = current_time;
             }
 
@@ -337,7 +337,7 @@ void BaseIndex::BlockConnected(ChainstateRole role, const std::shared_ptr<const 
     if (!best_block_index) {
         if (pindex->nHeight != 0) {
             FatalErrorf("First block connected is not the genesis block (height=%d)",
-                       pindex->nHeight);
+                        pindex->nHeight);
             return;
         }
     } else {
@@ -348,14 +348,14 @@ void BaseIndex::BlockConnected(ChainstateRole role, const std::shared_ptr<const 
         // new chain tip. In this unlikely event, log a warning and let the queue clear.
         if (best_block_index->GetAncestor(pindex->nHeight - 1) != pindex->pprev) {
             LogWarning("Block %s does not connect to an ancestor of "
-                      "known best chain (tip=%s); not updating index",
-                      pindex->GetBlockHash().ToString(),
-                      best_block_index->GetBlockHash().ToString());
+                       "known best chain (tip=%s); not updating index",
+                       pindex->GetBlockHash().ToString(),
+                       best_block_index->GetBlockHash().ToString());
             return;
         }
         if (best_block_index != pindex->pprev && !Rewind(best_block_index, pindex->pprev)) {
             FatalErrorf("Failed to rewind %s to a previous chain tip",
-                       GetName());
+                        GetName());
             return;
         }
     }
@@ -391,7 +391,7 @@ void BaseIndex::ChainStateFlushed(ChainstateRole role, const CBlockLocator& loca
 
     if (!locator_tip_index) {
         FatalErrorf("First block (hash=%s) in locator was not found",
-                   locator_tip_hash.ToString());
+                    locator_tip_hash.ToString());
         return;
     }
 
@@ -403,9 +403,9 @@ void BaseIndex::ChainStateFlushed(ChainstateRole role, const CBlockLocator& loca
     const CBlockIndex* best_block_index = m_best_block_index.load();
     if (best_block_index->GetAncestor(locator_tip_index->nHeight) != locator_tip_index) {
         LogWarning("Locator contains block (hash=%s) not on known best "
-                  "chain (tip=%s); not writing index locator",
-                  locator_tip_hash.ToString(),
-                  best_block_index->GetBlockHash().ToString());
+                   "chain (tip=%s); not writing index locator",
+                   locator_tip_hash.ToString(),
+                   best_block_index->GetBlockHash().ToString());
         return;
     }
 

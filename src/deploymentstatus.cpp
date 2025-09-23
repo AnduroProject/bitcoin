@@ -21,7 +21,7 @@ static_assert(!ValidDeployment(static_cast<Consensus::BuriedDeployment>(Consensu
  * (specific) valid deployment so that lower bounds don't need to be checked.
  */
 
-template<typename T, T x>
+template <typename T, T x>
 static constexpr bool is_minimum()
 {
     using U = std::underlying_type_t<T>;

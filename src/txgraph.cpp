@@ -33,8 +33,7 @@ using LinearizationIndex = uint32_t;
 using ClusterSetIndex = uint32_t;
 
 /** Quality levels for cached cluster linearizations. */
-enum class QualityLevel
-{
+enum class QualityLevel {
     /** This is a singleton cluster consisting of a transaction that individually exceeds the
      *  cluster size limit. It cannot be merged with anything. */
     OVERSIZED_SINGLETON,
@@ -54,8 +53,7 @@ enum class QualityLevel
 };
 
 /** Information about a transaction inside TxGraphImpl::Trim. */
-struct TrimTxData
-{
+struct TrimTxData {
     // Fields populated by Cluster::AppendTrimData(). These are immutable after TrimTxData
     // construction.
     /** Chunk feerate for this transaction. */
@@ -249,6 +247,7 @@ class TxGraphImpl final : public TxGraph
 {
     friend class Cluster;
     friend class BlockBuilderImpl;
+
 private:
     /** Internal RNG. */
     FastRandomContext m_rng;
@@ -261,8 +260,7 @@ private:
     const uint64_t m_acceptable_iters;
 
     /** Information about one group of Clusters to be merged. */
-    struct GroupEntry
-    {
+    struct GroupEntry {
         /** Where the clusters to be merged start in m_group_clusters. */
         uint32_t m_cluster_offset;
         /** How many clusters to merge. */
@@ -274,8 +272,7 @@ private:
     };
 
     /** Information about all groups of Clusters to be merged. */
-    struct GroupData
-    {
+    struct GroupData {
         /** The groups of Clusters to be merged. */
         std::vector<GroupEntry> m_groups;
         /** Which clusters are to be merged. GroupEntry::m_cluster_offset indexes into this. */
@@ -283,8 +280,7 @@ private:
     };
 
     /** The collection of all Clusters in main or staged. */
-    struct ClusterSet
-    {
+    struct ClusterSet {
         /** The vectors of clusters, one vector per quality level. ClusterSetIndex indexes into each. */
         std::array<std::vector<std::unique_ptr<Cluster>>, int(QualityLevel::NONE)> m_clusters;
         /** Which removals have yet to be applied. */
@@ -317,15 +313,13 @@ private:
     uint64_t m_next_sequence_counter{0};
 
     /** Information about a chunk in the main graph. */
-    struct ChunkData
-    {
+    struct ChunkData {
         /** The Entry which is the last transaction of the chunk. */
         mutable GraphIndex m_graph_index;
         /** How many transactions the chunk contains (-1 = singleton tail of cluster). */
         LinearizationIndex m_chunk_count;
 
-        ChunkData(GraphIndex graph_index, LinearizationIndex chunk_count) noexcept :
-            m_graph_index{graph_index}, m_chunk_count{chunk_count} {}
+        ChunkData(GraphIndex graph_index, LinearizationIndex chunk_count) noexcept : m_graph_index{graph_index}, m_chunk_count{chunk_count} {}
     };
 
     /** Compare two Cluster* by their m_sequence value (while supporting nullptr). */
@@ -365,6 +359,7 @@ private:
     class ChunkOrder
     {
         const TxGraphImpl* const m_graph;
+
     public:
         explicit ChunkOrder(const TxGraphImpl* graph) : m_graph(graph) {}
 
@@ -415,19 +410,30 @@ private:
      *
      * When staging does not exist, only (M,M) and (P,M) are possible.
      */
-    struct Locator
-    {
+    struct Locator {
         /** Which Cluster the Entry appears in (nullptr = missing). */
         Cluster* cluster{nullptr};
         /** Where in the Cluster it appears (if cluster == nullptr: 0 = missing, -1 = removed). */
         DepGraphIndex index{0};
 
         /** Mark this Locator as missing (= same as lower level, or non-existing if level 0). */
-        void SetMissing() noexcept { cluster = nullptr; index = 0; }
+        void SetMissing() noexcept
+        {
+            cluster = nullptr;
+            index = 0;
+        }
         /** Mark this Locator as removed (not allowed in level 0). */
-        void SetRemoved() noexcept { cluster = nullptr; index = DepGraphIndex(-1); }
+        void SetRemoved() noexcept
+        {
+            cluster = nullptr;
+            index = DepGraphIndex(-1);
+        }
         /** Mark this Locator as present, in the specified Cluster. */
-        void SetPresent(Cluster* c, DepGraphIndex i) noexcept { cluster = c; index = i; }
+        void SetPresent(Cluster* c, DepGraphIndex i) noexcept
+        {
+            cluster = c;
+            index = i;
+        }
         /** Check if this Locator is missing. */
         bool IsMissing() const noexcept { return cluster == nullptr && index == 0; }
         /** Check if this Locator is removed. */
@@ -437,8 +443,7 @@ private:
     };
 
     /** Internal information about each transaction in a TxGraphImpl. */
-    struct Entry
-    {
+    struct Entry {
         /** Pointer to the corresponding Ref object if any, or nullptr if unlinked. */
         Ref* m_ref{nullptr};
         /** Iterator to the corresponding ChunkData, if any, and m_main_chunkindex.end() otherwise.
@@ -460,11 +465,10 @@ private:
 
 public:
     /** Construct a new TxGraphImpl with the specified limits. */
-    explicit TxGraphImpl(DepGraphIndex max_cluster_count, uint64_t max_cluster_size, uint64_t acceptable_iters) noexcept :
-        m_max_cluster_count(max_cluster_count),
-        m_max_cluster_size(max_cluster_size),
-        m_acceptable_iters(acceptable_iters),
-        m_main_chunkindex(ChunkOrder(this))
+    explicit TxGraphImpl(DepGraphIndex max_cluster_count, uint64_t max_cluster_size, uint64_t acceptable_iters) noexcept : m_max_cluster_count(max_cluster_count),
+                                                                                                                           m_max_cluster_size(max_cluster_size),
+                                                                                                                           m_acceptable_iters(acceptable_iters),
+                                                                                                                           m_main_chunkindex(ChunkOrder(this))
     {
         Assume(max_cluster_count >= 1);
         Assume(max_cluster_count <= MAX_CLUSTER_COUNT_LIMIT);
@@ -484,7 +488,7 @@ public:
     /** Swap the Entry referred to by a and the one referred to by b. */
     void SwapIndexes(GraphIndex a, GraphIndex b) noexcept;
     /** If idx exists in the specified level ClusterSet (explicitly, or in the level below and not
-    *   removed), return the Cluster it is in. Otherwise, return nullptr. */
+     *   removed), return the Cluster it is in. Otherwise, return nullptr. */
     Cluster* FindCluster(GraphIndex idx, int level) const noexcept;
     /** Extract a Cluster from its ClusterSet. */
     std::unique_ptr<Cluster> ExtractCluster(int level, QualityLevel quality, ClusterSetIndex setindex) noexcept;
@@ -565,8 +569,8 @@ public:
      *  operations or staged removals referring to GraphIndexes remain). */
     void Compact() noexcept;
     /** If cluster is not in staging, copy it there, and return a pointer to it.
-    *   Staging must exist, and this modifies the locators of its
-    *   transactions from inherited (P,M) to explicit (P,P). */
+     *   Staging must exist, and this modifies the locators of its
+     *   transactions from inherited (P,M) to explicit (P,P). */
     Cluster* PullIn(Cluster* cluster) noexcept;
     /** Apply all removals queued up in m_to_remove to the relevant Clusters (which get a
      *  NEEDS_SPLIT* QualityLevel) up to the specified level. */
@@ -861,7 +865,7 @@ void Cluster::ApplyRemovals(TxGraphImpl& graph, std::span<GraphIndex>& to_remove
         // - Mark it as missing/removed in the Entry's locator.
         graph.ClearLocator(m_level, idx, m_quality == QualityLevel::OVERSIZED_SINGLETON);
         to_remove = to_remove.subspan(1);
-    } while(!to_remove.empty());
+    } while (!to_remove.empty());
 
     auto quality = m_quality;
     Assume(todo.Any());
@@ -886,9 +890,10 @@ void Cluster::ApplyRemovals(TxGraphImpl& graph, std::span<GraphIndex>& to_remove
     } else {
         // If more removals remain, filter those out of m_linearization.
         m_linearization.erase(std::remove_if(
-            m_linearization.begin(),
-            m_linearization.end(),
-            [&](auto pos) { return todo[pos]; }), m_linearization.end());
+                                  m_linearization.begin(),
+                                  m_linearization.end(),
+                                  [&](auto pos) { return todo[pos]; }),
+                              m_linearization.end());
         quality = QualityLevel::NEEDS_SPLIT;
     }
     graph.SetClusterQuality(m_level, m_quality, m_setindex, quality);
@@ -962,8 +967,7 @@ bool Cluster::Split(TxGraphImpl& graph) noexcept
     // This function can only be called when the Cluster needs splitting.
     Assume(NeedsSplitting());
     // Determine the new quality the split-off Clusters will have.
-    QualityLevel new_quality = IsAcceptable(/*after_split=*/true) ? QualityLevel::ACCEPTABLE
-                                                                  : QualityLevel::NEEDS_RELINEARIZE;
+    QualityLevel new_quality = IsAcceptable(/*after_split=*/true) ? QualityLevel::ACCEPTABLE : QualityLevel::NEEDS_RELINEARIZE;
     // If we're going to produce ACCEPTABLE clusters (i.e., when in NEEDS_SPLIT_ACCEPTABLE), we
     // need to post-linearize to make sure the split-out versions are all connected (as
     // connectivity may have changed by removing part of the cluster). This could be done on each
@@ -1023,7 +1027,8 @@ bool Cluster::Split(TxGraphImpl& graph) noexcept
         Cluster* new_cluster = remap[i].first;
         // Copy its parents, translating positions.
         SetType new_parents;
-        for (auto par : m_depgraph.GetReducedParents(i)) new_parents.Set(remap[par].second);
+        for (auto par : m_depgraph.GetReducedParents(i))
+            new_parents.Set(remap[par].second);
         new_cluster->m_depgraph.AddDependencies(new_parents, remap[i].second);
     }
     // Update all the Locators of moved transactions.
@@ -1432,8 +1437,7 @@ void TxGraphImpl::GroupClusters(int level) noexcept
     // grouped together. See https://en.wikipedia.org/wiki/Disjoint-set_data_structure.
     {
         /** Each PartitionData entry contains information about a single input Cluster. */
-        struct PartitionData
-        {
+        struct PartitionData {
             /** The sequence number of the cluster this holds information for. */
             uint64_t sequence;
             /** All PartitionData entries belonging to the same partition are organized in a tree.
@@ -1705,8 +1709,7 @@ void TxGraphImpl::MakeAllAcceptable(int level) noexcept
 
 Cluster::Cluster(uint64_t sequence) noexcept : m_sequence{sequence} {}
 
-Cluster::Cluster(uint64_t sequence, TxGraphImpl& graph, const FeePerWeight& feerate, GraphIndex graph_index) noexcept :
-    m_sequence{sequence}
+Cluster::Cluster(uint64_t sequence, TxGraphImpl& graph, const FeePerWeight& feerate, GraphIndex graph_index) noexcept : m_sequence{sequence}
 {
     // Create a new transaction in the DepGraph, and remember its position in m_mapping.
     auto cluster_idx = m_depgraph.AddTransaction(feerate);
@@ -2641,7 +2644,7 @@ std::pair<std::vector<TxGraph::Ref*>, FeePerWeight> TxGraphImpl::GetWorstMainChu
         const auto& chunk_data = *m_main_chunkindex.rbegin();
         const auto& chunk_end_entry = m_entries[chunk_data.m_graph_index];
         Cluster* cluster = chunk_end_entry.m_locator[0].cluster;
-        if (chunk_data.m_chunk_count == LinearizationIndex(-1) || chunk_data.m_chunk_count == 1)  {
+        if (chunk_data.m_chunk_count == LinearizationIndex(-1) || chunk_data.m_chunk_count == 1) {
             // Special case for singletons.
             ret.first.resize(1);
             Assume(chunk_end_entry.m_ref != nullptr);
@@ -2872,7 +2875,8 @@ std::vector<TxGraph::Ref*> TxGraphImpl::Trim() noexcept
 
             // Union the partitions this transaction and all its dependencies are in together.
             auto rep = &entry;
-            for (TrimTxData* ptr : current_deps) rep = union_fn(ptr, rep);
+            for (TrimTxData* ptr : current_deps)
+                rep = union_fn(ptr, rep);
             // Mark the entry as included (so the loop below will not remove the transaction).
             entry.m_deps_left = uint32_t(-1);
             // Mark each to-be-added dependency involving this transaction as parent satisfied.

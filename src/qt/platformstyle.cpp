@@ -10,7 +10,7 @@
 #include <QPalette>
 
 static const struct {
-    const char *platformId;
+    const char* platformId;
     /** Show images on push buttons */
     const bool imagesOnButtons;
     /** Colorize single-color icons */
@@ -21,8 +21,7 @@ static const struct {
     {"macosx", false, true, true},
     {"windows", true, false, false},
     /* Other: linux, unix, ... */
-    {"other", true, true, false}
-};
+    {"other", true, true, false}};
 
 namespace {
 /* Local functions for colorizing single-color images */
@@ -30,10 +29,8 @@ namespace {
 void MakeSingleColorImage(QImage& img, const QColor& colorbase)
 {
     img = img.convertToFormat(QImage::Format_ARGB32);
-    for (int x = img.width(); x--; )
-    {
-        for (int y = img.height(); y--; )
-        {
+    for (int x = img.width(); x--;) {
+        for (int y = img.height(); y--;) {
             const QRgb rgb = img.pixel(x, y);
             img.setPixel(x, y, qRgba(colorbase.red(), colorbase.green(), colorbase.blue(), qAlpha(rgb)));
         }
@@ -43,8 +40,7 @@ void MakeSingleColorImage(QImage& img, const QColor& colorbase)
 QIcon ColorizeIcon(const QIcon& ico, const QColor& colorbase)
 {
     QIcon new_ico;
-    for (const QSize& sz : ico.availableSizes())
-    {
+    for (const QSize& sz : ico.availableSizes()) {
         QImage img(ico.pixmap(sz).toImage());
         MakeSingleColorImage(img, colorbase);
         new_ico.addPixmap(QPixmap::fromImage(img));
@@ -64,14 +60,13 @@ QIcon ColorizeIcon(const QString& filename, const QColor& colorbase)
     return QIcon(QPixmap::fromImage(ColorizeImage(filename, colorbase)));
 }
 
-}
+} // namespace
 
 
-PlatformStyle::PlatformStyle(const QString &_name, bool _imagesOnButtons, bool _colorizeIcons, bool _useExtraSpacing):
-    name(_name),
-    imagesOnButtons(_imagesOnButtons),
-    colorizeIcons(_colorizeIcons),
-    useExtraSpacing(_useExtraSpacing)
+PlatformStyle::PlatformStyle(const QString& _name, bool _imagesOnButtons, bool _colorizeIcons, bool _useExtraSpacing) : name(_name),
+                                                                                                                        imagesOnButtons(_imagesOnButtons),
+                                                                                                                        colorizeIcons(_colorizeIcons),
+                                                                                                                        useExtraSpacing(_useExtraSpacing)
 {
 }
 
@@ -121,17 +116,16 @@ QIcon PlatformStyle::TextColorIcon(const QIcon& icon) const
     return ColorizeIcon(icon, TextColor());
 }
 
-const PlatformStyle *PlatformStyle::instantiate(const QString &platformId)
+const PlatformStyle* PlatformStyle::instantiate(const QString& platformId)
 {
     for (const auto& platform_style : platform_styles) {
         if (platformId == platform_style.platformId) {
             return new PlatformStyle(
-                    platform_style.platformId,
-                    platform_style.imagesOnButtons,
-                    platform_style.colorizeIcons,
-                    platform_style.useExtraSpacing);
+                platform_style.platformId,
+                platform_style.imagesOnButtons,
+                platform_style.colorizeIcons,
+                platform_style.useExtraSpacing);
         }
     }
     return nullptr;
 }
-

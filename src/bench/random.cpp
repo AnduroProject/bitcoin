@@ -12,7 +12,7 @@
 
 namespace {
 
-template<typename RNG>
+template <typename RNG>
 void BenchRandom_rand64(benchmark::Bench& bench, RNG&& rng) noexcept
 {
     bench.batch(1).unit("number").run([&] {
@@ -20,7 +20,7 @@ void BenchRandom_rand64(benchmark::Bench& bench, RNG&& rng) noexcept
     });
 }
 
-template<typename RNG>
+template <typename RNG>
 void BenchRandom_rand32(benchmark::Bench& bench, RNG&& rng) noexcept
 {
     bench.batch(1).unit("number").run([&] {
@@ -28,7 +28,7 @@ void BenchRandom_rand32(benchmark::Bench& bench, RNG&& rng) noexcept
     });
 }
 
-template<typename RNG>
+template <typename RNG>
 void BenchRandom_randbool(benchmark::Bench& bench, RNG&& rng) noexcept
 {
     bench.batch(1).unit("number").run([&] {
@@ -36,7 +36,7 @@ void BenchRandom_randbool(benchmark::Bench& bench, RNG&& rng) noexcept
     });
 }
 
-template<typename RNG>
+template <typename RNG>
 void BenchRandom_randbits(benchmark::Bench& bench, RNG&& rng) noexcept
 {
     bench.batch(64).unit("number").run([&] {
@@ -46,7 +46,7 @@ void BenchRandom_randbits(benchmark::Bench& bench, RNG&& rng) noexcept
     });
 }
 
-template<int RANGE, typename RNG>
+template <int RANGE, typename RNG>
 void BenchRandom_randrange(benchmark::Bench& bench, RNG&& rng) noexcept
 {
     bench.batch(RANGE).unit("number").run([&] {
@@ -56,7 +56,7 @@ void BenchRandom_randrange(benchmark::Bench& bench, RNG&& rng) noexcept
     });
 }
 
-template<int RANGE, typename RNG>
+template <int RANGE, typename RNG>
 void BenchRandom_stdshuffle(benchmark::Bench& bench, RNG&& rng) noexcept
 {
     uint64_t data[RANGE];

@@ -45,7 +45,7 @@ static void GCSFilterConstruct(benchmark::Bench& bench)
     auto elements = GenerateGCSTestElements();
 
     uint64_t siphash_k0 = 0;
-    bench.run([&]{
+    bench.run([&] {
         GCSFilter filter({siphash_k0, 0, BASIC_FILTER_P, BASIC_FILTER_M}, elements);
 
         siphash_k0++;

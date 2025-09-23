@@ -65,8 +65,7 @@ void HeadersSyncSetup::ResetAndInitialize()
     std::vector<ConnectionType> conn_types = {
         ConnectionType::OUTBOUND_FULL_RELAY,
         ConnectionType::BLOCK_RELAY,
-        ConnectionType::INBOUND
-    };
+        ConnectionType::INBOUND};
 
     for (auto conn_type : conn_types) {
         CAddress addr{};

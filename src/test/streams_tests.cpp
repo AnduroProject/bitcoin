@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(xor_bytes_reference)
 
     for (size_t test{0}; test < 100; ++test) {
         const size_t write_size{1 + m_rng.randrange(100U)};
-        const size_t key_offset{m_rng.randrange(3 * Obfuscation::KEY_SIZE)}; // Make sure the key can wrap around
+        const size_t key_offset{m_rng.randrange(3 * Obfuscation::KEY_SIZE)};                         // Make sure the key can wrap around
         const size_t write_offset{std::min(write_size, m_rng.randrange(Obfuscation::KEY_SIZE * 2))}; // Write unaligned data
 
         const auto key_bytes{m_rng.randbool() ? m_rng.randbytes<Obfuscation::KEY_SIZE>() : std::array<std::byte, Obfuscation::KEY_SIZE>{}};
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file)
         BOOST_CHECK(false);
     } catch (const std::exception& e) {
         BOOST_CHECK(strstr(e.what(),
-                        "Rewind limit must be less than buffer size") != nullptr);
+                           "Rewind limit must be less than buffer size") != nullptr);
     }
 
     // The buffer is 25 bytes, allow rewinding 10 bytes.
@@ -447,7 +447,7 @@ BOOST_AUTO_TEST_CASE(streams_buffered_file)
         BOOST_CHECK(false);
     } catch (const std::exception& e) {
         BOOST_CHECK(strstr(e.what(),
-                        "BufferedFile::Fill: end of file") != nullptr);
+                           "BufferedFile::Fill: end of file") != nullptr);
     }
     // Attempting to read beyond the end sets the EOF indicator.
     BOOST_CHECK(bf.eof());
@@ -675,8 +675,7 @@ BOOST_AUTO_TEST_CASE(buffered_reader_matches_autofile_random_content)
 
             BOOST_CHECK_EQUAL_COLLECTIONS(
                 direct_file_buffer.begin(), direct_file_buffer.end(),
-                buffered_buffer.begin(), buffered_buffer.end()
-            );
+                buffered_buffer.begin(), buffered_buffer.end());
 
             total_read += read;
         }
@@ -749,8 +748,7 @@ BOOST_AUTO_TEST_CASE(buffered_writer_matches_autofile_random_content)
 
     BOOST_CHECK_EQUAL_COLLECTIONS(
         direct_result.begin(), direct_result.end(),
-        buffered_result.begin(), buffered_result.end()
-    );
+        buffered_result.begin(), buffered_result.end());
 
     fs::remove(test_direct.FileName(pos));
     fs::remove(test_buffered.FileName(pos));

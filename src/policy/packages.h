@@ -39,17 +39,19 @@ static_assert(MAX_PACKAGE_WEIGHT >= DEFAULT_DESCENDANT_SIZE_LIMIT_KVB * WITNESS_
  * We don't distinguish between consensus and policy violations right now.
  */
 enum class PackageValidationResult {
-    PCKG_RESULT_UNSET = 0,        //!< Initial value. The package has not yet been rejected.
-    PCKG_POLICY,                  //!< The package itself is invalid (e.g. too many transactions).
-    PCKG_TX,                      //!< At least one tx is invalid.
-    PCKG_MEMPOOL_ERROR,           //!< Mempool logic error.
+    PCKG_RESULT_UNSET = 0, //!< Initial value. The package has not yet been rejected.
+    PCKG_POLICY,           //!< The package itself is invalid (e.g. too many transactions).
+    PCKG_TX,               //!< At least one tx is invalid.
+    PCKG_MEMPOOL_ERROR,    //!< Mempool logic error.
 };
 
 /** A package is an ordered list of transactions. The transactions cannot conflict with (spend the
  * same inputs as) one another. */
 using Package = std::vector<CTransactionRef>;
 
-class PackageValidationState : public ValidationState<PackageValidationResult> {};
+class PackageValidationState : public ValidationState<PackageValidationResult>
+{
+};
 
 /** If any direct dependencies exist between transactions (i.e. a child spending the output of a
  * parent), checks that all parents appear somewhere in the list before their respective children.

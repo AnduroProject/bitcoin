@@ -44,43 +44,43 @@ static CService ip(uint32_t i)
 }
 
 struct PeerTest : LogIPsTestingSetup {
-/** Create a peer and connect to it. If the optional `address` (IP/CJDNS only) isn't passed, a random address is created. */
-void AddPeer(NodeId& id, std::vector<CNode*>& nodes, PeerManager& peerman, ConnmanTestMsg& connman, ConnectionType conn_type, bool onion_peer = false, std::optional<std::string> address = std::nullopt)
-{
-    CAddress addr{};
+    /** Create a peer and connect to it. If the optional `address` (IP/CJDNS only) isn't passed, a random address is created. */
+    void AddPeer(NodeId& id, std::vector<CNode*>& nodes, PeerManager& peerman, ConnmanTestMsg& connman, ConnectionType conn_type, bool onion_peer = false, std::optional<std::string> address = std::nullopt)
+    {
+        CAddress addr{};
 
-    if (address.has_value()) {
-        addr = CAddress{MaybeFlipIPv6toCJDNS(LookupNumeric(address.value(), Params().GetDefaultPort())), NODE_NONE};
-    } else if (onion_peer) {
-        auto tor_addr{m_rng.randbytes(ADDR_TORV3_SIZE)};
-        BOOST_REQUIRE(addr.SetSpecial(OnionToString(tor_addr)));
+        if (address.has_value()) {
+            addr = CAddress{MaybeFlipIPv6toCJDNS(LookupNumeric(address.value(), Params().GetDefaultPort())), NODE_NONE};
+        } else if (onion_peer) {
+            auto tor_addr{m_rng.randbytes(ADDR_TORV3_SIZE)};
+            BOOST_REQUIRE(addr.SetSpecial(OnionToString(tor_addr)));
+        }
+
+        while (!addr.IsLocal() && !addr.IsRoutable()) {
+            addr = CAddress{ip(m_rng.randbits(32)), NODE_NONE};
+        }
+
+        BOOST_REQUIRE(addr.IsValid());
+
+        const bool inbound_onion{onion_peer && conn_type == ConnectionType::INBOUND};
+
+        nodes.emplace_back(new CNode{++id,
+                                     /*sock=*/nullptr,
+                                     addr,
+                                     /*nKeyedNetGroupIn=*/0,
+                                     /*nLocalHostNonceIn=*/0,
+                                     CAddress{},
+                                     /*addrNameIn=*/"",
+                                     conn_type,
+                                     /*inbound_onion=*/inbound_onion});
+        CNode& node = *nodes.back();
+        node.SetCommonVersion(PROTOCOL_VERSION);
+
+        peerman.InitializeNode(node, ServiceFlags(NODE_NETWORK | NODE_WITNESS));
+        node.fSuccessfullyConnected = true;
+
+        connman.AddTestNode(node);
     }
-
-    while (!addr.IsLocal() && !addr.IsRoutable()) {
-        addr = CAddress{ip(m_rng.randbits(32)), NODE_NONE};
-    }
-
-    BOOST_REQUIRE(addr.IsValid());
-
-    const bool inbound_onion{onion_peer && conn_type == ConnectionType::INBOUND};
-
-    nodes.emplace_back(new CNode{++id,
-                                 /*sock=*/nullptr,
-                                 addr,
-                                 /*nKeyedNetGroupIn=*/0,
-                                 /*nLocalHostNonceIn=*/0,
-                                 CAddress{},
-                                 /*addrNameIn=*/"",
-                                 conn_type,
-                                 /*inbound_onion=*/inbound_onion});
-    CNode& node = *nodes.back();
-    node.SetCommonVersion(PROTOCOL_VERSION);
-
-    peerman.InitializeNode(node, ServiceFlags(NODE_NETWORK | NODE_WITNESS));
-    node.fSuccessfullyConnected = true;
-
-    connman.AddTestNode(node);
-}
 }; // struct PeerTest
 
 BOOST_AUTO_TEST_SUITE_END()

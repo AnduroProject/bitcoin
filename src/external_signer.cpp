@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-ExternalSigner::ExternalSigner(const std::string& command, const std::string chain, const std::string& fingerprint, const std::string name): m_command(command), m_chain(chain), m_fingerprint(fingerprint), m_name(name) {}
+ExternalSigner::ExternalSigner(const std::string& command, const std::string chain, const std::string& fingerprint, const std::string name) : m_command(command), m_chain(chain), m_fingerprint(fingerprint), m_name(name) {}
 
 std::string ExternalSigner::NetworkArg() const
 {

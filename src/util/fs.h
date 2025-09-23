@@ -36,14 +36,34 @@ public:
 
     // Allow path objects arguments for compatibility.
     path(std::filesystem::path path) : std::filesystem::path::path(std::move(path)) {}
-    path& operator=(std::filesystem::path path) { std::filesystem::path::operator=(std::move(path)); return *this; }
-    path& operator/=(const std::filesystem::path& path) { std::filesystem::path::operator/=(path); return *this; }
+    path& operator=(std::filesystem::path path)
+    {
+        std::filesystem::path::operator=(std::move(path));
+        return *this;
+    }
+    path& operator/=(const std::filesystem::path& path)
+    {
+        std::filesystem::path::operator/=(path);
+        return *this;
+    }
 
     // Allow literal string arguments, which are safe as long as the literals are ASCII.
     path(const char* c) : std::filesystem::path(c) {}
-    path& operator=(const char* c) { std::filesystem::path::operator=(c); return *this; }
-    path& operator/=(const char* c) { std::filesystem::path::operator/=(c); return *this; }
-    path& append(const char* c) { std::filesystem::path::append(c); return *this; }
+    path& operator=(const char* c)
+    {
+        std::filesystem::path::operator=(c);
+        return *this;
+    }
+    path& operator/=(const char* c)
+    {
+        std::filesystem::path::operator/=(c);
+        return *this;
+    }
+    path& append(const char* c)
+    {
+        std::filesystem::path::append(c);
+        return *this;
+    }
 
     // Disallow std::string arguments to avoid locale-dependent decoding on windows.
     path(std::string) = delete;
@@ -68,7 +88,11 @@ public:
 
     // Required for path overloads in <fstream>.
     // See https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=96e0367ead5d8dcac3bec2865582e76e2fbab190
-    path& make_preferred() { std::filesystem::path::make_preferred(); return *this; }
+    path& make_preferred()
+    {
+        std::filesystem::path::make_preferred();
+        return *this;
+    }
     path filename() const { return std::filesystem::path::filename(); }
 };
 
@@ -120,8 +144,10 @@ static inline path operator+(path p1, path::value_type p2)
 }
 
 // Disallow unsafe path append operations.
-template<typename T> static inline path operator/(path p1, T p2) = delete;
-template<typename T> static inline path operator+(path p1, T p2) = delete;
+template <typename T>
+static inline path operator/(path p1, T p2) = delete;
+template <typename T>
+static inline path operator+(path p1, T p2) = delete;
 
 // Disallow implicit std::string conversion for copy_file
 // to avoid locale-dependent encoding on Windows.
@@ -206,46 +232,48 @@ bool create_directories(const std::filesystem::path& p, std::error_code& ec) = d
 
 /** Bridge operations to C stdio */
 namespace fsbridge {
-    using FopenFn = std::function<FILE*(const fs::path&, const char*)>;
-    FILE *fopen(const fs::path& p, const char *mode);
+using FopenFn = std::function<FILE*(const fs::path&, const char*)>;
+FILE* fopen(const fs::path& p, const char* mode);
 
-    /**
-     * Helper function for joining two paths
-     *
-     * @param[in] base  Base path
-     * @param[in] path  Path to combine with base
-     * @returns path unchanged if it is an absolute path, otherwise returns base joined with path. Returns base unchanged if path is empty.
-     * @pre  Base path must be absolute
-     * @post Returned path will always be absolute
-     */
-    fs::path AbsPathJoin(const fs::path& base, const fs::path& path);
+/**
+ * Helper function for joining two paths
+ *
+ * @param[in] base  Base path
+ * @param[in] path  Path to combine with base
+ * @returns path unchanged if it is an absolute path, otherwise returns base joined with path. Returns base unchanged if path is empty.
+ * @pre  Base path must be absolute
+ * @post Returned path will always be absolute
+ */
+fs::path AbsPathJoin(const fs::path& base, const fs::path& path);
 
-    class FileLock
-    {
-    public:
-        FileLock() = delete;
-        FileLock(const FileLock&) = delete;
-        FileLock(FileLock&&) = delete;
-        explicit FileLock(const fs::path& file);
-        ~FileLock();
-        bool TryLock();
-        std::string GetReason() { return reason; }
+class FileLock
+{
+public:
+    FileLock() = delete;
+    FileLock(const FileLock&) = delete;
+    FileLock(FileLock&&) = delete;
+    explicit FileLock(const fs::path& file);
+    ~FileLock();
+    bool TryLock();
+    std::string GetReason() { return reason; }
 
-    private:
-        std::string reason;
+private:
+    std::string reason;
 #ifndef WIN32
-        int fd = -1;
+    int fd = -1;
 #else
-        void* hFile = (void*)-1; // INVALID_HANDLE_VALUE
+    void* hFile = (void*)-1; // INVALID_HANDLE_VALUE
 #endif
-    };
 };
+}; // namespace fsbridge
 
 // Disallow path operator<< formatting in tinyformat to avoid locale-dependent
 // encoding on windows.
 namespace tinyformat {
-template<> inline void formatValue(std::ostream&, const char*, const char*, int, const std::filesystem::path&) = delete;
-template<> inline void formatValue(std::ostream&, const char*, const char*, int, const fs::path&) = delete;
+template <>
+inline void formatValue(std::ostream&, const char*, const char*, int, const std::filesystem::path&) = delete;
+template <>
+inline void formatValue(std::ostream&, const char*, const char*, int, const fs::path&) = delete;
 } // namespace tinyformat
 
 #endif // BITCOIN_UTIL_FS_H

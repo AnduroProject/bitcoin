@@ -27,8 +27,7 @@
  * 2. @ref cache is a cache which is performant in memory usage and lookup speed. It
  * is lockfree for erase operations. Elements are lazily erased on the next insert.
  */
-namespace CuckooCache
-{
+namespace CuckooCache {
 /** @ref bit_packed_atomic_flags implements a container for garbage collection flags
  * that is only thread unsafe on calls to setup. This class bit-packs collection
  * flags for memory efficiency.
@@ -314,7 +313,7 @@ private:
             // epoch_unused_count), but we already know that `epoch_unused_count
             // < epoch_size` in this branch
             epoch_heuristic_counter = std::max(1u, std::max(epoch_size / 16,
-                        epoch_size - epoch_unused_count));
+                                                            epoch_size - epoch_unused_count));
     }
 
 public:
@@ -419,19 +418,19 @@ public:
                 return;
             }
             /** Swap with the element at the location that was
-            * not the last one looked at. Example:
-            *
-            * 1. On first iteration, last_loc == invalid(), find returns last, so
-            *    last_loc defaults to locs[0].
-            * 2. On further iterations, where last_loc == locs[k], last_loc will
-            *    go to locs[k+1 % 8], i.e., next of the 8 indices wrapping around
-            *    to 0 if needed.
-            *
-            * This prevents moving the element we just put in.
-            *
-            * The swap is not a move -- we must switch onto the evicted element
-            * for the next iteration.
-            */
+             * not the last one looked at. Example:
+             *
+             * 1. On first iteration, last_loc == invalid(), find returns last, so
+             *    last_loc defaults to locs[0].
+             * 2. On further iterations, where last_loc == locs[k], last_loc will
+             *    go to locs[k+1 % 8], i.e., next of the 8 indices wrapping around
+             *    to 0 if needed.
+             *
+             * This prevents moving the element we just put in.
+             *
+             * The swap is not a move -- we must switch onto the evicted element
+             * for the next iteration.
+             */
             last_loc = locs[(1 + (std::find(locs.begin(), locs.end(), last_loc) - locs.begin())) & 7];
             std::swap(table[last_loc], e);
             // Can't std::swap a std::vector<bool>::reference and a bool&.

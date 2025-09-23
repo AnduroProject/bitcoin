@@ -10,7 +10,7 @@
 class AddressTableModel;
 
 namespace Ui {
-    class EditAddressDialog;
+class EditAddressDialog;
 }
 
 QT_BEGIN_NAMESPACE
@@ -30,14 +30,14 @@ public:
         EditSendingAddress
     };
 
-    explicit EditAddressDialog(Mode mode, QWidget *parent = nullptr);
+    explicit EditAddressDialog(Mode mode, QWidget* parent = nullptr);
     ~EditAddressDialog();
 
-    void setModel(AddressTableModel *model);
+    void setModel(AddressTableModel* model);
     void loadRow(int row);
 
     QString getAddress() const;
-    void setAddress(const QString &address);
+    void setAddress(const QString& address);
 
 public Q_SLOTS:
     void accept() override;
@@ -48,7 +48,7 @@ private:
     /** Return a descriptive string when adding an already-existing address fails. */
     QString getDuplicateAddressWarning() const;
 
-    Ui::EditAddressDialog *ui;
+    Ui::EditAddressDialog* ui;
     QDataWidgetMapper* mapper{nullptr};
     Mode mode;
     AddressTableModel* model{nullptr};

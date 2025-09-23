@@ -9,7 +9,7 @@
 
 BOOST_AUTO_TEST_SUITE(translation_tests)
 
-static TranslateFn translate{[](const char * str) {  return strprintf("t(%s)", str);  }};
+static TranslateFn translate{[](const char* str) { return strprintf("t(%s)", str); }};
 
 // Custom translation function _t(), similar to _() but internal to this test.
 consteval auto _t(util::TranslatedLiteral str)

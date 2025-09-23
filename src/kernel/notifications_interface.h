@@ -15,7 +15,8 @@ struct bilingual_str;
 namespace kernel {
 
 //! Result type for use with std::variant to indicate that an operation should be interrupted.
-struct Interrupted{};
+struct Interrupted {
+};
 enum class Warning;
 
 

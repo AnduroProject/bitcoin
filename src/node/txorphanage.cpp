@@ -9,8 +9,8 @@
 #include <policy/policy.h>
 #include <primitives/transaction.h>
 #include <util/feefrac.h>
-#include <util/time.h>
 #include <util/hasher.h>
+#include <util/time.h>
 
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -26,7 +26,8 @@ namespace node {
 static constexpr NodeId MIN_PEER{std::numeric_limits<NodeId>::min()};
 /** Maximum NodeId for upper_bound lookups. */
 static constexpr NodeId MAX_PEER{std::numeric_limits<NodeId>::max()};
-class TxOrphanageImpl final : public TxOrphanage {
+class TxOrphanageImpl final : public TxOrphanage
+{
     // Type alias for sequence numbers
     using SequenceNumber = uint64_t;
     /** Global sequence number, increment each time an announcement is added. */
@@ -34,8 +35,7 @@ class TxOrphanageImpl final : public TxOrphanage {
 
     /** One orphan announcement. Each announcement (i.e. combination of wtxid, nodeid) is unique. There may be multiple
      * announcements for the same tx, and multiple transactions with the same txid but different wtxid are possible. */
-    struct Announcement
-    {
+    struct Announcement {
         const CTransactionRef m_tx;
         /** Which peer announced this tx */
         const NodeId m_announcer;
@@ -45,16 +45,17 @@ class TxOrphanageImpl final : public TxOrphanage {
          * announcements with m_reconsider=true. */
         bool m_reconsider{false};
 
-        Announcement(const CTransactionRef& tx, NodeId peer, SequenceNumber seq) :
-            m_tx{tx}, m_announcer{peer}, m_entry_sequence{seq}
-        { }
+        Announcement(const CTransactionRef& tx, NodeId peer, SequenceNumber seq) : m_tx{tx}, m_announcer{peer}, m_entry_sequence{seq}
+        {
+        }
 
         /** Get an approximation for "memory usage". The total memory is a function of the memory used to store the
          * transaction itself, each entry in m_orphans, and each entry in m_outpoint_to_orphan_wtxids. We use weight because
          * it is often higher than the actual memory usage of the transaction. This metric conveniently encompasses
          * m_outpoint_to_orphan_wtxids usage since input data does not get the witness discount, and makes it easier to
          * reason about each peer's limits using well-understood transaction attributes. */
-        TxOrphanage::Usage GetMemUsage()  const {
+        TxOrphanage::Usage GetMemUsage() const
+        {
             return GetTransactionWeight(*m_tx);
         }
 
@@ -63,16 +64,17 @@ class TxOrphanageImpl final : public TxOrphanage {
          * number of entries in m_outpoint_to_orphan_wtxids (thus an additional 1 for every 10 inputs). Transactions with a
          * small number of inputs (9 or fewer) are counted as 1 to make it easier to reason about each peer's limits in
          * terms of "normal" transactions. */
-        TxOrphanage::Count GetLatencyScore() const {
+        TxOrphanage::Count GetLatencyScore() const
+        {
             return 1 + (m_tx->vin.size() / 10);
         }
     };
 
     // Index by wtxid, then peer
-    struct ByWtxid {};
+    struct ByWtxid {
+    };
     using ByWtxidView = std::tuple<Wtxid, NodeId>;
-    struct WtxidExtractor
-    {
+    struct WtxidExtractor {
         using result_type = ByWtxidView;
         result_type operator()(const Announcement& ann) const
         {
@@ -81,7 +83,8 @@ class TxOrphanageImpl final : public TxOrphanage {
     };
 
     // Sort by peer, then by whether it is ready to reconsider, then by recency.
-    struct ByPeer {};
+    struct ByPeer {
+    };
     using ByPeerView = std::tuple<NodeId, bool, SequenceNumber>;
     struct ByPeerViewExtractor {
         using result_type = ByPeerView;
@@ -92,12 +95,12 @@ class TxOrphanageImpl final : public TxOrphanage {
     };
 
     struct OrphanIndices final : boost::multi_index::indexed_by<
-        boost::multi_index::ordered_unique<boost::multi_index::tag<ByWtxid>, WtxidExtractor>,
-        boost::multi_index::ordered_unique<boost::multi_index::tag<ByPeer>, ByPeerViewExtractor>
-    >{};
+                                     boost::multi_index::ordered_unique<boost::multi_index::tag<ByWtxid>, WtxidExtractor>,
+                                     boost::multi_index::ordered_unique<boost::multi_index::tag<ByPeer>, ByPeerViewExtractor>> {
+    };
 
     using AnnouncementMap = boost::multi_index::multi_index_container<Announcement, OrphanIndices>;
-    template<typename Tag>
+    template <typename Tag>
     using Iter = typename AnnouncementMap::index<Tag>::type::iterator;
     AnnouncementMap m_orphans;
 
@@ -150,14 +153,14 @@ class TxOrphanageImpl final : public TxOrphanage {
             return m_count_announcements == 0;
         }
         /** There are 2 DoS scores:
-        * - Latency score (ratio of total latency score / max allowed latency score)
-        * - Memory score (ratio of total memory usage / max allowed memory usage).
-        *
-        * If the peer is using more than the allowed for either resource, its DoS score is > 1.
-        * A peer having a DoS score > 1 does not necessarily mean that something is wrong, since we
-        * do not trim unless the orphanage exceeds global limits, but it means that this peer will
-        * be selected for trimming sooner. If the global latency score or global memory usage
-        * limits are exceeded, it must be that there is a peer whose DoS score > 1. */
+         * - Latency score (ratio of total latency score / max allowed latency score)
+         * - Memory score (ratio of total memory usage / max allowed memory usage).
+         *
+         * If the peer is using more than the allowed for either resource, its DoS score is > 1.
+         * A peer having a DoS score > 1 does not necessarily mean that something is wrong, since we
+         * do not trim unless the orphanage exceeds global limits, but it means that this peer will
+         * be selected for trimming sooner. If the global latency score or global memory usage
+         * limits are exceeded, it must be that there is a peer whose DoS score > 1. */
         FeeFrac GetDosScore(TxOrphanage::Count max_peer_latency_score, TxOrphanage::Usage max_peer_memory) const
         {
             assert(max_peer_latency_score > 0);
@@ -172,7 +175,7 @@ class TxOrphanageImpl final : public TxOrphanage {
     std::unordered_map<NodeId, PeerDoSInfo> m_peer_orphanage_info;
 
     /** Erase from m_orphans and update m_peer_orphanage_info. */
-    template<typename Tag>
+    template <typename Tag>
     void Erase(Iter<Tag> it);
 
     /** Erase by wtxid. */
@@ -189,10 +192,10 @@ class TxOrphanageImpl final : public TxOrphanage {
 
 public:
     TxOrphanageImpl() = default;
-    TxOrphanageImpl(Count max_global_latency_score, Usage reserved_peer_usage) :
-        m_max_global_latency_score{max_global_latency_score},
-        m_reserved_usage_per_peer{reserved_peer_usage}
-    {}
+    TxOrphanageImpl(Count max_global_latency_score, Usage reserved_peer_usage) : m_max_global_latency_score{max_global_latency_score},
+                                                                                 m_reserved_usage_per_peer{reserved_peer_usage}
+    {
+    }
     ~TxOrphanageImpl() noexcept override = default;
 
     TxOrphanage::Count CountAnnouncements() const override;
@@ -234,7 +237,7 @@ public:
     void SanityCheck() const override;
 };
 
-template<typename Tag>
+template <typename Tag>
 void TxOrphanageImpl::Erase(Iter<Tag> it)
 {
     // Update m_peer_orphanage_info and clean up entries if they point to an empty struct.
@@ -293,12 +296,14 @@ TxOrphanage::Usage TxOrphanageImpl::TotalOrphanUsage() const { return m_unique_o
 
 TxOrphanage::Count TxOrphanageImpl::CountUniqueOrphans() const { return m_unique_orphans; }
 
-TxOrphanage::Count TxOrphanageImpl::AnnouncementsFromPeer(NodeId peer) const {
+TxOrphanage::Count TxOrphanageImpl::AnnouncementsFromPeer(NodeId peer) const
+{
     auto it = m_peer_orphanage_info.find(peer);
     return it == m_peer_orphanage_info.end() ? 0 : it->second.m_count_announcements;
 }
 
-TxOrphanage::Count TxOrphanageImpl::LatencyScoreFromPeer(NodeId peer) const {
+TxOrphanage::Count TxOrphanageImpl::LatencyScoreFromPeer(NodeId peer) const
+{
     auto it = m_peer_orphanage_info.find(peer);
     return it == m_peer_orphanage_info.end() ? 0 : it->second.m_total_latency_score;
 }
@@ -338,11 +343,11 @@ bool TxOrphanageImpl::AddTx(const CTransactionRef& tx, NodeId peer)
         m_unique_rounded_input_scores += iter->GetLatencyScore() - 1;
 
         LogDebug(BCLog::TXPACKAGES, "stored orphan tx %s (wtxid=%s), weight: %u (mapsz %u outsz %u)\n",
-                    txid.ToString(), wtxid.ToString(), sz, m_orphans.size(), m_outpoint_to_orphan_wtxids.size());
+                 txid.ToString(), wtxid.ToString(), sz, m_orphans.size(), m_outpoint_to_orphan_wtxids.size());
         Assume(IsUnique(iter));
     } else {
         LogDebug(BCLog::TXPACKAGES, "added peer=%d as announcer of orphan tx %s (wtxid=%s)\n",
-                    peer, txid.ToString(), wtxid.ToString());
+                 peer, txid.ToString(), wtxid.ToString());
         Assume(!IsUnique(iter));
     }
 
@@ -373,7 +378,7 @@ bool TxOrphanageImpl::AddAnnouncer(const Wtxid& wtxid, NodeId peer)
 
     const auto& txid = ptx->GetHash();
     LogDebug(BCLog::TXPACKAGES, "added peer=%d as announcer of orphan tx %s (wtxid=%s)\n",
-                peer, txid.ToString(), wtxid.ToString());
+             peer, txid.ToString(), wtxid.ToString());
 
     Assume(!IsUnique(iter));
 
@@ -557,7 +562,7 @@ std::vector<std::pair<Wtxid, NodeId>> TxOrphanageImpl::AddChildrenToWorkSet(cons
                 m_reconsiderable_wtxids.insert(wtxid);
 
                 LogDebug(BCLog::TXPACKAGES, "added %s (wtxid=%s) to peer %d workset\n",
-                            it->m_tx->GetHash().ToString(), it->m_tx->GetWitnessHash().ToString(), it->m_announcer);
+                         it->m_tx->GetHash().ToString(), it->m_tx->GetWitnessHash().ToString(), it->m_announcer);
             }
         }
     }
@@ -741,22 +746,22 @@ void TxOrphanageImpl::SanityCheck() const
     assert(unique_wtxids_to_scores.size() == m_unique_orphans);
 
     const auto calculated_dedup_usage = std::accumulate(unique_wtxids_to_scores.begin(), unique_wtxids_to_scores.end(),
-        TxOrphanage::Usage{0}, [](TxOrphanage::Usage sum, const auto pair) { return sum + pair.second.first; });
+                                                        TxOrphanage::Usage{0}, [](TxOrphanage::Usage sum, const auto pair) { return sum + pair.second.first; });
     assert(calculated_dedup_usage == m_unique_orphan_usage);
 
     // Global usage is deduplicated, should be less than or equal to the sum of all per-peer usages.
     const auto summed_peer_usage = std::accumulate(m_peer_orphanage_info.begin(), m_peer_orphanage_info.end(),
-        TxOrphanage::Usage{0}, [](TxOrphanage::Usage sum, const auto pair) { return sum + pair.second.m_total_usage; });
+                                                   TxOrphanage::Usage{0}, [](TxOrphanage::Usage sum, const auto pair) { return sum + pair.second.m_total_usage; });
     assert(summed_peer_usage >= m_unique_orphan_usage);
 
     // Cached m_unique_rounded_input_scores value is correct.
     const auto calculated_total_latency_score = std::accumulate(unique_wtxids_to_scores.begin(), unique_wtxids_to_scores.end(),
-        TxOrphanage::Count{0}, [](TxOrphanage::Count sum, const auto pair) { return sum + pair.second.second; });
+                                                                TxOrphanage::Count{0}, [](TxOrphanage::Count sum, const auto pair) { return sum + pair.second.second; });
     assert(calculated_total_latency_score == m_unique_rounded_input_scores);
 
     // Global latency score is deduplicated, should be less than or equal to the sum of all per-peer latency scores.
     const auto summed_peer_latency_score = std::accumulate(m_peer_orphanage_info.begin(), m_peer_orphanage_info.end(),
-        TxOrphanage::Count{0}, [](TxOrphanage::Count sum, const auto pair) { return sum + pair.second.m_total_latency_score; });
+                                                           TxOrphanage::Count{0}, [](TxOrphanage::Count sum, const auto pair) { return sum + pair.second.m_total_latency_score; });
     assert(summed_peer_latency_score >= m_unique_rounded_input_scores + m_orphans.size());
 
     assert(!NeedsTrim());

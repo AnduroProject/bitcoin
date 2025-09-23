@@ -36,8 +36,7 @@ public:
     DatabaseCursor(const DatabaseCursor&) = delete;
     DatabaseCursor& operator=(const DatabaseCursor&) = delete;
 
-    enum class Status
-    {
+    enum class Status {
         FAIL,
         MORE,
         DONE,

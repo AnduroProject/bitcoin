@@ -8,8 +8,8 @@
 #include <util/check.h>
 #include <util/fs.h>
 #include <util/translation.h>
-#include <wallet/sqlite.h>
 #include <wallet/migrate.h>
+#include <wallet/sqlite.h>
 #include <wallet/test/util.h>
 #include <wallet/walletutil.h>
 
@@ -214,9 +214,11 @@ class DbExecBlocker : public SQliteExecHandler
 private:
     SQliteExecHandler m_base_exec;
     std::set<std::string> m_blocked_statements;
+
 public:
     DbExecBlocker(std::set<std::string> blocked_statements) : m_blocked_statements(blocked_statements) {}
-    int Exec(SQLiteDatabase& database, const std::string& statement) override {
+    int Exec(SQLiteDatabase& database, const std::string& statement) override
+    {
         if (m_blocked_statements.contains(statement)) return TEST_SQLITE_ERROR;
         return m_base_exec.Exec(database, statement);
     }

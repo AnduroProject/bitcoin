@@ -28,14 +28,15 @@ std::string StateName(ThresholdState state);
 /**
  * Abstract class that implements BIP9-style threshold logic, and caches results.
  */
-class AbstractThresholdConditionChecker {
+class AbstractThresholdConditionChecker
+{
 protected:
-    virtual bool Condition(const CBlockIndex* pindex) const =0;
-    virtual int64_t BeginTime() const =0;
-    virtual int64_t EndTime() const =0;
+    virtual bool Condition(const CBlockIndex* pindex) const = 0;
+    virtual int64_t BeginTime() const = 0;
+    virtual int64_t EndTime() const = 0;
     virtual int MinActivationHeight() const { return 0; }
-    virtual int Period() const =0;
-    virtual int Threshold() const =0;
+    virtual int Period() const = 0;
+    virtual int Threshold() const = 0;
 
 public:
     virtual ~AbstractThresholdConditionChecker() = default;
@@ -54,7 +55,8 @@ public:
 /**
  * Class to implement versionbits logic.
  */
-class VersionBitsConditionChecker : public AbstractThresholdConditionChecker {
+class VersionBitsConditionChecker : public AbstractThresholdConditionChecker
+{
 private:
     const Consensus::BIP9Deployment& dep;
 

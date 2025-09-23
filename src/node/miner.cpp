@@ -28,9 +28,9 @@
 #include <validation.h>
 
 #include <algorithm>
-#include <utility>
 #include <coordinate/anduro_deposit.h>
 #include <coordinate/coordinate_preconf.h>
+#include <utility>
 namespace node {
 
 int64_t GetMinimumTime(const CBlockIndex* pindexPrev, const int64_t difficulty_adjustment_interval)
@@ -137,7 +137,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
 
-    const int32_t nChainId = chainparams.GetConsensus ().nAuxpowChainId;
+    const int32_t nChainId = chainparams.GetConsensus().nAuxpowChainId;
     const int32_t nVersion = 4;
     pblock->SetBaseVersion(nVersion, nChainId);
 
@@ -165,10 +165,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
     CAmount minerFee = 0;
     CAmount totalPreconfFee = 0;
     CAmount federationFee = 0;
-    if(nHeight > 3) {
+    if (nHeight > 3) {
         minerFee = getFeeForBlock(m_chainstate.m_chainman, nHeight);
         totalPreconfFee = getPreconfFeeForBlock(m_chainstate.m_chainman, nHeight);
-        if(totalPreconfFee > 0) {
+        if (totalPreconfFee > 0) {
             federationFee = std::ceil(totalPreconfFee * 0.20);
             minerFee = minerFee + (totalPreconfFee - federationFee);
         }
@@ -178,18 +178,18 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
     int resize = 2;
     CMutableTransaction coinbaseTx;
     std::vector<AnduroPreCommitment> pending_commitments = listPendingCommitment(nHeight);
-    if(Params().GetChainType() != ChainType::REGTEST) {
+    if (Params().GetChainType() != ChainType::REGTEST) {
         // get next block presigned data
         LogPrintf("commitment queue count %i\n", pending_commitments.size());
         // prevent to get block template if not presigned signature available for next block
-        if(nHeight > 2) {
-            if(pending_commitments.size() == 0) {
+        if (nHeight > 2) {
+            if (pending_commitments.size() == 0) {
                 LogPrintf("commitment queue unavailable\n");
                 return nullptr;
             }
 
-            // increase transaction out size based on available pegin 
-            if(!isPreCommitmentValid(pending_commitments,m_chainstate.m_chainman)) {
+            // increase transaction out size based on available pegin
+            if (!isPreCommitmentValid(pending_commitments, m_chainstate.m_chainman)) {
                 LogPrintf("anduro commitment invalid \n");
                 return nullptr;
             }
@@ -198,8 +198,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
         // increase transaction out size by one for include witness
         resize = resize + 1;
 
-        if(nHeight > 2) {
-            // if new commitment included, then existing anduro key replaced in next block 
+        if (nHeight > 2) {
+            // if new commitment included, then existing anduro key replaced in next block
             AnduroPreCommitment& commtiment = pending_commitments[0];
             pblock->currentKeys = commtiment.nextKeys;
             pblock->currentIndex = commtiment.nextIndex;
@@ -225,10 +225,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
     coinbaseTx.vout[oIncr].scriptPubKey = getMinerScript(m_chainstate.m_chainman, nHeight);
     coinbaseTx.vout[oIncr].nValue = minerFee;
 
-    if(Params().GetChainType() != ChainType::REGTEST) {
+    if (Params().GetChainType() != ChainType::REGTEST) {
         // including anduro signature information
         std::string preCommitmentWitness = "";
-        if(nHeight > 2) {
+        if (nHeight > 2) {
             preCommitmentWitness = pending_commitments[0].witness;
         }
         oIncr = oIncr + 1;
@@ -245,10 +245,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
 
     // Fill in header
-    pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
+    pblock->hashPrevBlock = pindexPrev->GetBlockHash();
     UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
-    pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
-    pblock->nNonce         = 0;
+    pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
+    pblock->nNonce = 0;
 
     if (m_options.test_block_validity) {
         if (BlockValidationState state{TestBlockValidity(m_chainstate, *pblock, /*check_pow=*/false, /*check_merkle_root=*/false)}; !state.IsValid()) {
@@ -266,7 +266,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
 }
 void BlockAssembler::onlyUnconfirmed(CTxMemPool::setEntries& testSet)
 {
-    for (CTxMemPool::setEntries::iterator iit = testSet.begin(); iit != testSet.end(); ) {
+    for (CTxMemPool::setEntries::iterator iit = testSet.begin(); iit != testSet.end();) {
         // Only test txs not already in the block
         if (inBlock.count((*iit)->GetSharedTx()->GetHash())) {
             testSet.erase(iit++);
@@ -426,7 +426,7 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
             // Try to compare the mapTx entry to the mapModifiedTx entry
             iter = mempool.mapTx.project<0>(mi);
             if (modit != mapModifiedTx.get<ancestor_score>().end() &&
-                    CompareTxMemPoolEntryByAncestorFee()(*modit, CTxMemPoolModifiedEntry(iter))) {
+                CompareTxMemPoolEntryByAncestorFee()(*modit, CTxMemPoolModifiedEntry(iter))) {
                 // The best entry in mapModifiedTx has higher score
                 // than the one from mapTx.
                 // Switch which transaction (package) to consider
@@ -469,7 +469,7 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
             ++nConsecutiveFailed;
 
             if (nConsecutiveFailed > MAX_CONSECUTIVE_FAILURES && nBlockWeight >
-                    m_options.nBlockMaxWeight - BLOCK_FULL_ENOUGH_WEIGHT_DELTA) {
+                                                                     m_options.nBlockMaxWeight - BLOCK_FULL_ENOUGH_WEIGHT_DELTA) {
                 // Give up if we're close to full and haven't succeeded in a while
                 break;
             }

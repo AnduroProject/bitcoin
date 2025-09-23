@@ -5,9 +5,9 @@
 #include <consensus/tx_check.h>
 
 #include <consensus/amount.h>
-#include <primitives/transaction.h>
 #include <consensus/validation.h>
 #include <logging.h>
+#include <primitives/transaction.h>
 
 bool CheckTransaction(const CTransaction& tx, TxValidationState& state, int coordinateOutputs)
 {
@@ -26,8 +26,7 @@ bool CheckTransaction(const CTransaction& tx, TxValidationState& state, int coor
     // Check for negative or overflow output values (see CVE-2010-5139)
     CAmount nValueOut = 0;
     int incr = 0;
-    for (; it != tx.vout.end(); it++)
-    {
+    for (; it != tx.vout.end(); it++) {
         if (it->nValue < 0)
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-txns-vout-negative");
         if ((it->nValue > MAX_MONEY && (incr >= coordinateOutputs)) || (it->nValue > MAX_ASSET_OUT_VALUE && incr < coordinateOutputs))
@@ -50,13 +49,10 @@ bool CheckTransaction(const CTransaction& tx, TxValidationState& state, int coor
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-txns-inputs-duplicate");
     }
 
-    if (tx.IsCoinBase())
-    {
+    if (tx.IsCoinBase()) {
         if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-cb-length");
-    }
-    else
-    {
+    } else {
         for (const auto& txin : tx.vin)
             if (txin.prevout.IsNull())
                 return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-txns-prevout-null");

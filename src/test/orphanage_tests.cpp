@@ -437,15 +437,14 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
     std::vector<CTransactionRef> orphans_added;
 
     // 50 orphan transactions:
-    for (int i = 0; i < 50; i++)
-    {
+    for (int i = 0; i < 50; i++) {
         CMutableTransaction tx;
         tx.vin.resize(1);
         tx.vin[0].prevout.n = 0;
         tx.vin[0].prevout.hash = Txid::FromUint256(m_rng.rand256());
         tx.vin[0].scriptSig << OP_1;
         tx.vout.resize(1);
-        tx.vout[0].nValue = i*CENT;
+        tx.vout[0].nValue = i * CENT;
         tx.vout[0].scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
 
         auto ptx = MakeTransactionRef(tx);
@@ -454,8 +453,7 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
     }
 
     // ... and 50 that depend on other orphans:
-    for (int i = 0; i < 50; i++)
-    {
+    for (int i = 0; i < 50; i++) {
         const auto& txPrev = orphans_added[m_rng.randrange(orphans_added.size())];
 
         CMutableTransaction tx;
@@ -463,7 +461,7 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
         tx.vin[0].prevout.n = 0;
         tx.vin[0].prevout.hash = txPrev->GetHash();
         tx.vout.resize(1);
-        tx.vout[0].nValue = i*CENT;
+        tx.vout[0].nValue = i * CENT;
         tx.vout[0].scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
         SignatureData empty;
         BOOST_CHECK(SignSignature(keystore, *txPrev, tx, 0, SIGHASH_ALL, empty));
@@ -474,17 +472,15 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
     }
 
     // This really-big orphan should be ignored:
-    for (int i = 0; i < 10; i++)
-    {
+    for (int i = 0; i < 10; i++) {
         const auto& txPrev = orphans_added[m_rng.randrange(orphans_added.size())];
 
         CMutableTransaction tx;
         tx.vout.resize(1);
-        tx.vout[0].nValue = 1*CENT;
+        tx.vout[0].nValue = 1 * CENT;
         tx.vout[0].scriptPubKey = GetScriptForDestination(PKHash(key.GetPubKey()));
         tx.vin.resize(2777);
-        for (unsigned int j = 0; j < tx.vin.size(); j++)
-        {
+        for (unsigned int j = 0; j < tx.vin.size(); j++) {
             tx.vin[j].prevout.n = j;
             tx.vin[j].prevout.hash = txPrev->GetHash();
         }
@@ -506,8 +502,7 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
 
     // Each of first three peers stored
     // two transactions each.
-    for (NodeId i = 0; i < 3; i++)
-    {
+    for (NodeId i = 0; i < 3; i++) {
         orphanage->EraseForPeer(i);
         expected_num_orphans -= 2;
         BOOST_CHECK_EQUAL(orphanage->CountUniqueOrphans(), expected_num_orphans);

@@ -7,14 +7,15 @@
 #ifndef SECP256K1_ECMULT_GEN_COMPUTE_TABLE_IMPL_H
 #define SECP256K1_ECMULT_GEN_COMPUTE_TABLE_IMPL_H
 
-#include "ecmult_gen_compute_table.h"
-#include "group_impl.h"
-#include "field_impl.h"
-#include "scalar_impl.h"
 #include "ecmult_gen.h"
+#include "ecmult_gen_compute_table.h"
+#include "field_impl.h"
+#include "group_impl.h"
+#include "scalar_impl.h"
 #include "util.h"
 
-static void secp256k1_ecmult_gen_compute_table(secp256k1_ge_storage* table, const secp256k1_ge* gen, int blocks, int teeth, int spacing) {
+static void secp256k1_ecmult_gen_compute_table(secp256k1_ge_storage* table, const secp256k1_ge* gen, int blocks, int teeth, int spacing)
+{
     size_t points = ((size_t)1) << (teeth - 1);
     size_t points_total = points * blocks;
     secp256k1_ge* prec = checked_malloc(&default_error_callback, points_total * sizeof(*prec));

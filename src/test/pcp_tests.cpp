@@ -29,8 +29,7 @@ struct TestOp {
     //! Set this field to a non-zero value to return the errno code from send or receive operation.
     int error;
 
-    TestOp(std::chrono::milliseconds delay_in, Op op_in, const std::vector<uint8_t> &data_in, int error_in):
-        delay(delay_in), op(op_in), data(data_in), error(error_in) {}
+    TestOp(std::chrono::milliseconds delay_in, Op op_in, const std::vector<uint8_t>& data_in, int error_in) : delay(delay_in), op(op_in), data(data_in), error(error_in) {}
 };
 
 /// Save the value of CreateSock and restore when the test ends.
@@ -72,6 +71,7 @@ public:
     CNetAddr default_gateway_ipv6;
     // IPv4 bind
     CNetAddr bind_any_ipv4;
+
 private:
     const decltype(CreateSock) m_create_sock_orig;
 };
@@ -83,7 +83,7 @@ class PCPTestSock final : public Sock
 public:
     // Note: we awkwardly mark all methods as const, and properties as mutable,
     // because Sock expects all networking calls to be const.
-    explicit PCPTestSock(const CNetAddr &local_ip, const CNetAddr &gateway_ip, const std::vector<TestOp> &script)
+    explicit PCPTestSock(const CNetAddr& local_ip, const CNetAddr& gateway_ip, const std::vector<TestOp>& script)
         : Sock{INVALID_SOCKET},
           m_script(script),
           m_local_ip(local_ip),
@@ -99,7 +99,8 @@ public:
         return *this;
     }
 
-    ssize_t Send(const void* data, size_t len, int) const override {
+    ssize_t Send(const void* data, size_t len, int) const override
+    {
         if (!m_connected) return -1;
         std::span in_pkt = std::span(static_cast<const uint8_t*>(data), len);
         if (AtEndOfScript() || CurOp().op != TestOp::SEND) {
@@ -123,7 +124,7 @@ public:
             return -1;
         }
         if (CurOp().error) return -1; // Inject failure
-        const auto &recv_pkt = CurOp().data;
+        const auto& recv_pkt = CurOp().data;
         const size_t consume_bytes{std::min(len, recv_pkt.size())};
         std::memcpy(buf, recv_pkt.data(), consume_bytes);
         if ((flags & MSG_PEEK) == 0) {
@@ -132,7 +133,8 @@ public:
         return consume_bytes;
     }
 
-    int Connect(const sockaddr* sa, socklen_t sa_len) const override {
+    int Connect(const sockaddr* sa, socklen_t sa_len) const override
+    {
         CService service;
         if (service.SetSockAddr(sa, sa_len) && service == CService(m_gateway_ip, 5351)) {
             if (m_bound.IsBindAny()) { // If bind-any, bind to local ip.
@@ -147,7 +149,8 @@ public:
         return -1;
     }
 
-    int Bind(const sockaddr* sa, socklen_t sa_len) const override {
+    int Bind(const sockaddr* sa, socklen_t sa_len) const override
+    {
         CService service;
         if (service.SetSockAddr(sa, sa_len)) {
             // Can only bind to one of our local ips
@@ -233,12 +236,14 @@ private:
     }
 
     bool AtEndOfScript() const { return m_script_ptr == m_script.size(); }
-    const TestOp &CurOp() const {
+    const TestOp& CurOp() const
+    {
         BOOST_REQUIRE(m_script_ptr < m_script.size());
         return m_script[m_script_ptr];
     }
 
-    void PrepareOp() const {
+    void PrepareOp() const
+    {
         if (AtEndOfScript()) return;
         m_time_left = CurOp().delay;
     }
@@ -258,37 +263,60 @@ BOOST_FIXTURE_TEST_SUITE(pcp_tests, PCPTestingSetup)
 BOOST_AUTO_TEST_CASE(natpmp_ipv4)
 {
     const std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            {
-                0x00, 0x00, // version, opcode (request external IP)
-            }, 0
-        },
-        {
-            2ms, TestOp::RECV,
-            {
-                0x00, 0x80, 0x00, 0x00, // version, opcode (external IP), result code (success)
-                0x66, 0xfd, 0xa1, 0xee, // seconds sinds start of epoch
-                0x01, 0x02, 0x03, 0x04, // external IP address
-            }, 0
-        },
-        {
-            0ms, TestOp::SEND,
-            {
-                0x00, 0x02, 0x00, 0x00, // version, opcode (request map TCP)
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x00, 0x00, 0x03, 0xe8, // requested mapping lifetime in seconds
-            }, 0
-        },
-        {
-            2ms, TestOp::RECV,
-            {
-                0x00, 0x82, 0x00, 0x00, // version, opcode (mapped TCP)
-                0x66, 0xfd, 0xa1, 0xee, // seconds sinds start of epoch
-                0x04, 0xd2, 0x04, 0xd2, // internal port, mapped external port
-                0x00, 0x00, 0x01, 0xf4, // mapping lifetime in seconds
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x00,
+                                0x00, // version, opcode (request external IP)
+                            },
+         0},
+        {2ms, TestOp::RECV, {
+                                0x00,
+                                0x80,
+                                0x00,
+                                0x00, // version, opcode (external IP), result code (success)
+                                0x66,
+                                0xfd,
+                                0xa1,
+                                0xee, // seconds sinds start of epoch
+                                0x01,
+                                0x02,
+                                0x03,
+                                0x04, // external IP address
+                            },
+         0},
+        {0ms, TestOp::SEND, {
+                                0x00,
+                                0x02,
+                                0x00,
+                                0x00, // version, opcode (request map TCP)
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, suggested external port
+                                0x00,
+                                0x00,
+                                0x03,
+                                0xe8, // requested mapping lifetime in seconds
+                            },
+         0},
+        {2ms, TestOp::RECV, {
+                                0x00,
+                                0x82,
+                                0x00,
+                                0x00, // version, opcode (mapped TCP)
+                                0x66,
+                                0xfd,
+                                0xa1,
+                                0xee, // seconds sinds start of epoch
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, mapped external port
+                                0x00,
+                                0x00,
+                                0x01,
+                                0xf4, // mapping lifetime in seconds
+                            },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv4, default_gateway_ipv4, script);
@@ -309,30 +337,133 @@ BOOST_AUTO_TEST_CASE(natpmp_ipv4)
 BOOST_AUTO_TEST_CASE(pcp_ipv4)
 {
     const std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            {
-                0x02, 0x01, 0x00, 0x00, // version, opcode
-                0x00, 0x00, 0x03, 0xe8, // lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc0, 0xa8, 0x00, 0x06, // internal IP
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, // suggested external IP
-            }, 0
-        },
-        {
-            250ms, TestOp::RECV, // 250ms delay before answer
-            {
-                0x02, 0x81, 0x00, 0x00, // version, opcode, result success
-                0x00, 0x00, 0x01, 0xf4, // granted lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, assigned external port
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x01, 0x02, 0x03, 0x04, // assigned external IP
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x02,
+                                0x01,
+                                0x00,
+                                0x00, // version, opcode
+                                0x00,
+                                0x00,
+                                0x03,
+                                0xe8, // lifetime
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0xff,
+                                0xff,
+                                0xc0,
+                                0xa8,
+                                0x00,
+                                0x06, // internal IP
+                                0x11,
+                                0x22,
+                                0x33,
+                                0x44,
+                                0x55,
+                                0x66,
+                                0x77,
+                                0x88,
+                                0x99,
+                                0xaa,
+                                0xbb,
+                                0xcc, // nonce
+                                0x06,
+                                0x00,
+                                0x00,
+                                0x00, // protocol (TCP), reserved
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, suggested external port
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0xff,
+                                0xff,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00, // suggested external IP
+                            },
+         0},
+        {250ms, TestOp::RECV, // 250ms delay before answer
+         {
+             0x02,
+             0x81,
+             0x00,
+             0x00, // version, opcode, result success
+             0x00,
+             0x00,
+             0x01,
+             0xf4, // granted lifetime
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00, // reserved
+             0x11,
+             0x22,
+             0x33,
+             0x44,
+             0x55,
+             0x66,
+             0x77,
+             0x88,
+             0x99,
+             0xaa,
+             0xbb,
+             0xcc, // nonce
+             0x06,
+             0x00,
+             0x00,
+             0x00, // protocol (TCP), reserved
+             0x04,
+             0xd2,
+             0x04,
+             0xd2, // internal port, assigned external port
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0xff,
+             0xff,
+             0x01,
+             0x02,
+             0x03,
+             0x04, // assigned external IP
+         },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv4, default_gateway_ipv4, script);
@@ -353,30 +484,133 @@ BOOST_AUTO_TEST_CASE(pcp_ipv4)
 BOOST_AUTO_TEST_CASE(pcp_ipv6)
 {
     const std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            {
-                0x02, 0x01, 0x00, 0x00, // version, opcode
-                0x00, 0x00, 0x03, 0xe8, // lifetime
-                0x2a, 0x10, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, // internal IP
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x2a, 0x10, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, // suggested external IP
-            }, 0
-        },
-        {
-            500ms, TestOp::RECV, // 500ms delay before answer
-            {
-                0x02, 0x81, 0x00, 0x00, // version, opcode, result success
-                0x00, 0x00, 0x01, 0xf4, // granted lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, assigned external port
-                0x2a, 0x10, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, // suggested external IP
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x02,
+                                0x01,
+                                0x00,
+                                0x00, // version, opcode
+                                0x00,
+                                0x00,
+                                0x03,
+                                0xe8, // lifetime
+                                0x2a,
+                                0x10,
+                                0x12,
+                                0x34,
+                                0x56,
+                                0x78,
+                                0x9a,
+                                0xbc,
+                                0xde,
+                                0xf0,
+                                0x12,
+                                0x34,
+                                0x56,
+                                0x78,
+                                0x9a,
+                                0xbc, // internal IP
+                                0x11,
+                                0x22,
+                                0x33,
+                                0x44,
+                                0x55,
+                                0x66,
+                                0x77,
+                                0x88,
+                                0x99,
+                                0xaa,
+                                0xbb,
+                                0xcc, // nonce
+                                0x06,
+                                0x00,
+                                0x00,
+                                0x00, // protocol (TCP), reserved
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, suggested external port
+                                0x2a,
+                                0x10,
+                                0x12,
+                                0x34,
+                                0x56,
+                                0x78,
+                                0x9a,
+                                0xbc,
+                                0xde,
+                                0xf0,
+                                0x12,
+                                0x34,
+                                0x56,
+                                0x78,
+                                0x9a,
+                                0xbc, // suggested external IP
+                            },
+         0},
+        {500ms, TestOp::RECV, // 500ms delay before answer
+         {
+             0x02,
+             0x81,
+             0x00,
+             0x00, // version, opcode, result success
+             0x00,
+             0x00,
+             0x01,
+             0xf4, // granted lifetime
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00, // reserved
+             0x11,
+             0x22,
+             0x33,
+             0x44,
+             0x55,
+             0x66,
+             0x77,
+             0x88,
+             0x99,
+             0xaa,
+             0xbb,
+             0xcc, // nonce
+             0x06,
+             0x00,
+             0x00,
+             0x00, // protocol (TCP), reserved
+             0x04,
+             0xd2,
+             0x04,
+             0xd2, // internal port, assigned external port
+             0x2a,
+             0x10,
+             0x12,
+             0x34,
+             0x56,
+             0x78,
+             0x9a,
+             0xbc,
+             0xde,
+             0xf0,
+             0x12,
+             0x34,
+             0x56,
+             0x78,
+             0x9a,
+             0xbc, // suggested external IP
+         },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET6 && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv6, default_gateway_ipv6, script);
@@ -417,16 +651,12 @@ BOOST_AUTO_TEST_CASE(pcp_timeout)
 BOOST_AUTO_TEST_CASE(pcp_connrefused)
 {
     const std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            { // May send anything.
-            }, 0
-        },
-        {
-            0ms, TestOp::RECV,
-            {
-            }, ECONNREFUSED
-        },
+        {0ms, TestOp::SEND,
+         {
+             // May send anything.
+         },
+         0},
+        {0ms, TestOp::RECV, {}, ECONNREFUSED},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv4, default_gateway_ipv4, script);
@@ -446,46 +676,200 @@ BOOST_AUTO_TEST_CASE(pcp_connrefused)
 BOOST_AUTO_TEST_CASE(pcp_ipv6_timeout_success)
 {
     const std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            {
-                0x02, 0x01, 0x00, 0x00, // version, opcode
-                0x00, 0x00, 0x03, 0xe8, // lifetime
-                0x2a, 0x10, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, // internal IP
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x2a, 0x10, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, // suggested external IP
-            }, 0
-        },
-        {
-            2001ms, TestOp::NOP, // Takes longer to respond than timeout of 2000ms
-            {}, 0
-        },
-        {
-            0ms, TestOp::SEND, // Repeated send (try 2)
-            {
-                0x02, 0x01, 0x00, 0x00, // version, opcode
-                0x00, 0x00, 0x03, 0xe8, // lifetime
-                0x2a, 0x10, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, // internal IP
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x2a, 0x10, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, // suggested external IP
-            }, 0
-        },
-        {
-            200ms, TestOp::RECV, // This time we're in time
-            {
-                0x02, 0x81, 0x00, 0x00, // version, opcode, result success
-                0x00, 0x00, 0x01, 0xf4, // granted lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, assigned external port
-                0x2a, 0x10, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, // suggested external IP
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x02,
+                                0x01,
+                                0x00,
+                                0x00, // version, opcode
+                                0x00,
+                                0x00,
+                                0x03,
+                                0xe8, // lifetime
+                                0x2a,
+                                0x10,
+                                0x12,
+                                0x34,
+                                0x56,
+                                0x78,
+                                0x9a,
+                                0xbc,
+                                0xde,
+                                0xf0,
+                                0x12,
+                                0x34,
+                                0x56,
+                                0x78,
+                                0x9a,
+                                0xbc, // internal IP
+                                0x11,
+                                0x22,
+                                0x33,
+                                0x44,
+                                0x55,
+                                0x66,
+                                0x77,
+                                0x88,
+                                0x99,
+                                0xaa,
+                                0xbb,
+                                0xcc, // nonce
+                                0x06,
+                                0x00,
+                                0x00,
+                                0x00, // protocol (TCP), reserved
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, suggested external port
+                                0x2a,
+                                0x10,
+                                0x12,
+                                0x34,
+                                0x56,
+                                0x78,
+                                0x9a,
+                                0xbc,
+                                0xde,
+                                0xf0,
+                                0x12,
+                                0x34,
+                                0x56,
+                                0x78,
+                                0x9a,
+                                0xbc, // suggested external IP
+                            },
+         0},
+        {2001ms, TestOp::NOP, // Takes longer to respond than timeout of 2000ms
+         {},
+         0},
+        {0ms, TestOp::SEND, // Repeated send (try 2)
+         {
+             0x02,
+             0x01,
+             0x00,
+             0x00, // version, opcode
+             0x00,
+             0x00,
+             0x03,
+             0xe8, // lifetime
+             0x2a,
+             0x10,
+             0x12,
+             0x34,
+             0x56,
+             0x78,
+             0x9a,
+             0xbc,
+             0xde,
+             0xf0,
+             0x12,
+             0x34,
+             0x56,
+             0x78,
+             0x9a,
+             0xbc, // internal IP
+             0x11,
+             0x22,
+             0x33,
+             0x44,
+             0x55,
+             0x66,
+             0x77,
+             0x88,
+             0x99,
+             0xaa,
+             0xbb,
+             0xcc, // nonce
+             0x06,
+             0x00,
+             0x00,
+             0x00, // protocol (TCP), reserved
+             0x04,
+             0xd2,
+             0x04,
+             0xd2, // internal port, suggested external port
+             0x2a,
+             0x10,
+             0x12,
+             0x34,
+             0x56,
+             0x78,
+             0x9a,
+             0xbc,
+             0xde,
+             0xf0,
+             0x12,
+             0x34,
+             0x56,
+             0x78,
+             0x9a,
+             0xbc, // suggested external IP
+         },
+         0},
+        {200ms, TestOp::RECV, // This time we're in time
+         {
+             0x02,
+             0x81,
+             0x00,
+             0x00, // version, opcode, result success
+             0x00,
+             0x00,
+             0x01,
+             0xf4, // granted lifetime
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00, // reserved
+             0x11,
+             0x22,
+             0x33,
+             0x44,
+             0x55,
+             0x66,
+             0x77,
+             0x88,
+             0x99,
+             0xaa,
+             0xbb,
+             0xcc, // nonce
+             0x06,
+             0x00,
+             0x00,
+             0x00, // protocol (TCP), reserved
+             0x04,
+             0xd2,
+             0x04,
+             0xd2, // internal port, assigned external port
+             0x2a,
+             0x10,
+             0x12,
+             0x34,
+             0x56,
+             0x78,
+             0x9a,
+             0xbc,
+             0xde,
+             0xf0,
+             0x12,
+             0x34,
+             0x56,
+             0x78,
+             0x9a,
+             0xbc, // suggested external IP
+         },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET6 && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv6, default_gateway_ipv6, script);
@@ -504,30 +888,132 @@ BOOST_AUTO_TEST_CASE(pcp_ipv6_timeout_success)
 BOOST_AUTO_TEST_CASE(pcp_ipv4_fail_no_resources)
 {
     const std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            {
-                0x02, 0x01, 0x00, 0x00, // version, opcode
-                0x00, 0x00, 0x03, 0xe8, // lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc0, 0xa8, 0x00, 0x06, // internal IP
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, // suggested external IP
-            }, 0
-        },
-        {
-            500ms, TestOp::RECV,
-            {
-                0x02, 0x81, 0x00, 0x08, // version, opcode, result 0x08: no resources
-                0x00, 0x00, 0x00, 0x00, // granted lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x00, 0x00, // internal port, assigned external port
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // assigned external IP
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x02,
+                                0x01,
+                                0x00,
+                                0x00, // version, opcode
+                                0x00,
+                                0x00,
+                                0x03,
+                                0xe8, // lifetime
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0xff,
+                                0xff,
+                                0xc0,
+                                0xa8,
+                                0x00,
+                                0x06, // internal IP
+                                0x11,
+                                0x22,
+                                0x33,
+                                0x44,
+                                0x55,
+                                0x66,
+                                0x77,
+                                0x88,
+                                0x99,
+                                0xaa,
+                                0xbb,
+                                0xcc, // nonce
+                                0x06,
+                                0x00,
+                                0x00,
+                                0x00, // protocol (TCP), reserved
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, suggested external port
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0xff,
+                                0xff,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00, // suggested external IP
+                            },
+         0},
+        {500ms, TestOp::RECV, {
+                                  0x02,
+                                  0x81,
+                                  0x00,
+                                  0x08, // version, opcode, result 0x08: no resources
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00, // granted lifetime
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00, // reserved
+                                  0x11,
+                                  0x22,
+                                  0x33,
+                                  0x44,
+                                  0x55,
+                                  0x66,
+                                  0x77,
+                                  0x88,
+                                  0x99,
+                                  0xaa,
+                                  0xbb,
+                                  0xcc, // nonce
+                                  0x06,
+                                  0x00,
+                                  0x00,
+                                  0x00, // protocol (TCP), reserved
+                                  0x04,
+                                  0xd2,
+                                  0x00,
+                                  0x00, // internal port, assigned external port
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00, // assigned external IP
+                              },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv4, default_gateway_ipv4, script);
@@ -545,25 +1031,80 @@ BOOST_AUTO_TEST_CASE(pcp_ipv4_fail_no_resources)
 BOOST_AUTO_TEST_CASE(pcp_ipv4_fail_unsupported_version)
 {
     const std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            {
-                0x02, 0x01, 0x00, 0x00, // version, opcode
-                0x00, 0x00, 0x03, 0xe8, // lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc0, 0xa8, 0x00, 0x06, // internal IP
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, // suggested external IP
-            }, 0
-        },
-        {
-            500ms, TestOp::RECV,
-            {
-                0x00, 0x81, 0x00, 0x01, // version, opcode, result 0x01: unsupported version
-                0x00, 0x00, 0x00, 0x00,
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x02,
+                                0x01,
+                                0x00,
+                                0x00, // version, opcode
+                                0x00,
+                                0x00,
+                                0x03,
+                                0xe8, // lifetime
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0xff,
+                                0xff,
+                                0xc0,
+                                0xa8,
+                                0x00,
+                                0x06, // internal IP
+                                0x11,
+                                0x22,
+                                0x33,
+                                0x44,
+                                0x55,
+                                0x66,
+                                0x77,
+                                0x88,
+                                0x99,
+                                0xaa,
+                                0xbb,
+                                0xcc, // nonce
+                                0x06,
+                                0x00,
+                                0x00,
+                                0x00, // protocol (TCP), reserved
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, suggested external port
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0xff,
+                                0xff,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00, // suggested external IP
+                            },
+         0},
+        {500ms, TestOp::RECV, {
+                                  0x00,
+                                  0x81,
+                                  0x00,
+                                  0x01, // version, opcode, result 0x01: unsupported version
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                                  0x00,
+                              },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv4, default_gateway_ipv4, script);
@@ -582,20 +1123,26 @@ BOOST_AUTO_TEST_CASE(natpmp_protocol_error)
 {
     // First scenario: non-0 result code when requesting external IP.
     std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            {
-                0x00, 0x00, // version, opcode (request external IP)
-            }, 0
-        },
-        {
-            2ms, TestOp::RECV,
-            {
-                0x00, 0x80, 0x00, 0x42, // version, opcode (external IP), result code (*NOT* success)
-                0x66, 0xfd, 0xa1, 0xee, // seconds sinds start of epoch
-                0x01, 0x02, 0x03, 0x04, // external IP address
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x00,
+                                0x00, // version, opcode (request external IP)
+                            },
+         0},
+        {2ms, TestOp::RECV, {
+                                0x00,
+                                0x80,
+                                0x00,
+                                0x42, // version, opcode (external IP), result code (*NOT* success)
+                                0x66,
+                                0xfd,
+                                0xa1,
+                                0xee, // seconds sinds start of epoch
+                                0x01,
+                                0x02,
+                                0x03,
+                                0x04, // external IP address
+                            },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv4, default_gateway_ipv4, script);
@@ -610,37 +1157,60 @@ BOOST_AUTO_TEST_CASE(natpmp_protocol_error)
 
     // First scenario: non-0 result code when requesting port mapping.
     script = {
-        {
-            0ms, TestOp::SEND,
-            {
-                0x00, 0x00, // version, opcode (request external IP)
-            }, 0
-        },
-        {
-            2ms, TestOp::RECV,
-            {
-                0x00, 0x80, 0x00, 0x00, // version, opcode (external IP), result code (success)
-                0x66, 0xfd, 0xa1, 0xee, // seconds sinds start of epoch
-                0x01, 0x02, 0x03, 0x04, // external IP address
-            }, 0
-        },
-        {
-            0ms, TestOp::SEND,
-            {
-                0x00, 0x02, 0x00, 0x00, // version, opcode (request map TCP)
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x00, 0x00, 0x03, 0xe8, // requested mapping lifetime in seconds
-            }, 0
-        },
-        {
-            2ms, TestOp::RECV,
-            {
-                0x00, 0x82, 0x00, 0x43, // version, opcode (mapped TCP)
-                0x66, 0xfd, 0xa1, 0xee, // seconds sinds start of epoch
-                0x04, 0xd2, 0x04, 0xd2, // internal port, mapped external port
-                0x00, 0x00, 0x01, 0xf4, // mapping lifetime in seconds
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x00,
+                                0x00, // version, opcode (request external IP)
+                            },
+         0},
+        {2ms, TestOp::RECV, {
+                                0x00,
+                                0x80,
+                                0x00,
+                                0x00, // version, opcode (external IP), result code (success)
+                                0x66,
+                                0xfd,
+                                0xa1,
+                                0xee, // seconds sinds start of epoch
+                                0x01,
+                                0x02,
+                                0x03,
+                                0x04, // external IP address
+                            },
+         0},
+        {0ms, TestOp::SEND, {
+                                0x00,
+                                0x02,
+                                0x00,
+                                0x00, // version, opcode (request map TCP)
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, suggested external port
+                                0x00,
+                                0x00,
+                                0x03,
+                                0xe8, // requested mapping lifetime in seconds
+                            },
+         0},
+        {2ms, TestOp::RECV, {
+                                0x00,
+                                0x82,
+                                0x00,
+                                0x43, // version, opcode (mapped TCP)
+                                0x66,
+                                0xfd,
+                                0xa1,
+                                0xee, // seconds sinds start of epoch
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, mapped external port
+                                0x00,
+                                0x00,
+                                0x01,
+                                0xf4, // mapping lifetime in seconds
+                            },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv4, default_gateway_ipv4, script);
@@ -658,30 +1228,133 @@ BOOST_AUTO_TEST_CASE(natpmp_protocol_error)
 BOOST_AUTO_TEST_CASE(pcp_protocol_error)
 {
     const std::vector<TestOp> script{
-        {
-            0ms, TestOp::SEND,
-            {
-                0x02, 0x01, 0x00, 0x00, // version, opcode
-                0x00, 0x00, 0x03, 0xe8, // lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc0, 0xa8, 0x00, 0x06, // internal IP
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, suggested external port
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, // suggested external IP
-            }, 0
-        },
-        {
-            250ms, TestOp::RECV, // 250ms delay before answer
-            {
-                0x02, 0x81, 0x00, 0x42, // version, opcode, result error
-                0x00, 0x00, 0x01, 0xf4, // granted lifetime
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved
-                0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, // nonce
-                0x06, 0x00, 0x00, 0x00, // protocol (TCP), reserved
-                0x04, 0xd2, 0x04, 0xd2, // internal port, assigned external port
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x01, 0x02, 0x03, 0x04, // assigned external IP
-            }, 0
-        },
+        {0ms, TestOp::SEND, {
+                                0x02,
+                                0x01,
+                                0x00,
+                                0x00, // version, opcode
+                                0x00,
+                                0x00,
+                                0x03,
+                                0xe8, // lifetime
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0xff,
+                                0xff,
+                                0xc0,
+                                0xa8,
+                                0x00,
+                                0x06, // internal IP
+                                0x11,
+                                0x22,
+                                0x33,
+                                0x44,
+                                0x55,
+                                0x66,
+                                0x77,
+                                0x88,
+                                0x99,
+                                0xaa,
+                                0xbb,
+                                0xcc, // nonce
+                                0x06,
+                                0x00,
+                                0x00,
+                                0x00, // protocol (TCP), reserved
+                                0x04,
+                                0xd2,
+                                0x04,
+                                0xd2, // internal port, suggested external port
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0xff,
+                                0xff,
+                                0x00,
+                                0x00,
+                                0x00,
+                                0x00, // suggested external IP
+                            },
+         0},
+        {250ms, TestOp::RECV, // 250ms delay before answer
+         {
+             0x02,
+             0x81,
+             0x00,
+             0x42, // version, opcode, result error
+             0x00,
+             0x00,
+             0x01,
+             0xf4, // granted lifetime
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00, // reserved
+             0x11,
+             0x22,
+             0x33,
+             0x44,
+             0x55,
+             0x66,
+             0x77,
+             0x88,
+             0x99,
+             0xaa,
+             0xbb,
+             0xcc, // nonce
+             0x06,
+             0x00,
+             0x00,
+             0x00, // protocol (TCP), reserved
+             0x04,
+             0xd2,
+             0x04,
+             0xd2, // internal port, assigned external port
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0x00,
+             0xff,
+             0xff,
+             0x01,
+             0x02,
+             0x03,
+             0x04, // assigned external IP
+         },
+         0},
     };
     CreateSock = [this, &script](int domain, int type, int protocol) {
         if (domain == AF_INET && type == SOCK_DGRAM && protocol == IPPROTO_UDP) return std::make_unique<PCPTestSock>(default_local_ipv4, default_gateway_ipv4, script);
@@ -696,4 +1369,3 @@ BOOST_AUTO_TEST_CASE(pcp_protocol_error)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

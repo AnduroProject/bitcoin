@@ -73,7 +73,7 @@ class CDBBatch
     friend class CDBWrapper;
 
 private:
-    const CDBWrapper &parent;
+    const CDBWrapper& parent;
 
     struct WriteBatchImpl;
     const std::unique_ptr<WriteBatchImpl> m_impl_batch;
@@ -122,7 +122,7 @@ public:
     struct IteratorImpl;
 
 private:
-    const CDBWrapper &parent;
+    const CDBWrapper& parent;
     const std::unique_ptr<IteratorImpl> m_impl_iter;
 
     void SeekImpl(std::span<const std::byte> key);
@@ -130,7 +130,6 @@ private:
     std::span<const std::byte> GetValueImpl() const;
 
 public:
-
     /**
      * @param[in] _parent          Parent CDBWrapper instance.
      * @param[in] _piter           The original leveldb iterator.
@@ -142,7 +141,9 @@ public:
 
     void SeekToFirst();
 
-    template<typename K> void Seek(const K& key) {
+    template <typename K>
+    void Seek(const K& key)
+    {
         DataStream ssKey{};
         ssKey.reserve(DBWRAPPER_PREALLOC_KEY_SIZE);
         ssKey << key;
@@ -151,7 +152,9 @@ public:
 
     void Next();
 
-    template<typename K> bool GetKey(K& key) {
+    template <typename K>
+    bool GetKey(K& key)
+    {
         try {
             DataStream ssKey{GetKeyImpl()};
             ssKey >> key;
@@ -161,7 +164,9 @@ public:
         return true;
     }
 
-    template<typename V> bool GetValue(V& value) {
+    template <typename V>
+    bool GetValue(V& value)
+    {
         try {
             DataStream ssValue{GetValueImpl()};
             dbwrapper_private::GetObfuscation(parent)(ssValue);
@@ -178,6 +183,7 @@ struct LevelDBContext;
 class CDBWrapper
 {
     friend const Obfuscation& dbwrapper_private::GetObfuscation(const CDBWrapper&);
+
 private:
     //! holds all leveldb-specific fields of this class
     std::unique_ptr<LevelDBContext> m_db_context;
@@ -238,7 +244,8 @@ public:
     }
 
     //! @returns filesystem path to the on-disk data.
-    std::optional<fs::path> StoragePath() {
+    std::optional<fs::path> StoragePath()
+    {
         if (m_is_memory) {
             return {};
         }
@@ -274,7 +281,7 @@ public:
      */
     bool IsEmpty();
 
-    template<typename K>
+    template <typename K>
     size_t EstimateSize(const K& key_begin, const K& key_end) const
     {
         DataStream ssKey1{}, ssKey2{};

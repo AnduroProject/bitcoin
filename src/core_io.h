@@ -8,9 +8,9 @@
 #include <consensus/amount.h>
 #include <util/result.h>
 
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 class CBlock;
 class CBlockHeader;
@@ -26,9 +26,9 @@ class CTxUndo;
  * Verbose level for block's transaction
  */
 enum class TxVerbosity {
-    SHOW_TXID,                //!< Only TXID for each block's transaction
-    SHOW_DETAILS,             //!< Include TXID, inputs, outputs, and other common block's transaction information
-    SHOW_DETAILS_AND_PREVOUT  //!< The same as previous option with information about prevouts if available
+    SHOW_TXID,               //!< Only TXID for each block's transaction
+    SHOW_DETAILS,            //!< Include TXID, inputs, outputs, and other common block's transaction information
+    SHOW_DETAILS_AND_PREVOUT //!< The same as previous option with information about prevouts if available
 };
 
 // core_read.cpp

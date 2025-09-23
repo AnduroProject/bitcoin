@@ -5,35 +5,35 @@
 #include <stdlib.h>
 
 #ifdef _MSC_VER
-#  include <BaseTsd.h>
-   typedef SSIZE_T ssize_t;
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 #else
-#  include <unistd.h>
+#include <unistd.h>
 #endif
 
 #ifndef MINISKETCH_API
-# if defined(_WIN32)
-#  ifdef MINISKETCH_BUILD
-#   define MINISKETCH_API __declspec(dllexport)
-#  else
-#   define MINISKETCH_API
-#  endif
-# elif defined(__GNUC__) && (__GNUC__ >= 4) && defined(MINISKETCH_BUILD)
-#  define MINISKETCH_API __attribute__ ((visibility ("default")))
-# else
-#  define MINISKETCH_API
-# endif
+#if defined(_WIN32)
+#ifdef MINISKETCH_BUILD
+#define MINISKETCH_API __declspec(dllexport)
+#else
+#define MINISKETCH_API
+#endif
+#elif defined(__GNUC__) && (__GNUC__ >= 4) && defined(MINISKETCH_BUILD)
+#define MINISKETCH_API __attribute__((visibility("default")))
+#else
+#define MINISKETCH_API
+#endif
 #endif
 
 #ifdef __cplusplus
-#  if __cplusplus >= 201103L
-#    include <memory>
-#    include <vector>
-#    include <cassert>
-#    if __cplusplus >= 201703L
-#      include <optional>
-#    endif // __cplusplus >= 201703L
-#  endif // __cplusplus >= 201103L
+#if __cplusplus >= 201103L
+#include <cassert>
+#include <memory>
+#include <vector>
+#if __cplusplus >= 201703L
+#include <optional>
+#endif // __cplusplus >= 201703L
+#endif // __cplusplus >= 201103L
 extern "C" {
 #endif // __cplusplus
 
@@ -51,7 +51,7 @@ MINISKETCH_API int minisketch_bits_supported(uint32_t bits);
  * Each implementation is identified by a number from 0 to the output of this
  * function call, inclusive. Note that not every combination of implementation
  * and element size may exist (see further).
-*/
+ */
 MINISKETCH_API uint32_t minisketch_implementation_max(void);
 
 /** Determine if the a combination of bits and implementation number is available.
@@ -195,8 +195,7 @@ MINISKETCH_API size_t minisketch_compute_max_elements(uint32_t bits, size_t capa
 /** Simple RAII C++11 wrapper around the minisketch API. */
 class Minisketch
 {
-    struct Deleter
-    {
+    struct Deleter {
         void operator()(minisketch* ptr) const
         {
             minisketch_destroy(ptr);
@@ -330,14 +329,13 @@ public:
 
     /** Deserialize into this (valid) Minisketch from an object containing its bytes (which has data()
      *  and size() members). */
-    template<typename T>
+    template <typename T>
     Minisketch& Deserialize(
         const T& obj,
         typename std::enable_if<
             std::is_convertible<typename std::remove_pointer<decltype(obj.data())>::type (*)[], const unsigned char (*)[]>::value &&
-            std::is_convertible<decltype(obj.size()), std::size_t>::value,
-            std::nullptr_t
-        >::type = nullptr) noexcept
+                std::is_convertible<decltype(obj.size()), std::size_t>::value,
+            std::nullptr_t>::type = nullptr) noexcept
     {
         assert(GetSerializedSize() == obj.size());
         minisketch_deserialize(m_minisketch.get(), obj.data());
@@ -365,4 +363,4 @@ public:
 #endif // __cplusplus >= 201103L
 #endif // __cplusplus
 
-#endif  // _MINISKETCH_H_
+#endif // _MINISKETCH_H_

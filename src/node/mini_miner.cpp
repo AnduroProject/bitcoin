@@ -63,7 +63,7 @@ MiniMiner::MiniMiner(const CTxMemPool& mempool, const std::vector<COutPoint>& ou
     // Calculate the cluster and construct the entry map.
     std::vector<uint256> txids_needed;
     txids_needed.reserve(m_requested_outpoints_by_txid.size());
-    for (const auto& [txid, _]: m_requested_outpoints_by_txid) {
+    for (const auto& [txid, _] : m_requested_outpoints_by_txid) {
         txids_needed.push_back(txid);
     }
     const auto cluster = mempool.GatherClusters(txids_needed);
@@ -78,11 +78,11 @@ MiniMiner::MiniMiner(const CTxMemPool& mempool, const std::vector<COutPoint>& ou
     for (const auto& txiter : cluster) {
         if (!m_to_be_replaced.count(txiter->GetTx().GetHash())) {
             auto [mapiter, success] = m_entries_by_txid.emplace(txiter->GetTx().GetHash(),
-                MiniMinerMempoolEntry{/*tx_in=*/txiter->GetSharedTx(),
-                                      /*vsize_self=*/txiter->GetTxSize(),
-                                      /*vsize_ancestor=*/txiter->GetSizeWithAncestors(),
-                                      /*fee_self=*/txiter->GetModifiedFee(),
-                                      /*fee_ancestor=*/txiter->GetModFeesWithAncestors()});
+                                                                MiniMinerMempoolEntry{/*tx_in=*/txiter->GetSharedTx(),
+                                                                                      /*vsize_self=*/txiter->GetTxSize(),
+                                                                                      /*vsize_ancestor=*/txiter->GetSizeWithAncestors(),
+                                                                                      /*fee_self=*/txiter->GetModifiedFee(),
+                                                                                      /*fee_ancestor=*/txiter->GetModFeesWithAncestors()});
             m_entries.push_back(mapiter);
         } else {
             auto outpoints_it = m_requested_outpoints_by_txid.find(txiter->GetTx().GetHash());
@@ -179,10 +179,10 @@ MiniMiner::MiniMiner(const std::vector<MiniMinerMempoolEntry>& manual_entries,
 // Under the ancestor-based mining approach, high-feerate children can pay for parents, but high-feerate
 // parents do not incentive inclusion of their children. Therefore the mining algorithm only considers
 // transactions for inclusion on basis of the minimum of their own feerate or their ancestor feerate.
-struct AncestorFeerateComparator
-{
-    template<typename I>
-    bool operator()(const I& a, const I& b) const {
+struct AncestorFeerateComparator {
+    template <typename I>
+    bool operator()(const I& a, const I& b) const
+    {
         auto min_feerate = [](const MiniMinerMempoolEntry& e) -> FeeFrac {
             FeeFrac self_feerate(e.GetModifiedFee(), e.GetTxSize());
             FeeFrac ancestor_feerate(e.GetModFeesWithAncestors(), e.GetSizeWithAncestors());
@@ -237,12 +237,11 @@ void MiniMiner::SanityCheck() const
     Assume(m_entries.size() == m_entries_by_txid.size());
     Assume(m_entries.size() == m_descendant_set_by_txid.size());
     // Cached ancestor values should be at least as large as the transaction's own fee and size
-    Assume(std::all_of(m_entries.begin(), m_entries.end(), [](const auto& entry) {
-        return entry->second.GetSizeWithAncestors() >= entry->second.GetTxSize() &&
-               entry->second.GetModFeesWithAncestors() >= entry->second.GetModifiedFee();}));
+    Assume(std::all_of(m_entries.begin(), m_entries.end(), [](const auto& entry) { return entry->second.GetSizeWithAncestors() >= entry->second.GetTxSize() &&
+                                                                                          entry->second.GetModFeesWithAncestors() >= entry->second.GetModifiedFee(); }));
     // None of the entries should be to-be-replaced transactions
     Assume(std::all_of(m_to_be_replaced.begin(), m_to_be_replaced.end(),
-        [&](const auto& txid){return m_entries_by_txid.find(txid) == m_entries_by_txid.end();}));
+                       [&](const auto& txid) { return m_entries_by_txid.find(txid) == m_entries_by_txid.end(); }));
 }
 
 void MiniMiner::BuildMockTemplate(std::optional<CFeeRate> target_feerate)
@@ -425,9 +424,9 @@ std::optional<CAmount> MiniMiner::CalculateTotalBumpFees(const CFeeRate& target_
         to_process.erase(iter);
     }
     const auto ancestor_package_size = std::accumulate(ancestors.cbegin(), ancestors.cend(), int64_t{0},
-        [](int64_t sum, const auto it) {return sum + it->second.GetTxSize();});
+                                                       [](int64_t sum, const auto it) { return sum + it->second.GetTxSize(); });
     const auto ancestor_package_fee = std::accumulate(ancestors.cbegin(), ancestors.cend(), CAmount{0},
-        [](CAmount sum, const auto it) {return sum + it->second.GetModifiedFee();});
+                                                      [](CAmount sum, const auto it) { return sum + it->second.GetModifiedFee(); });
     return target_feerate.GetFee(ancestor_package_size) - ancestor_package_fee;
 }
 } // namespace node

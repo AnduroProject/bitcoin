@@ -46,7 +46,6 @@ void initialize_package_rbf()
         g_outpoints.emplace_back();
         g_outpoints.back().n = i;
     }
-
 }
 
 FUZZ_TARGET(rbf, .init = initialize_rbf)
@@ -184,9 +183,9 @@ FUZZ_TARGET(package_rbf, .init = initialize_package_rbf)
         changeset->StageRemoval(txiter);
     }
     changeset->StageAddition(replacement_entry.GetSharedTx(), replacement_fees,
-            replacement_entry.GetTime().count(), replacement_entry.GetHeight(),
-            replacement_entry.GetSequence(), replacement_entry.GetSpendsCoinbase(),
-            replacement_entry.GetSigOpCost(), replacement_entry.GetLockPoints());
+                             replacement_entry.GetTime().count(), replacement_entry.GetHeight(),
+                             replacement_entry.GetSequence(), replacement_entry.GetSpendsCoinbase(),
+                             replacement_entry.GetSigOpCost(), replacement_entry.GetLockPoints());
     // Calculate the chunks for a replacement.
     auto calc_results{changeset->CalculateChunksForRBF()};
 
@@ -218,7 +217,7 @@ FUZZ_TARGET(package_rbf, .init = initialize_package_rbf)
     // If internals report error, wrapper should too
     auto err_tuple{ImprovesFeerateDiagram(*changeset)};
     if (!calc_results.has_value()) {
-         assert(err_tuple.value().first == DiagramCheckError::UNCALCULABLE);
+        assert(err_tuple.value().first == DiagramCheckError::UNCALCULABLE);
     } else {
         // Diagram check succeeded
         auto old_sum = std::accumulate(calc_results->first.begin(), calc_results->first.end(), FeeFrac{});

@@ -18,9 +18,9 @@
 #include <QMessageBox>
 #include <QMutex>
 #include <QProgressDialog>
+#include <QString>
 #include <QThread>
 #include <QTimer>
-#include <QString>
 
 class ClientModel;
 class OptionsModel;
@@ -105,7 +105,7 @@ protected:
     interfaces::Node& node() const { return m_wallet_controller->m_node; }
     QObject* worker() const { return m_wallet_controller->m_activity_worker; }
 
-    void showProgressDialog(const QString& title_text, const QString& label_text, bool show_minimized=false);
+    void showProgressDialog(const QString& title_text, const QString& label_text, bool show_minimized = false);
 
     WalletController* const m_wallet_controller;
     QWidget* const m_parent_widget;

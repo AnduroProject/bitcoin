@@ -9,13 +9,14 @@
 
 #include <random>
 
-#include "util.h"
-#include "sketch.h"
 #include "int_utils.h"
+#include "sketch.h"
+#include "util.h"
 
 /** Compute the remainder of a polynomial division of val by mod, putting the result in mod. */
-template<typename F>
-void PolyMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::Elem>& val, const F& field) {
+template <typename F>
+void PolyMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::Elem>& val, const F& field)
+{
     size_t modsize = mod.size();
     CHECK_SAFE(modsize > 0 && mod.back() == 1);
     if (val.size() < modsize) return;
@@ -30,12 +31,14 @@ void PolyMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::E
             }
         }
     }
-    while (val.size() > 0 && val.back() == 0) val.pop_back();
+    while (val.size() > 0 && val.back() == 0)
+        val.pop_back();
 }
 
 /** Compute the quotient of a polynomial division of val by mod, putting the quotient in div and the remainder in val. */
-template<typename F>
-void DivMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::Elem>& val, std::vector<typename F::Elem>& div, const F& field) {
+template <typename F>
+void DivMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::Elem>& val, std::vector<typename F::Elem>& div, const F& field)
+{
     size_t modsize = mod.size();
     CHECK_SAFE(mod.size() > 0 && mod.back() == 1);
     if (val.size() < mod.size()) {
@@ -58,8 +61,9 @@ void DivMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::El
 }
 
 /** Make a polynomial monic. */
-template<typename F>
-typename F::Elem MakeMonic(std::vector<typename F::Elem>& a, const F& field) {
+template <typename F>
+typename F::Elem MakeMonic(std::vector<typename F::Elem>& a, const F& field)
+{
     CHECK_SAFE(a.back() != 0);
     if (a.back() == 1) return 0;
     auto inv = field.Inv(a.back());
@@ -72,8 +76,9 @@ typename F::Elem MakeMonic(std::vector<typename F::Elem>& a, const F& field) {
 }
 
 /** Compute the GCD of two polynomials, putting the result in a. b will be cleared. */
-template<typename F>
-void GCD(std::vector<typename F::Elem>& a, std::vector<typename F::Elem>& b, const F& field) {
+template <typename F>
+void GCD(std::vector<typename F::Elem>& a, std::vector<typename F::Elem>& b, const F& field)
+{
     if (a.size() < b.size()) std::swap(a, b);
     while (b.size() > 0) {
         if (b.size() == 1) {
@@ -88,8 +93,9 @@ void GCD(std::vector<typename F::Elem>& a, std::vector<typename F::Elem>& b, con
 }
 
 /** Square a polynomial. */
-template<typename F>
-void Sqr(std::vector<typename F::Elem>& poly, const F& field) {
+template <typename F>
+void Sqr(std::vector<typename F::Elem>& poly, const F& field)
+{
     if (poly.size() == 0) return;
     poly.resize(poly.size() * 2 - 1);
     for (size_t i = 0; i < poly.size(); ++i) {
@@ -99,8 +105,9 @@ void Sqr(std::vector<typename F::Elem>& poly, const F& field) {
 }
 
 /** Compute the trace map of (param*x) modulo mod, putting the result in out. */
-template<typename F>
-void TraceMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::Elem>& out, const typename F::Elem& param, const F& field) {
+template <typename F>
+void TraceMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::Elem>& out, const typename F::Elem& param, const F& field)
+{
     out.reserve(mod.size() * 2);
     out.resize(2);
     out[0] = 0;
@@ -125,8 +132,9 @@ void TraceMod(const std::vector<typename F::Elem>& mod, std::vector<typename F::
  * This implements the Berlekamp trace algorithm, plus an efficient test to fail fast in
  * case the polynomial cannot be fully factored.
  */
-template<typename F>
-bool RecFindRoots(std::vector<std::vector<typename F::Elem>>& stack, size_t pos, std::vector<typename F::Elem>& roots, bool fully_factorizable, int depth, typename F::Elem randv, const F& field) {
+template <typename F>
+bool RecFindRoots(std::vector<std::vector<typename F::Elem>>& stack, size_t pos, std::vector<typename F::Elem>& roots, bool fully_factorizable, int depth, typename F::Elem randv, const F& field)
+{
     auto& ppoly = stack[pos];
     // We assert ppoly.size() > 1 (instead of just ppoly.size() > 0) to additionally exclude
     // constants polynomials because
@@ -206,7 +214,8 @@ bool RecFindRoots(std::vector<std::vector<typename F::Elem>>& stack, size_t pos,
             for (size_t i = 0; i < trace.size(); ++i) {
                 tmp[i] ^= trace[i];
             }
-            while (tmp.size() && tmp.back() == 0) tmp.pop_back();
+            while (tmp.size() && tmp.back() == 0)
+                tmp.pop_back();
             PolyMod(poly, tmp, field);
 
             // Whenever the test fails, we can immediately abort the root
@@ -223,7 +232,8 @@ bool RecFindRoots(std::vector<std::vector<typename F::Elem>>& stack, size_t pos,
             // of 2^(BITS-depth) roots. If after depth splits the degree of
             // the polynomial is >= 2^(BITS-depth), something is wrong.
             CHECK_RETURN(field.Bits() - depth >= std::numeric_limits<decltype(poly.size())>::digits ||
-                (poly.size() - 2) >> (field.Bits() - depth) == 0, false);
+                             (poly.size() - 2) >> (field.Bits() - depth) == 0,
+                         false);
         }
 
         depth++;
@@ -260,8 +270,9 @@ bool RecFindRoots(std::vector<std::vector<typename F::Elem>>& stack, size_t pos,
  * In case the square-free polynomial is not fully factorizable, i.e., it
  * has fewer roots than its degree, the empty vector is returned.
  */
-template<typename F>
-std::vector<typename F::Elem> FindRoots(const std::vector<typename F::Elem>& poly, typename F::Elem basis, const F& field) {
+template <typename F>
+std::vector<typename F::Elem> FindRoots(const std::vector<typename F::Elem>& poly, typename F::Elem basis, const F& field)
+{
     std::vector<typename F::Elem> roots;
     CHECK_RETURN(poly.size() != 0, {});
     CHECK_RETURN(basis != 0, {});
@@ -278,8 +289,9 @@ std::vector<typename F::Elem> FindRoots(const std::vector<typename F::Elem>& pol
     return roots;
 }
 
-template<typename F>
-std::vector<typename F::Elem> BerlekampMassey(const std::vector<typename F::Elem>& syndromes, size_t max_degree, const F& field) {
+template <typename F>
+std::vector<typename F::Elem> BerlekampMassey(const std::vector<typename F::Elem>& syndromes, size_t max_degree, const F& field)
+{
     std::vector<typename F::Multiplier> table;
     std::vector<typename F::Elem> current, prev, tmp;
     current.reserve(syndromes.size() / 2 + 1);
@@ -296,7 +308,8 @@ std::vector<typename F::Elem> BerlekampMassey(const std::vector<typename F::Elem
     for (size_t n = 0; n != syndromes.size(); ++n) {
         table.emplace_back(field, syndromes[n]);
         auto discrepancy = syndromes[n];
-        for (size_t i = 1; i < current.size(); ++i) discrepancy ^= table[n - i](current[i]);
+        for (size_t i = 1; i < current.size(); ++i)
+            discrepancy ^= table[n - i](current[i]);
         if (discrepancy != 0) {
             int x = static_cast<int>(n + 1 - (current.size() - 1) - (prev.size() - 1));
             if (!b_have_inv) {
@@ -310,7 +323,8 @@ std::vector<typename F::Elem> BerlekampMassey(const std::vector<typename F::Elem
                 current.resize(prev.size() + x);
             }
             typename F::Multiplier mul(field, field.Mul(discrepancy, b_inv));
-            for (size_t i = 0; i < prev.size(); ++i) current[i + x] ^= mul(prev[i]);
+            for (size_t i = 0; i < prev.size(); ++i)
+                current[i + x] ^= mul(prev[i]);
             if (swap) {
                 std::swap(prev, tmp);
                 b = discrepancy;
@@ -322,8 +336,9 @@ std::vector<typename F::Elem> BerlekampMassey(const std::vector<typename F::Elem
     return current;
 }
 
-template<typename F>
-std::vector<typename F::Elem> ReconstructAllSyndromes(const std::vector<typename F::Elem>& odd_syndromes, const F& field) {
+template <typename F>
+std::vector<typename F::Elem> ReconstructAllSyndromes(const std::vector<typename F::Elem>& odd_syndromes, const F& field)
+{
     std::vector<typename F::Elem> all_syndromes;
     all_syndromes.resize(odd_syndromes.size() * 2);
     for (size_t i = 0; i < odd_syndromes.size(); ++i) {
@@ -333,8 +348,9 @@ std::vector<typename F::Elem> ReconstructAllSyndromes(const std::vector<typename
     return all_syndromes;
 }
 
-template<typename F>
-void AddToOddSyndromes(std::vector<typename F::Elem>& osyndromes, typename F::Elem data, const F& field) {
+template <typename F>
+void AddToOddSyndromes(std::vector<typename F::Elem>& osyndromes, typename F::Elem data, const F& field)
+{
     auto sqr = field.Sqr(data);
     typename F::Multiplier mul(field, sqr);
     for (auto& osyndrome : osyndromes) {
@@ -343,15 +359,16 @@ void AddToOddSyndromes(std::vector<typename F::Elem>& osyndromes, typename F::El
     }
 }
 
-template<typename F>
-std::vector<typename F::Elem> FullDecode(const std::vector<typename F::Elem>& osyndromes, const F& field) {
+template <typename F>
+std::vector<typename F::Elem> FullDecode(const std::vector<typename F::Elem>& osyndromes, const F& field)
+{
     auto asyndromes = ReconstructAllSyndromes<typename F::Elem>(osyndromes, field);
     auto poly = BerlekampMassey(asyndromes, field);
     std::reverse(poly.begin(), poly.end());
     return FindRoots(poly, field);
 }
 
-template<typename F>
+template <typename F>
 class SketchImpl final : public Sketch
 {
     const F m_field;
@@ -359,8 +376,9 @@ class SketchImpl final : public Sketch
     typename F::Elem m_basis;
 
 public:
-    template<typename... Args>
-    SketchImpl(int implementation, int bits, const Args&... args) : Sketch(implementation, bits), m_field(args...) {
+    template <typename... Args>
+    SketchImpl(int implementation, int bits, const Args&... args) : Sketch(implementation, bits), m_field(args...)
+    {
         std::random_device rng;
         std::uniform_int_distribution<uint64_t> dist;
         m_basis = m_field.FromSeed(dist(rng));

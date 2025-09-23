@@ -30,8 +30,7 @@ CAmount CachedTxGetCredit(const CWallet& wallet, const CWalletTx& wtx, const ism
 //! filter decides which addresses will count towards the debit
 CAmount CachedTxGetDebit(const CWallet& wallet, const CWalletTx& wtx, const isminefilter& filter);
 CAmount CachedTxGetChange(const CWallet& wallet, const CWalletTx& wtx);
-struct COutputEntry
-{
+struct COutputEntry {
     CTxDestination destination;
     CAmount amount;
     int vout;

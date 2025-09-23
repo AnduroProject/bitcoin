@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(blockfilters_json_test)
         }
 
         unsigned int pos = 0;
-        /*int block_height =*/ test[pos++].getInt<int>();
+        /*int block_height =*/test[pos++].getInt<int>();
         BOOST_CHECK(uint256::FromHex(test[pos++].get_str()));
 
         CBlock block;

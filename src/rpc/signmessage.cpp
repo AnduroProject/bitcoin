@@ -16,7 +16,8 @@
 
 static RPCHelpMan verifymessage()
 {
-    return RPCHelpMan{"verifymessage",
+    return RPCHelpMan{
+        "verifymessage",
         "Verify a signed message.",
         {
             {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The bitcoin address to use for the signature."},
@@ -24,20 +25,13 @@ static RPCHelpMan verifymessage()
             {"message", RPCArg::Type::STR, RPCArg::Optional::NO, "The message that was signed."},
         },
         RPCResult{
-            RPCResult::Type::BOOL, "", "If the signature is verified or not."
-        },
+            RPCResult::Type::BOOL, "", "If the signature is verified or not."},
         RPCExamples{
-            "\nUnlock the wallet for 30 seconds\n"
-            + HelpExampleCli("walletpassphrase", "\"mypassphrase\" 30") +
-            "\nCreate the signature\n"
-            + HelpExampleCli("signmessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"my message\"") +
-            "\nVerify the signature\n"
-            + HelpExampleCli("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\"") +
-            "\nAs a JSON-RPC call\n"
-            + HelpExampleRpc("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\", \"signature\", \"my message\"")
-        },
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
-        {
+            "\nUnlock the wallet for 30 seconds\n" + HelpExampleCli("walletpassphrase", "\"mypassphrase\" 30") +
+            "\nCreate the signature\n" + HelpExampleCli("signmessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"my message\"") +
+            "\nVerify the signature\n" + HelpExampleCli("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\"") +
+            "\nAs a JSON-RPC call\n" + HelpExampleRpc("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\", \"signature\", \"my message\"")},
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
             std::string strAddress = self.Arg<std::string>("address");
             std::string strSign = self.Arg<std::string>("signature");
             std::string strMessage = self.Arg<std::string>("message");
@@ -71,18 +65,12 @@ static RPCHelpMan signmessagewithprivkey()
             {"message", RPCArg::Type::STR, RPCArg::Optional::NO, "The message to create a signature of."},
         },
         RPCResult{
-            RPCResult::Type::STR, "signature", "The signature of the message encoded in base 64"
-        },
+            RPCResult::Type::STR, "signature", "The signature of the message encoded in base 64"},
         RPCExamples{
-            "\nCreate the signature\n"
-            + HelpExampleCli("signmessagewithprivkey", "\"privkey\" \"my message\"") +
-            "\nVerify the signature\n"
-            + HelpExampleCli("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\"") +
-            "\nAs a JSON-RPC call\n"
-            + HelpExampleRpc("signmessagewithprivkey", "\"privkey\", \"my message\"")
-        },
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
-        {
+            "\nCreate the signature\n" + HelpExampleCli("signmessagewithprivkey", "\"privkey\" \"my message\"") +
+            "\nVerify the signature\n" + HelpExampleCli("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\"") +
+            "\nAs a JSON-RPC call\n" + HelpExampleRpc("signmessagewithprivkey", "\"privkey\", \"my message\"")},
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
             std::string strPrivkey = request.params[0].get_str();
             std::string strMessage = request.params[1].get_str();
 

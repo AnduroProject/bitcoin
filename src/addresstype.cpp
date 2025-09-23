@@ -168,6 +168,7 @@ CScript GetScriptForDestination(const CTxDestination& dest)
     return std::visit(CScriptVisitor(), dest);
 }
 
-bool IsValidDestination(const CTxDestination& dest) {
+bool IsValidDestination(const CTxDestination& dest)
+{
     return std::visit(ValidDestinationVisitor(), dest);
 }
