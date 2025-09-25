@@ -2449,6 +2449,7 @@ static RPCHelpMan scantxoutset()
         std::set<CScript> needles;
         std::map<CScript, std::string> descriptors;
         CAmount total_in = 0;
+        CAmount total_asset_in = 0;
 
         // loop through the scan objects
         for (const UniValue& scanobject : request.params[1].get_array().getValues()) {
@@ -2490,7 +2491,15 @@ static RPCHelpMan scantxoutset()
             const CTxOut& txo = coin.out;
             const CBlockIndex& coinb_block{*CHECK_NONFATAL(tip->GetAncestor(coin.nHeight))};
             input_txos.push_back(txo);
-            total_in += txo.nValue;
+
+            if(!coin.IsBitAssetController()) {
+                if(coin.IsBitAsset()) {
+                    total_asset_in +=txo.nValue;
+                } else {
+                    total_in += txo.nValue;
+                }
+            } 
+
 
             UniValue unspent(UniValue::VOBJ);
             unspent.pushKV("txid", outpoint.hash.GetHex());
@@ -2500,13 +2509,17 @@ static RPCHelpMan scantxoutset()
             unspent.pushKV("amount", ValueFromAmount(txo.nValue));
             unspent.pushKV("coinbase", coin.IsCoinBase());
             unspent.pushKV("height", coin.nHeight);
+
+            unspent.pushKV("is_asset", coin.IsBitAsset() && !coin.IsBitAssetController());
+            unspent.pushKV("is_controller", coin.IsBitAssetController());
             unspent.pushKV("blockhash", coinb_block.GetBlockHash().GetHex());
             unspent.pushKV("confirmations", tip->nHeight - coin.nHeight + 1);
-
             unspents.push_back(std::move(unspent));
         }
         result.pushKV("unspents", std::move(unspents));
         result.pushKV("total_amount", ValueFromAmount(total_in));
+        result.pushKV("total_asset", ValueFromAmount(total_asset_in));
+
     } else {
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid action '%s'", action));
     }
