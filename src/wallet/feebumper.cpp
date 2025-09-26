@@ -257,7 +257,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const Txid& txid, const CCoinC
         if (original_change_index.has_value() ?  original_change_index.value() == i : OutputIsChange(wallet, output)) {
             new_coin_control.destChange = dest;
         } else {
-            CRecipient recipient = {dest, output.nValue, false};
+            CRecipient recipient = {dest, output.nValue, false, false, CScript()};
             recipients.push_back(recipient);
         }
         new_outputs_value += output.nValue;
@@ -273,7 +273,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const Txid& txid, const CCoinC
 
         // Add change as recipient with SFFO flag enabled, so fees are deduced from it.
         // If the output differs from the original tx output (because the user customized it) a new change output will be created.
-        recipients.emplace_back(CRecipient{new_coin_control.destChange, new_outputs_value, /*fSubtractFeeFromAmount=*/true});
+        recipients.emplace_back(CRecipient{new_coin_control.destChange, new_outputs_value, /*fSubtractFeeFromAmount=*/true, false, CScript()});
         new_coin_control.destChange = CNoDestination();
     }
 

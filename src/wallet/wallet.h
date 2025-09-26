@@ -301,6 +301,8 @@ struct CRecipient
     CTxDestination dest;
     CAmount nAmount;
     bool fSubtractFeeFromAmount;
+    bool isPegout;
+    CScript scriptPubKey;
 };
 
 class WalletRescanReserver; //forward declarations for ScanForWalletTransactions/RescanFromTime

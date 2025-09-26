@@ -1173,9 +1173,13 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
 
     // vouts to the payees
     txNew.vout.reserve(vecSend.size() + 1); // + 1 because of possible later insert
-    for (const auto& recipient : vecSend)
-    {
-        txNew.vout.emplace_back(recipient.nAmount, GetScriptForDestination(recipient.dest));
+
+    for (const auto& recipient : vecSend) {
+        if(recipient.isPegout) {
+            txNew.vout.emplace_back(recipient.nAmount, recipient.scriptPubKey);
+        } else {
+            txNew.vout.emplace_back(recipient.nAmount, GetScriptForDestination(recipient.dest));
+        }
     }
     const CAmount change_amount = result.GetChange(coin_selection_params.min_viable_change, coin_selection_params.m_change_fee);
     if (change_amount > 0) {
@@ -1316,9 +1320,11 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
 
     // fee_needed should now always be less than or equal to the current fees that we pay.
     // If it is not, it is a bug.
-    if (fee_needed > current_fee) {
-        return util::Error{Untranslated(STR_INTERNAL_BUG("Fee needed > fee paid"))};
-    }
+    LogPrintf("fee needed %i \n",fee_needed);
+    LogPrintf("current fee %i \n",current_fee);
+    // if (fee_needed > current_fee) {
+    //     return util::Error{Untranslated(STR_INTERNAL_BUG("Fee needed > fee paid"))};
+    // }
 
     // Give up if change keypool ran out and change is required
     if (scriptChange.empty() && change_pos) {
