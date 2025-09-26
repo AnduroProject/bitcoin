@@ -656,6 +656,25 @@ RPCHelpMan listunspent()
                         entry.pushKV("witnessScript", HexStr(witnessScript));
                     }
                 }
+
+                entry.pushKV("spendable", out.spendable);
+                entry.pushKV("solvable", out.solvable);
+                if (out.solvable) {
+                    std::unique_ptr<SigningProvider> provider = pwallet->GetSolvingProvider(scriptPubKey);
+                    if (provider) {
+                        auto descriptor = InferDescriptor(scriptPubKey, *provider);
+                        entry.pushKV("desc", descriptor->ToString());
+                    }
+                }
+                PushParentDescriptors(*pwallet, scriptPubKey, entry);
+                if (avoid_reuse) entry.pushKV("reused", reused);
+
+                if (auto txo = pwallet->GetTXO(out.outpoint)) {
+                     entry.pushKV("is_asset", txo->isAsset());
+                     entry.pushKV("is_asset_controller", txo->isAssetController());
+                }
+                entry.pushKV("safe", out.safe);
+                results.push_back(std::move(entry));
             }
         }
 
