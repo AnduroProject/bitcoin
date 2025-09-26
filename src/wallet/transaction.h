@@ -378,12 +378,17 @@ private:
     const CWalletTx& m_wtx;
     const CTxOut& m_output;
     isminetype m_ismine;
+    bool is_asset;
+    bool is_asset_controller;
+    
 
 public:
     WalletTXO(const CWalletTx& wtx, const CTxOut& output, const isminetype ismine)
         : m_wtx(wtx),
           m_output(output),
-          m_ismine(ismine)
+          m_ismine(ismine),
+          is_asset(false),
+          is_asset_controller(false)
     {
         Assume(std::ranges::find(wtx.tx->vout, output) != wtx.tx->vout.end());
     }
@@ -394,6 +399,14 @@ public:
 
     isminetype GetIsMine() const { return m_ismine; }
     void SetIsMine(isminetype ismine) { m_ismine = ismine; }
+
+    void setAsset() { is_asset = true; }
+
+    bool isAsset() { return is_asset; }
+
+    void setAssetController() { is_asset_controller = true; }
+
+    bool isAssetController() { return is_asset_controller; }
 };
 } // namespace wallet
 

@@ -621,6 +621,11 @@ RPCHelpMan listunspent()
                 }
                 PushParentDescriptors(*pwallet, scriptPubKey, entry);
                 if (avoid_reuse) entry.pushKV("reused", reused);
+
+                if (auto txo = pwallet->GetTXO(out.outpoint)) {
+                     entry.pushKV("is_asset", txo->isAsset());
+                     entry.pushKV("is_asset_controller", txo->isAssetController());
+                }
                 entry.pushKV("safe", out.safe);
                 results.push_back(std::move(entry));
             }

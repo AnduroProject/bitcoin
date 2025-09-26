@@ -1007,6 +1007,7 @@ CWalletTx* CWallet::AddToWallet(CTransactionRef tx, const TxState& state, const 
     // Inserts only if not already there, returns tx inserted or tx found
     auto ret = mapWallet.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(tx, state));
     CWalletTx& wtx = (*ret.first).second;
+    
     bool fInsertedNew = ret.second;
     bool fUpdated = update_wtx && update_wtx(wtx, fInsertedNew);
     if (fInsertedNew) {
@@ -4394,17 +4395,64 @@ void CWallet::WriteBestBlock() const
 void CWallet::RefreshTXOsFromTx(const CWalletTx& wtx)
 {
     AssertLockHeld(cs_wallet);
+
+    CAmount total_asset_in{0};
+    if(wtx.tx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || wtx.tx->version == TRANSACTION_PRECONF_VERSION) {
+        std::map<COutPoint, Coin> coins;
+        for (uint32_t i = 0; i < wtx.tx->vin.size(); ++i) {
+            coins[wtx.tx->vin[i].prevout];
+        }
+        m_chain->findCoins(coins);
+        
+    
+        for (uint32_t i = 0; i < wtx.tx->vin.size(); ++i) {
+            const auto& outPoint = wtx.tx->vin[i].prevout;
+            Coin coinDetail = coins[outPoint];
+            if(coinDetail.IsBitAsset()) {
+                total_asset_in += coinDetail.out.nValue;
+            }
+        }
+    }
+
     for (uint32_t i = 0; i < wtx.tx->vout.size(); ++i) {
-        const CTxOut& txout = wtx.tx->vout.at(i);
+        CTxOut txout = wtx.tx->vout.at(i);
         isminetype ismine = IsMine(txout);
         if (ismine == ISMINE_NO) {
             continue;
         }
         COutPoint outpoint(wtx.GetHash(), i);
+        if(wtx.tx->version == TRANSACTION_PRECONF_VERSION && i == 0) {
+            std::map<COutPoint, Coin> preconfCoins;
+            preconfCoins[outpoint];
+            m_chain->findCoins(preconfCoins);
+            Coin coinDetail = preconfCoins[outpoint];
+            txout.nValue = coinDetail.out.nValue;
+        }
+
+
+        
         if (m_txos.contains(outpoint)) {
             m_txos.at(outpoint).SetIsMine(ismine);
         } else {
             m_txos.emplace(outpoint, WalletTXO{wtx, txout, ismine});
+        }
+
+        if(wtx.tx->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+            if(i==0) {
+                m_txos.at(outpoint).setAssetController();
+            } else if(i==1) {
+                m_txos.at(outpoint).setAsset();
+            }
+        } else if(wtx.tx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
+           if(total_asset_in > 0) {
+              total_asset_in = total_asset_in - txout.nValue;
+              m_txos.at(outpoint).setAsset();
+           }
+        } else if(wtx.tx->version == TRANSACTION_PRECONF_VERSION) {
+            if(total_asset_in > 0 && i > 0) {
+              total_asset_in = total_asset_in - txout.nValue;
+              m_txos.at(outpoint).setAsset();
+            }
         }
     }
 }
