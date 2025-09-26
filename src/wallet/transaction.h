@@ -370,6 +370,8 @@ private:
     isminetype m_ismine;
     bool is_asset;
     bool is_asset_controller;
+    bool is_preconf;
+    CAmount reserve;
     
 
 public:
@@ -378,7 +380,8 @@ public:
           m_output(output),
           m_ismine(ismine),
           is_asset(false),
-          is_asset_controller(false)
+          is_asset_controller(false),
+          reserve{0}
     {
         Assume(std::ranges::find(wtx.tx->vout, output) != wtx.tx->vout.end());
     }
@@ -397,6 +400,10 @@ public:
     void setAssetController() { is_asset_controller = true; }
 
     bool isAssetController() { return is_asset_controller; }
+
+    void setPreconf(CAmount amt) { reserve = amt; }
+    bool isPreconf() { return is_preconf; }
+    CAmount getReserve() { return reserve; }
 };
 } // namespace wallet
 

@@ -4432,22 +4432,13 @@ void CWallet::RefreshTXOsFromTx(const CWalletTx& wtx)
     }
 
     for (uint32_t i = 0; i < wtx.tx->vout.size(); ++i) {
-        CTxOut txout = wtx.tx->vout.at(i);
+        const CTxOut& txout = wtx.tx->vout.at(i);
         isminetype ismine = IsMine(txout);
         if (ismine == ISMINE_NO) {
             continue;
         }
         COutPoint outpoint(wtx.GetHash(), i);
-        if(wtx.tx->version == TRANSACTION_PRECONF_VERSION && i == 0) {
-            std::map<COutPoint, Coin> preconfCoins;
-            preconfCoins[outpoint];
-            m_chain->findCoins(preconfCoins);
-            Coin coinDetail = preconfCoins[outpoint];
-            txout.nValue = coinDetail.out.nValue;
-        }
 
-
-        
         if (m_txos.contains(outpoint)) {
             m_txos.at(outpoint).SetIsMine(ismine);
         } else {
@@ -4469,6 +4460,13 @@ void CWallet::RefreshTXOsFromTx(const CWalletTx& wtx)
             if(total_asset_in > 0 && i > 0) {
               total_asset_in = total_asset_in - txout.nValue;
               m_txos.at(outpoint).setAsset();
+            }
+            if(i==0) {
+                std::map<COutPoint, Coin> preconfCoins;
+                preconfCoins[outpoint];
+                m_chain->findCoins(preconfCoins);
+                Coin coinDetail = preconfCoins[outpoint];
+                m_txos.at(outpoint).setPreconf(coinDetail.out.nValue);
             }
         }
     }
