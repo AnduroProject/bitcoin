@@ -36,7 +36,7 @@ std::vector<CRecipient> CreateRecipients(const std::vector<std::pair<CTxDestinat
     std::vector<CRecipient> recipients;
     for (size_t i = 0; i < outputs.size(); ++i) {
         const auto& [destination, amount] = outputs.at(i);
-        CRecipient recipient{destination, amount, subtract_fee_outputs.contains(i)};
+        CRecipient recipient{destination, amount, subtract_fee_outputs.contains(i), false, CScript()};
         recipients.push_back(recipient);
     }
     return recipients;
@@ -319,6 +319,82 @@ RPCHelpMan sendtoaddress()
             const bool verbose{request.params[10].isNull() ? false : request.params[10].get_bool()};
 
             return SendMoney(*pwallet, coin_control, recipients, mapValue, verbose);
+        },
+    };
+}
+
+
+RPCHelpMan sendpegout()
+{
+    return RPCHelpMan{
+        "sendpegout",
+        "Send an pegout to a given address.",
+        {
+            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The bitcoin address to send to."},
+            {"amount", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The amount in " + CURRENCY_UNIT + " to send. eg 0.1"},
+        },
+        {
+            RPCResult{"if verbose is not set or set to false",
+                      RPCResult::Type::STR_HEX, "txid", "The transaction id."},
+        },
+        RPCExamples{
+            "\nSend 0.1 BTC\n" + HelpExampleCli("sendtoaddress", "\"" + EXAMPLE_ADDRESS[0] + "\" 0.1") 
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
+            std::shared_ptr<CWallet> const pwallet = GetWalletForJSONRPCRequest(request);
+            if (!pwallet) return UniValue::VNULL;
+
+            // Make sure the results are valid at least up to the most recent block
+            // the user could have gotten from another RPC command prior to now
+            pwallet->BlockUntilSyncedToCurrentChain();
+
+            LOCK(pwallet->cs_wallet);
+
+            EnsureWalletIsUnlocked(*pwallet);
+
+            // Parse and validate Bitcoin address
+            const std::string bitcoin_address = request.params[0].get_str();
+            
+            // Validate Bitcoin address format
+            CTxDestination dest = ParentDecodeDestination(bitcoin_address);
+            if (!IsValidDestination(dest)) {
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+            }
+
+            // Parse amount
+            CAmount amount = AmountFromValue(request.params[1]);
+            if (amount <= 0) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for peg-out");
+            }
+
+            // Use default coin control settings
+            CCoinControl coin_control;
+
+            // Wallet comments
+            mapValue_t mapValue;
+
+            // Create peg-out burn output
+            std::vector<CRecipient> recipients;
+            
+            // Create the peg-out burn recipient
+            CRecipient recipient;
+            recipient.nAmount = amount;
+            recipient.fSubtractFeeFromAmount = false; // Use default behavior
+            
+            // Create OP_RETURN burn script with Bitcoin address
+            CScript burn_script;
+            burn_script << OP_RETURN << ToByteVector(bitcoin_address);
+            recipient.scriptPubKey = burn_script;
+            recipient.isPegout = true;
+            recipients.push_back(recipient);
+            
+            auto res = CreateTransaction(*pwallet, recipients, /*change_pos=*/std::nullopt, coin_control, true);
+            if (!res) {
+                throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, util::ErrorString(res).original);
+            }
+            const CTransactionRef& tx = res->tx;
+            pwallet->CommitTransaction(tx, std::move(mapValue), /*orderForm=*/{});
+            return tx->GetHash().GetHex();
         },
     };
 }
