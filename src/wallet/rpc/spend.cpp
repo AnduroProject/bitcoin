@@ -20,6 +20,7 @@
 #include <wallet/rpc/util.h>
 #include <wallet/spend.h>
 #include <wallet/wallet.h>
+#include <coordinate/anduro_validator.h>
 
 #include <univalue.h>
 
@@ -329,6 +330,198 @@ RPCHelpMan sendtoaddress()
 
     return SendMoney(*pwallet, coin_control, recipients, mapValue, verbose);
 },
+    };
+}
+
+RPCHelpMan createasset()
+{
+    return RPCHelpMan{
+        "createasset",
+        "Create Asset to a given address.",
+        {
+            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address to send to."},
+            {"supply", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The amount in " + CURRENCY_UNIT + " to send. eg 0.1"},
+            {"assetInfo", RPCArg::Type::OBJ, RPCArg::Optional::NO, "Additional parameters for asset creation", {{"assettype", RPCArg::Type::NUM, RPCArg::Optional::NO, "The asset type"}, {"precision", RPCArg::Type::NUM, RPCArg::Optional::NO, "Precision number for token"}, {"ticker", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker symbol"}, {"headline", RPCArg::Type::STR, RPCArg::Optional::NO, "The headline"}, {"payloaddata", RPCArg::Type::STR, RPCArg::Optional::NO, "The payload data"}}}
+        },
+        {
+            RPCResult{"if verbose is not set or set to false",
+                      RPCResult::Type::STR_HEX, "txid", "The transaction id."},
+        },
+        RPCExamples{
+            "\nCreateAsset 1000 Supply\n" + HelpExampleCli("createasset", "\"" + EXAMPLE_ADDRESS[0] + "\" 0.1") 
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
+            std::shared_ptr<CWallet> const pwallet = GetWalletForJSONRPCRequest(request);
+            if (!pwallet) return UniValue::VNULL;
+
+            // Make sure the results are valid at least up to the most recent block
+            // the user could have gotten from another RPC command prior to now
+            pwallet->BlockUntilSyncedToCurrentChain();
+
+            LOCK(pwallet->cs_wallet);
+
+            EnsureWalletIsUnlocked(*pwallet);
+
+            // Parse and validate Coordinate address
+            const std::string coordinate_address = request.params[0].get_str();
+            
+            // Validate Bitcoin address format
+            CTxDestination dest = DecodeDestination(coordinate_address);
+            if (!IsValidDestination(dest)) {
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+            }
+
+            // Parse amount
+            CAmount amount = AmountFromValue(request.params[1]);
+            if (amount <= 0) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Invalid supply");
+            }
+
+            // Use default coin control settings
+            CCoinControl coin_control;
+
+            CoinFilterParams filter_coins;
+            filter_coins.min_amount = 500000;
+
+            std::vector<COutput> vecOutputs = AvailableCoinsListUnspent(*pwallet, &coin_control, filter_coins).All();
+
+            if (vecOutputs.empty()) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Inputs not available");
+            }
+
+            CScript scriptChange;
+            ReserveDestination rdest(pwallet.get(), pwallet->m_default_address_type);
+            const auto op_dest = rdest.GetReservedDestination(false);
+            if (!op_dest) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Transaction needs a change address, but we can't generate it");
+            } else {
+                dest = *op_dest;
+                scriptChange = GetScriptForDestination(dest);
+            }
+
+            CMutableTransaction rawTx;
+            rawTx.vout.push_back(CTxOut{CAmount(100000000),GetScriptForDestination(dest)});
+            rawTx.vout.push_back(CTxOut{amount,GetScriptForDestination(dest)});
+            rawTx.vout.push_back(CTxOut{0,scriptChange});
+            rawTx.vin.push_back(CTxIn(vecOutputs[0].outpoint));
+
+          
+
+
+            const UniValue& assetParams = request.params[2];
+            if (assetParams.isObject()) {
+                rawTx.version = TRANSACTION_COORDINATE_ASSET_CREATE_VERSION;
+                rawTx.assetType = assetParams["assettype"].getInt<int>();
+                rawTx.precision = assetParams["precision"].getInt<int>();
+                rawTx.ticker = assetParams["ticker"].get_str();
+                rawTx.headline = assetParams["headline"].get_str();
+                rawTx.payload = prepareMessageHash(assetParams["payloaddata"].get_str());
+                rawTx.payloadData = assetParams["payloaddata"].get_str();
+            }
+            
+
+            const CTransaction& ptx = CTransaction(rawTx);
+
+            CAmount txFee = GetVirtualTransactionSize(ptx) * 10;
+
+            rawTx.vout[2].nValue = vecOutputs[0].txout.nValue - txFee;
+
+            if (!pwallet->SignTransaction(rawTx)) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Signing transaction failed");
+            }
+
+            const CTransactionRef& tx = MakeTransactionRef(rawTx);
+            mapValue_t mapValue;
+            pwallet->CommitTransaction(tx, std::move(mapValue), /*orderForm=*/{});
+            return tx->GetHash().GetHex();
+        },
+    };
+}
+
+RPCHelpMan createpremium()
+{
+    return RPCHelpMan{
+        "createpremium",
+        "Create Asset to a given address.",
+        {
+            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address to send to."},
+            {"amount", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "The amount in " + CURRENCY_UNIT + " to send. eg 0.1"}
+        },
+        {
+            RPCResult{"if verbose is not set or set to false",
+                      RPCResult::Type::STR_HEX, "txid", "The transaction id."},
+        },
+        RPCExamples{
+            "\ncreatepremium 0,1 ctc\n" + HelpExampleCli("createpremium", "\"" + EXAMPLE_ADDRESS[0] + "\" 0.1") 
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
+            std::shared_ptr<CWallet> const pwallet = GetWalletForJSONRPCRequest(request);
+            if (!pwallet) return UniValue::VNULL;
+
+            // Make sure the results are valid at least up to the most recent block
+            // the user could have gotten from another RPC command prior to now
+            pwallet->BlockUntilSyncedToCurrentChain();
+
+            LOCK(pwallet->cs_wallet);
+
+            EnsureWalletIsUnlocked(*pwallet);
+
+            // Parse and validate Coordinate address
+            const std::string coordinate_address = request.params[0].get_str();
+            
+            // Validate Bitcoin address format
+            CTxDestination dest = DecodeDestination(coordinate_address);
+            if (!IsValidDestination(dest)) {
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+            }
+
+            // Parse amount
+            CAmount amount = AmountFromValue(request.params[1]);
+            if (amount <= 0) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for peg-out");
+            }
+
+            // Parse amount
+            CAmount reserve = CAmount(5);
+            if (amount <= 5) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Invalid reserve value");
+            }
+
+            // Use default coin control settings
+            CCoinControl coin_control;
+
+            CoinFilterParams filter_coins;
+            filter_coins.min_amount = amount + 100000000;
+
+            std::vector<COutput> vecOutputs = AvailableCoinsListUnspent(*pwallet, &coin_control, filter_coins).All();
+
+            if (vecOutputs.empty()) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Inputs not available");
+            }
+
+            CScript scriptChange;
+            ReserveDestination rdest(pwallet.get(), pwallet->m_default_address_type);
+            const auto op_dest = rdest.GetReservedDestination(false);
+            if (!op_dest) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Transaction needs a change address, but we can't generate it");
+            } else {
+                dest = *op_dest;
+                scriptChange = GetScriptForDestination(dest);
+            }
+
+            CMutableTransaction rawTx;
+            rawTx.version = TRANSACTION_PRECONF_VERSION;
+            rawTx.vout.push_back(CTxOut{reserve,scriptChange});
+            rawTx.vout.push_back(CTxOut{amount,GetScriptForDestination(dest)});
+            rawTx.vin.push_back(CTxIn(vecOutputs[0].outpoint));
+
+            if (!pwallet->SignTransaction(rawTx)) {
+                throw JSONRPCError(RPC_TYPE_ERROR, "Signing transaction failed");
+            }
+
+            const CTransactionRef& tx = MakeTransactionRef(rawTx);
+            return EncodeHexTx(*tx);
+        },
     };
 }
 
