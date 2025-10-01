@@ -1439,6 +1439,7 @@ util::Result<CreatedTransactionResult> FundTransaction(CWallet& wallet, const CM
 {
     // We want to make sure tx.vout is not used now that we are passing outputs as a vector of recipients.
     // This sets us up to remove tx completely in a future PR in favor of passing the inputs directly.
+    
     assert(tx.vout.empty());
 
     // Set the user desired locktime

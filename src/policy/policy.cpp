@@ -71,7 +71,13 @@ bool IsDust(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 std::vector<uint32_t> GetDust(const CTransaction& tx, CFeeRate dust_relay_rate)
 {
     std::vector<uint32_t> dust_outputs;
-    for (uint32_t i{0}; i < tx.vout.size(); ++i) {
+    uint32_t startIndex = 0;
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+       startIndex = 2;
+    } else if (tx.version == TRANSACTION_PRECONF_VERSION) {
+        startIndex = 1;
+    }
+    for (uint32_t i{startIndex}; i < tx.vout.size(); ++i) {
         if (IsDust(tx.vout[i], dust_relay_rate)) dust_outputs.push_back(i);
     }
     return dust_outputs;
