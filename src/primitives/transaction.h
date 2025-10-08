@@ -34,22 +34,20 @@ static const int TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION = 11;
 class CAsset
 {
 public:
-    int16_t blockType;
     int64_t blockNumber;
     int32_t pos;
 
     CAsset() {}
-    CAsset(int16_t blockTypeIn, int64_t blockNumberIn, int32_t posIn) : blockType(blockTypeIn), blockNumber(blockNumberIn), pos(posIn) {}
+    CAsset(int64_t blockNumberIn, int32_t posIn) : blockNumber(blockNumberIn), pos(posIn) {}
 
-    SERIALIZE_METHODS(CAsset, obj) { READWRITE(obj.blockType, obj.blockNumber, obj.pos); }
+    SERIALIZE_METHODS(CAsset, obj) { READWRITE(obj.blockNumber, obj.pos); }
 
     void SetNull()
     {
         pos = 0;
         blockNumber = 0;
-        blockType = 0;
     }
-    bool IsNull() const { return (pos == 0 && blockNumber == 0 && blockType == 0); }
+    bool IsNull() const { return (pos == 0 && blockNumber == 0); }
 };
 
 
