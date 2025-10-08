@@ -29,24 +29,48 @@ static const int TRANSACTION_PRECONF_VERSION = 9;
 static const int TRANSACTION_COORDINATE_ASSET_CREATE_VERSION = 10;
 static const int TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION = 11;
 
+
+/** An outpoint - a combination of a transaction hash and an index n into its vout */
+class CAsset
+{
+public:
+    int16_t blockType;
+    int64_t blockNumber;
+    int32_t pos;
+
+    CAsset() {}
+    CAsset(int16_t blockTypeIn, int64_t blockNumberIn, int32_t posIn) : blockType(blockTypeIn), blockNumber(blockNumberIn), pos(posIn) {}
+
+    SERIALIZE_METHODS(CAsset, obj) { READWRITE(obj.blockType, obj.blockNumber, obj.pos); }
+
+    void SetNull()
+    {
+        pos = 0;
+        blockNumber = 0;
+        blockType = 0;
+    }
+    bool IsNull() const { return (pos == 0 && blockNumber == 0 && blockType == 0); }
+};
+
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
 {
 public:
     Txid hash;
     uint32_t n;
-    int64_t assetId;
+    CAsset assetId;
     static constexpr uint32_t NULL_INDEX = std::numeric_limits<uint32_t>::max();
 
     COutPoint() : n(NULL_INDEX) {}
-    COutPoint(const Txid& hashIn, uint32_t nIn, int64_t assetIdIn=0) : hash(hashIn), n(nIn), assetId(assetIdIn) {}
+    COutPoint(const Txid& hashIn, uint32_t nIn, CAsset assetIdIn=CAsset()) : hash(hashIn), n(nIn), assetId(assetIdIn) {}
 
     SERIALIZE_METHODS(COutPoint, obj) { READWRITE(obj.hash, obj.n, obj.assetId); }
 
     void SetNull()
     {
         hash.SetNull();
-        assetId = 0;
+        assetId.SetNull();
         n = NULL_INDEX;
     }
     bool IsNull() const { return (hash.IsNull() && n == NULL_INDEX); }
