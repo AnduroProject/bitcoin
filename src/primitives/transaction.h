@@ -35,17 +35,18 @@ class COutPoint
 public:
     Txid hash;
     uint32_t n;
-
+    int64_t assetId;
     static constexpr uint32_t NULL_INDEX = std::numeric_limits<uint32_t>::max();
 
     COutPoint() : n(NULL_INDEX) {}
-    COutPoint(const Txid& hashIn, uint32_t nIn) : hash(hashIn), n(nIn) {}
+    COutPoint(const Txid& hashIn, uint32_t nIn, int64_t assetIdIn=0) : hash(hashIn), n(nIn), assetId(assetIdIn) {}
 
-    SERIALIZE_METHODS(COutPoint, obj) { READWRITE(obj.hash, obj.n); }
+    SERIALIZE_METHODS(COutPoint, obj) { READWRITE(obj.hash, obj.n, obj.assetId); }
 
     void SetNull()
     {
         hash.SetNull();
+        assetId = 0;
         n = NULL_INDEX;
     }
     bool IsNull() const { return (hash.IsNull() && n == NULL_INDEX); }
