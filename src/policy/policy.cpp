@@ -188,12 +188,13 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
         return true;
     }
     LogPrintf("transaction version is %i \n", tx.version);
-    CAmount amountAssetInOut = CAmount(0); 
-    uint32_t currentAssetID = 0;
+
+    CAmount amountAssetInOut = CAmount(0);
+    CAsset currentAssetID = CAsset();
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
         bool fBitAsset = false;
         bool fBitAssetControl = false;
-        uint32_t nAssetID = 0;
+        CAsset nAssetID = CAsset();
         Coin coin;
         CAmount coinValue = 0;
 
@@ -229,7 +230,7 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
                     currentAssetID = nAssetID;
                 } else {
                     // prevent to include multiple asset id
-                    if(currentAssetID != nAssetID) {
+                    if (currentAssetID.GetHash() != nAssetID.GetHash()) {
                         LogPrintf(" Multiple asset is detected and it is invalid \n");
                         return false;
                     }

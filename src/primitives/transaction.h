@@ -48,6 +48,8 @@ public:
         blockNumber = 0;
     }
     bool IsNull() const { return (pos == 0 && blockNumber == 0); }
+
+    uint256 GetHash() const;
 };
 
 

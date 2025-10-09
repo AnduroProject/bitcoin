@@ -24,7 +24,8 @@
 using namespace util::hex_literals;
 
 int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out);
-void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, uint32_t& nAssetIDOut, uint32_t nNewAssetIDIn, CAmount& refund);
+
+void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, CAsset& nAssetIDOut, CAsset nNewAssetIDIn, CAmount& refund);
 
 namespace
 {
@@ -142,11 +143,148 @@ void SimulationTest(CCoinsView* base, bool fake_best_block)
     std::vector<std::unique_ptr<CCoinsViewCacheTest>> stack; // A stack of CCoinsViewCaches on top.
     stack.push_back(std::make_unique<CCoinsViewCacheTest>(base)); // Start with one cache.
 
-    // Use a limited set of random transaction ids, so we do test overwriting entries.
-    std::vector<Txid> txids;
-    txids.resize(NUM_SIMULATION_ITERATIONS / 8);
-    for (unsigned int i = 0; i < txids.size(); i++) {
-        txids[i] = Txid::FromUint256(m_rng.rand256());
+
+        // Use a limited set of random transaction ids, so we do test overwriting entries.
+        std::vector<Txid> txids;
+        txids.resize(NUM_SIMULATION_ITERATIONS / 8);
+        for (unsigned int i = 0; i < txids.size(); i++) {
+            txids[i] = Txid::FromUint256(m_rng.rand256());
+        }
+
+        for (unsigned int i = 0; i < NUM_SIMULATION_ITERATIONS; i++) {
+            // Do a random modification.
+            {
+                auto txid = txids[m_rng.randrange(txids.size())]; // txid we're going to modify in this iteration.
+                Coin& coin = result[COutPoint(txid, 0)];
+
+                // Determine whether to test HaveCoin before or after Access* (or both). As these functions
+                // can influence each other's behaviour by pulling things into the cache, all combinations
+                // are tested.
+                bool test_havecoin_before = m_rng.randbits(2) == 0;
+                bool test_havecoin_after = m_rng.randbits(2) == 0;
+
+                bool result_havecoin = test_havecoin_before ? stack.back()->HaveCoin(COutPoint(txid, 0)) : false;
+
+                // Infrequently, test usage of AccessByTxid instead of AccessCoin - the
+                // former just delegates to the latter and returns the first unspent in a txn.
+                const Coin& entry = (m_rng.randrange(500) == 0) ?
+                                        AccessByTxid(*stack.back(), txid) :
+                                        stack.back()->AccessCoin(COutPoint(txid, 0));
+                BOOST_CHECK(coin == entry);
+
+                if (test_havecoin_before) {
+                    BOOST_CHECK(result_havecoin == !entry.IsSpent());
+                }
+
+                if (test_havecoin_after) {
+                    bool ret = stack.back()->HaveCoin(COutPoint(txid, 0));
+                    BOOST_CHECK(ret == !entry.IsSpent());
+                }
+
+                if (m_rng.randrange(5) == 0 || coin.IsSpent()) {
+                    Coin newcoin;
+                    newcoin.out.nValue = RandMoney(m_rng);
+                    newcoin.nHeight = 1;
+
+                    // Infrequently test adding unspendable coins.
+                    if (m_rng.randrange(16) == 0 && coin.IsSpent()) {
+                        newcoin.out.scriptPubKey.assign(1 + m_rng.randbits(6), OP_RETURN);
+                        BOOST_CHECK(newcoin.out.scriptPubKey.IsUnspendable());
+                        added_an_unspendable_entry = true;
+                    } else {
+                        // Random sizes so we can test memory usage accounting
+                        newcoin.out.scriptPubKey.assign(m_rng.randbits(6), 0);
+                        (coin.IsSpent() ? added_an_entry : updated_an_entry) = true;
+                        coin = newcoin;
+                    }
+                    bool is_overwrite = !coin.IsSpent() || m_rng.rand32() & 1;
+                    stack.back()->AddCoin(COutPoint(txid, 0), std::move(newcoin), is_overwrite);
+                } else {
+                    // Spend the coin.
+                    removed_an_entry = true;
+                    coin.Clear();
+                    bool fBitAsset = false;
+                    bool fBitAssetControl = false;
+                    bool isPreconf = false;
+                    CAsset nAssetID = CAsset();
+                    BOOST_CHECK(stack.back()->SpendCoin(COutPoint(txid, 0), fBitAsset, fBitAssetControl, isPreconf, nAssetID));
+                }
+            }
+
+            // Once every 10 iterations, remove a random entry from the cache
+            if (m_rng.randrange(10) == 0) {
+                COutPoint out(txids[m_rng.rand32() % txids.size()], 0);
+                int cacheid = m_rng.rand32() % stack.size();
+                stack[cacheid]->Uncache(out);
+                uncached_an_entry |= !stack[cacheid]->HaveCoinInCache(out);
+            }
+
+            // Once every 1000 iterations and at the end, verify the full cache.
+            if (m_rng.randrange(1000) == 1 || i == NUM_SIMULATION_ITERATIONS - 1) {
+                for (const auto& entry : result) {
+                    bool have = stack.back()->HaveCoin(entry.first);
+                    const Coin& coin = stack.back()->AccessCoin(entry.first);
+                    BOOST_CHECK(have == !coin.IsSpent());
+                    BOOST_CHECK(coin == entry.second);
+                    if (coin.IsSpent()) {
+                        missed_an_entry = true;
+                    } else {
+                        BOOST_CHECK(stack.back()->HaveCoinInCache(entry.first));
+                        found_an_entry = true;
+                    }
+                }
+                for (const auto& test : stack) {
+                    test->SelfTest();
+                }
+            }
+
+            if (m_rng.randrange(100) == 0) {
+                // Every 100 iterations, flush an intermediate cache
+                if (stack.size() > 1 && m_rng.randbool() == 0) {
+                    unsigned int flushIndex = m_rng.randrange(stack.size() - 1);
+                    if (fake_best_block) stack[flushIndex]->SetBestBlock(m_rng.rand256());
+                    bool should_erase = m_rng.randrange(4) < 3;
+                    BOOST_CHECK(should_erase ? stack[flushIndex]->Flush() : stack[flushIndex]->Sync());
+                    flushed_without_erase |= !should_erase;
+                }
+            }
+            if (m_rng.randrange(100) == 0) {
+                // Every 100 iterations, change the cache stack.
+                if (stack.size() > 0 && m_rng.randbool() == 0) {
+                    // Remove the top cache
+                    if (fake_best_block) stack.back()->SetBestBlock(m_rng.rand256());
+                    bool should_erase = m_rng.randrange(4) < 3;
+                    BOOST_CHECK(should_erase ? stack.back()->Flush() : stack.back()->Sync());
+                    flushed_without_erase |= !should_erase;
+                    stack.pop_back();
+                }
+                if (stack.size() == 0 || (stack.size() < 4 && m_rng.randbool())) {
+                    // Add a new cache
+                    CCoinsView* tip = base;
+                    if (stack.size() > 0) {
+                        tip = stack.back().get();
+                    } else {
+                        removed_all_caches = true;
+                    }
+                    stack.push_back(std::make_unique<CCoinsViewCacheTest>(tip));
+                    if (stack.size() == 4) {
+                        reached_4_caches = true;
+                    }
+                }
+            }
+        }
+
+        // Verify coverage.
+        BOOST_CHECK(removed_all_caches);
+        BOOST_CHECK(reached_4_caches);
+        BOOST_CHECK(added_an_entry);
+        BOOST_CHECK(added_an_unspendable_entry);
+        BOOST_CHECK(removed_an_entry);
+        BOOST_CHECK(updated_an_entry);
+        BOOST_CHECK(found_an_entry);
+        BOOST_CHECK(missed_an_entry);
+        BOOST_CHECK(uncached_an_entry);
+        BOOST_CHECK(flushed_without_erase);
     }
 
     for (unsigned int i = 0; i < NUM_SIMULATION_ITERATIONS; i++) {
@@ -435,8 +573,8 @@ BOOST_FIXTURE_TEST_CASE(updatecoins_simulation_test, UpdateTest)
             CTxUndo undo;
             CAmount amountAssetIn = CAmount(0);
             int nControlN = -1;
-            uint32_t nAssetID = 0;
-            uint32_t nNewAssetID = 0;
+            CAsset nAssetID = CAsset();
+            CAsset nNewAssetID = CAsset();
             CAmount refund = CAmount(0);
             UpdateCoins(CTransaction{tx}, *(stack.back()), undo, height, amountAssetIn, nControlN, nAssetID, nNewAssetID, refund);
 
@@ -467,7 +605,7 @@ BOOST_FIXTURE_TEST_CASE(updatecoins_simulation_test, UpdateTest)
             bool fBitAsset = false;
             bool fBitAssetControl = false;
             bool isPreconf = false;
-            uint32_t nAssetID = 0;
+            CAsset nAssetID = CAsset();
             BOOST_CHECK(stack.back()->SpendCoin(utxod->first, fBitAsset, fBitAssetControl, isPreconf, nAssetID));
             // restore inputs
             if (!tx.IsCoinBase()) {
@@ -680,7 +818,7 @@ static void CheckSpendCoins(const CAmount base_value, const MaybeCoin& cache_coi
     bool fBitAsset = false;
     bool fBitAssetControl = false;
     bool isPreconf = false;
-    uint32_t nAssetID = 0;
+    CAsset nAssetID = CAsset();
     test.cache.SpendCoin(OUTPOINT, fBitAsset, fBitAssetControl, isPreconf, nAssetID);
     test.cache.SelfTest();
     BOOST_CHECK_EQUAL(GetCoinsMapEntry(test.cache.map()), expected);
@@ -921,7 +1059,12 @@ void TestFlushBehavior(
     if (do_erasing_flush) {
         // --- 4. Flushing the caches again (with erasing)
         //
-        flush_all(/*erase=*/ true);
+
+        bool fBitAsset = false;
+        bool fBitAssetControl = false;
+        bool isPreconf = false;
+        CAsset nAssetID = CAsset();
+        BOOST_CHECK(view->SpendCoin(outp, fBitAsset, fBitAssetControl, isPreconf, nAssetID));
 
         // Memory does not necessarily go down due to the map using a memory pool
         BOOST_TEST(view->DynamicMemoryUsage() <= cache_usage);

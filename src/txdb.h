@@ -73,10 +73,8 @@ public:
     CoordinateAssetDB(DBParams db_params);
     bool WriteCoordinateAssets(const std::vector<CoordinateAsset>& vAsset);
     std::vector<CoordinateAsset> GetAssets();
-    bool GetLastAssetID(uint32_t& nID);
-    bool WriteLastAssetID(const uint32_t nID);
-    bool GetAsset(const uint32_t nID,CoordinateAsset& asset);
-    bool RemoveAsset(const uint32_t nID);
+    bool GetAsset(const CAsset nID, CoordinateAsset& asset);
+    bool RemoveAsset(const CAsset nID);
     bool WriteAssetMinedBlock(uint256 blockHash);
     bool getAssetMinedBlock(uint256 blockHash);
     bool GetLastAssetPruneHeight(uint32_t& nID);

@@ -272,25 +272,24 @@ static RPCHelpMan listAllAssets() {
             UniValue assets(UniValue::VARR);
             std::vector<CoordinateAsset> assetList = chainman.ActiveChainstate().passettree->GetAssets();
             ;
-                for (const CoordinateAsset& asset_item : assetList) {
-                    UniValue obj(UniValue::VOBJ);
-                    obj.pushKV("id", (uint64_t)asset_item.nID);
-                    obj.pushKV("assettype", asset_item.assetType);
-                    obj.pushKV("precision", asset_item.precision);
-                    obj.pushKV("ticker", asset_item.strTicker);
-                    obj.pushKV("supply", asset_item.nSupply);
-                    obj.pushKV("headline", asset_item.strHeadline);
-                    obj.pushKV("payload", asset_item.payload.ToString());
-                    obj.pushKV("txid", asset_item.txid.ToString());
-                    obj.pushKV("controller", asset_item.strController);
-                    obj.pushKV("owner", asset_item.strOwner);
-                    assets.push_back(obj);
-                }
-                result.pushKV("assets", assets);
-                return result;
-        }
-    };
 
+            for (const CoordinateAsset& asset_item : assetList) {
+                UniValue obj(UniValue::VOBJ);
+                obj.pushKV("id", asset_item.nID.GetHash().ToString());
+                obj.pushKV("assettype", asset_item.assetType);
+                obj.pushKV("precision", asset_item.precision);
+                obj.pushKV("ticker", asset_item.strTicker);
+                obj.pushKV("supply", asset_item.nSupply);
+                obj.pushKV("headline", asset_item.strHeadline);
+                obj.pushKV("payload", asset_item.payload.ToString());
+                obj.pushKV("txid", asset_item.txid.ToString());
+                obj.pushKV("controller", asset_item.strController);
+                obj.pushKV("owner", asset_item.strOwner);
+                assets.push_back(obj);
+            }
+            result.pushKV("assets", assets);
+            return result;
+        }};
 }
 
 static RPCHelpMan listMempoolAssets() {
@@ -325,19 +324,18 @@ static RPCHelpMan listMempoolAssets() {
                 UniValue assets(UniValue::VARR);
                 std::vector<CoordinateMempoolEntry> assetList = getMempoolAssets();
             ;
-                for (const CoordinateMempoolEntry& assetItem : assetList) {
-                    UniValue obj(UniValue::VOBJ);
-                    obj.pushKV("assetId", (uint32_t)assetItem.assetID);
-                    obj.pushKV("txid", assetItem.txid.ToString());
-                    obj.pushKV("vout", (uint32_t)assetItem.vout);
-                     obj.pushKV("nValue", (int64_t)assetItem.nValue);
-                    assets.push_back(obj);
-                }
-                result.pushKV("assets", assets);
-                return result;
-        }
-    };
 
+            for (const CoordinateMempoolEntry& assetItem : assetList) {
+                UniValue obj(UniValue::VOBJ);
+                obj.pushKV("assetId", assetItem.assetID.GetHash().ToString());
+                obj.pushKV("txid", assetItem.txid.ToString());
+                obj.pushKV("vout", (uint32_t)assetItem.vout);
+                obj.pushKV("nValue", (int64_t)assetItem.nValue);
+                assets.push_back(obj);
+            }
+            result.pushKV("assets", assets);
+            return result;
+        }};
 }
 
 static RPCHelpMan createPegin()
