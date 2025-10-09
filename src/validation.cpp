@@ -851,13 +851,6 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "transaction version not supported");
     }
 
-    uint32_t nIDLast = 0;
-    m_active_chainstate.passettree->GetLastAssetID(nIDLast);
-    if (nIDLast > UINT32_MAX) {
-        LogPrintf("asset id maxium count reached");
-        return false;
-    }
-
 
     if (!CheckTransaction(tx, state, coordinateOutputs)) {
         return false; // state filled in by CheckTransaction
@@ -2309,12 +2302,11 @@ void Chainstate::InvalidBlockFound(CBlockIndex* pindex, const BlockValidationSta
     }
 }
 
-void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, uint32_t& nAssetIDOut, uint32_t nNewAssetIDIn, CAmount& preconfRefund)
+void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, CAsset& nAssetIDOut, CAsset nNewAssetIDIn, CAmount& preconfRefund)
 {
     amountAssetInOut = CAmount(0); // Track asset inputs
     nControlNOut = -1;             // Track asset controller outputs
-    nAssetIDOut = 0;               // Track asset ID
-    // mark inputs spent
+
     if (!tx.IsCoinBase() && tx.version != TRANSACTION_PEGIN_VERSION) {
         txundo.vprevout.reserve(tx.vin.size());
         for (size_t x = 0; x < tx.vin.size(); x++) {
@@ -2323,7 +2315,7 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txund
             bool fBitAsset = false;
             bool fBitAssetControl = false;
             bool isPreconf = false;
-            uint32_t nAssetID = 0;
+            CAsset nAssetID;
             bool is_spent = inputs.SpendCoin(txin.prevout, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &txundo.vprevout.back());
 
             if (tx.version == TRANSACTION_PRECONF_VERSION && !is_spent) {
@@ -2333,7 +2325,7 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txund
             }
 
             // Update nAssetIDOut if SpendCoin returns a non-zero asset ID
-            if (nAssetID)
+            if (!nAssetID.IsNull())
                 nAssetIDOut = nAssetID;
 
             if (fBitAsset && !fBitAssetControl)
@@ -2571,7 +2563,7 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
                 bool fBitAsset = false;
                 bool fBitAssetControl = false;
                 bool isPreconf = false;
-                uint32_t nAssetID = 0;
+                CAsset nAssetID;
                 bool is_spent = view.SpendCoin(out, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &coin);
                 if (!is_spent || tx.vout[o] != coin.out || pindex->nHeight != coin.nHeight || is_coinbase != coin.fCoinBase) {
                     if (!is_bip30_exception) {
@@ -2878,9 +2870,9 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                 CTxUndo undoDummy;
                 CAmount amountAssetIn = CAmount(0);
                 int nControlN = -1;
-                uint32_t nAssetID = 0;
+                CAsset nAssetID;
                 CAmount refund = getRefundForPreconfTx(tx, finalizedSignedBlock.currentFee, view);
-                UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+                UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, CAsset(), refund);
             }
             includedSignedBlock.push_back(finalizedSignedBlock.GetHash());
         }
@@ -2895,9 +2887,9 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                     CTxUndo undoDummy;
                     CAmount amountAssetIn = CAmount(0);
                     int nControlN = -1;
-                    uint32_t nAssetID = 0;
+                    CAsset nAssetID;
                     CAmount refund = getRefundForPreconfTx(tx, finalizedSignedBlock.currentFee, view);
-                    UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+                    UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, CAsset(), refund);
                 }
             }
         }
@@ -2940,9 +2932,9 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         CTxUndo undoDummy;
         CAmount amountAssetIn = CAmount(0);
         int nControlN = -1;
-        uint32_t nAssetID = 0;
+        CAsset nAssetID;
         CAmount refund = CAmount(0);
-        UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+        UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, CAsset(), refund);
     }
 
 
@@ -3036,21 +3028,18 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         }
 
         // New asset created - set asset ID # and update CoordinateAssetDB
-        uint32_t nNewAssetID = 0;
+        CAsset nNewAssetID;
         if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
             if (tx.vout.size() < 2) {
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - vout too small");
             }
 
-            uint32_t nIDLast = 0;
-            uint32_t nAssetID = 0;
+            CAsset nIDLast;
+            CAsset nAssetID;
             CoordinateAsset asset;
-            passettree->GetLastAssetID(nIDLast);
 
-            if (nIDLast > UINT32_MAX) {
-                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Maxium asset count reacheds");
-            }
-            nIDLast = nIDLast + 1;
+            nIDLast.pos = i;
+            nIDLast.blockNumber = pindex->nHeight;
 
             // validate asset precision
             if ((tx.assetType == 0 && (tx.precision < 1 || tx.precision > 8)) || (tx.assetType != 0 && tx.precision != 0)) {
@@ -3074,7 +3063,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             }
 
             // additional mint not available for current minting
-            if (nAssetID == 0) {
+            if (nAssetID.IsNull()) {
                 asset.nID = nIDLast;
                 asset.assetType = tx.assetType;
                 asset.precision = tx.precision;
@@ -3099,12 +3088,6 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                 } else {
                     return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - controller destination invalid");
                 }
-
-                // Update latest CoordinateAsset ID #
-                if (!fJustCheck && !passettree->WriteLastAssetID(asset.nID)) {
-                    return state.Error("Failed to update last CoordinateAsset ID #!\n");
-                }
-
             } else {
                 asset.nSupply = asset.nSupply + tx.vout[1].nValue;
             }
@@ -3125,7 +3108,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         }
         CAmount amountAssetIn = CAmount(0);
         int nControlN = -1;
-        uint32_t nAssetID = 0;
+        CAsset nAssetID;
         CAmount preconfCurrentFee = CAmount(0);
         UpdateCoins(tx, view, (i == 0 || tx.version == TRANSACTION_PEGIN_VERSION) ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight, amountAssetIn, nControlN, nAssetID, nNewAssetID, preconfCurrentFee);
     }
@@ -3278,9 +3261,9 @@ CCoinsViewCache& Chainstate::UpdatedCoinsTip(CCoinsViewCache& view, int blockHei
             CTxUndo undoDummy;
             CAmount amountAssetIn = CAmount(0);
             int nControlN = -1;
-            uint32_t nAssetID = 0;
+            CAsset nAssetID;
             CAmount refund = getRefundForPreconfTx(tx, finalizedSignedBlock.currentFee, view);
-            UpdateCoins(tx, view, undoDummy, blockHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+            UpdateCoins(tx, view, undoDummy, blockHeight, amountAssetIn, nControlN, nAssetID, CAsset(), refund);
         }
     }
 
@@ -3356,9 +3339,9 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block)
 
         CAmount amountAssetIn = CAmount(0);
         int nControlN = -1;
-        uint32_t nAssetID = 0;
+        CAsset nAssetID;
         CAmount refund = getRefundForPreconfTx(tx, block.currentFee, view);
-        UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), m_chainman.ActiveHeight(), amountAssetIn, nControlN, nAssetID, 0, refund);
+        UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), m_chainman.ActiveHeight(), amountAssetIn, nControlN, nAssetID, CAsset(), refund);
     }
 
     psignedblocktree->WriteLastSignedBlockID(block.nHeight);
@@ -5523,7 +5506,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
                     bool fBitAsset = false;
                     bool fBitAssetControl = false;
                     bool isPreconf = false;
-                    uint32_t nAssetID = 0;
+                    CAsset nAssetID;
                     Coin coin;
                     inputs.SpendCoin(txin.prevout, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &coin);
                     if (fBitAsset)
@@ -5533,7 +5516,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
                 }
             }
             // Pass check = true as every addition may be an overwrite.
-            AddCoins(inputs, *tx, pindex->nHeight, refund, amountAssetIn, nControlN, true);
+            AddCoins(inputs, *tx, pindex->nHeight, refund, CAsset(), amountAssetIn, nControlN, CAsset(), true);
         }
     }
 
@@ -5544,7 +5527,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
         CAmount amountAssetIn = CAmount(0);
         int nControlN = -1;
         CAmount refund = CAmount(0);
-        AddCoins(inputs, *tx, pindex->nHeight, refund, amountAssetIn, nControlN, true);
+        AddCoins(inputs, *tx, pindex->nHeight, refund, CAsset(), amountAssetIn, nControlN, CAsset(), true);
     }
 
     for (size_t x = 0; x < block.vtx.size(); x++) {
@@ -5557,7 +5540,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
                 bool fBitAsset = false;
                 bool fBitAssetControl = false;
                 bool isPreconf = false;
-                uint32_t nAssetID = 0;
+                CAsset nAssetID;
                 Coin coin;
                 inputs.SpendCoin(txin.prevout, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &coin);
 
@@ -5568,7 +5551,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
             }
         }
         // Pass check = true as every addition may be an overwrite.
-        AddCoins(inputs, *tx, pindex->nHeight, preconfRefund, amountAssetIn, nControlN, true);
+        AddCoins(inputs, *tx, pindex->nHeight, preconfRefund, CAsset(), amountAssetIn, nControlN, CAsset(), true);
     }
     return true;
 }

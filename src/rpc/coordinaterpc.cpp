@@ -252,7 +252,7 @@ static RPCHelpMan listAllAssets()
             ;
             for (const CoordinateAsset& asset_item : assetList) {
                 UniValue obj(UniValue::VOBJ);
-                obj.pushKV("id", (uint64_t)asset_item.nID);
+                obj.pushKV("id", asset_item.nID.GetHash().ToString());
                 obj.pushKV("assettype", asset_item.assetType);
                 obj.pushKV("precision", asset_item.precision);
                 obj.pushKV("ticker", asset_item.strTicker);
@@ -296,7 +296,7 @@ static RPCHelpMan listMempoolAssets()
             ;
             for (const CoordinateMempoolEntry& assetItem : assetList) {
                 UniValue obj(UniValue::VOBJ);
-                obj.pushKV("assetId", (uint32_t)assetItem.assetID);
+                obj.pushKV("assetId", assetItem.assetID.GetHash().ToString());
                 obj.pushKV("txid", assetItem.txid.ToString());
                 obj.pushKV("vout", (uint32_t)assetItem.vout);
                 obj.pushKV("nValue", (int64_t)assetItem.nValue);

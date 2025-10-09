@@ -24,7 +24,7 @@
 using namespace util::hex_literals;
 
 int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out);
-void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, uint32_t& nAssetIDOut, uint32_t nNewAssetIDIn, CAmount& refund);
+void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, CAsset& nAssetIDOut, CAsset nNewAssetIDIn, CAmount& refund);
 
 namespace {
 //! equality test
@@ -204,7 +204,7 @@ struct CacheTest : BasicTestingSetup {
                     bool fBitAsset = false;
                     bool fBitAssetControl = false;
                     bool isPreconf = false;
-                    uint32_t nAssetID = 0;
+                    CAsset nAssetID = CAsset();
                     BOOST_CHECK(stack.back()->SpendCoin(COutPoint(txid, 0), fBitAsset, fBitAssetControl, isPreconf, nAssetID));
                 }
             }
@@ -434,8 +434,8 @@ BOOST_FIXTURE_TEST_CASE(updatecoins_simulation_test, UpdateTest)
             CTxUndo undo;
             CAmount amountAssetIn = CAmount(0);
             int nControlN = -1;
-            uint32_t nAssetID = 0;
-            uint32_t nNewAssetID = 0;
+            CAsset nAssetID = CAsset();
+            CAsset nNewAssetID = CAsset();
             CAmount refund = CAmount(0);
             UpdateCoins(CTransaction{tx}, *(stack.back()), undo, height, amountAssetIn, nControlN, nAssetID, nNewAssetID, refund);
 
@@ -466,7 +466,7 @@ BOOST_FIXTURE_TEST_CASE(updatecoins_simulation_test, UpdateTest)
             bool fBitAsset = false;
             bool fBitAssetControl = false;
             bool isPreconf = false;
-            uint32_t nAssetID = 0;
+            CAsset nAssetID = CAsset();
             BOOST_CHECK(stack.back()->SpendCoin(utxod->first, fBitAsset, fBitAssetControl, isPreconf, nAssetID));
             // restore inputs
             if (!tx.IsCoinBase()) {
@@ -683,7 +683,7 @@ static void CheckSpendCoins(const CAmount base_value, const MaybeCoin& cache_coi
     bool fBitAsset = false;
     bool fBitAssetControl = false;
     bool isPreconf = false;
-    uint32_t nAssetID = 0;
+    CAsset nAssetID = CAsset();
     test.cache.SpendCoin(OUTPOINT, fBitAsset, fBitAssetControl, isPreconf, nAssetID);
     test.cache.SelfTest();
     BOOST_CHECK_EQUAL(GetCoinsMapEntry(test.cache.map()), expected);
@@ -949,7 +949,7 @@ struct FlushTest : BasicTestingSetup {
         bool fBitAsset = false;
         bool fBitAssetControl = false;
         bool isPreconf = false;
-        uint32_t nAssetID = 0;
+        CAsset nAssetID = CAsset();
         BOOST_CHECK(view->SpendCoin(outp, fBitAsset, fBitAssetControl, isPreconf, nAssetID));
 
         // The coin should be in the cache, but spent and marked dirty.
