@@ -96,7 +96,7 @@ void TestCoinsView(FuzzedDataProvider& fuzzed_data_provider, CCoinsView& backend
                 bool fBitAsset = false;
                 bool fBitAssetControl = false;
                 bool isPreconf = false;
-                CAsset nAssetID = CAsset();
+                std::vector<unsigned char> nAssetID = {};
                 (void)coins_view_cache.SpendCoin(random_out_point, fBitAsset, fBitAssetControl, isPreconf, nAssetID, fuzzed_data_provider.ConsumeBool() ? &move_to : nullptr);
             },
             [&] {

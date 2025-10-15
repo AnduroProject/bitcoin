@@ -32,8 +32,7 @@ inline void SerializeAsset(const CoordinateType& assetData, Stream& s) {
 
 struct CoordinateAsset {
 public:
-
-    CAsset nID;              /*!< Asset unique number */
+    std::vector<unsigned char> nID;  /*!< Asset unique buffer  */
     uint32_t assetType;        /*!< Asset type - (e.g. 0 - tokens, 1 - nft, 1 - blob nft) */
     uint32_t precision;        /*!< Precision Number - (0..8) */
     std::string strTicker;     /*!< Asset symbol. */
@@ -65,7 +64,7 @@ public:
 
     void SetNull()
     {
-        nID.SetNull();
+        nID.clear();
         assetType = 0;
         precision = 0;
         strTicker = "";
@@ -78,3 +77,6 @@ public:
     }
 };
 
+std::vector<unsigned char> CreateAssetId(uint64_t blockNumber, uint16_t assetIndex);
+void ParseAssetId(const std::vector<unsigned char>& assetId, uint64_t &blockNumber, uint16_t &assetIndex);
+uint256 getAssetHash(const std::vector<unsigned char>& assetId);

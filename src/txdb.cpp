@@ -251,7 +251,8 @@ bool CoordinateAssetDB::WriteCoordinateAssets(const std::vector<CoordinateAsset>
 {
     CDBBatch batch(*this);
     for (const CoordinateAsset& asset : vAsset) {
-        std::pair<uint8_t, uint256> key = std::make_pair(DB_ASSET, asset.nID.GetHash());
+        uint256 assetHash = getAssetHash(asset.nID);
+        std::pair<uint8_t, uint256> key = std::make_pair(DB_ASSET, assetHash);
         batch.Write(key, asset);
     }
     return WriteBatch(batch, true);
@@ -290,16 +291,9 @@ bool CoordinateAssetDB::WriteLastAssetPruneHeight(const uint32_t nID)
     return Write(DB_ASSET_LAST_PRUNE_HEIGHT, nID);
 }
 
-
-bool CoordinateAssetDB::RemoveAsset(const CAsset nID)
+bool CoordinateAssetDB::GetAsset(uint256 nID, CoordinateAsset& asset)
 {
-    std::pair<uint8_t, uint256> key = std::make_pair(DB_ASSET, nID.GetHash());
-    return Erase(key);
-}
-
-bool CoordinateAssetDB::GetAsset(const CAsset nID, CoordinateAsset& asset)
-{
-    return Read(std::make_pair(DB_ASSET, nID.GetHash()), asset);
+    return Read(std::make_pair(DB_ASSET, nID), asset);
 }
 
 bool CoordinateAssetDB::WriteAssetMinedBlock(uint256 blockHash) {

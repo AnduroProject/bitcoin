@@ -6,12 +6,12 @@
 #ifndef BITCOIN_POLICY_POLICY_H
 #define BITCOIN_POLICY_POLICY_H
 
+
 #include <consensus/amount.h>
 #include <consensus/consensus.h>
 #include <primitives/transaction.h>
 #include <script/interpreter.h>
 #include <script/solver.h>
-
 #include <cstdint>
 #include <string>
 
@@ -185,5 +185,7 @@ static inline int64_t GetVirtualTransactionInputSize(const CTxIn& tx)
 }
 
 bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& mapInputs);
+
+uint256 getAssetHash(const std::vector<unsigned char>& assetId);
 
 #endif // BITCOIN_POLICY_POLICY_H

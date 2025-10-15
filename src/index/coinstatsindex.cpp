@@ -152,7 +152,7 @@ bool CoinStatsIndex::CustomAppend(const interfaces::BlockInfo& block)
 
             for (uint32_t j = 0; j < tx->vout.size(); ++j) {
                 const CTxOut& out{tx->vout[j]};
-                Coin coin{out, block.height, tx->IsCoinBase(), false, false, false, false, CAsset()};
+                Coin coin{out, block.height, tx->IsCoinBase(), false, false, false, false, std::vector<unsigned char>{}};
                 COutPoint outpoint{tx->GetHash(), j};
 
                 // Skip unspendable coins
@@ -433,9 +433,8 @@ bool CoinStatsIndex::ReverseBlock(const interfaces::BlockInfo& block)
 
         for (uint32_t j = 0; j < tx->vout.size(); ++j) {
             const CTxOut& out{tx->vout[j]};
-            COutPoint outpoint{tx->GetHash(), j};
-
-            Coin coin{out, block.height, tx->IsCoinBase(), false, false, false, false, CAsset()};
+            COutPoint outpoint{tx->GetHash(), j};=
+            Coin coin{out, block.height, tx->IsCoinBase(), false, false, false, false, std::vector<unsigned char>{}};
 
             // Skip unspendable coins
             if (coin.out.scriptPubKey.IsUnspendable()) {
