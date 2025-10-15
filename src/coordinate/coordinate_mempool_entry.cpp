@@ -15,7 +15,7 @@ bool getMempoolAsset(uint256 txid, uint32_t voutIn, CoordinateMempoolEntry* asse
     if (it == coordinateMempoolEntry.end()) return false;
 
     *assetMempoolObj = std::move(*it);
-    return assetMempoolObj->assetID.IsNull() ? false : true;
+    return assetMempoolObj->assetID.empty() ? false : true;
 }
 
 /**
@@ -44,14 +44,14 @@ void includeMempoolAsset(const CTransaction& tx, Chainstate& m_active_chainstate
 {
     if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
         CoordinateMempoolEntry assetMempoolObj;
-        assetMempoolObj.assetID = CAsset();
+        assetMempoolObj.assetID = {};
         assetMempoolObj.txid = tx.GetHash();
         assetMempoolObj.vout = 1;
         assetMempoolObj.nValue = tx.vout[1].nValue;
         coordinateMempoolEntry.push_back(assetMempoolObj);
         return;
     }
-    CAsset currentAssetID;
+    std::vector<unsigned char> currentAssetID;
     CAmount amountAssetIn = 0;
     bool has_asset_amount = getAssetWithAmount(tx, m_active_chainstate, amountAssetIn, currentAssetID);
     if (has_asset_amount) {
@@ -74,11 +74,11 @@ void includeMempoolAsset(const CTransaction& tx, Chainstate& m_active_chainstate
 /**
  * This is the function which used to get asset total amount
  */
-bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate, CAmount& amountAssetIn, CAsset& currentAssetID)
+bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate, CAmount& amountAssetIn, std::vector<unsigned char>& currentAssetID)
 {
     CCoinsViewCache& mapInputs = m_active_chainstate.CoinsTip();
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
-        CAsset nAssetID;
+        std::vector<unsigned char> nAssetID;
         bool fBitAsset = false;
         bool fBitAssetControl = false;
         CoordinateMempoolEntry assetMempoolObj;
@@ -90,7 +90,7 @@ bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate,
             Coin coin;
             if (mapInputs.getAssetCoin(tx.vin[i].prevout, fBitAsset, fBitAssetControl, nAssetID, &coin)) {
                 if (fBitAssetControl) {
-                    currentAssetID = CAsset();
+                    currentAssetID = {};
                     break;
                 }
                 if (fBitAsset) {
@@ -100,13 +100,13 @@ bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate,
         }
 
 
-        if (nAssetID.IsNull()) {
+        if (nAssetID.empty()) {
             break;
         }
         currentAssetID = nAssetID;
     }
 
-    return !currentAssetID.IsNull() ? true : false;
+    return !currentAssetID.empty() ? true : false;
 }
 
 /**
@@ -119,7 +119,7 @@ int getAssetOutputCount(const CTransaction& tx, Chainstate& m_active_chainstate)
     }
     if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION) {
         uint32_t totalOutputs = 0;
-        CAsset currentAssetID;
+        std::vector<unsigned char> currentAssetID;
         CAmount amountAssetIn = 0;
         bool has_asset_amount = getAssetWithAmount(tx, m_active_chainstate, amountAssetIn, currentAssetID);
         if (has_asset_amount) {
