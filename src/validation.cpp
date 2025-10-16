@@ -656,6 +656,10 @@ private:
         int64_t m_vsize;
         /** Fees paid by this transaction: total input amounts subtracted by total output amounts. */
         CAmount m_base_fees;
+
+        /** Fees paid by the asset transaction **/
+        CAmount m_utxo_fees;
+
         /** Base fees + any fee delta set by the user with prioritisetransaction. */
         CAmount m_modified_fees;
 
@@ -968,8 +972,16 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     }
 
     // The mempool holds txs for the next block, so pass height+1 to CheckTxInputs
-    if (!Consensus::CheckTxInputs(tx, state, m_view, m_active_chainstate.m_chain.Height() + 1, ws.m_base_fees)) {
+    if (!Consensus::CheckTxInputs(tx, state, m_view, m_active_chainstate.m_chain.Height() + 1, ws.m_base_fees, ws.m_utxo_fees)) {
         return false; // state filled in by CheckTxInputs
+    }
+
+    if(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION || tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
+        CAmount utxoRejectFee = m_pool.GetMinFee().GetFee(ws.m_vsize) + ws.m_utxo_fees;
+        if (utxoRejectFee > 0 &&  ws.m_base_fees < utxoRejectFee) {
+            LogPrintf("The UTXO fee is not sufficient for this transaction. %i \n", utxoRejectFee);
+            return false;
+        }
     }
 
     if (m_pool.m_opts.require_standard && !AreInputsStandard(tx, m_view)) {
@@ -2912,8 +2924,9 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid pegin transaction version");
         }
         CAmount txfee = 0;
+        CAmount utxoFee = 0;
         TxValidationState tx_state;
-        if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee)) {
+        if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee, utxoFee)) {
             // state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
             //             tx_state.GetRejectReason(), tx_state.GetDebugMessage());
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
@@ -2967,9 +2980,11 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid transaction standard");
             }
             CAmount txfee = 0;
+            CAmount utxoFee = 0;
             TxValidationState tx_state;
-            if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee, true)) {
-                if(state.GetRejectReason().compare("bad-txns-coins-not-exist") == 0) {
+
+            if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee, utxoFee, true)) {
+                if (state.GetRejectReason().compare("bad-txns-coins-not-exist") == 0) {
                     ReconciliationInvalidTx invalidTxObj;
                     invalidTxObj.pos = i;
                     invalidTxObj.txHash = tx.GetHash();
@@ -3322,8 +3337,9 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block) {
             }
 
             CAmount txfee = 0;
+            CAmount utxoFee = 0;
             TxValidationState tx_state;
-            if (!Consensus::CheckTxInputs(tx, tx_state, view, block.blockIndex, txfee)) {
+            if (!Consensus::CheckTxInputs(tx, tx_state, view, block.blockIndex, txfee, utxoFee)) {
                 // Any transaction validation failure in ConnectBlock is a block consensus failure
                 state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
                             tx_state.GetRejectReason(), tx_state.GetDebugMessage());
