@@ -48,6 +48,5 @@ uint256 getAssetHash(const std::vector<unsigned char>& assetId) {
     // Copy bytes into the end of the array (big-endian padding)
     std::memcpy(bytes + (32 - copySize), assetId.data(), copySize);
 
-    return uint256(bytes);
+    return uint256{bytes};
 }
-

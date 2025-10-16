@@ -389,6 +389,7 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
     const int64_t MAX_CONSECUTIVE_FAILURES = 1000;
     constexpr int32_t BLOCK_FULL_ENOUGH_WEIGHT_DELTA = 4000;
     int64_t nConsecutiveFailed = 0;
+    int16_t assetIncr = 0;
 
     while (mi != mempool.mapTx.get<ancestor_score>().end() || !mapModifiedTx.empty()) {
         // First try to find a new transaction in mapTx to evaluate.
@@ -498,6 +499,14 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
         SortForBlock(ancestors, sortedEntries);
 
         for (size_t i = 0; i < sortedEntries.size(); ++i) {
+
+            CTransactionRef txRef = sortedEntries[i]->GetSharedTx();
+            if(txRef->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+                if(assetIncr == NUMOF_NEWASSET_IN_BLOCK) {
+                    continue;
+                }
+                assetIncr++;
+            }
             AddToBlock(sortedEntries[i]);
             // Erase from the modified set, if present
             mapModifiedTx.erase(sortedEntries[i]);

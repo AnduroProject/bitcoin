@@ -30,7 +30,13 @@ static constexpr unsigned int DEFAULT_BLOCK_RESERVED_WEIGHT{8000};
 static constexpr unsigned int MINIMUM_BLOCK_RESERVED_WEIGHT{2000};
 /** Default for -blockmintxfee, which sets the minimum feerate for a transaction in blocks created by mining code **/
 static constexpr unsigned int DEFAULT_BLOCK_MIN_TX_FEE{1000};
+
 static constexpr unsigned int DEFAULT_SIGNED_BLOCK_WEIGHT{1024000};
+
+static constexpr unsigned int DEFAULT_SIGNED_BLOCK_RESERVE{5};
+
+static constexpr unsigned int NUMOF_NEWASSET_IN_BLOCK{256};
+
 /** The maximum weight for transactions we're willing to relay/mine */
 static constexpr int32_t MAX_STANDARD_TX_WEIGHT{400000};
 static constexpr unsigned int MAX_STANDARD_TX_WEIGHT_ASSET{4000000};

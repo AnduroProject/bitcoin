@@ -221,8 +221,7 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
             }
         }
 
-
-        if(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION ) {
+        if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             // check first input is asset
             if(fBitAssetControl) {
                 LogPrintf("Asset controller value not accepted \n");
@@ -256,15 +255,15 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
         return false;
     }
 
-    if(amountAssetInOut > 0 && !(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION)) {
-        LogPrintf("Invalid transaction hold asset inptu \n");
+
+    if (amountAssetInOut > 0 && !(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION)) {
+        LogPrintf("Invalid transaction hold asset input \n");
     }
-    
-    if(amountAssetInOut > 0) {
-        CAmount amountAssetOut = CAmount(0); 
-        size_t startValue = tx.version == TRANSACTION_PRECONF_VERSION ? 1 : 0;
-        for (unsigned int i = startValue; i < tx.vout.size(); i++) {
-            if(amountAssetOut == amountAssetInOut) {
+
+    if (amountAssetInOut > 0) {
+        CAmount amountAssetOut = CAmount(0);
+        for (unsigned int i = 0; i < tx.vout.size(); i++) {
+            if (amountAssetOut == amountAssetInOut) {
                 break;
             }
             amountAssetOut = amountAssetOut + tx.vout[i].nValue;
@@ -277,7 +276,6 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
     }
     return true;
 }
-
 
 /**
  * Check the total number of non-witness sigops across the whole transaction, as per BIP54.

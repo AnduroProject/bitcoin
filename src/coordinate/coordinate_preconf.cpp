@@ -21,7 +21,7 @@ std::vector<SignedBlockPeer> finalizedSignedBlockPeers;
 CCoinsView coins_view;
 CCoinsViewCache preconfView(&coins_view);
 // temporary minfee
-CAmount preconfMinFee = 5;
+CAmount preconfMinFee = DEFAULT_SIGNED_BLOCK_RESERVE;
 
 CoordinatePreConfBlock getNextPreConfSigList(ChainstateManager& chainman) {
     uint64_t signedBlockHeight = 0;
