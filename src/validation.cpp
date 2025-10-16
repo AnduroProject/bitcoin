@@ -834,7 +834,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     } else if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION) {
         if (tx.version == TRANSACTION_PRECONF_VERSION && !tx.HasValidOutputCount()) {
-            return state.Invalid(TxValidationResult::TX_CONSENSUS, "Preconf transaction atleast have 2 output");
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "Transaction atleast have 2 output");
         }
         coordinateOutputs = getAssetOutputCount(tx,m_active_chainstate);
     } 
@@ -1506,7 +1506,7 @@ bool MemPoolAccept::SubmitPackage(const ATMPArgs& args, std::vector<Workspace>& 
                                                        IsCurrentForFeeEstimation(m_active_chainstate),
                                                        m_pool.HasNoInputsOf(tx));
         m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.GetAndIncrementSequence());
-        if(ws.m_ptx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || ws.m_ptx->version == TRANSACTION_PRECONF_VERSION) {
+        if (ws.m_ptx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             includeMempoolAsset(*ws.m_ptx, m_active_chainstate);
         }
     }

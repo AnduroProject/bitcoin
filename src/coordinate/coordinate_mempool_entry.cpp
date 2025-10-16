@@ -113,16 +113,16 @@ int getAssetOutputCount(const CTransaction& tx, Chainstate& m_active_chainstate)
     if(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
         return 2;
     }
-    if(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION) {
+
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
         uint32_t totalOutputs = 0;
         std::vector<unsigned char> currentAssetID;
         CAmount amountAssetIn = 0;
         bool has_asset_amount = getAssetWithAmount(tx,m_active_chainstate,amountAssetIn, currentAssetID);
         if(has_asset_amount) {
             CAmount amountAssetOut = 0;
-            size_t startValue = tx.version == TRANSACTION_PRECONF_VERSION ? 1 : 0;
-            for (unsigned int i = startValue; i < tx.vout.size(); i++) {
-                if(amountAssetOut == amountAssetIn) {
+            for (unsigned int i = 0; i < tx.vout.size(); i++) {
+                if (amountAssetOut == amountAssetIn) {
                     break;
                 }
                 totalOutputs = totalOutputs + 1;
