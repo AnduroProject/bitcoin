@@ -210,8 +210,14 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, 
                 assert(!coin.IsSpent());
             }
 
-            if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION || tx.version == 2) {
+            if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
                 if (coin.IsBitAsset()) {
+                    return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-txns-coins-not-exist");
+                }
+            }
+
+            if(tx.version == TRANSACTION_PRECONF_VERSION || tx.version == 2) {
+                if (coin.IsBitAsset() || coin.IsBitAssetController()) {
                     return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-txns-coins-not-exist");
                 }
             }
@@ -223,6 +229,11 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, 
                                          strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
                 }
             }
+
+            if(coin.IsBitAsset() && tx.vin[i].prevout.assetId != coin.GetAssetID()){
+                return state.Invalid(TxValidationResult::TX_CONSENSUS, "asset mistmatch");
+            }
+            
             // Check for negative or overflow input values
             if (!coin.IsBitAssetController()) {
                 nValueIn += coin.out.nValue;

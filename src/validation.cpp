@@ -2943,7 +2943,6 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         const CTransaction& tx = *(block.vtx[i]);
         bool isValidTx = true;
         nInputs += tx.vin.size();
-        assetIncr++;
 
         if (!tx.IsCoinBase()) {
             if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && !m_chainman.ActiveChainstate().isAssetPrune) {
@@ -2951,6 +2950,10 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                     return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): transaction payload missing");
                 }
             }
+            if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && assetIncr == NUMOF_NEWASSET_IN_BLOCK) { 
+                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): block only accept 256 new asset per block");
+            }
+
             if (!AreCoordinateTransactionStandard(tx, view)) {
                 LogPrintf("Invalid transaction standard \n");
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid transaction standard");
@@ -3030,6 +3033,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         // New asset created - set asset ID # and update CoordinateAssetDB
         std::vector<unsigned char> nNewAssetID;
         if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+            assetIncr++;
             if (!tx.HasValidOutputCount()) {
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - vout too small");
             }

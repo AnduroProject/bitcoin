@@ -1,7 +1,6 @@
 #include <iostream>
 #include <serialize.h>
 #include <uint256.h>
-#include <primitives/transaction.h>
 
 template <typename Stream, typename CoordinateType>
 inline void UnserializeAsset(CoordinateType& assetData, Stream& s)
