@@ -236,8 +236,12 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, 
                 }
             }
 
+            if(coin.IsBitAsset() && tx.vin[i].prevout.assetId.empty()){
+                return state.Invalid(TxValidationResult::TX_CONSENSUS, "Asset information is missing");
+            }
+
             if(coin.IsBitAsset() && tx.vin[i].prevout.assetId != coin.GetAssetID()){
-                return state.Invalid(TxValidationResult::TX_CONSENSUS, "asset mistmatch");
+                return state.Invalid(TxValidationResult::TX_CONSENSUS, "Asset mistmatch");
             }
             
             // Check for negative or overflow input values

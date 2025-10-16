@@ -1593,7 +1593,7 @@ MempoolAcceptResult MemPoolAccept::AcceptSingleTransaction(const CTransactionRef
                                                        m_pool.HasNoInputsOf(tx));
         m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.is_preconf ? 0 : m_pool.GetAndIncrementSequence());
         // adding asset coin info to back track child transaction in checkTransaction Function
-        if(tx_info.info.m_tx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx_info.info.m_tx->version == TRANSACTION_PRECONF_VERSION || tx_info.info.m_tx->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        if (tx_info.info.m_tx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             LogPrintf("new asset utxo cache added in custom struct \n");
             includeMempoolAsset(*tx_info.info.m_tx, m_active_chainstate);
         }
@@ -3108,7 +3108,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             nNewAssetID = asset.nID;
         }
 
-        if(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             removeMempoolAsset(tx);
         }
 
@@ -3345,7 +3345,6 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block) {
                     tx.GetHash().ToString(), state.ToString()));
             }
 
-            removeMempoolAsset(tx);
         }
 
         CTxUndo undoDummy;
