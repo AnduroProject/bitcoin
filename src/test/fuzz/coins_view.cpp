@@ -261,6 +261,7 @@ void TestCoinsView(FuzzedDataProvider& fuzzed_data_provider, CCoinsView& backend
             [&] {
                 TxValidationState state;
                 CAmount tx_fee_out;
+                CAmount utxoFee;
                 const CTransaction transaction{random_mutable_transaction};
                 if (ContainsSpentInput(transaction, coins_view_cache)) {
                     // Avoid:
@@ -272,7 +273,7 @@ void TestCoinsView(FuzzedDataProvider& fuzzed_data_provider, CCoinsView& backend
                     // It is not allowed to call CheckTxInputs if CheckTransaction failed
                     return;
                 }
-                if (Consensus::CheckTxInputs(transaction, state, coins_view_cache, fuzzed_data_provider.ConsumeIntegralInRange<int>(0, std::numeric_limits<int>::max()), tx_fee_out)) {
+                if (Consensus::CheckTxInputs(transaction, state, coins_view_cache, fuzzed_data_provider.ConsumeIntegralInRange<int>(0, std::numeric_limits<int>::max()), tx_fee_out, utxoFee)) {
                     assert(MoneyRange(tx_fee_out));
                 }
             },

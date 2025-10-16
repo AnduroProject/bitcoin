@@ -159,7 +159,7 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
     return nSigOps;
 }
 
-bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee, bool isConnectBlock)
+bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee, CAmount& utxoFee, bool isConnectBlock)
 {
     if (tx.version == TRANSACTION_PEGIN_VERSION) {
         for (const CTxIn& txin : tx.vin) {
@@ -257,7 +257,12 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, TxValidationState& state, 
         if (!MoneyRange(txfee_aux)) {
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "bad-txns-fee-outofrange");
         }
+
         txfee = txfee_aux;
+
+        if((tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION || tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) && tx.vin.size() < tx.vout.size()) {
+            utxoFee = CAmount(tx.vout.size() - tx.vin.size()) * UTXO_FEE;
+        }
     }
     return true;
 }
