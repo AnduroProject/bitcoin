@@ -37,6 +37,8 @@ static constexpr unsigned int DEFAULT_SIGNED_BLOCK_RESERVE{5};
 
 static constexpr unsigned int NUMOF_NEWASSET_IN_BLOCK{256};
 
+static constexpr unsigned int UTXO_FEE{100};
+
 /** The maximum weight for transactions we're willing to relay/mine */
 static constexpr int32_t MAX_STANDARD_TX_WEIGHT{400000};
 static constexpr unsigned int MAX_STANDARD_TX_WEIGHT_ASSET{4000000};

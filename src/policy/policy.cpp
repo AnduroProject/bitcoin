@@ -169,16 +169,11 @@ bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_dat
             reason = "bare-multisig";
             return false;
         }
-
-        if((tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.version != TRANSACTION_PRECONF_VERSION) && !txout.scriptPubKey.IsUnspendable() && txout.nValue == 0) {
-            reason = "dust";
-            return false;
-        }
     }
 
     // Only MAX_DUST_OUTPUTS_PER_TX dust is permitted(on otherwise valid ephemeral dust)
     if (GetDust(tx, dust_relay_fee).size() > MAX_DUST_OUTPUTS_PER_TX) {
-        if (tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.version != TRANSACTION_PRECONF_VERSION) {
+        if (tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             reason = "dust";
             return false;
         }
