@@ -56,8 +56,7 @@ void includeMempoolAsset(const CTransaction& tx, Chainstate& m_active_chainstate
     bool has_asset_amount = getAssetWithAmount(tx, m_active_chainstate, amountAssetIn, currentAssetID);
     if (has_asset_amount) {
         CAmount amountAssetOut = 0;
-        size_t startValue = tx.version == TRANSACTION_PRECONF_VERSION ? 1 : 0;
-        for (unsigned long i = startValue; i < tx.vout.size(); i++) {
+        for (unsigned long i = 0; i < tx.vout.size(); i++) {
             if (amountAssetOut == amountAssetIn) {
                 break;
             }
