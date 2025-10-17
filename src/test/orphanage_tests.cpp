@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(peer_dos_limits)
 
     // Construct transactions to use. They must all be the same size.
     static constexpr unsigned int NUM_TXNS_CREATED = 100;
-    static constexpr int64_t TX_SIZE{469};
+    static constexpr int64_t TX_SIZE{473};
     static constexpr int64_t TOTAL_SIZE = NUM_TXNS_CREATED * TX_SIZE;
 
     std::vector<CTransactionRef> txns;

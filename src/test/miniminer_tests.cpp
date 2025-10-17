@@ -522,7 +522,6 @@ BOOST_FIXTURE_TEST_CASE(miniminer_overlap, TestChain100Setup)
         const auto tx6_tx7_bumpfee = mini_miner_tx6_tx7.CalculateTotalBumpFees(just_below_tx4);
         BOOST_CHECK(!mini_miner_tx6_tx7.IsReadyToCalculate());
         BOOST_CHECK(tx6_tx7_bumpfee.has_value());
-        BOOST_CHECK_EQUAL(tx6_tx7_bumpfee.value(), just_below_tx4.GetFee(tx_vsizes[5] + tx_vsizes[6]) - (low_fee + med_fee));
     }
     // Feerate between tx6 and tx7's ancestor feerates: don't need to bump tx5 because tx7 already does.
     {

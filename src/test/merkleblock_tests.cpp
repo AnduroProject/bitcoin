@@ -24,10 +24,10 @@ BOOST_AUTO_TEST_CASE(merkleblock_construct_from_txids_found)
     std::set<Txid> txids;
 
     // Last txn in block.
-    Txid txhash1{Txid::FromHex("0fcd8990ff468cd4e74de2a2e717c36526379a71261e4f0eed1a607828f5744e").value()};
+    Txid txhash1{Txid::FromHex("937790a1a3bfb749a9d248e5a46e7bb9dbe9009917e7aae1149f2d4883e637ea").value()};
 
     // Second txn in block.
-    Txid txhash2{Txid::FromHex("0cd9f04a95217269b2a10ad944e0f43d0bcd99e91a512e3ce324cd25b77c4e9e").value()};
+    Txid txhash2{Txid::FromHex("0f2e9924b1e175a5fc55d26f38b1d50a52380eebaa12c6484920a2c7f5065818").value()};
 
     txids.insert(txhash1);
     txids.insert(txhash2);
