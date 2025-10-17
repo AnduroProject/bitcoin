@@ -151,13 +151,12 @@ BOOST_AUTO_TEST_CASE(rpc_rawparams)
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction"), std::runtime_error);
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction null"), std::runtime_error);
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction DEADBEEF"), std::runtime_error);
-    std::string rawtx = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
+    std::string rawtx = "020000000001018eee3117ad6619f59b5ffe82469fac06568b509d6589b08c0cff39f8bb374fb0000000000000fdffffff0200e1f505000000001600149cda0de94e384ca38c057124a489523b4d92637cc0ca4403000000001600141a0a0776e138371bb68034648589f2940fc7e43f0247304402204e96d50850737750de5bfbc797cdac06045657945dc487b5cb83233e77d40f19022010db62f9daa3eecabdb543c81d39636b71e77228f5dbfd3adc66e59b7ab8763101210263f7df4d9b8ba0035e28325e2643b762d97185ff147df713fc58dceb6746544fe8030000";
     BOOST_CHECK_NO_THROW(r = CallRPC(std::string("decoderawtransaction ") + rawtx));
-    BOOST_CHECK_EQUAL(r.get_obj().find_value("size").getInt<int>(), 193);
-    BOOST_CHECK_EQUAL(r.get_obj().find_value("version").getInt<int>(), 1);
-    BOOST_CHECK_EQUAL(r.get_obj().find_value("locktime").getInt<int>(), 0);
+    BOOST_CHECK_EQUAL(r.get_obj().find_value("size").getInt<int>(), 223);
+    BOOST_CHECK_EQUAL(r.get_obj().find_value("version").getInt<int>(), 2);
+    BOOST_CHECK_EQUAL(r.get_obj().find_value("locktime").getInt<int>(), 1000);
     BOOST_CHECK_THROW(CallRPC(std::string("decoderawtransaction ") + rawtx + " extra"), std::runtime_error);
-    BOOST_CHECK_NO_THROW(r = CallRPC(std::string("decoderawtransaction ") + rawtx + " false"));
     BOOST_CHECK_THROW(r = CallRPC(std::string("decoderawtransaction ") + rawtx + " false extra"), std::runtime_error);
 
     // Only check failure cases for sendrawtransaction, there's no network to send to...
