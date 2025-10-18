@@ -1083,21 +1083,76 @@ class CBlock(CBlockHeader):
         return uint256_from_str(hashes[0])
 
     def calc_merkle_root(self):
-        hashes = []
-        for tx in self.vtx:
-            hashes.append(ser_uint256(tx.txid_int))
-        return self.get_merkle_root(hashes)
+        leaves = [b""] * 4  # preconfBlock, vtx, pegins, invalidTx
+
+        # --- preconfBlock merkle root ---
+        preconfBlockLeaves = []
+        for sb in self.preconfBlock:
+            preconfTxLeaves = [b"\x00" * 32] * len(sb.vtx)  # coinbase witness = 0
+            for i in range(1, len(sb.vtx)):
+                preconfTxLeaves[i] = ser_uint256(sb.vtx[i].txid_int)
+            preconfBlockLeaves.append(self.get_merkle_root(preconfTxLeaves))
+        leaves[0] = self.get_merkle_root(preconfBlockLeaves) if preconfBlockLeaves else b"\x00" * 32
+
+        # --- normal transactions ---
+        txLeaves = [ser_uint256(tx.txid_int) for tx in self.vtx]
+        leaves[1] = self.get_merkle_root(txLeaves) if txLeaves else b"\x00" * 32
+
+        # --- peg-in transactions ---
+        peginLeaves = [ser_uint256(tx.txid_int) for tx in self.pegins]
+        leaves[2] = self.get_merkle_root(peginLeaves) if peginLeaves else b"\x00" * 32
+
+        # --- invalid transactions from reconciliationBlock ---
+        nTx = self.reconciliationBlock.nTx
+        invalidTxLeaves = [ser_uint256(self.reconciliationBlock.reconcileMerkleRoot)]
+        for s in range(nTx):
+            found = next((tx.txHash for tx in self.reconciliationBlock.tx if tx.pos == s), None)
+            if found is None:
+                invalidTxLeaves.append(b"\x00" * 32)
+            else:
+                invalidTxLeaves.append(ser_uint256(found))
+        leaves[3] = self.get_merkle_root(invalidTxLeaves) if invalidTxLeaves else b"\x00" * 32
+
+        # final block merkle root
+        return self.get_merkle_root(leaves)
+
 
     def calc_witness_merkle_root(self):
-        # For witness root purposes, the hash of the
-        # coinbase, with witness, is defined to be 0...0
-        hashes = [ser_uint256(0)]
+        leaves = [b""] * 4  # preconfBlock, vtx, pegins, invalidTx
 
-        for tx in self.vtx[1:]:
-            # Calculate the hashes with witness data
-            hashes.append(ser_uint256(tx.wtxid_int))
+        # --- preconfBlock witness merkle root ---
+        preconfBlockLeaves = []
+        for sb in self.preconfBlock:
+            preconfTxLeaves = [b"\x00" * 32] * len(sb.vtx)  # coinbase witness = 0
+            for i in range(1, len(sb.vtx)):
+                preconfTxLeaves[i] = ser_uint256(sb.vtx[i].wtxid_int)
+            preconfBlockLeaves.append(self.get_merkle_root(preconfTxLeaves))
+        leaves[0] = self.get_merkle_root(preconfBlockLeaves) if preconfBlockLeaves else b"\x00" * 32
 
-        return self.get_merkle_root(hashes)
+        # --- normal transactions witness merkle root ---
+        txLeaves = [b"\x00" * 32] * len(self.vtx)
+        for i in range(1, len(self.vtx)):
+            txLeaves[i] = ser_uint256(self.vtx[i].wtxid_int)
+        leaves[1] = self.get_merkle_root(txLeaves) if txLeaves else b"\x00" * 32
+
+        # --- peg-in transactions witness merkle root ---
+        peginLeaves = [ser_uint256(tx.wtxid_int) for tx in self.pegins]
+        leaves[2] = self.get_merkle_root(peginLeaves) if peginLeaves else b"\x00" * 32
+
+        # --- invalid transactions from reconciliationBlock ---
+        nTx = self.reconciliationBlock.nTx
+        invalidTxLeaves = [ser_uint256(self.reconciliationBlock.reconcileMerkleRoot)]
+        for s in range(nTx):
+            found = next((tx.txHash for tx in self.reconciliationBlock.tx if tx.pos == s), None)
+            if found is None:
+                invalidTxLeaves.append(b"\x00" * 32)
+            else:
+                invalidTxLeaves.append(ser_uint256(found))
+        leaves[3] = self.get_merkle_root(invalidTxLeaves) if invalidTxLeaves else b"\x00" * 32
+
+        # final block witness merkle root
+        return self.get_merkle_root(leaves)
+
 
     def is_valid(self):
         target = uint256_from_compact(self.nBits)
