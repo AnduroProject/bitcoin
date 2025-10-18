@@ -223,7 +223,6 @@ uint256 BlockWitnessMerkleRoot(const CBlock& block, bool* mutated)
     return ComputeMerkleRoot(std::move(leaves));
 }
 
-
 uint256 SignedBlockMerkleRoot(const SignedBlock& block, bool* mutated)
 {
     std::vector<uint256> leaves;
