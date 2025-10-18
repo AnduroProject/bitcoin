@@ -108,6 +108,10 @@ double GetDifficulty(const uint32_t nBits)
         nShift--;
     }
 
+    if (!std::isfinite(dDiff)) {
+        return 0.0;
+    }
+
     return dDiff;
 }
 
@@ -173,6 +177,7 @@ static UniValue blockheaderToJSON(const CPureBlockHeader& header)
     result.pushKV("time", (int64_t)header.nTime);
     result.pushKV("nonce", (uint64_t)header.nNonce);
     result.pushKV("bits", strprintf("%08x", header.nBits));
+    result.pushKV("difficulty", GetDifficulty(header.nBits));
 
     if (!header.hashPrevBlock.IsNull())
         result.pushKV("previousblockhash", header.hashPrevBlock.GetHex());
