@@ -15,8 +15,6 @@
 #include <test/util/txmempool.h>
 #include <txmempool.h>
 
-using node::BlockAssembler;
-
 BOOST_FIXTURE_TEST_SUITE(asset_transaction_tests, TestingSetup)
 // ============================================================================
 // Helper Functions
@@ -56,11 +54,11 @@ CMutableTransaction CreateAssetTransaction(
     // CScript scriptPubKey = GetScriptForRawPubKey(coinbaseKey.GetPubKey());
     
     // Output 0: Controller output (zero value)
-    CTxOut controllerOut(0, scriptPubKey);
+    CTxOut controllerOut(CAmount(1), scriptPubKey);
     tx.vout.push_back(controllerOut);
     
     // Output 1: Supply output (zero value)
-    CTxOut supplyOut(0, scriptPubKey);
+    CTxOut supplyOut(CAmount(10000), scriptPubKey);
     tx.vout.push_back(supplyOut);
     
     // Output 2: Forward output (remaining BTC minus fee)
