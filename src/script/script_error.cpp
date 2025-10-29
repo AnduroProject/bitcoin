@@ -103,6 +103,12 @@ std::string ScriptErrorString(const ScriptError serror)
             return "Invalid Schnorr signature hash type";
         case SCRIPT_ERR_SCHNORR_SIG:
             return "Invalid Schnorr signature";
+        case SCRIPT_ERR_SLHDSA_SIG_SIZE:
+            return "Invalid SLH-DSA signature size";
+        case SCRIPT_ERR_SLHDSA_SIG:
+            return "Invalid SLH-DSA signature";
+        case SCRIPT_ERR_SCHNORR_SIG_IN_COMBINED:
+            return "Invalid Schnorr signature in combined script";
         case SCRIPT_ERR_TAPROOT_WRONG_CONTROL_SIZE:
             return "Invalid Taproot control block size";
         case SCRIPT_ERR_TAPSCRIPT_VALIDATION_WEIGHT:
@@ -115,6 +121,8 @@ std::string ScriptErrorString(const ScriptError serror)
             return "Using OP_CODESEPARATOR in non-witness script";
         case SCRIPT_ERR_SIG_FINDANDDELETE:
             return "Signature is found in scriptCode";
+        case SCRIPT_ERR_P2TSH_WRONG_CONTROL_SIZE:
+            return "Invalid P2TSH control block size";
         case SCRIPT_ERR_UNKNOWN_ERROR:
         case SCRIPT_ERR_ERROR_COUNT:
         default: break;

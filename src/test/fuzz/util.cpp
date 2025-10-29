@@ -214,6 +214,9 @@ CTxDestination ConsumeTxDestination(FuzzedDataProvider& fuzzed_data_provider) no
             tx_destination = WitnessV1Taproot{XOnlyPubKey{ConsumeUInt256(fuzzed_data_provider)}};
         },
         [&] {
+            tx_destination = WitnessV2P2TSH{ConsumeUInt256(fuzzed_data_provider)};
+        },
+        [&] {
             tx_destination = PayToAnchor{};
         },
         [&] {

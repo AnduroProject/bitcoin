@@ -1,4 +1,5 @@
 #include <iostream>
+#include <serialize.h>
 #include <uint256.h>
 
 template<typename Stream, typename CoordinateType>

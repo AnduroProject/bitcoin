@@ -147,6 +147,14 @@ public:
         return bech32::Encode(bech32::Encoding::BECH32M, m_params.ParentBech32HRP(), data);
     }
 
+    std::string operator()(const WitnessV2P2TSH& id) const
+    {
+        std::vector<unsigned char> data = {2};  // Version 2
+        data.reserve(53);  // Reserve space for the hash
+        ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, id.begin(), id.end());
+        return bech32::Encode(bech32::Encoding::BECH32M, m_params.Bech32HRP(), data);
+    }
+
     std::string operator()(const CNoDestination& no) const { return {}; }
     std::string operator()(const PubKeyDestination& pk) const { return {}; }
 };

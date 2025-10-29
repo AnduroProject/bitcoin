@@ -91,6 +91,7 @@ add_executable(test_bitcoin
   script_standard_tests.cpp
   script_tests.cpp
   scriptnum_tests.cpp
+  test_slh_dsa_keygen.cpp
   serfloat_tests.cpp
   serialize_tests.cpp
   settings_tests.cpp
@@ -157,6 +158,7 @@ target_link_libraries(test_bitcoin
   bitcoin_consensus
   minisketch
   secp256k1
+  bitcoinpqc
   Boost::headers
   libevent::extra
 )

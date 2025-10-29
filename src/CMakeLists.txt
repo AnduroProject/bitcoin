@@ -145,6 +145,7 @@ target_link_libraries(bitcoin_consensus
     core_interface
     bitcoin_crypto
     secp256k1
+    bitcoinpqc
 )
 
 if(WITH_ZMQ)

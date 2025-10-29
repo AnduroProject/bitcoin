@@ -170,7 +170,7 @@ VALID_DATA = [
     (
         "bc1pfeessrawgf",
         "51024e73",
-    ),
+    )
 ]
 
 
