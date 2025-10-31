@@ -433,7 +433,7 @@ bool CoinStatsIndex::ReverseBlock(const interfaces::BlockInfo& block)
 
         for (uint32_t j = 0; j < tx->vout.size(); ++j) {
             const CTxOut& out{tx->vout[j]};
-            COutPoint outpoint{tx->GetHash(), j};=
+            COutPoint outpoint{tx->GetHash(), j};
             Coin coin{out, block.height, tx->IsCoinBase(), false, false, false, false, std::vector<unsigned char>{}};
 
             // Skip unspendable coins
