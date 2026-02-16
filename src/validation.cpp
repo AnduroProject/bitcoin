@@ -664,6 +664,10 @@ private:
         int64_t m_vsize;
         /** Fees paid by this transaction: total input amounts subtracted by total output amounts. */
         CAmount m_base_fees;
+
+        /** Fees paid by the asset transaction **/
+        CAmount m_utxo_fees;
+
         /** Base fees + any fee delta set by the user with prioritisetransaction. */
         CAmount m_modified_fees;
 
@@ -825,7 +829,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     int coordinateOutputs = 0;
     if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
-        if (tx.vout.size() < 2) {
+        if (!tx.HasValidOutputCount()) {
             return state.Invalid(TxValidationResult::TX_CONSENSUS, "Invalid CoordinateAsset creation - vout too small");
         }
 
@@ -839,23 +843,14 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         }
         coordinateOutputs = 2;
     } else if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION) {
-        if (tx.version == TRANSACTION_PRECONF_VERSION) {
-            if (tx.vout.size() <= 1) {
-                return state.Invalid(TxValidationResult::TX_CONSENSUS, "Preconf transaction atleast have 2 output");
-            }
+        if (tx.version == TRANSACTION_PRECONF_VERSION && !tx.HasValidOutputCount()) {
+            return state.Invalid(TxValidationResult::TX_CONSENSUS, "Transaction atleast have 2 output");
         }
         coordinateOutputs = getAssetOutputCount(tx, m_active_chainstate);
     }
 
     if ((m_pool.is_preconf && tx.version != TRANSACTION_PRECONF_VERSION) || (!m_pool.is_preconf && tx.version == TRANSACTION_PRECONF_VERSION)) {
         return state.Invalid(TxValidationResult::TX_CONSENSUS, "transaction version not supported");
-    }
-
-    uint32_t nIDLast = 0;
-    m_active_chainstate.passettree->GetLastAssetID(nIDLast);
-    if (nIDLast > UINT32_MAX) {
-        LogPrintf("asset id maxium count reached");
-        return false;
     }
 
 
@@ -983,8 +978,16 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     }
 
     // The mempool holds txs for the next block, so pass height+1 to CheckTxInputs
-    if (!Consensus::CheckTxInputs(tx, state, m_view, m_active_chainstate.m_chain.Height() + 1, ws.m_base_fees)) {
+    if (!Consensus::CheckTxInputs(tx, state, m_view, m_active_chainstate.m_chain.Height() + 1, ws.m_base_fees, ws.m_utxo_fees)) {
         return false; // state filled in by CheckTxInputs
+    }
+
+    if(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION || tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
+        CAmount utxoRejectFee = m_pool.GetMinFee().GetFee(ws.m_vsize) + ws.m_utxo_fees;
+        if (utxoRejectFee > 0 &&  ws.m_base_fees < utxoRejectFee) {
+            LogPrintf("The UTXO fee is not sufficient for this transaction. %i \n", utxoRejectFee);
+            return false;
+        }
     }
 
     if (m_pool.m_opts.require_standard && !AreInputsStandard(tx, m_view)) {
@@ -1518,7 +1521,7 @@ bool MemPoolAccept::SubmitPackage(const ATMPArgs& args, std::vector<Workspace>& 
                                                        IsCurrentForFeeEstimation(m_active_chainstate),
                                                        m_pool.HasNoInputsOf(tx));
         m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.GetAndIncrementSequence());
-        if (ws.m_ptx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || ws.m_ptx->version == TRANSACTION_PRECONF_VERSION) {
+        if (ws.m_ptx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             includeMempoolAsset(*ws.m_ptx, m_active_chainstate);
         }
     }
@@ -1605,7 +1608,7 @@ MempoolAcceptResult MemPoolAccept::AcceptSingleTransaction(const CTransactionRef
                                                        m_pool.HasNoInputsOf(tx));
         m_pool.m_opts.signals->TransactionAddedToMempool(tx_info, m_pool.is_preconf ? 0 : m_pool.GetAndIncrementSequence());
         // adding asset coin info to back track child transaction in checkTransaction Function
-        if (tx_info.info.m_tx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx_info.info.m_tx->version == TRANSACTION_PRECONF_VERSION || tx_info.info.m_tx->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        if (tx_info.info.m_tx->version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             LogPrintf("new asset utxo cache added in custom struct \n");
             includeMempoolAsset(*tx_info.info.m_tx, m_active_chainstate);
         }
@@ -2046,11 +2049,11 @@ bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params
 
     /* If there is no auxpow, just check the block hash.  */
     if (!block.auxpow) {
-        // regtest - f6b09d81e94dc5dbbc263d091b91bf527aadc4e9175361f576b2bd2a8b185b82
-        // testnet - f1829fd53bdafd15df45bdb7becb40cb8ae720bb9aa2004c46e3827bc558d8b0
-        // testnet4 - 0325d17ded17061bb7282f0891a1b3c950983c6c868cbda83cb70c5dd569bc93
-        // mainnet - 7d2a1680b452741c7775ffd958c1412da86acf5507e2849cd0f6d9e52979824a
-        if (block.GetHash().ToString().compare("f6b09d81e94dc5dbbc263d091b91bf527aadc4e9175361f576b2bd2a8b185b82") == 0 || block.GetHash().ToString().compare("f1829fd53bdafd15df45bdb7becb40cb8ae720bb9aa2004c46e3827bc558d8b0") == 0 || block.GetHash().ToString().compare("0325d17ded17061bb7282f0891a1b3c950983c6c868cbda83cb70c5dd569bc93") == 0 || block.GetHash().ToString().compare("7d2a1680b452741c7775ffd958c1412da86acf5507e2849cd0f6d9e52979824a") == 0) {
+        // regtest - 1785db2ef2693e42685107293456a5b10941fda948c4dd79054b336ee2b930c4
+        // testnet - 42f657748c01d2fb59cea5d7269fd410e96ed21c249417c4ad27a18fa4432221
+        // testnet4 - 6c6f09c397877ce3e13f4c6cc2b7eec2329204e30cd603f90cf8f82b41883e88
+        // mainnet - 64a92c2b815bbebeb13c6c6ea629731afae731e7256b2441b8dfef349926dcd8
+        if (block.GetHash().ToString().compare("1785db2ef2693e42685107293456a5b10941fda948c4dd79054b336ee2b930c4") == 0 || block.GetHash().ToString().compare("42f657748c01d2fb59cea5d7269fd410e96ed21c249417c4ad27a18fa4432221") == 0 || block.GetHash().ToString().compare("6c6f09c397877ce3e13f4c6cc2b7eec2329204e30cd603f90cf8f82b41883e88") == 0 || block.GetHash().ToString().compare("64a92c2b815bbebeb13c6c6ea629731afae731e7256b2441b8dfef349926dcd8") == 0) {
             return true;
         } else {
             LogError("%s : block hash no auxpow on block with auxpow version",
@@ -2309,12 +2312,11 @@ void Chainstate::InvalidBlockFound(CBlockIndex* pindex, const BlockValidationSta
     }
 }
 
-void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, uint32_t& nAssetIDOut, uint32_t nNewAssetIDIn, CAmount& preconfRefund)
+void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txundo, int nHeight, CAmount& amountAssetInOut, int& nControlNOut, std::vector<unsigned char>& nAssetIDOut, std::vector<unsigned char> nNewAssetIDIn, CAmount& preconfRefund)
 {
     amountAssetInOut = CAmount(0); // Track asset inputs
     nControlNOut = -1;             // Track asset controller outputs
-    nAssetIDOut = 0;               // Track asset ID
-    // mark inputs spent
+
     if (!tx.IsCoinBase() && tx.version != TRANSACTION_PEGIN_VERSION) {
         txundo.vprevout.reserve(tx.vin.size());
         for (size_t x = 0; x < tx.vin.size(); x++) {
@@ -2323,7 +2325,7 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txund
             bool fBitAsset = false;
             bool fBitAssetControl = false;
             bool isPreconf = false;
-            uint32_t nAssetID = 0;
+            std::vector<unsigned char> nAssetID;
             bool is_spent = inputs.SpendCoin(txin.prevout, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &txundo.vprevout.back());
 
             if (tx.version == TRANSACTION_PRECONF_VERSION && !is_spent) {
@@ -2333,7 +2335,7 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo& txund
             }
 
             // Update nAssetIDOut if SpendCoin returns a non-zero asset ID
-            if (nAssetID)
+            if (!nAssetID.empty())
                 nAssetIDOut = nAssetID;
 
             if (fBitAsset && !fBitAssetControl)
@@ -2571,7 +2573,7 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
                 bool fBitAsset = false;
                 bool fBitAssetControl = false;
                 bool isPreconf = false;
-                uint32_t nAssetID = 0;
+                std::vector<unsigned char> nAssetID;
                 bool is_spent = view.SpendCoin(out, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &coin);
                 if (!is_spent || tx.vout[o] != coin.out || pindex->nHeight != coin.nHeight || is_coinbase != coin.fCoinBase) {
                     if (!is_bip30_exception) {
@@ -2878,9 +2880,9 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                 CTxUndo undoDummy;
                 CAmount amountAssetIn = CAmount(0);
                 int nControlN = -1;
-                uint32_t nAssetID = 0;
+                std::vector<unsigned char> nAssetID;
                 CAmount refund = getRefundForPreconfTx(tx, finalizedSignedBlock.currentFee, view);
-                UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+                UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, std::vector<unsigned char>{}, refund);
             }
             includedSignedBlock.push_back(finalizedSignedBlock.GetHash());
         }
@@ -2895,9 +2897,9 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                     CTxUndo undoDummy;
                     CAmount amountAssetIn = CAmount(0);
                     int nControlN = -1;
-                    uint32_t nAssetID = 0;
+                    std::vector<unsigned char> nAssetID;
                     CAmount refund = getRefundForPreconfTx(tx, finalizedSignedBlock.currentFee, view);
-                    UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+                    UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, std::vector<unsigned char>{}, refund);
                 }
             }
         }
@@ -2917,8 +2919,9 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid pegin transaction version");
         }
         CAmount txfee = 0;
+        CAmount utxoFee = 0;
         TxValidationState tx_state;
-        if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee)) {
+        if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee, utxoFee)) {
             // state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
             //             tx_state.GetRejectReason(), tx_state.GetDebugMessage());
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
@@ -2940,13 +2943,14 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         CTxUndo undoDummy;
         CAmount amountAssetIn = CAmount(0);
         int nControlN = -1;
-        uint32_t nAssetID = 0;
+        std::vector<unsigned char> nAssetID;
         CAmount refund = CAmount(0);
-        UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+        UpdateCoins(tx, view, undoDummy, pindex->nHeight, amountAssetIn, nControlN, nAssetID, std::vector<unsigned char>{}, refund);
     }
 
 
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
+    int16_t assetIncr = 0;
     for (unsigned int i = 0; i < block.vtx.size(); i++) {
         if (!state.IsValid()) break;
         const CTransaction& tx = *(block.vtx[i]);
@@ -2959,13 +2963,18 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                     return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): transaction payload missing");
                 }
             }
+            if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && assetIncr == NUMOF_NEWASSET_IN_BLOCK) { 
+                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): block only accept 256 new asset per block");
+            }
+
             if (!AreCoordinateTransactionStandard(tx, view)) {
                 LogPrintf("Invalid transaction standard \n");
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid transaction standard");
             }
             CAmount txfee = 0;
+            CAmount utxoFee = 0;
             TxValidationState tx_state;
-            if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee, true)) {
+            if (!Consensus::CheckTxInputs(tx, tx_state, view, pindex->nHeight, txfee, utxoFee, true)) {
                 if (state.GetRejectReason().compare("bad-txns-coins-not-exist") == 0) {
                     ReconciliationInvalidTx invalidTxObj;
                     invalidTxObj.pos = i;
@@ -3036,21 +3045,15 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         }
 
         // New asset created - set asset ID # and update CoordinateAssetDB
-        uint32_t nNewAssetID = 0;
+        std::vector<unsigned char> nNewAssetID;
         if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
-            if (tx.vout.size() < 2) {
+            assetIncr++;
+            if (!tx.HasValidOutputCount()) {
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - vout too small");
             }
-
-            uint32_t nIDLast = 0;
-            uint32_t nAssetID = 0;
+            std::vector<unsigned char> nIDLast = CreateAssetId(pindex->nHeight, assetIncr);
+            std::vector<unsigned char> nAssetID;
             CoordinateAsset asset;
-            passettree->GetLastAssetID(nIDLast);
-
-            if (nIDLast > UINT32_MAX) {
-                return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Maxium asset count reacheds");
-            }
-            nIDLast = nIDLast + 1;
 
             // validate asset precision
             if ((tx.assetType == 0 && (tx.precision < 1 || tx.precision > 8)) || (tx.assetType != 0 && tx.precision != 0)) {
@@ -3069,12 +3072,12 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                 view.getAssetCoin(tx.vin[0].prevout, fBitAsset, fBitAssetControl, nAssetID, &coin);
                 if (fBitAssetControl) {
                     nIDLast = nAssetID;
-                    passettree->GetAsset(nIDLast, asset);
+                    passettree->GetAsset(getAssetHash(nIDLast), asset);
                 }
             }
 
             // additional mint not available for current minting
-            if (nAssetID == 0) {
+            if (nAssetID.empty()) {
                 asset.nID = nIDLast;
                 asset.assetType = tx.assetType;
                 asset.precision = tx.precision;
@@ -3099,12 +3102,6 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
                 } else {
                     return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid CoordinateAsset creation - controller destination invalid");
                 }
-
-                // Update latest CoordinateAsset ID #
-                if (!fJustCheck && !passettree->WriteLastAssetID(asset.nID)) {
-                    return state.Error("Failed to update last CoordinateAsset ID #!\n");
-                }
-
             } else {
                 asset.nSupply = asset.nSupply + tx.vout[1].nValue;
             }
@@ -3115,7 +3112,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
             nNewAssetID = asset.nID;
         }
 
-        if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             removeMempoolAsset(tx);
         }
 
@@ -3125,7 +3122,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
         }
         CAmount amountAssetIn = CAmount(0);
         int nControlN = -1;
-        uint32_t nAssetID = 0;
+        std::vector<unsigned char> nAssetID;
         CAmount preconfCurrentFee = CAmount(0);
         UpdateCoins(tx, view, (i == 0 || tx.version == TRANSACTION_PEGIN_VERSION) ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight, amountAssetIn, nControlN, nAssetID, nNewAssetID, preconfCurrentFee);
     }
@@ -3278,9 +3275,9 @@ CCoinsViewCache& Chainstate::UpdatedCoinsTip(CCoinsViewCache& view, int blockHei
             CTxUndo undoDummy;
             CAmount amountAssetIn = CAmount(0);
             int nControlN = -1;
-            uint32_t nAssetID = 0;
+            std::vector<unsigned char> nAssetID;
             CAmount refund = getRefundForPreconfTx(tx, finalizedSignedBlock.currentFee, view);
-            UpdateCoins(tx, view, undoDummy, blockHeight, amountAssetIn, nControlN, nAssetID, 0, refund);
+            UpdateCoins(tx, view, undoDummy, blockHeight, amountAssetIn, nControlN, nAssetID, std::vector<unsigned char>{}, refund);
         }
     }
 
@@ -3305,6 +3302,10 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block)
         CTransactionRef ptx = block.vtx[i];
         const CTransaction& tx = *ptx;
         if (i != 0) {
+            if (tx.version == TRANSACTION_PRECONF_VERSION && !tx.HasValidOutputCount()) {
+                    return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid preconf creation - vout too small");
+            }
+
             if (!AreCoordinateTransactionStandard(tx, view)) {
                 LogPrintf("Invalid transaction standard \n");
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): Invalid transaction standard");
@@ -3318,13 +3319,14 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block)
                 }
             }
 
-            if (tx.vout.size() <= 1) {
+            if (!tx.HasValidOutputCount()) {
                 return state.Invalid(BlockValidationResult::BLOCK_CACHED_INVALID, "ConnectBlock(): transaction atleast have 2 output");
             }
 
             CAmount txfee = 0;
+            CAmount utxoFee = 0;
             TxValidationState tx_state;
-            if (!Consensus::CheckTxInputs(tx, tx_state, view, block.blockIndex, txfee)) {
+            if (!Consensus::CheckTxInputs(tx, tx_state, view, block.blockIndex, txfee, utxoFee)) {
                 // Any transaction validation failure in ConnectBlock is a block consensus failure
                 state.Invalid(BlockValidationResult::BLOCK_CONSENSUS,
                               tx_state.GetRejectReason(), tx_state.GetDebugMessage());
@@ -3346,7 +3348,6 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block)
                                              tx.GetHash().ToString(), state.ToString()));
             }
 
-            removeMempoolAsset(tx);
         }
 
         CTxUndo undoDummy;
@@ -3356,9 +3357,9 @@ bool Chainstate::ConnectSignedBlock(const SignedBlock& block)
 
         CAmount amountAssetIn = CAmount(0);
         int nControlN = -1;
-        uint32_t nAssetID = 0;
+        std::vector<unsigned char> nAssetID;
         CAmount refund = getRefundForPreconfTx(tx, block.currentFee, view);
-        UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), m_chainman.ActiveHeight(), amountAssetIn, nControlN, nAssetID, 0, refund);
+        UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), m_chainman.ActiveHeight(), amountAssetIn, nControlN, nAssetID, std::vector<unsigned char>{}, refund);
     }
 
     psignedblocktree->WriteLastSignedBlockID(block.nHeight);
@@ -5523,7 +5524,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
                     bool fBitAsset = false;
                     bool fBitAssetControl = false;
                     bool isPreconf = false;
-                    uint32_t nAssetID = 0;
+                    std::vector<unsigned char> nAssetID;
                     Coin coin;
                     inputs.SpendCoin(txin.prevout, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &coin);
                     if (fBitAsset)
@@ -5533,7 +5534,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
                 }
             }
             // Pass check = true as every addition may be an overwrite.
-            AddCoins(inputs, *tx, pindex->nHeight, refund, amountAssetIn, nControlN, true);
+            AddCoins(inputs, *tx, pindex->nHeight, refund, std::vector<unsigned char>{}, amountAssetIn, nControlN, std::vector<unsigned char>{}, true);
         }
     }
 
@@ -5544,7 +5545,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
         CAmount amountAssetIn = CAmount(0);
         int nControlN = -1;
         CAmount refund = CAmount(0);
-        AddCoins(inputs, *tx, pindex->nHeight, refund, amountAssetIn, nControlN, true);
+        AddCoins(inputs, *tx, pindex->nHeight, refund, std::vector<unsigned char>{}, amountAssetIn, nControlN, std::vector<unsigned char>{}, true);
     }
 
     for (size_t x = 0; x < block.vtx.size(); x++) {
@@ -5557,7 +5558,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
                 bool fBitAsset = false;
                 bool fBitAssetControl = false;
                 bool isPreconf = false;
-                uint32_t nAssetID = 0;
+                std::vector<unsigned char> nAssetID;
                 Coin coin;
                 inputs.SpendCoin(txin.prevout, fBitAsset, fBitAssetControl, isPreconf, nAssetID, &coin);
 
@@ -5568,7 +5569,7 @@ bool Chainstate::RollforwardBlock(const CBlockIndex* pindex, CCoinsViewCache& in
             }
         }
         // Pass check = true as every addition may be an overwrite.
-        AddCoins(inputs, *tx, pindex->nHeight, preconfRefund, amountAssetIn, nControlN, true);
+        AddCoins(inputs, *tx, pindex->nHeight, preconfRefund, std::vector<unsigned char>{}, amountAssetIn, nControlN, std::vector<unsigned char>{}, true);
     }
     return true;
 }

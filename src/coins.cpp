@@ -120,7 +120,7 @@ void CCoinsViewCache::EmplaceCoinInternalDANGER(COutPoint&& outpoint, Coin&& coi
     if (inserted) CCoinsCacheEntry::SetDirty(*it, m_sentinel);
 }
 
-void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight, const CAmount preconfRefund, uint32_t nAssetID, const CAmount amountAssetIn, int nControlN, uint32_t nNewAssetID, bool check_for_overwrite)
+void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight, const CAmount preconfRefund, std::vector<unsigned char> nAssetID, const CAmount amountAssetIn, int nControlN, std::vector<unsigned char> nNewAssetID, bool check_for_overwrite)
 {
     bool fCoinbase = tx.IsCoinBase();
     const Txid& txid = tx.GetHash();
@@ -130,7 +130,7 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight, const
         DataStream stream(stack[2]);
         CAmount value;
         stream >> value;
-        cache.AddCoin(tx.vin[0].prevout, Coin(CTxOut(value, CScript(stack[0].begin(), stack[0].end())), nHeight, fCoinbase, false, false, false, true, 0), false);
+        cache.AddCoin(tx.vin[0].prevout, Coin(CTxOut(value, CScript(stack[0].begin(), stack[0].end())), nHeight, fCoinbase, false, false, false, true, std::vector<unsigned char>{}), false);
     }
 
     if (amountAssetIn > 0) {
@@ -139,7 +139,7 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight, const
         if (tx.version == TRANSACTION_PRECONF_VERSION && !tx.IsCoinBase()) {
             bool overwrite = check_for_overwrite ? cache.HaveCoin(COutPoint(txid, 0)) : fCoinbase;
             CTxOut refund(preconfRefund, tx.vout[0].scriptPubKey);
-            cache.AddCoin(COutPoint(txid, 0), Coin(refund, nHeight, fCoinbase, false, false, true, false, 0), overwrite);
+            cache.AddCoin(COutPoint(txid, 0), Coin(refund, nHeight, fCoinbase, false, false, true, false, std::vector<unsigned char>{}), overwrite);
         }
 
         // Label BitAsset outputs until we account for all BitAsset input
@@ -149,8 +149,8 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight, const
             bool overwrite = check_for_overwrite ? cache.HaveCoin(COutPoint(txid, i)) : fCoinbase;
             bool fAsset = amountAssetIn > amountAssetOut;
             bool fControl = nControlN >= 0 && (int)i == nControlN;
-            uint32_t nID = nNewAssetID ? nNewAssetID : nAssetID;
-            cache.AddCoin(COutPoint(txid, i), Coin(tx.vout[i], nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
+            std::vector<unsigned char> nID = !nNewAssetID.empty() ? nNewAssetID : nAssetID;
+            cache.AddCoin(COutPoint(txid, i), Coin(tx.vout[i], nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : std::vector<unsigned char>{}), overwrite);
             if (fAsset)
                 amountAssetOut += tx.vout[i].nValue;
         }
@@ -163,19 +163,19 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight, const
         for (size_t i = 0; i < tx.vout.size(); ++i) {
             bool fAsset = fNewAsset && i < 2;
             bool fControl = fNewAsset && i == 0;
-            uint32_t nID = nNewAssetID ? nNewAssetID : nAssetID;
+            std::vector<unsigned char> nID = !nNewAssetID.empty() ? nNewAssetID : nAssetID;
             bool overwrite = check_for_overwrite ? cache.HaveCoin(COutPoint(txid, i)) : fCoinbase;
             if (tx.version == TRANSACTION_PRECONF_VERSION && i == 0 && !tx.IsCoinBase()) {
                 CTxOut refund(preconfRefund, tx.vout[i].scriptPubKey);
-                cache.AddCoin(COutPoint(txid, i), Coin(refund, nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
+                cache.AddCoin(COutPoint(txid, i), Coin(refund, nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : std::vector<unsigned char>{}), overwrite);
             } else {
-                cache.AddCoin(COutPoint(txid, i), Coin(tx.vout[i], nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : 0), overwrite);
+                cache.AddCoin(COutPoint(txid, i), Coin(tx.vout[i], nHeight, fCoinbase, fAsset, fControl, tx.version == TRANSACTION_PRECONF_VERSION ? true : false, false, fAsset ? nID : std::vector<unsigned char>{}), overwrite);
             }
         }
     }
 }
 
-bool CCoinsViewCache::SpendCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, bool& isPreconf, uint32_t& nAssetID, Coin* moveout)
+bool CCoinsViewCache::SpendCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, bool& isPreconf, std::vector<unsigned char>& nAssetID, Coin* moveout)
 {
     CCoinsMap::iterator it = FetchCoin(outpoint);
     if (it == cacheCoins.end()) return false;
@@ -202,7 +202,7 @@ bool CCoinsViewCache::SpendCoin(const COutPoint& outpoint, bool& fBitAsset, bool
     return true;
 }
 
-bool CCoinsViewCache::getAssetCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, uint32_t& nAssetID, Coin* moveout)
+bool CCoinsViewCache::getAssetCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, std::vector<unsigned char>& nAssetID, Coin* moveout)
 {
     CCoinsMap::iterator it = FetchCoin(outpoint);
     if (it == cacheCoins.end()) return false;

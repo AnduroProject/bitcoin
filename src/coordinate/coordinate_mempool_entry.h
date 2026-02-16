@@ -26,7 +26,7 @@ inline void SerializeCoordinateMempoolEntry(const CoordinateMempoolEntryType& as
 
 struct CoordinateMempoolEntry {
 public:
-    uint32_t assetID; /*!< Asset unique number */
+    std::vector<unsigned char> assetID; /*!< Asset unique number */
     uint256 txid;     /*!< Asset Mempool txid*/
     int32_t vout;     /*!< Asset Mempool Transaction vout*/
     CAmount nValue;   /*!< Asset Mempool Transaction value*/
@@ -56,7 +56,7 @@ public:
 
     void SetNull()
     {
-        assetID = 0;
+        assetID.clear();
         txid.SetNull();
         vout = -1;
         nValue = -1;
@@ -78,7 +78,7 @@ bool getMempoolAsset(uint256 txid, uint32_t voutIn, CoordinateMempoolEntry* asse
  * @param[in] amountAssetIn  returns total asset amount used in transaction
  * @param[in] currentAssetID  returns current asset id
  */
-bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate, CAmount& amountAssetIn, uint32_t& currentAssetID);
+bool getAssetWithAmount(const CTransaction& tx, Chainstate& m_active_chainstate, CAmount& amountAssetIn, std::vector<unsigned char>& currentAssetID);
 
 /**
  * Remove all asset transaction based on txid

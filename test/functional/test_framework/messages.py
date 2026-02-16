@@ -27,6 +27,7 @@ import random
 import socket
 import time
 import unittest
+import struct
 
 from test_framework.crypto.siphash import siphash256
 from test_framework.util import assert_equal
@@ -81,11 +82,15 @@ MAX_OP_RETURN_RELAY = 100_000
 DEFAULT_MEMPOOL_EXPIRY_HOURS = 336  # hours
 
 MAGIC_BYTES = {
-    "mainnet": b"\xf9\xbe\xb4\xd9",
-    "testnet4": b"\x1c\x16\x3f\x28",
-    "regtest": b"\xfa\xbf\xb5\xda",
+    "mainnet": b"\xf8\xbf\xb8\xd8",
+    "testnet4": b"\x1f\x16\x3f\x28",
+    "regtest": b"\xb9\xbe\xb9\xd8",
     "signet": b"\x0a\x03\xcf\x40",
 }
+
+VERSION_AUXPOW = (1 << 8)
+VERSION_CHAIN_START = (1 << 16)
+CHAIN_ID = 2222
 
 def sha256(s):
     return hashlib.sha256(s).digest()
@@ -450,24 +455,37 @@ class CBlockLocator:
 
 
 class COutPoint:
-    __slots__ = ("hash", "n")
+    __slots__ = ("hash", "n", "assetId")
 
-    def __init__(self, hash=0, n=0):
+    def __init__(self, hash=0, n=0, assetId=b""):
         self.hash = hash
         self.n = n
+        self.assetId = assetId
 
     def deserialize(self, f):
         self.hash = deser_uint256(f)
         self.n = int.from_bytes(f.read(4), "little")
+        asset_len_bytes = f.read(1)
+        if asset_len_bytes:
+            asset_len = asset_len_bytes[0]
+            self.assetId = f.read(asset_len)
+        else:
+            self.assetId = b""
 
     def serialize(self):
         r = b""
         r += ser_uint256(self.hash)
         r += self.n.to_bytes(4, "little")
+        r += len(self.assetId).to_bytes(1, "little")
+        r += self.assetId
         return r
 
     def __repr__(self):
-        return "COutPoint(hash=%064x n=%i)" % (self.hash, self.n)
+        return "COutPoint(hash=%064x n=%i assetId=%s)" % (
+            self.hash,
+            self.n,
+            self.assetId.hex() if self.assetId else "",
+        )
 
 
 class CTxIn:
@@ -590,17 +608,29 @@ class CTxWitness:
 
 
 class CTransaction:
-    __slots__ = ("nLockTime", "version", "vin", "vout", "wit")
+    __slots__ = ("nLockTime", "version", "vin", "vout", "wit", "assetType", "precision", "ticker", "headline", "payload", "payloadData")
 
     def __init__(self, tx=None):
         if tx is None:
             self.version = 2
+            self.assetType = 0        # 0=fungible, 1/2=non-fungible types
+            self.precision = 0         # 0 if NFT, 1-8 if fungible
+            self.ticker = ""
+            self.headline = ""
+            self.payload = 0           # uint256 (as int)
+            self.payloadData = ""
             self.vin = []
             self.vout = []
             self.wit = CTxWitness()
             self.nLockTime = 0
         else:
             self.version = tx.version
+            self.assetType = tx.assetType
+            self.precision = tx.precision
+            self.ticker = tx.ticker
+            self.headline = tx.headline
+            self.payload = tx.payload
+            self.payloadData = tx.payloadData
             self.vin = copy.deepcopy(tx.vin)
             self.vout = copy.deepcopy(tx.vout)
             self.nLockTime = tx.nLockTime
@@ -608,6 +638,23 @@ class CTransaction:
 
     def deserialize(self, f):
         self.version = int.from_bytes(f.read(4), "little")
+        self.assetType = int.from_bytes(f.read(4), "little")
+        self.precision = int.from_bytes(f.read(4), "little")
+
+        # ticker and headline as length-prefixed strings
+        ticker_len = int.from_bytes(f.read(1), "little")
+        self.ticker = f.read(ticker_len).decode("utf-8") if ticker_len > 0 else ""
+
+        headline_len = int.from_bytes(f.read(1), "little")
+        self.headline = f.read(headline_len).decode("utf-8") if headline_len > 0 else ""
+
+        # payload as uint256
+        self.payload = deser_uint256(f)
+
+        # payloadData as length-prefixed string
+        data_len = int.from_bytes(f.read(1), "little")
+        self.payloadData = f.read(data_len).decode("utf-8") if data_len > 0 else ""
+
         self.vin = deser_vector(f, CTxIn)
         flags = 0
         if len(self.vin) == 0:
@@ -629,6 +676,22 @@ class CTransaction:
     def serialize_without_witness(self):
         r = b""
         r += self.version.to_bytes(4, "little")
+        r += self.assetType.to_bytes(4, "little")
+        r += self.precision.to_bytes(4, "little")
+
+        # serialize strings with length prefix
+        r += len(self.ticker.encode()).to_bytes(1, "little")
+        r += self.ticker.encode()
+        r += len(self.headline.encode()).to_bytes(1, "little")
+        r += self.headline.encode()
+
+        # payload
+        r += ser_uint256(self.payload)
+
+        # payloadData
+        data_bytes = self.payloadData.encode()
+        r += len(data_bytes).to_bytes(1, "little")
+        r += data_bytes
         r += ser_vector(self.vin)
         r += ser_vector(self.vout)
         r += self.nLockTime.to_bytes(4, "little")
@@ -641,6 +704,18 @@ class CTransaction:
             flags |= 1
         r = b""
         r += self.version.to_bytes(4, "little")
+        r += self.assetType.to_bytes(4, "little")
+        r += self.precision.to_bytes(4, "little")
+
+        r += len(self.ticker.encode()).to_bytes(1, "little")
+        r += self.ticker.encode()
+        r += len(self.headline.encode()).to_bytes(1, "little")
+        r += self.headline.encode()
+        r += ser_uint256(self.payload)
+
+        data_bytes = self.payloadData.encode()
+        r += len(data_bytes).to_bytes(1, "little")
+        r += data_bytes
         if flags:
             dummy = []
             r += ser_vector(dummy)
@@ -702,9 +777,184 @@ class CTransaction:
         return "CTransaction(version=%i vin=%s vout=%s wit=%s nLockTime=%i)" \
             % (self.version, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime)
 
+class CAuxPow(CTransaction):
+    __slots__ = ("hashBlock", "vMerkleBranch", "nIndex",
+                 "vChainMerkleBranch", "nChainIndex", "parentBlock")
+
+    def __init__(self):
+        super(CAuxPow, self).__init__()
+        self.hashBlock = 0
+        self.vMerkleBranch = []
+        self.nIndex = 0
+        self.vChainMerkleBranch = []
+        self.nChainIndex = 0
+        self.parentBlock = CBlockHeader()
+
+    def deserialize(self, f):
+        super(CAuxPow, self).deserialize(f)
+        self.hashBlock = deser_uint256(f)
+        self.vMerkleBranch = deser_uint256_vector(f)
+        self.nIndex = int.from_bytes(f.read(4), "little")
+        self.vChainMerkleBranch = deser_uint256_vector(f)
+        self.nChainIndex = int.from_bytes(f.read(4), "little")
+        self.parentBlock.deserialize(f)
+
+    def serialize(self):
+        r = b""
+        r += super(CAuxPow, self).serialize()
+        r += ser_uint256(self.hashBlock)
+        r += ser_uint256_vector(self.vMerkleBranch)
+        r += self.nIndex.to_bytes(4, "little")
+        r += ser_uint256_vector(self.vChainMerkleBranch)
+        r += self.nChainIndex.to_bytes(4, "little")
+        r += self.parentBlock.serialize()
+        return r
+
+class ReconciliationInvalidTx:
+    __slots__ = ("txHash", "pos")
+
+    def __init__(self, txHash=0, pos=0):
+        self.txHash = txHash  # uint256 (as int)
+        self.pos = pos        # uint32_t
+
+    def SetNull(self):
+        self.txHash = 0
+        self.pos = 0
+
+    def serialize(self):
+        r = b""
+        r += ser_uint256(self.txHash)
+        r += self.pos.to_bytes(4, "little")
+        return r
+
+    def deserialize(self, f):
+        self.txHash = deser_uint256(f)
+        self.pos = int.from_bytes(f.read(4), "little")
+
+    def __repr__(self):
+        return f"ReconciliationInvalidTx(txHash={self.txHash:064x}, pos={self.pos})"
+
+class ReconciliationBlock:
+    __slots__ = ("reconcileMerkleRoot", "nTx", "tx")
+
+    def __init__(self):
+        self.reconcileMerkleRoot = 0  # uint256
+        self.nTx = 0                  # uint32_t
+        self.tx = []                  # list of ReconciliationInvalidTx
+
+    def SetNull(self):
+        self.reconcileMerkleRoot = 0
+        self.nTx = 0
+        self.tx = []
+
+    def serialize(self):
+        r = b""
+        r += ser_uint256(self.reconcileMerkleRoot)
+        r += self.nTx.to_bytes(4, "little")
+        r += ser_vector(self.tx)
+        return r
+
+    def deserialize(self, f):
+        self.reconcileMerkleRoot = deser_uint256(f)
+        self.nTx = int.from_bytes(f.read(4), "little")
+        self.tx = deser_vector(f, ReconciliationInvalidTx)
+
+    def __repr__(self):
+        return (
+            f"ReconciliationBlock("
+            f"reconcileMerkleRoot={self.reconcileMerkleRoot:064x}, "
+            f"nTx={self.nTx}, tx={repr(self.tx)})"
+        )
+
+class SignedBlockHeader:
+    __slots__ = (
+        "nVersion",
+        "nTime",
+        "nHeight",
+        "blockIndex",
+        "hashPrevSignedBlock",
+        "hashMerkleRoot",
+        "currentFee",
+    )
+
+    def __init__(self):
+        self.nVersion = 0
+        self.nTime = 0
+        self.nHeight = 0
+        self.blockIndex = 0
+        self.hashPrevSignedBlock = 0
+        self.hashMerkleRoot = 0
+        self.currentFee = 0  # CAmount (int64)
+
+    def SetNull(self):
+        self.nVersion = 0
+        self.nTime = 0
+        self.nHeight = 0
+        self.blockIndex = 0
+        self.hashPrevSignedBlock = 0
+        self.hashMerkleRoot = 0
+        self.currentFee = 0
+
+    def serialize(self):
+        r = b""
+        r += self.nVersion.to_bytes(4, "little", signed=True)
+        r += self.nTime.to_bytes(4, "little")
+        r += self.nHeight.to_bytes(8, "little")
+        r += self.blockIndex.to_bytes(8, "little")
+        r += ser_uint256(self.hashPrevSignedBlock)
+        r += ser_uint256(self.hashMerkleRoot)
+        r += self.currentFee.to_bytes(8, "little", signed=True)
+        return r
+
+    def deserialize(self, f):
+        self.nVersion = int.from_bytes(f.read(4), "little", signed=True)
+        self.nTime = int.from_bytes(f.read(4), "little")
+        self.nHeight = int.from_bytes(f.read(8), "little")
+        self.blockIndex = int.from_bytes(f.read(8), "little")
+        self.hashPrevSignedBlock = deser_uint256(f)
+        self.hashMerkleRoot = deser_uint256(f)
+        self.currentFee = int.from_bytes(f.read(8), "little", signed=True)
+
+    def GetHash(self):
+        """Return SHA256d hash of the serialized header."""
+        return uint256_from_str(hash256(self.serialize()))
+
+    def __repr__(self):
+        return (
+            f"SignedBlockHeader("
+            f"nVersion={self.nVersion}, nTime={self.nTime}, nHeight={self.nHeight}, "
+            f"blockIndex={self.blockIndex}, hashPrevSignedBlock={self.hashPrevSignedBlock:064x}, "
+            f"hashMerkleRoot={self.hashMerkleRoot:064x}, currentFee={self.currentFee})"
+        )
+
+class SignedBlock(SignedBlockHeader):
+    __slots__ = ("vtx",)
+
+    def __init__(self):
+        super().__init__()
+        self.vtx = []  # list of CTransactionRef (CTransaction objects)
+
+    def SetNull(self):
+        super().SetNull()
+        self.vtx = []
+
+    def serialize(self):
+        r = super().serialize()
+        r += ser_vector(self.vtx)
+        return r
+
+    def deserialize(self, f):
+        super().deserialize(f)
+        self.vtx = deser_vector(f, CTransaction)
+
+    def __repr__(self):
+        return (
+            f"SignedBlock({super().__repr__()}, vtx_count={len(self.vtx)})"
+        )
 
 class CBlockHeader:
     __slots__ = ("hashMerkleRoot", "hashPrevBlock", "nBits", "nNonce",
+                 "auxpow",
                  "nTime", "nVersion")
 
     def __init__(self, header=None):
@@ -717,14 +967,29 @@ class CBlockHeader:
             self.nTime = header.nTime
             self.nBits = header.nBits
             self.nNonce = header.nNonce
+            self.auxpow = header.auxpow
 
     def set_null(self):
-        self.nVersion = 4
+        # Set auxpow chain ID.  Blocks without a chain ID are not accepted
+        # by the regtest network consensus rules (since they are "legacy").
+        self.set_base_version(4)
+
         self.hashPrevBlock = 0
         self.hashMerkleRoot = 0
         self.nTime = 0
         self.nBits = 0
         self.nNonce = 0
+        self.auxpow = None
+
+    def set_base_version(self, n):
+        assert n < VERSION_AUXPOW
+        self.nVersion = n + CHAIN_ID * VERSION_CHAIN_START
+
+    def mark_auxpow(self):
+        self.nVersion |= VERSION_AUXPOW
+
+    def is_auxpow(self):
+        return (self.nVersion & VERSION_AUXPOW) > 0
 
     def deserialize(self, f):
         self.nVersion = int.from_bytes(f.read(4), "little", signed=True)
@@ -733,11 +998,14 @@ class CBlockHeader:
         self.nTime = int.from_bytes(f.read(4), "little")
         self.nBits = int.from_bytes(f.read(4), "little")
         self.nNonce = int.from_bytes(f.read(4), "little")
+        if self.is_auxpow():
+            self.auxpow = CAuxPow()
+            self.auxpow.deserialize(f)
 
     def serialize(self):
-        return self._serialize_header()
+        return self._serialize_header(True)
 
-    def _serialize_header(self):
+    def _serialize_header(self, withAuxpow):
         r = b""
         r += self.nVersion.to_bytes(4, "little", signed=True)
         r += ser_uint256(self.hashPrevBlock)
@@ -745,17 +1013,19 @@ class CBlockHeader:
         r += self.nTime.to_bytes(4, "little")
         r += self.nBits.to_bytes(4, "little")
         r += self.nNonce.to_bytes(4, "little")
+        if withAuxpow and self.is_auxpow():
+            r += self.auxpow.serialize()
         return r
 
     @property
     def hash_hex(self):
         """Return block header hash as hex string."""
-        return hash256(self._serialize_header())[::-1].hex()
+        return hash256(self._serialize_header(False))[::-1].hex()
 
     @property
     def hash_int(self):
         """Return block header hash as integer."""
-        return uint256_from_str(hash256(self._serialize_header()))
+        return uint256_from_str(hash256(self._serialize_header(False)))
 
     def __repr__(self):
         return "CBlockHeader(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x)" \
@@ -766,23 +1036,39 @@ BLOCK_HEADER_SIZE = len(CBlockHeader().serialize())
 assert_equal(BLOCK_HEADER_SIZE, 80)
 
 class CBlock(CBlockHeader):
-    __slots__ = ("vtx",)
+    __slots__ = ("vtx", "pegins", "preconfBlock", "reconciliationBlock", "currentKeys", "currentIndex")
 
     def __init__(self, header=None):
         super().__init__(header)
         self.vtx = []
+        self.pegins = []
+        self.preconfBlock = []
+        self.reconciliationBlock = ReconciliationBlock()
+        self.currentKeys = ""
+        self.currentIndex = 0
 
     def deserialize(self, f):
         super().deserialize(f)
         self.vtx = deser_vector(f, CTransaction)
+        self.pegins = deser_vector(f, CTransaction)
+        self.preconfBlock = deser_vector(f, SignedBlock)
+        self.reconciliationBlock = ReconciliationBlock().deserialize(f)
+        self.currentKeys = deser_string(f)
+        self.currentIndex = struct.unpack("<i", f.read(4))[0]
 
     def serialize(self, with_witness=True):
         r = b""
         r += super().serialize()
         if with_witness:
             r += ser_vector(self.vtx, "serialize_with_witness")
+            r += ser_vector(self.pegins, "serialize_with_witness")
         else:
             r += ser_vector(self.vtx, "serialize_without_witness")
+            r += ser_vector(self.pegins, "serialize_without_witness")
+        r += ser_vector(self.preconfBlock, "serialize")
+        r += self.reconciliationBlock.serialize()
+        r += ser_string(self.currentKeys)
+        r += struct.pack("<i", self.currentIndex)
         return r
 
     # Calculate the merkle root given a vector of transaction hashes
@@ -797,21 +1083,76 @@ class CBlock(CBlockHeader):
         return uint256_from_str(hashes[0])
 
     def calc_merkle_root(self):
-        hashes = []
-        for tx in self.vtx:
-            hashes.append(ser_uint256(tx.txid_int))
-        return self.get_merkle_root(hashes)
+        leaves = [b""] * 4  # preconfBlock, vtx, pegins, invalidTx
+
+        # --- preconfBlock merkle root ---
+        preconfBlockLeaves = []
+        for sb in self.preconfBlock:
+            preconfTxLeaves = [b"\x00" * 32] * len(sb.vtx)  # coinbase witness = 0
+            for i in range(1, len(sb.vtx)):
+                preconfTxLeaves[i] = ser_uint256(sb.vtx[i].txid_int)
+            preconfBlockLeaves.append(self.get_merkle_root(preconfTxLeaves))
+        leaves[0] = self.get_merkle_root(preconfBlockLeaves) if preconfBlockLeaves else b"\x00" * 32
+
+        # --- normal transactions ---
+        txLeaves = [ser_uint256(tx.txid_int) for tx in self.vtx]
+        leaves[1] = self.get_merkle_root(txLeaves) if txLeaves else b"\x00" * 32
+
+        # --- peg-in transactions ---
+        peginLeaves = [ser_uint256(tx.txid_int) for tx in self.pegins]
+        leaves[2] = self.get_merkle_root(peginLeaves) if peginLeaves else b"\x00" * 32
+
+        # --- invalid transactions from reconciliationBlock ---
+        nTx = self.reconciliationBlock.nTx
+        invalidTxLeaves = [ser_uint256(self.reconciliationBlock.reconcileMerkleRoot)]
+        for s in range(nTx):
+            found = next((tx.txHash for tx in self.reconciliationBlock.tx if tx.pos == s), None)
+            if found is None:
+                invalidTxLeaves.append(b"\x00" * 32)
+            else:
+                invalidTxLeaves.append(ser_uint256(found))
+        leaves[3] = self.get_merkle_root(invalidTxLeaves) if invalidTxLeaves else b"\x00" * 32
+
+        # final block merkle root
+        return self.get_merkle_root(leaves)
+
 
     def calc_witness_merkle_root(self):
-        # For witness root purposes, the hash of the
-        # coinbase, with witness, is defined to be 0...0
-        hashes = [ser_uint256(0)]
+        leaves = [b""] * 4  # preconfBlock, vtx, pegins, invalidTx
 
-        for tx in self.vtx[1:]:
-            # Calculate the hashes with witness data
-            hashes.append(ser_uint256(tx.wtxid_int))
+        # --- preconfBlock witness merkle root ---
+        preconfBlockLeaves = []
+        for sb in self.preconfBlock:
+            preconfTxLeaves = [b"\x00" * 32] * len(sb.vtx)  # coinbase witness = 0
+            for i in range(1, len(sb.vtx)):
+                preconfTxLeaves[i] = ser_uint256(sb.vtx[i].wtxid_int)
+            preconfBlockLeaves.append(self.get_merkle_root(preconfTxLeaves))
+        leaves[0] = self.get_merkle_root(preconfBlockLeaves) if preconfBlockLeaves else b"\x00" * 32
 
-        return self.get_merkle_root(hashes)
+        # --- normal transactions witness merkle root ---
+        txLeaves = [b"\x00" * 32] * len(self.vtx)
+        for i in range(1, len(self.vtx)):
+            txLeaves[i] = ser_uint256(self.vtx[i].wtxid_int)
+        leaves[1] = self.get_merkle_root(txLeaves) if txLeaves else b"\x00" * 32
+
+        # --- peg-in transactions witness merkle root ---
+        peginLeaves = [ser_uint256(tx.wtxid_int) for tx in self.pegins]
+        leaves[2] = self.get_merkle_root(peginLeaves) if peginLeaves else b"\x00" * 32
+
+        # --- invalid transactions from reconciliationBlock ---
+        nTx = self.reconciliationBlock.nTx
+        invalidTxLeaves = [ser_uint256(self.reconciliationBlock.reconcileMerkleRoot)]
+        for s in range(nTx):
+            found = next((tx.txHash for tx in self.reconciliationBlock.tx if tx.pos == s), None)
+            if found is None:
+                invalidTxLeaves.append(b"\x00" * 32)
+            else:
+                invalidTxLeaves.append(ser_uint256(found))
+        leaves[3] = self.get_merkle_root(invalidTxLeaves) if invalidTxLeaves else b"\x00" * 32
+
+        # final block witness merkle root
+        return self.get_merkle_root(leaves)
+
 
     def is_valid(self):
         target = uint256_from_compact(self.nBits)
@@ -840,7 +1181,6 @@ class CBlock(CBlockHeader):
         return "CBlock(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x vtx=%s)" \
             % (self.nVersion, self.hashPrevBlock, self.hashMerkleRoot,
                time.ctime(self.nTime), self.nBits, self.nNonce, repr(self.vtx))
-
 
 class PrefilledTransaction:
     __slots__ = ("index", "tx")
@@ -871,7 +1211,6 @@ class PrefilledTransaction:
 
     def __repr__(self):
         return "PrefilledTransaction(index=%d, tx=%s)" % (self.index, repr(self.tx))
-
 
 # This is what we send on the wire, in a cmpctblock message.
 class P2PHeaderAndShortIDs:
@@ -915,7 +1254,6 @@ class P2PHeaderAndShortIDs:
     def __repr__(self):
         return "P2PHeaderAndShortIDs(header=%s, nonce=%d, shortids_length=%d, shortids=%s, prefilled_txn_length=%d, prefilledtxn=%s" % (repr(self.header), self.nonce, self.shortids_length, repr(self.shortids), self.prefilled_txn_length, repr(self.prefilled_txn))
 
-
 # P2P version of the above that will use witness serialization (for compact
 # block version 2)
 class P2PHeaderAndShortWitnessIDs(P2PHeaderAndShortIDs):
@@ -928,7 +1266,6 @@ def calculate_shortid(k0, k1, tx_hash):
     expected_shortid = siphash256(k0, k1, tx_hash)
     expected_shortid &= 0x0000ffffffffffff
     return expected_shortid
-
 
 # This version gets rid of the array lengths, and reinterprets the differential
 # encoding into indices that can be used for lookup.

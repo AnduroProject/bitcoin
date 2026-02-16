@@ -29,23 +29,26 @@ static const int TRANSACTION_PRECONF_VERSION = 9;
 static const int TRANSACTION_COORDINATE_ASSET_CREATE_VERSION = 10;
 static const int TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION = 11;
 
+
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
 {
 public:
     Txid hash;
     uint32_t n;
-
+    std::vector<unsigned char> assetId;
     static constexpr uint32_t NULL_INDEX = std::numeric_limits<uint32_t>::max();
 
     COutPoint() : n(NULL_INDEX) {}
-    COutPoint(const Txid& hashIn, uint32_t nIn) : hash(hashIn), n(nIn) {}
+    COutPoint(const Txid& hashIn, uint32_t nIn, std::vector<unsigned char> assetIdIn={}) : hash(hashIn), n(nIn), assetId(assetIdIn) {}
 
-    SERIALIZE_METHODS(COutPoint, obj) { READWRITE(obj.hash, obj.n); }
+    SERIALIZE_METHODS(COutPoint, obj) { READWRITE(obj.hash, obj.n, obj.assetId); }
 
     void SetNull()
     {
         hash.SetNull();
+        assetId.clear();
         n = NULL_INDEX;
     }
     bool IsNull() const { return (hash.IsNull() && n == NULL_INDEX); }
@@ -396,6 +399,8 @@ public:
      * @return Total transaction size in bytes
      */
     unsigned int GetTotalSize() const;
+
+    bool HasValidOutputCount() const;
 
     bool IsCoinBase() const
     {

@@ -55,12 +55,12 @@ public:
     //! Is this a pegin transaction
     bool isPegin;
 
-    uint32_t nAssetID;
+    std::vector<unsigned char> nAssetID;
 
 
     //! construct a Coin from a CTxOut and height/coinbase information.
-    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn = false, bool fBitAssetControlIn = false, bool isPreconfIn = false, bool isPeginIn = false, uint32_t nAssetIDIn = 0) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
-    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn = false, bool fBitAssetControlIn = false, bool isPreconfIn = false, bool isPeginIn = false, uint32_t nAssetIDIn = 0) : out(outIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
+    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn = false, bool fBitAssetControlIn = false, bool isPreconfIn = false, bool isPeginIn = false, std::vector<unsigned char> nAssetIDIn = {}) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
+    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn = false, bool fBitAssetControlIn = false, bool isPreconfIn = false, bool isPeginIn = false, std::vector<unsigned char> nAssetIDIn = {}) : out(outIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
 
     void Clear()
     {
@@ -71,11 +71,11 @@ public:
         fBitAssetControl = false;
         isPreconf = false;
         isPegin = false;
-        nAssetID = 0;
+        nAssetID.clear();
     }
 
     //! empty constructor
-    Coin() : fCoinBase(false), nHeight(0), fBitAsset(false), fBitAssetControl(false), isPreconf(false), isPegin(false), nAssetID(0) {}
+    Coin() : fCoinBase(false), nHeight(0), fBitAsset(false), fBitAssetControl(false), isPreconf(false), isPegin(false), nAssetID({}) {}
 
 
     bool IsCoinBase() const
@@ -103,7 +103,7 @@ public:
         return isPegin;
     }
 
-    uint32_t GetAssetID() const
+    std::vector<unsigned char> GetAssetID() const
     {
         return nAssetID;
     }
@@ -500,14 +500,14 @@ public:
      * If no unspent output exists for the passed outpoint, this call
      * has no effect.
      */
-    bool SpendCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, bool& isPreconf, uint32_t& nAssetID, Coin* moveto = nullptr);
+    bool SpendCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, bool& isPreconf, std::vector<unsigned char>& nAssetID, Coin* moveto = nullptr);
 
     /**
      * get asset coin. Pass moveto in order to get the deleted data.
      * If no unspent output exists for the passed outpoint, this call
      * has no effect.
      */
-    bool getAssetCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, uint32_t& nAssetID, Coin* moveto = nullptr);
+    bool getAssetCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, std::vector<unsigned char>& nAssetID, Coin* moveto = nullptr);
 
     bool isPeginSpent(const COutPoint& outpoint) const;
 
@@ -567,7 +567,7 @@ private:
 //! an overwrite.
 // TODO: pass in a boolean to limit these possible overwrites to known
 // (pre-BIP34) cases.
-void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight = 0, const CAmount preconfRefund = CAmount(0), uint32_t nAssetID = 0, const CAmount amountAssetIn = 0, int nControlN = -1, uint32_t nNewAssetID = 0, bool check = false);
+void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight = 0, const CAmount preconfRefund = CAmount(0), std::vector<unsigned char> nAssetID = {}, const CAmount amountAssetIn = 0, int nControlN = -1, std::vector<unsigned char> nNewAssetID = {}, bool check = false);
 
 //! Utility function to find any unspent output with a given txid.
 //! This function can be quite expensive because in the event of a transaction

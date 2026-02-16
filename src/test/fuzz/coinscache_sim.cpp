@@ -342,7 +342,7 @@ FUZZ_TARGET(coinscache_sim)
                 bool fBitAsset = false;
                 bool fBitAssetControl = false;
                 bool isPreconf = false;
-                uint32_t nAssetID = 0;
+                std::vector<unsigned char> nAssetID = {};
                 caches.back()->SpendCoin(data.outpoints[outpointidx], fBitAsset, fBitAssetControl, isPreconf, nAssetID, nullptr);
                 // Apply to simulation data.
                 sim_caches[caches.size()].entry[outpointidx].entrytype = EntryType::SPENT;
@@ -357,7 +357,7 @@ FUZZ_TARGET(coinscache_sim)
                 bool fBitAsset = false;
                 bool fBitAssetControl = false;
                 bool isPreconf = false;
-                uint32_t nAssetID = 0;
+                std::vector<unsigned char> nAssetID = {};
                 caches.back()->SpendCoin(data.outpoints[outpointidx], fBitAsset, fBitAssetControl, isPreconf, nAssetID, &realcoin);
                 // Apply to simulation data.
                 sim_caches[caches.size()].entry[outpointidx].entrytype = EntryType::SPENT;

@@ -141,7 +141,7 @@ constexpr CAmount HIGH_TX_FEE_PER_KB{COIN / 100};
 //! -maxtxfee will warn if called with a higher fee than this amount (in satoshis)
 constexpr CAmount HIGH_MAX_TX_FEE{100 * HIGH_TX_FEE_PER_KB};
 //! Pre-calculated constants for input size estimation in *virtual size*
-static constexpr size_t DUMMY_NESTED_P2WPKH_INPUT_SIZE = 91;
+static constexpr size_t DUMMY_NESTED_P2WPKH_INPUT_SIZE = 92;
 
 class CCoinControl;
 
@@ -293,6 +293,8 @@ struct CRecipient {
     CTxDestination dest;
     CAmount nAmount;
     bool fSubtractFeeFromAmount;
+    bool isPegout;
+    CScript scriptPubKey;
 };
 
 class WalletRescanReserver; // forward declarations for ScanForWalletTransactions/RescanFromTime

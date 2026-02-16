@@ -205,6 +205,7 @@ void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry
             in.pushKV("coinbase", HexStr(txin.scriptSig));
         } else {
             in.pushKV("txid", txin.prevout.hash.GetHex());
+            in.pushKV("assetid", HexStr(txin.prevout.assetId));
             in.pushKV("vout", (int64_t)txin.prevout.n);
             UniValue o(UniValue::VOBJ);
             o.pushKV("asm", ScriptToAsmStr(txin.scriptSig, true));

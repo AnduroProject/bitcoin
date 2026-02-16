@@ -142,3 +142,10 @@ std::string CTransaction::ToString() const
         str += "    " + tx_out.ToString() + "\n";
     return str;
 }
+
+bool CTransaction::HasValidOutputCount() const {
+   if(this->version == TRANSACTION_PRECONF_VERSION || this->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+       return this->vout.size() > 1;
+   }
+   return !this->vout.empty();
+}

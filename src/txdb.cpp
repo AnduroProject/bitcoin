@@ -27,7 +27,6 @@ static constexpr uint8_t DB_COINS{'c'};
 
 static constexpr uint8_t DB_ASSET{'A'};
 static constexpr uint8_t DB_MINED_ASSET{'D'};
-static constexpr uint8_t DB_ASSET_LAST_ID{'I'};
 static constexpr uint8_t DB_ASSET_LAST_PRUNE_HEIGHT{'E'};
 
 static constexpr uint8_t DB_SIGNED_BLOCK_HASH{'V'};
@@ -254,7 +253,8 @@ bool CoordinateAssetDB::WriteCoordinateAssets(const std::vector<CoordinateAsset>
 {
     CDBBatch batch(*this);
     for (const CoordinateAsset& asset : vAsset) {
-        std::pair<uint8_t, uint32_t> key = std::make_pair(DB_ASSET, asset.nID);
+        uint256 assetHash = getAssetHash(asset.nID);
+        std::pair<uint8_t, uint256> key = std::make_pair(DB_ASSET, assetHash);
         batch.Write(key, asset);
     }
     return WriteBatch(batch, true);
@@ -268,7 +268,7 @@ std::vector<CoordinateAsset> CoordinateAssetDB::GetAssets()
     std::vector<CoordinateAsset> vAsset;
 
     while (pcursor->Valid()) {
-        std::pair<uint8_t, uint32_t> key;
+        std::pair<uint8_t, uint256> key;
         CoordinateAsset asset;
         if (pcursor->GetKey(key) && key.first == DB_ASSET) {
             if (pcursor->GetValue(asset))
@@ -278,20 +278,6 @@ std::vector<CoordinateAsset> CoordinateAssetDB::GetAssets()
         pcursor->Next();
     }
     return vAsset;
-}
-
-bool CoordinateAssetDB::GetLastAssetID(uint32_t& nID)
-{
-    // Look up the last asset ID (in chronological order)
-    if (!Read(DB_ASSET_LAST_ID, nID))
-        return false;
-
-    return true;
-}
-
-bool CoordinateAssetDB::WriteLastAssetID(const uint32_t nID)
-{
-    return Write(DB_ASSET_LAST_ID, nID);
 }
 
 bool CoordinateAssetDB::GetLastAssetPruneHeight(uint32_t& nID)
@@ -307,14 +293,7 @@ bool CoordinateAssetDB::WriteLastAssetPruneHeight(const uint32_t nID)
     return Write(DB_ASSET_LAST_PRUNE_HEIGHT, nID);
 }
 
-
-bool CoordinateAssetDB::RemoveAsset(const uint32_t nID)
-{
-    std::pair<uint8_t, uint32_t> key = std::make_pair(DB_ASSET, nID);
-    return Erase(key);
-}
-
-bool CoordinateAssetDB::GetAsset(const uint32_t nID, CoordinateAsset& asset)
+bool CoordinateAssetDB::GetAsset(uint256 nID, CoordinateAsset& asset)
 {
     return Read(std::make_pair(DB_ASSET, nID), asset);
 }

@@ -813,6 +813,9 @@ RPCHelpMan encryptwallet();
 
 // spend
 RPCHelpMan sendtoaddress();
+RPCHelpMan sendpegout();
+RPCHelpMan createpremium();
+RPCHelpMan createasset();
 RPCHelpMan sendmany();
 RPCHelpMan settxfee();
 RPCHelpMan fundrawtransaction();
@@ -886,6 +889,9 @@ std::span<const CRPCCommand> GetWalletRPCCommands()
         {"wallet", &send},
         {"wallet", &sendmany},
         {"wallet", &sendtoaddress},
+        {"wallet", &sendpegout},
+        {"wallet", &createasset},
+        {"wallet", &createpremium},
         {"wallet", &setlabel},
         {"wallet", &settxfee},
         {"wallet", &setwalletflag},

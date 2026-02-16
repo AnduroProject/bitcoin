@@ -71,7 +71,13 @@ bool IsDust(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 std::vector<uint32_t> GetDust(const CTransaction& tx, CFeeRate dust_relay_rate)
 {
     std::vector<uint32_t> dust_outputs;
-    for (uint32_t i{0}; i < tx.vout.size(); ++i) {
+    uint32_t startIndex = 0;
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+       startIndex = 2;
+    } else if (tx.version == TRANSACTION_PRECONF_VERSION) {
+        startIndex = 1;
+    }
+    for (uint32_t i{startIndex}; i < tx.vout.size(); ++i) {
         if (IsDust(tx.vout[i], dust_relay_rate)) dust_outputs.push_back(i);
     }
     return dust_outputs;
@@ -167,7 +173,7 @@ bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_dat
 
     // Only MAX_DUST_OUTPUTS_PER_TX dust is permitted(on otherwise valid ephemeral dust)
     if (GetDust(tx, dust_relay_fee).size() > MAX_DUST_OUTPUTS_PER_TX) {
-        if (tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.version != TRANSACTION_PRECONF_VERSION) {
+        if (tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             reason = "dust";
             return false;
         }
@@ -183,11 +189,11 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
     }
     LogPrintf("transaction version is %i \n", tx.version);
     CAmount amountAssetInOut = CAmount(0);
-    uint32_t currentAssetID = 0;
+    std::vector<unsigned char> currentAssetID = {};
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
         bool fBitAsset = false;
         bool fBitAssetControl = false;
-        uint32_t nAssetID = 0;
+        std::vector<unsigned char> nAssetID = {};
         Coin coin;
         CAmount coinValue = 0;
 
@@ -210,7 +216,7 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
         }
 
 
-        if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION) {
+        if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
             // check first input is asset
             if (fBitAssetControl) {
                 LogPrintf("Asset controller value not accepted \n");
@@ -223,7 +229,7 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
                     currentAssetID = nAssetID;
                 } else {
                     // prevent to include multiple asset id
-                    if (currentAssetID != nAssetID) {
+                    if (getAssetHash(currentAssetID) != getAssetHash(nAssetID)) {
                         LogPrintf(" Multiple asset is detected and it is invalid \n");
                         return false;
                     }
@@ -243,14 +249,13 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
         return false;
     }
 
-    if (amountAssetInOut > 0 && !(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION || tx.version == TRANSACTION_PRECONF_VERSION)) {
-        LogPrintf("Invalid transaction hold asset inptu \n");
+    if (amountAssetInOut > 0 && !(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION)) {
+        LogPrintf("Invalid transaction hold asset input \n");
     }
 
     if (amountAssetInOut > 0) {
         CAmount amountAssetOut = CAmount(0);
-        size_t startValue = tx.version == TRANSACTION_PRECONF_VERSION ? 1 : 0;
-        for (unsigned int i = startValue; i < tx.vout.size(); i++) {
+        for (unsigned int i = 0; i < tx.vout.size(); i++) {
             if (amountAssetOut == amountAssetInOut) {
                 break;
             }
@@ -264,7 +269,6 @@ bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& m
     }
     return true;
 }
-
 
 /**
  * Check the total number of non-witness sigops across the whole transaction, as per BIP54.
