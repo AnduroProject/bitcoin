@@ -75,14 +75,15 @@ void OptionTests::migrateSettings()
                                             "is running, as any changes might be ignored or overwritten.",
                                             CLIENT_NAME);
     QCOMPARE(std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()).c_str(), "{\n"
-        "    \"_warning_\": \""+ default_warning+"\",\n"
-        "    \"dbcache\": \"600\",\n"
-        "    \"listen\": false,\n"
-        "    \"onion\": \"onion:234\",\n"
-        "    \"par\": \"12\",\n"
-        "    \"proxy\": \"proxy:123\",\n"
-        "    \"prune\": \"2861\"\n"
-        "}\n");
+                                                                                                          "    \"_warning_\": \"" +
+                                                                                                              default_warning + "\",\n"
+                                                                                                                                "    \"dbcache\": \"600\",\n"
+                                                                                                                                "    \"listen\": false,\n"
+                                                                                                                                "    \"onion\": \"onion:234\",\n"
+                                                                                                                                "    \"par\": \"12\",\n"
+                                                                                                                                "    \"proxy\": \"proxy:123\",\n"
+                                                                                                                                "    \"prune\": \"2861\"\n"
+                                                                                                                                "}\n");
 }
 
 void OptionTests::integerGetArgBug()

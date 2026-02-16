@@ -74,7 +74,7 @@ public:
         READWRITE(AsBase<CAddress>(obj), obj.source, Using<ChronoFormatter<int64_t>>(obj.m_last_success), obj.nAttempts);
     }
 
-    AddrInfo(const CAddress &addrIn, const CNetAddr &addrSource) : CAddress(addrIn), source(addrSource)
+    AddrInfo(const CAddress& addrIn, const CNetAddr& addrSource) : CAddress(addrIn), source(addrSource)
     {
     }
 
@@ -95,7 +95,7 @@ public:
     }
 
     //! Calculate in which position of a bucket to store this entry.
-    int GetBucketPosition(const uint256 &nKey, bool fNew, int bucket) const;
+    int GetBucketPosition(const uint256& nKey, bool fNew, int bucket) const;
 
     //! Determine whether the statistics about this entry are bad enough so that it can just be deleted
     bool IsTerrible(NodeSeconds now = Now<NodeSeconds>()) const;

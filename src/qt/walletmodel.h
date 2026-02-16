@@ -50,7 +50,7 @@ class WalletModel : public QObject
     Q_OBJECT
 
 public:
-    explicit WalletModel(std::unique_ptr<interfaces::Wallet> wallet, ClientModel& client_model, const PlatformStyle *platformStyle, QObject *parent = nullptr);
+    explicit WalletModel(std::unique_ptr<interfaces::Wallet> wallet, ClientModel& client_model, const PlatformStyle* platformStyle, QObject* parent = nullptr);
     ~WalletModel();
 
     enum StatusCode // Returned by sendCoins
@@ -65,12 +65,11 @@ public:
         AbsurdFee
     };
 
-    enum EncryptionStatus
-    {
-        NoKeys,       // wallet->IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS)
-        Unencrypted,  // !wallet->IsCrypted()
-        Locked,       // wallet->IsCrypted() && wallet->IsLocked()
-        Unlocked      // wallet->IsCrypted() && !wallet->IsLocked()
+    enum EncryptionStatus {
+        NoKeys,      // wallet->IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS)
+        Unencrypted, // !wallet->IsCrypted()
+        Locked,      // wallet->IsCrypted() && wallet->IsLocked()
+        Unlocked     // wallet->IsCrypted() && !wallet->IsLocked()
     };
 
     OptionsModel* getOptionsModel() const;
@@ -84,8 +83,7 @@ public:
     bool validateAddress(const QString& address) const;
 
     // Return status record for SendCoins, contains error id + information
-    struct SendCoinsReturn
-    {
+    struct SendCoinsReturn {
         SendCoinsReturn(StatusCode _status = OK, QString _reasonCommitFailed = "")
             : status(_status),
               reasonCommitFailed(_reasonCommitFailed)
@@ -96,7 +94,7 @@ public:
     };
 
     // prepare transaction for getting txfee before sending coins
-    SendCoinsReturn prepareTransaction(WalletModelTransaction &transaction, const wallet::CCoinControl& coinControl);
+    SendCoinsReturn prepareTransaction(WalletModelTransaction& transaction, const wallet::CCoinControl& coinControl);
 
     // Send coins to a list of recipients
     void sendCoins(WalletModelTransaction& transaction);
@@ -104,14 +102,14 @@ public:
     // Wallet encryption
     bool setWalletEncrypted(const SecureString& passphrase);
     // Passphrase only needed when unlocking
-    bool setWalletLocked(bool locked, const SecureString &passPhrase=SecureString());
-    bool changePassphrase(const SecureString &oldPass, const SecureString &newPass);
+    bool setWalletLocked(bool locked, const SecureString& passPhrase = SecureString());
+    bool changePassphrase(const SecureString& oldPass, const SecureString& newPass);
 
     // RAII object for unlocking wallet, returned by requestUnlock()
     class UnlockContext
     {
     public:
-        UnlockContext(WalletModel *wallet, bool valid, bool relock);
+        UnlockContext(WalletModel* wallet, bool valid, bool relock);
         ~UnlockContext();
 
         bool isValid() const { return valid; }
@@ -123,7 +121,7 @@ public:
         UnlockContext& operator=(UnlockContext&&) = delete;
 
     private:
-        WalletModel *wallet;
+        WalletModel* wallet;
         const bool valid;
         const bool relock;
     };
@@ -171,7 +169,7 @@ private:
 
     // Wallet has an options model for wallet-specific options
     // (transaction fee, for example)
-    OptionsModel *optionsModel;
+    OptionsModel* optionsModel;
 
     AddressTableModel* addressTableModel{nullptr};
     TransactionTableModel* transactionTableModel{nullptr};
@@ -202,13 +200,13 @@ Q_SIGNALS:
     void requireUnlock();
 
     // Fired when a message should be reported to the user
-    void message(const QString &title, const QString &message, unsigned int style);
+    void message(const QString& title, const QString& message, unsigned int style);
 
     // Coins sent: from wallet, to recipient, in (serialized) transaction:
     void coinsSent(WalletModel* wallet, SendCoinsRecipient recipient, QByteArray transaction);
 
     // Show progress dialog e.g. for rescan
-    void showProgress(const QString &title, int nProgress);
+    void showProgress(const QString& title, int nProgress);
 
     // Signal that wallet is about to be removed
     void unload();
@@ -227,7 +225,7 @@ public Q_SLOTS:
     /* New transaction, or transaction changed status */
     void updateTransaction();
     /* New, updated or removed address book entry */
-    void updateAddressBook(const QString &address, const QString &label, bool isMine, wallet::AddressPurpose purpose, int status);
+    void updateAddressBook(const QString& address, const QString& label, bool isMine, wallet::AddressPurpose purpose, int status);
     /* Current, immature or unconfirmed balance might have changed - emit 'balanceChanged' if so */
     void pollBalanceChanged();
 };

@@ -140,9 +140,11 @@ class BlockManager
     friend Chainstate;
     friend ChainstateManager;
 
+public:
+    const Consensus::Params& GetConsensus() const { return m_opts.chainparams.GetConsensus(); }
+
 private:
     const CChainParams& GetParams() const { return m_opts.chainparams; }
-    const Consensus::Params& GetConsensus() const { return m_opts.chainparams.GetConsensus(); }
     /**
      * Load the blocktree off disk and into memory. Populate certain metadata
      * per index entry (nStatus, nChainWork, nTimeMax, etc.) as well as peripheral
@@ -172,6 +174,8 @@ private:
 
     AutoFile OpenUndoFile(const FlatFilePos& pos, bool fReadOnly = false) const;
 
+    bool UpdateBlockToDisk(const CBlock& block, FlatFilePos& pos) const;
+
     /* Calculate the block/rev files to delete based on height specified by user with RPC command pruneblockchain */
     void FindFilesToPruneManual(
         std::set<int>& setFilesToPrune,
@@ -198,6 +202,10 @@ private:
     void FindFilesToPrune(
         std::set<int>& setFilesToPrune,
         int last_prune,
+        const Chainstate& chain,
+        ChainstateManager& chainman);
+
+    void FindFilesToAssetPrune(
         const Chainstate& chain,
         ChainstateManager& chainman);
 
@@ -387,8 +395,7 @@ public:
     const CBlockIndex* GetFirstBlock(
         const CBlockIndex& upper_block LIFETIMEBOUND,
         uint32_t status_mask,
-        const CBlockIndex* lower_block = nullptr
-    ) const EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+        const CBlockIndex* lower_block = nullptr) const EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 
     /** True if any block files have ever been pruned. */
     bool m_have_pruned = false;
@@ -414,6 +421,7 @@ public:
     bool ReadBlock(CBlock& block, const FlatFilePos& pos, const std::optional<uint256>& expected_hash) const;
     bool ReadBlock(CBlock& block, const CBlockIndex& index) const;
     bool ReadRawBlock(std::vector<std::byte>& block, const FlatFilePos& pos) const;
+    bool ReadBlockHeader(CBlockHeader& block, const CBlockIndex& pindex) const;
 
     bool ReadBlockUndo(CBlockUndo& blockundo, const CBlockIndex& index) const;
 

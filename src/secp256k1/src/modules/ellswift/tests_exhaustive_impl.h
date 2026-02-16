@@ -9,7 +9,8 @@
 #include "../../../include/secp256k1_ellswift.h"
 #include "main_impl.h"
 
-static void test_exhaustive_ellswift(const secp256k1_context *ctx, const secp256k1_ge *group) {
+static void test_exhaustive_ellswift(const secp256k1_context* ctx, const secp256k1_ge* group)
+{
     int i;
 
     /* Note that SwiftEC/ElligatorSwift are inherently curve operations, not

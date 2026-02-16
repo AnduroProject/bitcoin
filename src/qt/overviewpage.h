@@ -17,7 +17,7 @@ class PlatformStyle;
 class WalletModel;
 
 namespace Ui {
-    class OverviewPage;
+class OverviewPage;
 }
 
 QT_BEGIN_NAMESPACE
@@ -30,11 +30,11 @@ class OverviewPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit OverviewPage(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
+    explicit OverviewPage(const PlatformStyle* platformStyle, QWidget* parent = nullptr);
     ~OverviewPage();
 
-    void setClientModel(ClientModel *clientModel);
-    void setWalletModel(WalletModel *walletModel);
+    void setClientModel(ClientModel* clientModel);
+    void setWalletModel(WalletModel* walletModel);
     void showOutOfSyncWarning(bool fShow);
 
 public Q_SLOTS:
@@ -42,28 +42,28 @@ public Q_SLOTS:
     void setPrivacy(bool privacy);
 
 Q_SIGNALS:
-    void transactionClicked(const QModelIndex &index);
+    void transactionClicked(const QModelIndex& index);
     void outOfSyncWarningClicked();
 
 protected:
     void changeEvent(QEvent* e) override;
 
 private:
-    Ui::OverviewPage *ui;
+    Ui::OverviewPage* ui;
     ClientModel* clientModel{nullptr};
     WalletModel* walletModel{nullptr};
     bool m_privacy{false};
 
     const PlatformStyle* m_platform_style;
 
-    TxViewDelegate *txdelegate;
+    TxViewDelegate* txdelegate;
     std::unique_ptr<TransactionFilterProxy> filter;
 
 private Q_SLOTS:
     void LimitTransactionRows();
     void updateDisplayUnit();
-    void handleTransactionClicked(const QModelIndex &index);
-    void updateAlerts(const QString &warnings);
+    void handleTransactionClicked(const QModelIndex& index);
+    void updateAlerts(const QString& warnings);
     void setMonospacedFont(const QFont&);
 };
 

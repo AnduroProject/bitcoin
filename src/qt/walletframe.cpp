@@ -32,17 +32,17 @@ WalletFrame::WalletFrame(const PlatformStyle* _platformStyle, QWidget* parent)
       m_size_hint(OverviewPage{platformStyle, nullptr}.sizeHint())
 {
     // Leave HBox hook for adding a list view later
-    QHBoxLayout *walletFrameLayout = new QHBoxLayout(this);
-    setContentsMargins(0,0,0,0);
+    QHBoxLayout* walletFrameLayout = new QHBoxLayout(this);
+    setContentsMargins(0, 0, 0, 0);
     walletStack = new QStackedWidget(this);
-    walletFrameLayout->setContentsMargins(0,0,0,0);
+    walletFrameLayout->setContentsMargins(0, 0, 0, 0);
     walletFrameLayout->addWidget(walletStack);
 
     // hbox for no wallet
     QGroupBox* no_wallet_group = new QGroupBox(walletStack);
     QVBoxLayout* no_wallet_layout = new QVBoxLayout(no_wallet_group);
 
-    QLabel *noWallet = new QLabel(tr("No wallet has been loaded.\nGo to File > Open Wallet to load a wallet.\n- OR -"));
+    QLabel* noWallet = new QLabel(tr("No wallet has been loaded.\nGo to File > Open Wallet to load a wallet.\n- OR -"));
     noWallet->setAlignment(Qt::AlignCenter);
     no_wallet_layout->addWidget(noWallet, 0, Qt::AlignHCenter | Qt::AlignBottom);
 
@@ -57,7 +57,7 @@ WalletFrame::WalletFrame(const PlatformStyle* _platformStyle, QWidget* parent)
 
 WalletFrame::~WalletFrame() = default;
 
-void WalletFrame::setClientModel(ClientModel *_clientModel)
+void WalletFrame::setClientModel(ClientModel* _clientModel)
 {
     this->clientModel = _clientModel;
 
@@ -100,7 +100,7 @@ void WalletFrame::setCurrentWallet(WalletModel* wallet_model)
         view_about_to_hide->setSizePolicy(sp);
     }
 
-    WalletView *walletView = mapWalletViews.value(wallet_model);
+    WalletView* walletView = mapWalletViews.value(wallet_model);
     assert(walletView);
 
     // Set or restore the default QSizePolicy which could be set to QSizePolicy::Ignored previously.
@@ -118,7 +118,7 @@ void WalletFrame::removeWallet(WalletModel* wallet_model)
 {
     if (mapWalletViews.count(wallet_model) == 0) return;
 
-    WalletView *walletView = mapWalletViews.take(wallet_model);
+    WalletView* walletView = mapWalletViews.take(wallet_model);
     walletStack->removeWidget(walletView);
     delete walletView;
 }
@@ -131,9 +131,9 @@ void WalletFrame::removeAllWallets()
     mapWalletViews.clear();
 }
 
-bool WalletFrame::handlePaymentRequest(const SendCoinsRecipient &recipient)
+bool WalletFrame::handlePaymentRequest(const SendCoinsRecipient& recipient)
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (!walletView)
         return false;
 
@@ -178,14 +178,14 @@ void WalletFrame::gotoSendCoinsPage(QString addr)
 
 void WalletFrame::gotoSignMessageTab(QString addr)
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (walletView)
         walletView->gotoSignMessageTab(addr);
 }
 
 void WalletFrame::gotoVerifyMessageTab(QString addr)
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (walletView)
         walletView->gotoVerifyMessageTab(addr);
 }
@@ -204,8 +204,8 @@ void WalletFrame::gotoLoadPSBT(bool from_clipboard)
         data = std::move(*result);
     } else {
         QString filename = GUIUtil::getOpenFileName(this,
-            tr("Load Transaction Data"), QString(),
-            tr("Partially Signed Transaction (*.psbt)"), nullptr);
+                                                    tr("Load Transaction Data"), QString(),
+                                                    tr("Partially Signed Transaction (*.psbt)"), nullptr);
         if (filename.isEmpty()) return;
         if (GetFileSize(filename.toLocal8Bit().data(), MAX_FILE_SIZE_PSBT) == MAX_FILE_SIZE_PSBT) {
             Q_EMIT message(tr("Error"), tr("PSBT file must be smaller than 100 MiB"), CClientUIInterface::MSG_ERROR);
@@ -237,42 +237,42 @@ void WalletFrame::gotoLoadPSBT(bool from_clipboard)
 
 void WalletFrame::encryptWallet()
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (walletView)
         walletView->encryptWallet();
 }
 
 void WalletFrame::backupWallet()
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (walletView)
         walletView->backupWallet();
 }
 
 void WalletFrame::changePassphrase()
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (walletView)
         walletView->changePassphrase();
 }
 
 void WalletFrame::unlockWallet()
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (walletView)
         walletView->unlockWallet();
 }
 
 void WalletFrame::usedSendingAddresses()
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (walletView)
         walletView->usedSendingAddresses();
 }
 
 void WalletFrame::usedReceivingAddresses()
 {
-    WalletView *walletView = currentWalletView();
+    WalletView* walletView = currentWalletView();
     if (walletView)
         walletView->usedReceivingAddresses();
 }

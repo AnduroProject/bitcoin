@@ -13,11 +13,11 @@
 #include <string>
 #include <utility>
 
-std::pair<bool,std::string> ReadBinaryFile(const fs::path &filename, size_t maxsize)
+std::pair<bool, std::string> ReadBinaryFile(const fs::path& filename, size_t maxsize)
 {
-    FILE *f = fsbridge::fopen(filename, "rb");
+    FILE* f = fsbridge::fopen(filename, "rb");
     if (f == nullptr)
-        return std::make_pair(false,"");
+        return std::make_pair(false, "");
     std::string retval;
     char buffer[128];
     do {
@@ -26,17 +26,17 @@ std::pair<bool,std::string> ReadBinaryFile(const fs::path &filename, size_t maxs
         // read the entire file (or up to maxsize)
         if (ferror(f)) {
             fclose(f);
-            return std::make_pair(false,"");
+            return std::make_pair(false, "");
         }
-        retval.append(buffer, buffer+n);
+        retval.append(buffer, buffer + n);
     } while (!feof(f) && retval.size() < maxsize);
     fclose(f);
-    return std::make_pair(true,retval);
+    return std::make_pair(true, retval);
 }
 
-bool WriteBinaryFile(const fs::path &filename, const std::string &data)
+bool WriteBinaryFile(const fs::path& filename, const std::string& data)
 {
-    FILE *f = fsbridge::fopen(filename, "wb");
+    FILE* f = fsbridge::fopen(filename, "wb");
     if (f == nullptr)
         return false;
     if (fwrite(data.data(), 1, data.size(), f) != data.size()) {

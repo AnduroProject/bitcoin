@@ -53,11 +53,11 @@ class TorControlConnection
 {
 public:
     typedef std::function<void(TorControlConnection&)> ConnectionCB;
-    typedef std::function<void(TorControlConnection &,const TorControlReply &)> ReplyHandlerCB;
+    typedef std::function<void(TorControlConnection&, const TorControlReply&)> ReplyHandlerCB;
 
     /** Create a new TorControlConnection.
      */
-    explicit TorControlConnection(struct event_base *base);
+    explicit TorControlConnection(struct event_base* base);
     ~TorControlConnection();
 
     /**
@@ -78,7 +78,7 @@ public:
      * A trailing CRLF is automatically added.
      * Return true on success.
      */
-    bool Command(const std::string &cmd, const ReplyHandlerCB& reply_handler);
+    bool Command(const std::string& cmd, const ReplyHandlerCB& reply_handler);
 
 private:
     /** Callback when ready for use */
@@ -86,7 +86,7 @@ private:
     /** Callback when connection lost */
     std::function<void(TorControlConnection&)> disconnected;
     /** Libevent event base */
-    struct event_base *base;
+    struct event_base* base;
     /** Connection to control socket */
     struct bufferevent* b_conn{nullptr};
     /** Message being received */
@@ -95,8 +95,8 @@ private:
     std::deque<ReplyHandlerCB> reply_handlers;
 
     /** Libevent handlers: internal */
-    static void readcb(struct bufferevent *bev, void *ctx);
-    static void eventcb(struct bufferevent *bev, short what, void *ctx);
+    static void readcb(struct bufferevent* bev, void* ctx);
+    static void eventcb(struct bufferevent* bev, short what, void* ctx);
 };
 
 /****** Bitcoin specific TorController implementation ********/
@@ -108,7 +108,8 @@ class TorController
 {
 public:
     TorController(struct event_base* base, const std::string& tor_control_center, const CService& target);
-    TorController() : conn{nullptr} {
+    TorController() : conn{nullptr}
+    {
         // Used for testing only.
     }
     ~TorController();
@@ -118,6 +119,7 @@ public:
 
     /** Reconnect, after getting disconnected */
     void Reconnect();
+
 private:
     struct event_base* base;
     const std::string m_tor_control_center;
@@ -125,7 +127,7 @@ private:
     std::string private_key;
     std::string service_id;
     bool reconnect;
-    struct event *reconnect_ev = nullptr;
+    struct event* reconnect_ev = nullptr;
     float reconnect_timeout;
     CService service;
     const CService m_target;
@@ -151,7 +153,7 @@ public:
     void disconnected_cb(TorControlConnection& conn);
 
     /** Callback for reconnect timer */
-    static void reconnect_cb(evutil_socket_t fd, short what, void *arg);
+    static void reconnect_cb(evutil_socket_t fd, short what, void* arg);
 };
 
 #endif // BITCOIN_TORCONTROL_H

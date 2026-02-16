@@ -102,7 +102,7 @@ struct TransactionsDelta final : public CValidationInterface {
     void TransactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason, uint64_t /* mempool_sequence */) override
     {
         // Transactions may be entered and booted any number of times
-         m_added.erase(tx);
+        m_added.erase(tx);
     }
 };
 
@@ -240,8 +240,8 @@ FUZZ_TARGET(ephemeral_package_eval, .init = initialize_tx_pool)
                 // Note that this test currently only spends package outputs in last transaction.
                 bool last_tx = num_txs > 1 && txs.size() == num_txs - 1;
                 const auto num_in = outpoint_to_rbf ? 2 :
-                    last_tx ? fuzzed_data_provider.ConsumeIntegralInRange<int>(package_outpoints.size()/2 + 1, package_outpoints.size()) :
-                    fuzzed_data_provider.ConsumeIntegralInRange<int>(1, 4);
+                                    last_tx         ? fuzzed_data_provider.ConsumeIntegralInRange<int>(package_outpoints.size() / 2 + 1, package_outpoints.size()) :
+                                                      fuzzed_data_provider.ConsumeIntegralInRange<int>(1, 4);
                 const auto num_out = outpoint_to_rbf ? 1 : fuzzed_data_provider.ConsumeIntegralInRange<int>(1, 4);
 
                 auto& outpoints = last_tx ? package_outpoints : mempool_outpoints;
@@ -322,10 +322,10 @@ FUZZ_TARGET(ephemeral_package_eval, .init = initialize_tx_pool)
         auto single_submit = txs.size() == 1;
 
         const auto result_package = WITH_LOCK(::cs_main,
-                                    return ProcessNewPackage(chainstate, tx_pool, txs, /*test_accept=*/single_submit, /*client_maxfeerate=*/{}));
+                                              return ProcessNewPackage(chainstate, tx_pool, txs, /*test_accept=*/single_submit, /*client_maxfeerate=*/{}));
 
         const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(chainstate, txs.back(), GetTime(),
-                                   /*bypass_limits=*/fuzzed_data_provider.ConsumeBool(), /*test_accept=*/!single_submit));
+                                                                        /*bypass_limits=*/fuzzed_data_provider.ConsumeBool(), /*test_accept=*/!single_submit));
 
         if (!single_submit && result_package.m_state.GetResult() != PackageValidationResult::PCKG_POLICY) {
             // We don't know anything about the validity since transactions were randomly generated, so
@@ -390,7 +390,7 @@ FUZZ_TARGET(tx_package_eval, .init = initialize_tx_pool)
                 // so the last transaction to be generated(in a >1 package) must spend all package-made outputs
                 // Note that this test currently only spends package outputs in last transaction.
                 bool last_tx = num_txs > 1 && txs.size() == num_txs - 1;
-                const auto num_in = last_tx ? package_outpoints.size()  : fuzzed_data_provider.ConsumeIntegralInRange<int>(1, mempool_outpoints.size());
+                const auto num_in = last_tx ? package_outpoints.size() : fuzzed_data_provider.ConsumeIntegralInRange<int>(1, mempool_outpoints.size());
                 auto num_out = fuzzed_data_provider.ConsumeIntegralInRange<int>(1, mempool_outpoints.size() * 2);
 
                 auto& outpoints = last_tx ? package_outpoints : mempool_outpoints;
@@ -497,12 +497,12 @@ FUZZ_TARGET(tx_package_eval, .init = initialize_tx_pool)
         }
 
         const auto result_package = WITH_LOCK(::cs_main,
-                                    return ProcessNewPackage(chainstate, tx_pool, txs, /*test_accept=*/single_submit, client_maxfeerate));
+                                              return ProcessNewPackage(chainstate, tx_pool, txs, /*test_accept=*/single_submit, client_maxfeerate));
 
         // Always set bypass_limits to false because it is not supported in ProcessNewPackage and
         // can be a source of divergence.
         const auto res = WITH_LOCK(::cs_main, return AcceptToMemoryPool(chainstate, txs.back(), GetTime(),
-                                   /*bypass_limits=*/false, /*test_accept=*/!single_submit));
+                                                                        /*bypass_limits=*/false, /*test_accept=*/!single_submit));
         const bool passed = res.m_result_type == MempoolAcceptResult::ResultType::VALID;
 
         node.validation_signals->SyncWithValidationInterfaceQueue();

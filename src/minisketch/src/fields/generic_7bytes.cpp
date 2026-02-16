@@ -90,7 +90,7 @@ constexpr StatTable56 SQR_TABLE_56({0x1, 0x4, 0x10, 0x40, 0x100, 0x400, 0x1000, 
 constexpr StatTable56 QRT_TABLE_56({0x10004084, 0xd058f12fd5925e, 0xd058f12fd5925c, 0x41a60b5566d9f0, 0xd058f12fd59258, 0xbda60a142740ba, 0x41a60b5566d9f8, 0xd059f1afc5e688, 0xd058f12fd59248, 0xfc040841615a22, 0xbda60a1427409a, 0xbda60b5426c1ca, 0x41a60b5566d9b8, 0x1a60b4166b950, 0xd059f1afc5e608, 0xfc000041409822, 0xd058f12fd59348, 0xd1ee7a4ef4185c, 0xfc040841615822, 0x9049759b80b4a4, 0xbda60a1427449a, 0xd258e06f301e18, 0xbda60b5426c9ca, 0x6dfeeb3bf6d7d2, 0x41a60b5566c9b8, 0xbdef3ed4ae398a, 0x1a60b41669950, 0xd1ef3f8eeff04c, 0xd059f1afc5a608, 0xbda203340783de, 0xfc000041401822, 0x2dfefbaff2b27a, 0xd058f12fd49348, 0xfdb788a0706776, 0xd1ee7a4ef6185c, 0x2e5de0ae41337a, 0xfc040841655822, 0x41eb17d5ceecf8, 0x9049759b88b4a4, 0x40048874211afc, 0xbda60a1437449a, 0xd04a720f93400c, 0xd258e06f101e18, 0xbc559cf5ac7fce, 0xbda60b5466c9ca, 0x6dc9759b88b4d6, 0x6dfeeb3b76d7d2, 0x92feea7b275af0, 0x41a60b5466c9b8, 0, 0xbdef3ed6ae398a, 0x2811d5edd8ee2a, 0x1a60b45669950, 0xb1a60b5466c9ca, 0xd1ef3f86eff04c, 0xec493582c8f032});
 typedef Field<uint64_t, 56, 149, StatTable56, DynTable56, &SQR_TABLE_56, &QRT_TABLE_56> Field56;
 #endif
-}
+} // namespace
 
 Sketch* ConstructGeneric7Bytes(int bits, int implementation)
 {

@@ -31,8 +31,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
@@ -53,8 +53,7 @@ static const size_t MAX_HEADERS_SIZE = 8192;
 class HTTPWorkItem final : public HTTPClosure
 {
 public:
-    HTTPWorkItem(std::unique_ptr<HTTPRequest> _req, const std::string &_path, const HTTPRequestHandler& _func):
-        req(std::move(_req)), path(_path), func(_func)
+    HTTPWorkItem(std::unique_ptr<HTTPRequest> _req, const std::string& _path, const HTTPRequestHandler& _func) : req(std::move(_req)), path(_path), func(_func)
     {
     }
     void operator()() override
@@ -126,10 +125,8 @@ public:
     }
 };
 
-struct HTTPPathHandler
-{
-    HTTPPathHandler(std::string _prefix, bool _exactMatch, HTTPRequestHandler _handler):
-        prefix(_prefix), exactMatch(_exactMatch), handler(_handler)
+struct HTTPPathHandler {
+    HTTPPathHandler(std::string _prefix, bool _exactMatch, HTTPRequestHandler _handler) : prefix(_prefix), exactMatch(_exactMatch), handler(_handler)
     {
     }
     std::string prefix;
@@ -151,7 +148,7 @@ static std::unique_ptr<WorkQueue<HTTPClosure>> g_work_queue{nullptr};
 static GlobalMutex g_httppathhandlers_mutex;
 static std::vector<HTTPPathHandler> pathHandlers GUARDED_BY(g_httppathhandlers_mutex);
 //! Bound listening sockets
-static std::vector<evhttp_bound_socket *> boundSockets;
+static std::vector<evhttp_bound_socket*> boundSockets;
 
 /**
  * @brief Helps keep track of open `evhttp_connection`s with active `evhttp_requests`
@@ -170,6 +167,7 @@ private:
         m_tracker.erase(it);
         if (m_tracker.empty()) m_cv.notify_all();
     }
+
 public:
     //! Increase request counter for the associated connection by 1
     void AddRequest(evhttp_request* req) EXCLUSIVE_LOCKS_REQUIRED(!m_mutex)
@@ -213,7 +211,7 @@ static bool ClientAllowed(const CNetAddr& netaddr)
 {
     if (!netaddr.IsValid())
         return false;
-    for(const CSubNet& subnet : rpc_allow_subnets)
+    for (const CSubNet& subnet : rpc_allow_subnets)
         if (subnet.Match(netaddr))
             return true;
     return false;
@@ -223,8 +221,8 @@ static bool ClientAllowed(const CNetAddr& netaddr)
 static bool InitHTTPAllowList()
 {
     rpc_allow_subnets.clear();
-    rpc_allow_subnets.emplace_back(LookupHost("127.0.0.1", false).value(), 8);  // always allow IPv4 local subnet
-    rpc_allow_subnets.emplace_back(LookupHost("::1", false).value());  // always allow IPv6 localhost
+    rpc_allow_subnets.emplace_back(LookupHost("127.0.0.1", false).value(), 8); // always allow IPv4 local subnet
+    rpc_allow_subnets.emplace_back(LookupHost("::1", false).value());          // always allow IPv6 localhost
     for (const std::string& strAllow : gArgs.GetArgs("-rpcallowip")) {
         const CSubNet subnet{LookupSubNet(strAllow)};
         if (!subnet.IsValid()) {
@@ -267,12 +265,8 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
     // Track active requests
     {
         g_requests.AddRequest(req);
-        evhttp_request_set_on_complete_cb(req, [](struct evhttp_request* req, void*) {
-            g_requests.RemoveRequest(req);
-        }, nullptr);
-        evhttp_connection_set_closecb(conn, [](evhttp_connection* conn, void* arg) {
-            g_requests.RemoveConnection(conn);
-        }, nullptr);
+        evhttp_request_set_on_complete_cb(req, [](struct evhttp_request* req, void*) { g_requests.RemoveRequest(req); }, nullptr);
+        evhttp_connection_set_closecb(conn, [](evhttp_connection* conn, void* arg) { g_requests.RemoveConnection(conn); }, nullptr);
     }
 
     // Disable reading to work around a libevent bug, fixed in 2.1.9
@@ -390,9 +384,9 @@ static bool HTTPBindAddresses(struct evhttp* http)
     }
 
     // Bind addresses
-    for (std::vector<std::pair<std::string, uint16_t> >::iterator i = endpoints.begin(); i != endpoints.end(); ++i) {
+    for (std::vector<std::pair<std::string, uint16_t>>::iterator i = endpoints.begin(); i != endpoints.end(); ++i) {
         LogInfo("Binding RPC on address %s port %i", i->first, i->second);
-        evhttp_bound_socket *bind_handle = evhttp_bind_socket_with_handle(http, i->first.empty() ? nullptr : i->first.c_str(), i->second);
+        evhttp_bound_socket* bind_handle = evhttp_bind_socket_with_handle(http, i->first.empty() ? nullptr : i->first.c_str(), i->second);
         if (bind_handle) {
             const std::optional<CNetAddr> addr{LookupHost(i->first, false)};
             if (i->first.empty() || (addr.has_value() && addr->IsBindAny())) {
@@ -420,7 +414,7 @@ static void HTTPWorkQueueRun(WorkQueue<HTTPClosure>* queue, int worker_num)
 }
 
 /** libevent event log callback */
-static void libevent_log_cb(int severity, const char *msg)
+static void libevent_log_cb(int severity, const char* msg)
 {
     BCLog::Level level;
     switch (severity) {
@@ -487,7 +481,8 @@ bool InitHTTPServer(const util::SignalInterrupt& interrupt)
     return true;
 }
 
-void UpdateHTTPServerLogging(bool enable) {
+void UpdateHTTPServerLogging(bool enable)
+{
     if (enable) {
         event_enable_debug_logging(EVENT_DBG_ALL);
     } else {
@@ -533,7 +528,7 @@ void StopHTTPServer()
     }
     // Unlisten sockets, these are what make the event loop running, which means
     // that after this and all connections are closed the event loop will quit.
-    for (evhttp_bound_socket *socket : boundSockets) {
+    for (evhttp_bound_socket* socket : boundSockets) {
         evhttp_del_accept_socket(eventHTTP, socket);
     }
     boundSockets.clear();
@@ -549,8 +544,7 @@ void StopHTTPServer()
         // of unfinished request connections that follows.
         event_base_once(eventBase, -1, EV_TIMEOUT, [](evutil_socket_t, short, void*) {
             evhttp_free(eventHTTP);
-            eventHTTP = nullptr;
-        }, nullptr, nullptr);
+            eventHTTP = nullptr; }, nullptr, nullptr);
     }
     if (eventBase) {
         LogDebug(BCLog::HTTP, "Waiting for HTTP event thread to exit\n");
@@ -570,14 +564,13 @@ struct event_base* EventBase()
 static void httpevent_callback_fn(evutil_socket_t, short, void* data)
 {
     // Static handler: simply call inner handler
-    HTTPEvent *self = static_cast<HTTPEvent*>(data);
+    HTTPEvent* self = static_cast<HTTPEvent*>(data);
     self->handler();
     if (self->deleteWhenTriggered)
         delete self;
 }
 
-HTTPEvent::HTTPEvent(struct event_base* base, bool _deleteWhenTriggered, const std::function<void()>& _handler):
-    deleteWhenTriggered(_deleteWhenTriggered), handler(_handler)
+HTTPEvent::HTTPEvent(struct event_base* base, bool _deleteWhenTriggered, const std::function<void()>& _handler) : deleteWhenTriggered(_deleteWhenTriggered), handler(_handler)
 {
     ev = event_new(base, -1, 0, httpevent_callback_fn, this);
     assert(ev);
@@ -662,7 +655,7 @@ void HTTPRequest::WriteReply(int nStatus, std::span<const std::byte> reply)
     assert(evb);
     evbuffer_add(evb, reply.data(), reply.size());
     auto req_copy = req;
-    HTTPEvent* ev = new HTTPEvent(eventBase, true, [req_copy, nStatus]{
+    HTTPEvent* ev = new HTTPEvent(eventBase, true, [req_copy, nStatus] {
         evhttp_send_reply(req_copy, nStatus, nullptr, nullptr);
         // Re-enable reading from the socket. This is the second part of the libevent
         // workaround above.
@@ -756,14 +749,14 @@ std::optional<std::string> GetQueryParameterFromUri(const char* uri, const std::
     return result;
 }
 
-void RegisterHTTPHandler(const std::string &prefix, bool exactMatch, const HTTPRequestHandler &handler)
+void RegisterHTTPHandler(const std::string& prefix, bool exactMatch, const HTTPRequestHandler& handler)
 {
     LogDebug(BCLog::HTTP, "Registering HTTP handler for %s (exactmatch %d)\n", prefix, exactMatch);
     LOCK(g_httppathhandlers_mutex);
     pathHandlers.emplace_back(prefix, exactMatch, handler);
 }
 
-void UnregisterHTTPHandler(const std::string &prefix, bool exactMatch)
+void UnregisterHTTPHandler(const std::string& prefix, bool exactMatch)
 {
     LOCK(g_httppathhandlers_mutex);
     std::vector<HTTPPathHandler>::iterator i = pathHandlers.begin();
@@ -771,8 +764,7 @@ void UnregisterHTTPHandler(const std::string &prefix, bool exactMatch)
     for (; i != iend; ++i)
         if (i->prefix == prefix && i->exactMatch == exactMatch)
             break;
-    if (i != iend)
-    {
+    if (i != iend) {
         LogDebug(BCLog::HTTP, "Unregistering HTTP handler for %s (exactmatch %d)\n", prefix, exactMatch);
         pathHandlers.erase(i);
     }

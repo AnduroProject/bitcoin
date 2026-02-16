@@ -250,7 +250,7 @@ auto ConsumeNode(FuzzedDataProvider& fuzzed_data_provider, const std::optional<N
                                        addr_name,
                                        conn_type,
                                        inbound_onion,
-                                       CNodeOptions{ .permission_flags = permission_flags });
+                                       CNodeOptions{.permission_flags = permission_flags});
     } else {
         return CNode{node_id,
                      sock,
@@ -261,7 +261,7 @@ auto ConsumeNode(FuzzedDataProvider& fuzzed_data_provider, const std::optional<N
                      addr_name,
                      conn_type,
                      inbound_onion,
-                     CNodeOptions{ .permission_flags = permission_flags }};
+                     CNodeOptions{.permission_flags = permission_flags}};
     }
 }
 inline std::unique_ptr<CNode> ConsumeNodeAsUniquePtr(FuzzedDataProvider& fdp, const std::optional<NodeId>& node_id_in = std::nullopt) { return ConsumeNode<true>(fdp, node_id_in); }

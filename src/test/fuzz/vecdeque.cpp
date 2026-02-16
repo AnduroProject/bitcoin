@@ -23,7 +23,7 @@ static constexpr size_t MAX_OPERATIONS{1024};
  *
  * T must be constructible from a uint64_t seed, comparable to other T, copyable, and movable.
  */
-template<typename T, bool CheckNoneLeft>
+template <typename T, bool CheckNoneLeft>
 void TestType(std::span<const uint8_t> buffer, uint64_t rng_tweak)
 {
     FuzzedDataProvider provider(buffer.data(), buffer.size());
@@ -52,7 +52,8 @@ void TestType(std::span<const uint8_t> buffer, uint64_t rng_tweak)
         }
     };
 
-    LIMITED_WHILE(provider.remaining_bytes(), MAX_OPERATIONS) {
+    LIMITED_WHILE(provider.remaining_bytes(), MAX_OPERATIONS)
+    {
         int command = provider.ConsumeIntegral<uint8_t>() % 64;
         unsigned idx = real.empty() ? 0 : provider.ConsumeIntegralInRange<unsigned>(0, real.size() - 1);
         const size_t num_buffers = sim.size();
@@ -344,7 +345,7 @@ void TestType(std::span<const uint8_t> buffer, uint64_t rng_tweak)
 }
 
 /** Data structure with built-in tracking of all existing objects. */
-template<size_t Size>
+template <size_t Size>
 class TrackedObj
 {
     static_assert(Size > 0);
@@ -357,7 +358,6 @@ class TrackedObj
     using track_map_type = std::map<const TrackedObj<Size>*, std::optional<uint64_t>>;
 
 private:
-
     /** Actual map. */
     static inline track_map_type g_tracker;
 

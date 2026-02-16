@@ -25,6 +25,17 @@ static constexpr uint8_t DB_HEAD_BLOCKS{'H'};
 // Keys used in previous version that might still be found in the DB:
 static constexpr uint8_t DB_COINS{'c'};
 
+static constexpr uint8_t DB_ASSET{'A'};
+static constexpr uint8_t DB_MINED_ASSET{'D'};
+static constexpr uint8_t DB_ASSET_LAST_PRUNE_HEIGHT{'E'};
+
+static constexpr uint8_t DB_SIGNED_BLOCK_HASH{'V'};
+static constexpr uint8_t DB_SIGNED_BLOCK_LAST_ID{'S'};
+static constexpr uint8_t DB_SIGNED_BLOCK_LAST_HASH{'U'};
+static constexpr uint8_t DB_BLOCK_INVALID_TX{'Q'};
+static constexpr uint8_t DB_SIGNED_BLOCK_TX{'P'};
+static constexpr uint8_t DB_DEPOSIT_ADDRESS{'R'};
+
 bool CCoinsViewDB::NeedsUpgrade()
 {
     std::unique_ptr<CDBIterator> cursor{m_db->NewIterator()};
@@ -39,17 +50,16 @@ namespace {
 struct CoinEntry {
     COutPoint* outpoint;
     uint8_t key;
-    explicit CoinEntry(const COutPoint* ptr) : outpoint(const_cast<COutPoint*>(ptr)), key(DB_COIN)  {}
+    explicit CoinEntry(const COutPoint* ptr) : outpoint(const_cast<COutPoint*>(ptr)), key(DB_COIN) {}
 
     SERIALIZE_METHODS(CoinEntry, obj) { READWRITE(obj.key, obj.outpoint->hash, VARINT(obj.outpoint->n)); }
 };
 
 } // namespace
 
-CCoinsViewDB::CCoinsViewDB(DBParams db_params, CoinsViewOptions options) :
-    m_db_params{std::move(db_params)},
-    m_options{std::move(options)},
-    m_db{std::make_unique<CDBWrapper>(m_db_params)} { }
+CCoinsViewDB::CCoinsViewDB(DBParams db_params, CoinsViewOptions options) : m_db_params{std::move(db_params)},
+                                                                           m_options{std::move(options)},
+                                                                           m_db{std::make_unique<CDBWrapper>(m_db_params)} {}
 
 void CCoinsViewDB::ResizeCache(size_t new_cache_size)
 {
@@ -71,18 +81,21 @@ std::optional<Coin> CCoinsViewDB::GetCoin(const COutPoint& outpoint) const
     return std::nullopt;
 }
 
-bool CCoinsViewDB::HaveCoin(const COutPoint &outpoint) const {
+bool CCoinsViewDB::HaveCoin(const COutPoint& outpoint) const
+{
     return m_db->Exists(CoinEntry(&outpoint));
 }
 
-uint256 CCoinsViewDB::GetBestBlock() const {
+uint256 CCoinsViewDB::GetBestBlock() const
+{
     uint256 hashBestChain;
     if (!m_db->Read(DB_BEST_BLOCK, hashBestChain))
         return uint256();
     return hashBestChain;
 }
 
-std::vector<uint256> CCoinsViewDB::GetHeadBlocks() const {
+std::vector<uint256> CCoinsViewDB::GetHeadBlocks() const
+{
     std::vector<uint256> vhashHeadBlocks;
     if (!m_db->Read(DB_HEAD_BLOCKS, vhashHeadBlocks)) {
         return std::vector<uint256>();
@@ -90,7 +103,8 @@ std::vector<uint256> CCoinsViewDB::GetHeadBlocks() const {
     return vhashHeadBlocks;
 }
 
-bool CCoinsViewDB::BatchWrite(CoinsViewCacheCursor& cursor, const uint256 &hashBlock) {
+bool CCoinsViewDB::BatchWrite(CoinsViewCacheCursor& cursor, const uint256& hashBlock)
+{
     CDBBatch batch(*m_db);
     size_t count = 0;
     size_t changed = 0;
@@ -160,17 +174,16 @@ size_t CCoinsViewDB::EstimateSize() const
 }
 
 /** Specialization of CCoinsViewCursor to iterate over a CCoinsViewDB */
-class CCoinsViewDBCursor: public CCoinsViewCursor
+class CCoinsViewDBCursor : public CCoinsViewCursor
 {
 public:
     // Prefer using CCoinsViewDB::Cursor() since we want to perform some
     // cache warmup on instantiation.
-    CCoinsViewDBCursor(CDBIterator* pcursorIn, const uint256&hashBlockIn):
-        CCoinsViewCursor(hashBlockIn), pcursor(pcursorIn) {}
+    CCoinsViewDBCursor(CDBIterator* pcursorIn, const uint256& hashBlockIn) : CCoinsViewCursor(hashBlockIn), pcursor(pcursorIn) {}
     ~CCoinsViewDBCursor() = default;
 
-    bool GetKey(COutPoint &key) const override;
-    bool GetValue(Coin &coin) const override;
+    bool GetKey(COutPoint& key) const override;
+    bool GetValue(Coin& coin) const override;
 
     bool Valid() const override;
     void Next() override;
@@ -201,7 +214,7 @@ std::unique_ptr<CCoinsViewCursor> CCoinsViewDB::Cursor() const
     return i;
 }
 
-bool CCoinsViewDBCursor::GetKey(COutPoint &key) const
+bool CCoinsViewDBCursor::GetKey(COutPoint& key) const
 {
     // Return cached key
     if (keyTmp.first == DB_COIN) {
@@ -211,7 +224,7 @@ bool CCoinsViewDBCursor::GetKey(COutPoint &key) const
     return false;
 }
 
-bool CCoinsViewDBCursor::GetValue(Coin &coin) const
+bool CCoinsViewDBCursor::GetValue(Coin& coin) const
 {
     return pcursor->GetValue(coin);
 }
@@ -230,4 +243,166 @@ void CCoinsViewDBCursor::Next()
     } else {
         keyTmp.first = entry.key;
     }
+}
+
+
+CoordinateAssetDB::CoordinateAssetDB(DBParams db_params)
+    : CDBWrapper(db_params) {}
+
+bool CoordinateAssetDB::WriteCoordinateAssets(const std::vector<CoordinateAsset>& vAsset)
+{
+    CDBBatch batch(*this);
+    for (const CoordinateAsset& asset : vAsset) {
+        uint256 assetHash = getAssetHash(asset.nID);
+        std::pair<uint8_t, uint256> key = std::make_pair(DB_ASSET, assetHash);
+        batch.Write(key, asset);
+    }
+    return WriteBatch(batch, true);
+}
+
+std::vector<CoordinateAsset> CoordinateAssetDB::GetAssets()
+{
+    std::unique_ptr<CDBIterator> pcursor(NewIterator());
+    pcursor->Seek(std::make_pair(DB_ASSET, uint256()));
+
+    std::vector<CoordinateAsset> vAsset;
+
+    while (pcursor->Valid()) {
+        std::pair<uint8_t, uint256> key;
+        CoordinateAsset asset;
+        if (pcursor->GetKey(key) && key.first == DB_ASSET) {
+            if (pcursor->GetValue(asset))
+                vAsset.push_back(asset);
+        }
+
+        pcursor->Next();
+    }
+    return vAsset;
+}
+
+bool CoordinateAssetDB::GetLastAssetPruneHeight(uint32_t& nID)
+{
+    if (!Read(DB_ASSET_LAST_PRUNE_HEIGHT, nID))
+        return false;
+
+    return true;
+}
+
+bool CoordinateAssetDB::WriteLastAssetPruneHeight(const uint32_t nID)
+{
+    return Write(DB_ASSET_LAST_PRUNE_HEIGHT, nID);
+}
+
+bool CoordinateAssetDB::GetAsset(uint256 nID, CoordinateAsset& asset)
+{
+    return Read(std::make_pair(DB_ASSET, nID), asset);
+}
+
+bool CoordinateAssetDB::WriteAssetMinedBlock(uint256 blockHash)
+{
+    CDBBatch batch(*this);
+    std::pair<uint8_t, uint256> key = std::make_pair(DB_MINED_ASSET, blockHash);
+    batch.Write(key, blockHash);
+    return WriteBatch(batch, true);
+}
+
+bool CoordinateAssetDB::getAssetMinedBlock(uint256 blockHash)
+{
+    uint256 hash;
+    if (Read(std::make_pair(DB_MINED_ASSET, blockHash), hash)) {
+        return true;
+    }
+    return false;
+}
+
+SignedBlocksDB::SignedBlocksDB(DBParams db_params)
+    : CDBWrapper(db_params) {}
+
+bool SignedBlocksDB::WriteLastSignedBlockID(const uint64_t nHeight)
+{
+    return Write(DB_SIGNED_BLOCK_LAST_ID, nHeight);
+}
+
+bool SignedBlocksDB::GetLastSignedBlockID(uint64_t& nHeight)
+{
+    if (!Read(DB_SIGNED_BLOCK_LAST_ID, nHeight))
+        return false;
+
+    return true;
+}
+
+bool SignedBlocksDB::WriteLastSignedBlockHash(const uint256 blockHash)
+{
+    return Write(DB_SIGNED_BLOCK_LAST_HASH, blockHash);
+}
+
+bool SignedBlocksDB::GetLastSignedBlockHash(uint256& blockHash)
+{
+    if (!Read(DB_SIGNED_BLOCK_LAST_HASH, blockHash))
+        return false;
+
+    return true;
+}
+
+bool SignedBlocksDB::WriteSignedBlockHash(const std::vector<uint256>& signedBlockHashes, uint256 blockHash)
+{
+    CDBBatch batch(*this);
+    for (const uint256& signedBlockHash : signedBlockHashes) {
+        std::pair<uint8_t, uint256> key = std::make_pair(DB_SIGNED_BLOCK_HASH, signedBlockHash);
+        batch.Write(key, blockHash);
+    }
+    return WriteBatch(batch, true);
+}
+
+bool SignedBlocksDB::GetSignedBlockHash(const uint256 signedBlockHashes, uint256& blockHash)
+{
+    return Read(std::make_pair(DB_SIGNED_BLOCK_HASH, signedBlockHashes), blockHash);
+}
+
+bool SignedBlocksDB::WriteInvalidTx(const std::vector<InvalidTx>& invalidTxs)
+{
+    CDBBatch batch(*this);
+    for (const InvalidTx& invalidTx : invalidTxs) {
+        std::pair<uint8_t, uint64_t> key = std::make_pair(DB_BLOCK_INVALID_TX, invalidTx.nHeight);
+        batch.Write(key, invalidTx);
+    }
+    return WriteBatch(batch, true);
+}
+
+bool SignedBlocksDB::GetInvalidTx(const uint64_t nHeight, InvalidTx& invalidTx)
+{
+    return Read(std::make_pair(DB_BLOCK_INVALID_TX, nHeight), invalidTx);
+}
+
+bool SignedBlocksDB::DeleteInvalidTx(const uint64_t nHeight)
+{
+    std::pair<uint8_t, uint64_t> key = std::make_pair(DB_BLOCK_INVALID_TX, nHeight);
+    return Erase(key);
+}
+
+
+bool SignedBlocksDB::WriteTxPosition(const SignedTxindex& signedTx, uint256 txHash)
+{
+    CDBBatch batch(*this);
+    std::pair<uint8_t, uint256> key = std::make_pair(DB_SIGNED_BLOCK_TX, txHash);
+    batch.Write(key, signedTx);
+    return WriteBatch(batch, true);
+}
+
+bool SignedBlocksDB::getTxPosition(const uint256 txHash, SignedTxindex& txIndex)
+{
+    return Read(std::make_pair(DB_SIGNED_BLOCK_TX, txHash), txIndex);
+}
+
+bool SignedBlocksDB::WriteDepositAddress(const CoordinateAddress& coordinateAddressObj, std::string address)
+{
+    CDBBatch batch(*this);
+    std::pair<uint8_t, std::string> key = std::make_pair(DB_DEPOSIT_ADDRESS, address);
+    batch.Write(key, coordinateAddressObj);
+    return WriteBatch(batch, true);
+}
+
+bool SignedBlocksDB::getDepositAddress(const std::string address, CoordinateAddress& coordinateAddressObj)
+{
+    return Read(std::make_pair(DB_DEPOSIT_ADDRESS, address), coordinateAddressObj);
 }

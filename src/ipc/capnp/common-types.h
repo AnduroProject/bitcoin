@@ -61,12 +61,12 @@ namespace mp {
 //! higher priority hooks could take precedence over this one.
 template <typename LocalType, typename Value, typename Output>
 void CustomBuildField(TypeList<LocalType>, Priority<1>, InvokeContext& invoke_context, Value&& value, Output&& output)
-// Enable if serializeable and if LocalType is not cv or reference qualified. If
-// LocalType is cv or reference qualified, it is important to fall back to
-// lower-priority Priority<0> implementation of this function that strips cv
-// references, to prevent this CustomBuildField overload from taking precedence
-// over more narrow overloads for specific LocalTypes.
-requires Serializable<LocalType, DataStream> && std::is_same_v<LocalType, std::remove_cv_t<std::remove_reference_t<LocalType>>>
+    // Enable if serializeable and if LocalType is not cv or reference qualified. If
+    // LocalType is cv or reference qualified, it is important to fall back to
+    // lower-priority Priority<0> implementation of this function that strips cv
+    // references, to prevent this CustomBuildField overload from taking precedence
+    // over more narrow overloads for specific LocalTypes.
+    requires Serializable<LocalType, DataStream> && std::is_same_v<LocalType, std::remove_cv_t<std::remove_reference_t<LocalType>>>
 {
     DataStream stream;
     auto wrapper{ipc::capnp::Wrap(stream)};
@@ -81,7 +81,7 @@ requires Serializable<LocalType, DataStream> && std::is_same_v<LocalType, std::r
 //! priority, and higher priority hooks could take precedence over this one.
 template <typename LocalType, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<LocalType>, Priority<1>, InvokeContext& invoke_context, Input&& input, ReadDest&& read_dest)
-requires Unserializable<LocalType, DataStream> && (!ipc::capnp::Deserializable<LocalType>)
+    requires Unserializable<LocalType, DataStream> && (!ipc::capnp::Deserializable<LocalType>)
 {
     return read_dest.update([&](auto& value) {
         if (!input.has()) return;
@@ -98,7 +98,7 @@ requires Unserializable<LocalType, DataStream> && (!ipc::capnp::Deserializable<L
 //! priority, and higher priority hooks could take precedence over this one.
 template <typename LocalType, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<LocalType>, Priority<1>, InvokeContext& invoke_context, Input&& input, ReadDest&& read_dest)
-requires ipc::capnp::Deserializable<LocalType>
+    requires ipc::capnp::Deserializable<LocalType>
 {
     assert(input.has());
     auto data = input.get();

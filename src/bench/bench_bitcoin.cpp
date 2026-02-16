@@ -5,10 +5,10 @@
 #include <bench/bench.h>
 #include <common/args.h>
 #include <crypto/sha256.h>
+#include <test/util/setup_common.h>
 #include <tinyformat.h>
 #include <util/fs.h>
 #include <util/string.h>
-#include <test/util/setup_common.h>
 
 #include <chrono>
 #include <cstdint>
@@ -37,12 +37,12 @@ static void SetupBenchArgs(ArgsManager& argsman)
     argsman.AddArg("-output-csv=<output.csv>", "Generate CSV file with the most important benchmark results", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-output-json=<output.json>", "Generate JSON file with all benchmark results", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-sanity-check", "Run benchmarks for only one iteration with no output", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
-    argsman.AddArg("-priority-level=<l1,l2,l3>", strprintf("Run benchmarks of one or multiple priority level(s) (%s), default: '%s'",
-                                                           benchmark::ListPriorities(), DEFAULT_PRIORITY), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
+    argsman.AddArg("-priority-level=<l1,l2,l3>", strprintf("Run benchmarks of one or multiple priority level(s) (%s), default: '%s'", benchmark::ListPriorities(), DEFAULT_PRIORITY), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
 }
 
 // parses a comma separated list like "10,20,30,50"
-static std::vector<double> parseAsymptote(const std::string& str) {
+static std::vector<double> parseAsymptote(const std::string& str)
+{
     std::stringstream ss(str);
     std::vector<double> numbers;
     double d;
@@ -54,9 +54,10 @@ static std::vector<double> parseAsymptote(const std::string& str) {
     return numbers;
 }
 
-static uint8_t parsePriorityLevel(const std::string& str) {
+static uint8_t parsePriorityLevel(const std::string& str)
+{
     uint8_t levels{0};
-    for (const auto& level: SplitString(str, ',')) {
+    for (const auto& level : SplitString(str, ',')) {
         levels |= benchmark::StringToPriority(level);
     }
     return levels;

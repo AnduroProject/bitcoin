@@ -19,7 +19,7 @@ class PlatformStyle;
 class WalletModel;
 
 namespace Ui {
-    class ReceiveCoinsDialog;
+class ReceiveCoinsDialog;
 }
 
 QT_BEGIN_NAMESPACE
@@ -39,10 +39,10 @@ public:
         MINIMUM_COLUMN_WIDTH = 130
     };
 
-    explicit ReceiveCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
+    explicit ReceiveCoinsDialog(const PlatformStyle* platformStyle, QWidget* parent = nullptr);
     ~ReceiveCoinsDialog();
 
-    void setModel(WalletModel *model);
+    void setModel(WalletModel* model);
 
 public Q_SLOTS:
     void clear();
@@ -50,13 +50,13 @@ public Q_SLOTS:
     void accept() override;
 
 private:
-    Ui::ReceiveCoinsDialog *ui;
+    Ui::ReceiveCoinsDialog* ui;
     WalletModel* model{nullptr};
-    QMenu *contextMenu;
+    QMenu* contextMenu;
     QAction* copyLabelAction;
     QAction* copyMessageAction;
     QAction* copyAmountAction;
-    const PlatformStyle *platformStyle;
+    const PlatformStyle* platformStyle;
 
     QModelIndex selectedRow();
     void copyColumnToClipboard(int column);
@@ -65,10 +65,10 @@ private Q_SLOTS:
     void on_receiveButton_clicked();
     void on_showRequestButton_clicked();
     void on_removeRequestButton_clicked();
-    void on_recentRequestsView_doubleClicked(const QModelIndex &index);
-    void recentRequestsView_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    void on_recentRequestsView_doubleClicked(const QModelIndex& index);
+    void recentRequestsView_selectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
     void updateDisplayUnit();
-    void showMenu(const QPoint &point);
+    void showMenu(const QPoint& point);
     void copyURI();
     void copyAddress();
     void copyLabel();

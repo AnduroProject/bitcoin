@@ -31,7 +31,8 @@ int ExecVp(const char* file, char* const argv[])
 
     std::vector<const wchar_t*> new_argv;
     new_argv.reserve(escaped_args.size() + 1);
-    for (const auto& s : escaped_args) new_argv.push_back(s.c_str());
+    for (const auto& s : escaped_args)
+        new_argv.push_back(s.c_str());
     new_argv.push_back(nullptr);
     return _wexecvp(converter.from_bytes(file).c_str(), new_argv.data());
 #endif

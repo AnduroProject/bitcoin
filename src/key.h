@@ -20,7 +20,7 @@
  * CPrivKey is a serialized private key, with all parameters included
  * (SIZE bytes)
  */
-typedef std::vector<unsigned char, secure_allocator<unsigned char> > CPrivKey;
+typedef std::vector<unsigned char, secure_allocator<unsigned char>> CPrivKey;
 
 /** Size of ECDH shared secrets. */
 constexpr static size_t ECDH_SECRET_SIZE = CSHA256::OUTPUT_SIZE;
@@ -37,7 +37,7 @@ public:
     /**
      * secp256k1:
      */
-    static const unsigned int SIZE            = 279;
+    static const unsigned int SIZE = 279;
     static const unsigned int COMPRESSED_SIZE = 214;
     /**
      * see www.keylength.com
@@ -94,8 +94,8 @@ public:
     friend bool operator==(const CKey& a, const CKey& b)
     {
         return a.fCompressed == b.fCompressed &&
-            a.size() == b.size() &&
-            memcmp(a.data(), b.data(), a.size()) == 0;
+               a.size() == b.size() &&
+               memcmp(a.data(), b.data(), a.size()) == 0;
     }
 
     //! Initialize using begin and end iterators to byte data.
@@ -173,7 +173,7 @@ public:
     bool SignSchnorr(const uint256& hash, std::span<unsigned char> sig, const uint256* merkle_root, const uint256& aux) const;
 
     //! Derive BIP32 child key.
-    [[nodiscard]] bool Derive(CKey& keyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode& cc) const;
+    [[nodiscard]] bool Derive(CKey& keyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const;
 
     /**
      * Verify thoroughly whether a private key and a public key match.
@@ -234,10 +234,10 @@ struct CExtKey {
     friend bool operator==(const CExtKey& a, const CExtKey& b)
     {
         return a.nDepth == b.nDepth &&
-            memcmp(a.vchFingerprint, b.vchFingerprint, sizeof(vchFingerprint)) == 0 &&
-            a.nChild == b.nChild &&
-            a.chaincode == b.chaincode &&
-            a.key == b.key;
+               memcmp(a.vchFingerprint, b.vchFingerprint, sizeof(vchFingerprint)) == 0 &&
+               a.nChild == b.nChild &&
+               a.chaincode == b.chaincode &&
+               a.key == b.key;
     }
 
     CExtKey() = default;

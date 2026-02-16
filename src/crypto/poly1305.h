@@ -27,11 +27,11 @@ typedef struct {
     unsigned char final;
 } poly1305_context;
 
-void poly1305_init(poly1305_context *st, const unsigned char key[32]) noexcept;
-void poly1305_update(poly1305_context *st, const unsigned char *m, size_t bytes) noexcept;
-void poly1305_finish(poly1305_context *st, unsigned char mac[16]) noexcept;
+void poly1305_init(poly1305_context* st, const unsigned char key[32]) noexcept;
+void poly1305_update(poly1305_context* st, const unsigned char* m, size_t bytes) noexcept;
+void poly1305_finish(poly1305_context* st, unsigned char mac[16]) noexcept;
 
-}  // namespace poly1305_donna
+} // namespace poly1305_donna
 
 /** C++ wrapper with std::byte span interface around poly1305_donna code. */
 class Poly1305

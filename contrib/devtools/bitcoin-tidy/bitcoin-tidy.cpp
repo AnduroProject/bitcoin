@@ -7,13 +7,13 @@
 #include <clang-tidy/ClangTidyModule.h>
 #include <clang-tidy/ClangTidyModuleRegistry.h>
 
-class BitcoinModule final : public clang::tidy::ClangTidyModule
-{
+class BitcoinModule final : public clang::tidy::ClangTidyModule {
 public:
-    void addCheckFactories(clang::tidy::ClangTidyCheckFactories& CheckFactories) override
-    {
-        CheckFactories.registerCheck<bitcoin::NonTrivialThreadLocal>("bitcoin-nontrivial-threadlocal");
-    }
+  void addCheckFactories(
+      clang::tidy::ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<bitcoin::NonTrivialThreadLocal>(
+        "bitcoin-nontrivial-threadlocal");
+  }
 };
 
 static clang::tidy::ClangTidyModuleRegistry::Add<BitcoinModule>

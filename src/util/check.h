@@ -120,8 +120,8 @@ constexpr T&& inline_assertion_check(LIFETIMEBOUND T&& val, [[maybe_unused]] con
 /**
  * NONFATAL_UNREACHABLE() is a macro that is used to mark unreachable code. It throws a NonFatalCheckError.
  */
-#define NONFATAL_UNREACHABLE()                                        \
-    throw NonFatalCheckError(                                         \
+#define NONFATAL_UNREACHABLE() \
+    throw NonFatalCheckError(  \
         "Unreachable code reached (non-fatal)", __FILE__, __LINE__, __func__)
 
 // NOLINTEND(bugprone-lambda-function-name)

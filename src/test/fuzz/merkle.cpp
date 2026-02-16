@@ -3,18 +3,19 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <consensus/merkle.h>
-#include <test/fuzz/fuzz.h>
+#include <hash.h>
 #include <test/fuzz/FuzzedDataProvider.h>
+#include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
 #include <test/util/str.h>
 #include <util/strencodings.h>
-#include <hash.h>
 
 #include <cassert>
 #include <cstdint>
 #include <vector>
 
-uint256 ComputeMerkleRootFromPath(const CBlock& block, uint32_t position, const std::vector<uint256>& merkle_path) {
+uint256 ComputeMerkleRootFromPath(const CBlock& block, uint32_t position, const std::vector<uint256>& merkle_path)
+{
     if (position >= block.vtx.size()) {
         throw std::out_of_range("Position out of range");
     }
@@ -38,8 +39,8 @@ FUZZ_TARGET(merkle)
     FuzzedDataProvider fuzzed_data_provider(buffer.data(), buffer.size());
 
     const bool with_witness = fuzzed_data_provider.ConsumeBool();
-    std::optional<CBlock> block {ConsumeDeserializable<CBlock>(fuzzed_data_provider, with_witness ? TX_WITH_WITNESS : TX_NO_WITNESS)};
-    if (!block){
+    std::optional<CBlock> block{ConsumeDeserializable<CBlock>(fuzzed_data_provider, with_witness ? TX_WITH_WITNESS : TX_NO_WITNESS)};
+    if (!block) {
         return;
     }
     const size_t num_txs = block->vtx.size();
@@ -65,7 +66,7 @@ FUZZ_TARGET(merkle)
         assert(block_merkle_root == tx_hashes[0]);
     }
 
-    if (!block->vtx.empty()){
+    if (!block->vtx.empty()) {
         const uint256 block_witness_merkle_root = BlockWitnessMerkleRoot(*block, &mutated);
         if (tx_hashes.size() == 1) {
             assert(block_witness_merkle_root == uint256());
@@ -88,5 +89,4 @@ FUZZ_TARGET(merkle)
     if (num_txs == 1 || num_txs == 0) {
         assert(merkle_path.empty()); // Single transaction has no path
     }
-
 }

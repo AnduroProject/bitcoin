@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <addresstype.h>
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
@@ -9,13 +10,12 @@
 #include <test/util/random.h>
 #include <test/util/setup_common.h>
 #include <util/time.h>
+#include <validation.h>
 #include <wallet/coincontrol.h>
 #include <wallet/context.h>
 #include <wallet/spend.h>
 #include <wallet/test/util.h>
 #include <wallet/wallet.h>
-#include <validation.h>
-#include <addresstype.h>
 
 using util::ToString;
 
@@ -75,7 +75,8 @@ FUZZ_TARGET(wallet_create_transaction, .init = initialize_setup)
     }
 
     std::vector<CRecipient> recipients;
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 100) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 100)
+    {
         CTxDestination destination;
         CallOneOf(
             fuzzed_data_provider,
@@ -89,8 +90,7 @@ FUZZ_TARGET(wallet_create_transaction, .init = initialize_setup)
             },
             [&] {
                 destination = ConsumeTxDestination(fuzzed_data_provider);
-            }
-        );
+            });
         recipients.push_back({destination,
                               /*nAmount=*/ConsumeMoney(fuzzed_data_provider),
                               /*fSubtractFeeFromAmount=*/fuzzed_data_provider.ConsumeBool()});

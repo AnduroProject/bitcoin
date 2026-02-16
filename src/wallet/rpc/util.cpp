@@ -18,7 +18,8 @@ namespace wallet {
 static const std::string WALLET_ENDPOINT_BASE = "/wallet/";
 const std::string HELP_REQUIRING_PASSPHRASE{"\nRequires wallet passphrase to be set with walletpassphrase call if wallet is encrypted.\n"};
 
-bool GetAvoidReuseFlag(const CWallet& wallet, const UniValue& param) {
+bool GetAvoidReuseFlag(const CWallet& wallet, const UniValue& param)
+{
     bool can_avoid_reuse = wallet.IsWalletFlagSet(WALLET_FLAG_AVOID_REUSE);
     bool avoid_reuse = param.isNull() ? can_avoid_reuse : param.get_bool();
 
@@ -36,7 +37,7 @@ std::string EnsureUniqueWalletName(const JSONRPCRequest& request, const std::str
         // wallet endpoint was used
         if (wallet_name && *wallet_name != endpoint_wallet) {
             throw JSONRPCError(RPC_INVALID_PARAMETER,
-                "The RPC endpoint wallet and the wallet name parameter specify different wallets");
+                               "The RPC endpoint wallet and the wallet name parameter specify different wallets");
         }
         return endpoint_wallet;
     }
@@ -44,7 +45,7 @@ std::string EnsureUniqueWalletName(const JSONRPCRequest& request, const std::str
     // Not a wallet endpoint; parameter must be provided
     if (!wallet_name) {
         throw JSONRPCError(RPC_INVALID_PARAMETER,
-            "Either the RPC endpoint wallet or the wallet name parameter must be provided");
+                           "Either the RPC endpoint wallet or the wallet name parameter must be provided");
     }
 
     return *wallet_name;
@@ -81,7 +82,7 @@ std::shared_ptr<CWallet> GetWalletForJSONRPCRequest(const JSONRPCRequest& reques
             RPC_WALLET_NOT_FOUND, "No wallet is loaded. Load a wallet using loadwallet or create a new one with createwallet. (Note: A default wallet is no longer automatically created)");
     }
     throw JSONRPCError(RPC_WALLET_NOT_SPECIFIED,
-        "Multiple wallets are loaded. Please select which wallet to use by requesting the RPC through the /wallet/<walletname> URI path.");
+                       "Multiple wallets are loaded. Please select which wallet to use by requesting the RPC through the /wallet/<walletname> URI path.");
 }
 
 void EnsureWalletIsUnlocked(const CWallet& wallet)
@@ -114,7 +115,7 @@ std::string LabelFromValue(const UniValue& value)
 void PushParentDescriptors(const CWallet& wallet, const CScript& script_pubkey, UniValue& entry)
 {
     UniValue parent_descs(UniValue::VARR);
-    for (const auto& desc: wallet.GetWalletDescriptors(script_pubkey)) {
+    for (const auto& desc : wallet.GetWalletDescriptors(script_pubkey)) {
         std::string desc_str;
         FlatSigningProvider dummy_provider;
         if (!CHECK_NONFATAL(desc.descriptor->ToNormalizedString(dummy_provider, desc_str, &desc.cache))) continue;
@@ -130,22 +131,22 @@ void HandleWalletError(const std::shared_ptr<CWallet> wallet, DatabaseStatus& st
         // wallet directory exists, but doesn't contain a data file.
         RPCErrorCode code = RPC_WALLET_ERROR;
         switch (status) {
-            case DatabaseStatus::FAILED_NOT_FOUND:
-            case DatabaseStatus::FAILED_BAD_FORMAT:
-            case DatabaseStatus::FAILED_LEGACY_DISABLED:
-                code = RPC_WALLET_NOT_FOUND;
-                break;
-            case DatabaseStatus::FAILED_ALREADY_LOADED:
-                code = RPC_WALLET_ALREADY_LOADED;
-                break;
-            case DatabaseStatus::FAILED_ALREADY_EXISTS:
-                code = RPC_WALLET_ALREADY_EXISTS;
-                break;
-            case DatabaseStatus::FAILED_INVALID_BACKUP_FILE:
-                code = RPC_INVALID_PARAMETER;
-                break;
-            default: // RPC_WALLET_ERROR is returned for all other cases.
-                break;
+        case DatabaseStatus::FAILED_NOT_FOUND:
+        case DatabaseStatus::FAILED_BAD_FORMAT:
+        case DatabaseStatus::FAILED_LEGACY_DISABLED:
+            code = RPC_WALLET_NOT_FOUND;
+            break;
+        case DatabaseStatus::FAILED_ALREADY_LOADED:
+            code = RPC_WALLET_ALREADY_LOADED;
+            break;
+        case DatabaseStatus::FAILED_ALREADY_EXISTS:
+            code = RPC_WALLET_ALREADY_EXISTS;
+            break;
+        case DatabaseStatus::FAILED_INVALID_BACKUP_FILE:
+            code = RPC_INVALID_PARAMETER;
+            break;
+        default: // RPC_WALLET_ERROR is returned for all other cases.
+            break;
         }
         throw JSONRPCError(code, error.original);
     }

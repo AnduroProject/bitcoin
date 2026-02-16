@@ -58,8 +58,8 @@ static void JSONErrorReply(HTTPRequest* req, UniValue objError, const JSONRPCReq
     req->WriteReply(nStatus, strReply);
 }
 
-//This function checks username and password against -rpcauth
-//entries from config file.
+// This function checks username and password against -rpcauth
+// entries from config file.
 static bool CheckUserAuthorized(std::string_view user, std::string_view pass)
 {
     for (const auto& fields : g_rpcauth) {
@@ -148,7 +148,7 @@ static bool HTTPReq_JSONRPC(const std::any& context, HTTPRequest* req)
             req->WriteReply(HTTP_FORBIDDEN);
             return false;
 
-        // singleton request
+            // singleton request
         } else if (valRequest.isObject()) {
             jreq.parse(valRequest);
             if (user_has_whitelist && !g_rpc_whitelist[jreq.authUser].count(jreq.strMethod)) {
@@ -170,7 +170,7 @@ static bool HTTPReq_JSONRPC(const std::any& context, HTTPRequest* req)
                 return true;
             }
 
-        // array of requests
+            // array of requests
         } else if (valRequest.isArray()) {
             // Check authorization for each request's method
             if (user_has_whitelist) {
@@ -221,8 +221,7 @@ static bool HTTPReq_JSONRPC(const std::any& context, HTTPRequest* req)
                 req->WriteReply(HTTP_NO_CONTENT);
                 return true;
             }
-        }
-        else
+        } else
             throw JSONRPCError(RPC_PARSE_ERROR, "Top-level object parse error");
 
         req->WriteHeader("Content-Type", "application/json");
@@ -242,8 +241,7 @@ static bool InitRPCAuthentication()
     std::string user;
     std::string pass;
 
-    if (gArgs.GetArg("-rpcpassword", "") == "")
-    {
+    if (gArgs.GetArg("-rpcpassword", "") == "") {
         std::optional<fs::perms> cookie_perms{std::nullopt};
         auto cookie_perms_arg{gArgs.GetArg("-rpccookieperms")};
         if (cookie_perms_arg) {
@@ -318,7 +316,7 @@ static bool InitRPCAuthentication()
             if (intersect) {
                 std::set<std::string> tmp_whitelist;
                 std::set_intersection(new_whitelist.begin(), new_whitelist.end(),
-                       whitelist.begin(), whitelist.end(), std::inserter(tmp_whitelist, tmp_whitelist.end()));
+                                      whitelist.begin(), whitelist.end(), std::inserter(tmp_whitelist, tmp_whitelist.end()));
                 new_whitelist = std::move(tmp_whitelist);
             }
             whitelist = std::move(new_whitelist);

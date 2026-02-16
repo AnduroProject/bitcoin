@@ -206,8 +206,7 @@ FUZZ_TARGET(txorphan, .init = initialize_orphanage)
                         Assert(!orphanage->HaveTx(tx_removed->GetWitnessHash()));
                         Assert(!orphanage->HaveTxFromPeer(tx_removed->GetWitnessHash(), peer_id));
                     }
-                }
-            );
+                });
         }
 
         // Set tx as potential parent to be used for future GetChildren() calls.
@@ -313,7 +312,7 @@ FUZZ_TARGET(txorphan_protected, .init = initialize_orphanage)
                     bool have_tx_and_peer = orphanage->HaveTxFromPeer(wtxid, peer_id);
                     if (peer_is_protected && !have_tx_and_peer &&
                         (orphanage->UsageByPeer(peer_id) + tx_weight > honest_mem_limit ||
-                        orphanage->LatencyScoreFromPeer(peer_id) + (tx->vin.size() / 10) + 1 > honest_latency_limit)) {
+                         orphanage->LatencyScoreFromPeer(peer_id) + (tx->vin.size() / 10) + 1 > honest_latency_limit)) {
                         // We never want our protected peer oversized or over-announced
                     } else {
                         orphanage->AddTx(tx, peer_id);
@@ -328,7 +327,7 @@ FUZZ_TARGET(txorphan_protected, .init = initialize_orphanage)
                     {
                         if (peer_is_protected && !have_tx_and_peer &&
                             (orphanage->UsageByPeer(peer_id) + tx_weight > honest_mem_limit ||
-                            orphanage->LatencyScoreFromPeer(peer_id) + (tx->vin.size() / 10) + 1 > honest_latency_limit)) {
+                             orphanage->LatencyScoreFromPeer(peer_id) + (tx->vin.size() / 10) + 1 > honest_latency_limit)) {
                             // We never want our protected peer oversized
                         } else {
                             orphanage->AddAnnouncer(tx->GetWitnessHash(), peer_id);
@@ -352,8 +351,7 @@ FUZZ_TARGET(txorphan_protected, .init = initialize_orphanage)
                         Assert(orphanage->LatencyScoreFromPeer(peer_id) == 0);
                         Assert(orphanage->AnnouncementsFromPeer(peer_id) == 0);
                     }
-                }
-            );
+                });
         }
     }
 
@@ -480,13 +478,11 @@ FUZZ_TARGET(txorphanage_sim)
 
     /** Data structure representing one announcement (pair of (tx, peer), plus whether it's
      *  reconsiderable or not. */
-    struct SimAnnouncement
-    {
+    struct SimAnnouncement {
         unsigned tx;
         NodeId announcer;
         bool reconsider{false};
-        SimAnnouncement(unsigned tx_in, NodeId announcer_in, bool reconsider_in) noexcept :
-            tx(tx_in), announcer(announcer_in), reconsider(reconsider_in) {}
+        SimAnnouncement(unsigned tx_in, NodeId announcer_in, bool reconsider_in) noexcept : tx(tx_in), announcer(announcer_in), reconsider(reconsider_in) {}
     };
     /** The entire simulated orphanage is represented by this list of announcements, in
      *  announcement order (unlike TxOrphanageImpl which uses a sequence number to represent
@@ -561,7 +557,8 @@ FUZZ_TARGET(txorphanage_sim)
     // 5. Run through a scenario of mutators on both real and simulated orphanage.
     //
 
-    LIMITED_WHILE(provider.remaining_bytes() > 0, 200) {
+    LIMITED_WHILE(provider.remaining_bytes() > 0, 200)
+    {
         int command = provider.ConsumeIntegralInRange<uint8_t>(0, 15);
         while (true) {
             if (sim_announcements.size() < MAX_ANN && command-- == 0) {
@@ -593,7 +590,7 @@ FUZZ_TARGET(txorphanage_sim)
                 assert(erased == sim_have);
                 std::erase_if(sim_announcements, [&](auto& ann) { return ann.tx == tx; });
                 break;
-           } else if (command-- == 0) {
+            } else if (command-- == 0) {
                 // EraseForPeer
                 auto peer = read_peer_fn();
                 real->EraseForPeer(peer);
@@ -697,7 +694,7 @@ FUZZ_TARGET(txorphanage_sim)
             }
             auto num_peers = count_peers_fn();
             bool oversized = (total_usage > reserved_peer_usage * num_peers) ||
-                                (total_latency_score > real->MaxGlobalLatencyScore());
+                             (total_latency_score > real->MaxGlobalLatencyScore());
             if (!oversized) break;
             // Find worst peer.
             FeeFrac worst_dos_score{0, 1};

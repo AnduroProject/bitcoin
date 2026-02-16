@@ -80,24 +80,25 @@ const std::streamsize MAX_FILE_SIZE_PSBT = 100000000; // 100 MB
 static constexpr uint32_t PSBT_HIGHEST_VERSION = 0;
 
 /** A structure for PSBT proprietary types */
-struct PSBTProprietary
-{
+struct PSBTProprietary {
     uint64_t subtype;
     std::vector<unsigned char> identifier;
     std::vector<unsigned char> key;
     std::vector<unsigned char> value;
 
-    bool operator<(const PSBTProprietary &b) const {
+    bool operator<(const PSBTProprietary& b) const
+    {
         return key < b.key;
     }
-    bool operator==(const PSBTProprietary &b) const {
+    bool operator==(const PSBTProprietary& b) const
+    {
         return key == b.key;
     }
 };
 
 // Takes a stream and multiple arguments and serializes them as if first serialized into a vector and then into the stream
 // The resulting output into the stream has the total serialized length of all of the objects followed by all objects concatenated with each other.
-template<typename Stream, typename... X>
+template <typename Stream, typename... X>
 void SerializeToVector(Stream& s, const X&... args)
 {
     SizeComputer sizecomp;
@@ -107,7 +108,7 @@ void SerializeToVector(Stream& s, const X&... args)
 }
 
 // Takes a stream and multiple arguments and unserializes them first as a vector then each object individually in the order provided in the arguments
-template<typename Stream, typename... X>
+template <typename Stream, typename... X>
 void UnserializeFromVector(Stream& s, X&&... args)
 {
     size_t expected_size = ReadCompactSize(s);
@@ -120,7 +121,7 @@ void UnserializeFromVector(Stream& s, X&&... args)
 }
 
 // Deserialize bytes of given length from the stream as a KeyOriginInfo
-template<typename Stream>
+template <typename Stream>
 KeyOriginInfo DeserializeKeyOrigin(Stream& s, uint64_t length)
 {
     // Read in key path
@@ -139,14 +140,14 @@ KeyOriginInfo DeserializeKeyOrigin(Stream& s, uint64_t length)
 }
 
 // Deserialize a length prefixed KeyOriginInfo from a stream
-template<typename Stream>
+template <typename Stream>
 void DeserializeHDKeypath(Stream& s, KeyOriginInfo& hd_keypath)
 {
     hd_keypath = DeserializeKeyOrigin(s, ReadCompactSize(s));
 }
 
 // Deserialize HD keypaths into a map
-template<typename Stream>
+template <typename Stream>
 void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std::map<CPubKey, KeyOriginInfo>& hd_keypaths)
 {
     // Make sure that the key is the size of pubkey + 1
@@ -156,7 +157,7 @@ void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std
     // Read in the pubkey from key
     CPubKey pubkey(key.begin() + 1, key.end());
     if (!pubkey.IsFullyValid()) {
-       throw std::ios_base::failure("Invalid pubkey");
+        throw std::ios_base::failure("Invalid pubkey");
     }
     if (hd_keypaths.count(pubkey) > 0) {
         throw std::ios_base::failure("Duplicate Key, pubkey derivation path already provided");
@@ -170,7 +171,7 @@ void DeserializeHDKeypaths(Stream& s, const std::vector<unsigned char>& key, std
 }
 
 // Serialize a KeyOriginInfo to a stream
-template<typename Stream>
+template <typename Stream>
 void SerializeKeyOrigin(Stream& s, KeyOriginInfo hd_keypath)
 {
     s << hd_keypath.fingerprint;
@@ -180,7 +181,7 @@ void SerializeKeyOrigin(Stream& s, KeyOriginInfo hd_keypath)
 }
 
 // Serialize a length prefixed KeyOriginInfo to a stream
-template<typename Stream>
+template <typename Stream>
 void SerializeHDKeypath(Stream& s, KeyOriginInfo hd_keypath)
 {
     WriteCompactSize(s, (hd_keypath.path.size() + 1) * sizeof(uint32_t));
@@ -188,7 +189,7 @@ void SerializeHDKeypath(Stream& s, KeyOriginInfo hd_keypath)
 }
 
 // Serialize HD keypaths to a stream from a map
-template<typename Stream>
+template <typename Stream>
 void SerializeHDKeypaths(Stream& s, const std::map<CPubKey, KeyOriginInfo>& hd_keypaths, CompactSizeWriter type)
 {
     for (const auto& keypath_pair : hd_keypaths) {
@@ -201,7 +202,7 @@ void SerializeHDKeypaths(Stream& s, const std::map<CPubKey, KeyOriginInfo>& hd_k
 }
 
 // Deserialize a PSBT_{IN/OUT}_MUSIG2_PARTICIPANT_PUBKEYS field
-template<typename Stream>
+template <typename Stream>
 void DeserializeMuSig2ParticipantPubkeys(Stream& s, SpanReader& skey, std::map<CPubKey, std::vector<CPubKey>>& out, std::string context)
 {
     std::array<unsigned char, CPubKey::COMPRESSED_SIZE> agg_pubkey_bytes;
@@ -226,7 +227,7 @@ void DeserializeMuSig2ParticipantPubkeys(Stream& s, SpanReader& skey, std::map<C
 
 // Deserialize the MuSig2 participant identifiers from PSBT_MUSIG2_{PUBNONCE/PARTIAL_SIG} fields
 // Both fields contain the same data after the type byte - aggregate pubkey | participant pubkey | leaf script hash
-template<typename Stream>
+template <typename Stream>
 void DeserializeMuSig2ParticipantDataIdentifier(Stream& skey, CPubKey& agg_pub, CPubKey& part_pub, uint256& leaf_hash)
 {
     leaf_hash.SetNull();
@@ -244,8 +245,7 @@ void DeserializeMuSig2ParticipantDataIdentifier(Stream& skey, CPubKey& agg_pub, 
 }
 
 /** A structure for PSBTs which contain per-input information */
-struct PSBTInput
-{
+struct PSBTInput {
     CTransactionRef non_witness_utxo;
     CTxOut witness_utxo;
     CScript redeem_script;
@@ -285,7 +285,8 @@ struct PSBTInput
     PSBTInput() = default;
 
     template <typename Stream>
-    inline void Serialize(Stream& s) const {
+    inline void Serialize(Stream& s) const
+    {
         // Write the utxo
         if (non_witness_utxo) {
             SerializeToVector(s, CompactSizeWriter(PSBT_IN_NON_WITNESS_UTXO));
@@ -461,13 +462,14 @@ struct PSBTInput
 
 
     template <typename Stream>
-    inline void Unserialize(Stream& s) {
+    inline void Unserialize(Stream& s)
+    {
         // Used for duplicate key detection
         std::set<std::vector<unsigned char>> key_lookup;
 
         // Read loop
         bool found_sep = false;
-        while(!s.empty()) {
+        while (!s.empty()) {
             // Read
             std::vector<unsigned char> key;
             s >> key;
@@ -484,364 +486,343 @@ struct PSBTInput
             uint64_t type = ReadCompactSize(skey);
 
             // Do stuff based on type
-            switch(type) {
-                case PSBT_IN_NON_WITNESS_UTXO:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input non-witness utxo already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Non-witness utxo key is more than one byte type");
-                    }
-                    // Set the stream to unserialize with witness since this is always a valid network transaction
-                    UnserializeFromVector(s, TX_WITH_WITNESS(non_witness_utxo));
-                    break;
+            switch (type) {
+            case PSBT_IN_NON_WITNESS_UTXO: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input non-witness utxo already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Non-witness utxo key is more than one byte type");
                 }
-                case PSBT_IN_WITNESS_UTXO:
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input witness utxo already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Witness utxo key is more than one byte type");
-                    }
-                    UnserializeFromVector(s, witness_utxo);
-                    break;
-                case PSBT_IN_PARTIAL_SIG:
-                {
-                    // Make sure that the key is the size of pubkey + 1
-                    if (key.size() != CPubKey::SIZE + 1 && key.size() != CPubKey::COMPRESSED_SIZE + 1) {
-                        throw std::ios_base::failure("Size of key was not the expected size for the type partial signature pubkey");
-                    }
-                    // Read in the pubkey from key
-                    CPubKey pubkey(key.begin() + 1, key.end());
-                    if (!pubkey.IsFullyValid()) {
-                       throw std::ios_base::failure("Invalid pubkey");
-                    }
-                    if (partial_sigs.count(pubkey.GetID()) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, input partial signature for pubkey already provided");
-                    }
+                // Set the stream to unserialize with witness since this is always a valid network transaction
+                UnserializeFromVector(s, TX_WITH_WITNESS(non_witness_utxo));
+                break;
+            }
+            case PSBT_IN_WITNESS_UTXO:
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input witness utxo already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Witness utxo key is more than one byte type");
+                }
+                UnserializeFromVector(s, witness_utxo);
+                break;
+            case PSBT_IN_PARTIAL_SIG: {
+                // Make sure that the key is the size of pubkey + 1
+                if (key.size() != CPubKey::SIZE + 1 && key.size() != CPubKey::COMPRESSED_SIZE + 1) {
+                    throw std::ios_base::failure("Size of key was not the expected size for the type partial signature pubkey");
+                }
+                // Read in the pubkey from key
+                CPubKey pubkey(key.begin() + 1, key.end());
+                if (!pubkey.IsFullyValid()) {
+                    throw std::ios_base::failure("Invalid pubkey");
+                }
+                if (partial_sigs.count(pubkey.GetID()) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, input partial signature for pubkey already provided");
+                }
 
-                    // Read in the signature from value
-                    std::vector<unsigned char> sig;
-                    s >> sig;
+                // Read in the signature from value
+                std::vector<unsigned char> sig;
+                s >> sig;
 
-                    // Check that the signature is validly encoded
-                    if (sig.empty() || !CheckSignatureEncoding(sig, SCRIPT_VERIFY_DERSIG | SCRIPT_VERIFY_STRICTENC, nullptr)) {
-                        throw std::ios_base::failure("Signature is not a valid encoding");
-                    }
+                // Check that the signature is validly encoded
+                if (sig.empty() || !CheckSignatureEncoding(sig, SCRIPT_VERIFY_DERSIG | SCRIPT_VERIFY_STRICTENC, nullptr)) {
+                    throw std::ios_base::failure("Signature is not a valid encoding");
+                }
 
-                    // Add to list
-                    partial_sigs.emplace(pubkey.GetID(), SigPair(pubkey, std::move(sig)));
-                    break;
+                // Add to list
+                partial_sigs.emplace(pubkey.GetID(), SigPair(pubkey, std::move(sig)));
+                break;
+            }
+            case PSBT_IN_SIGHASH:
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input sighash type already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Sighash type key is more than one byte type");
                 }
-                case PSBT_IN_SIGHASH:
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input sighash type already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Sighash type key is more than one byte type");
-                    }
-                    int sighash;
-                    UnserializeFromVector(s, sighash);
-                    sighash_type = sighash;
-                    break;
-                case PSBT_IN_REDEEMSCRIPT:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input redeemScript already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Input redeemScript key is more than one byte type");
-                    }
-                    s >> redeem_script;
-                    break;
+                int sighash;
+                UnserializeFromVector(s, sighash);
+                sighash_type = sighash;
+                break;
+            case PSBT_IN_REDEEMSCRIPT: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input redeemScript already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Input redeemScript key is more than one byte type");
                 }
-                case PSBT_IN_WITNESSSCRIPT:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input witnessScript already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Input witnessScript key is more than one byte type");
-                    }
-                    s >> witness_script;
-                    break;
+                s >> redeem_script;
+                break;
+            }
+            case PSBT_IN_WITNESSSCRIPT: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input witnessScript already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Input witnessScript key is more than one byte type");
                 }
-                case PSBT_IN_BIP32_DERIVATION:
-                {
-                    DeserializeHDKeypaths(s, key, hd_keypaths);
-                    break;
+                s >> witness_script;
+                break;
+            }
+            case PSBT_IN_BIP32_DERIVATION: {
+                DeserializeHDKeypaths(s, key, hd_keypaths);
+                break;
+            }
+            case PSBT_IN_SCRIPTSIG: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input final scriptSig already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Final scriptSig key is more than one byte type");
                 }
-                case PSBT_IN_SCRIPTSIG:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input final scriptSig already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Final scriptSig key is more than one byte type");
-                    }
-                    s >> final_script_sig;
-                    break;
+                s >> final_script_sig;
+                break;
+            }
+            case PSBT_IN_SCRIPTWITNESS: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input final scriptWitness already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Final scriptWitness key is more than one byte type");
                 }
-                case PSBT_IN_SCRIPTWITNESS:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input final scriptWitness already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Final scriptWitness key is more than one byte type");
-                    }
-                    UnserializeFromVector(s, final_script_witness.stack);
-                    break;
+                UnserializeFromVector(s, final_script_witness.stack);
+                break;
+            }
+            case PSBT_IN_RIPEMD160: {
+                // Make sure that the key is the size of a ripemd160 hash + 1
+                if (key.size() != CRIPEMD160::OUTPUT_SIZE + 1) {
+                    throw std::ios_base::failure("Size of key was not the expected size for the type ripemd160 preimage");
                 }
-                case PSBT_IN_RIPEMD160:
-                {
-                    // Make sure that the key is the size of a ripemd160 hash + 1
-                    if (key.size() != CRIPEMD160::OUTPUT_SIZE + 1) {
-                        throw std::ios_base::failure("Size of key was not the expected size for the type ripemd160 preimage");
-                    }
-                    // Read in the hash from key
-                    std::vector<unsigned char> hash_vec(key.begin() + 1, key.end());
-                    uint160 hash(hash_vec);
-                    if (ripemd160_preimages.count(hash) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, input ripemd160 preimage already provided");
-                    }
+                // Read in the hash from key
+                std::vector<unsigned char> hash_vec(key.begin() + 1, key.end());
+                uint160 hash(hash_vec);
+                if (ripemd160_preimages.count(hash) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, input ripemd160 preimage already provided");
+                }
 
-                    // Read in the preimage from value
-                    std::vector<unsigned char> preimage;
-                    s >> preimage;
+                // Read in the preimage from value
+                std::vector<unsigned char> preimage;
+                s >> preimage;
 
-                    // Add to preimages list
-                    ripemd160_preimages.emplace(hash, std::move(preimage));
-                    break;
+                // Add to preimages list
+                ripemd160_preimages.emplace(hash, std::move(preimage));
+                break;
+            }
+            case PSBT_IN_SHA256: {
+                // Make sure that the key is the size of a sha256 hash + 1
+                if (key.size() != CSHA256::OUTPUT_SIZE + 1) {
+                    throw std::ios_base::failure("Size of key was not the expected size for the type sha256 preimage");
                 }
-                case PSBT_IN_SHA256:
-                {
-                    // Make sure that the key is the size of a sha256 hash + 1
-                    if (key.size() != CSHA256::OUTPUT_SIZE + 1) {
-                        throw std::ios_base::failure("Size of key was not the expected size for the type sha256 preimage");
-                    }
-                    // Read in the hash from key
-                    std::vector<unsigned char> hash_vec(key.begin() + 1, key.end());
-                    uint256 hash(hash_vec);
-                    if (sha256_preimages.count(hash) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, input sha256 preimage already provided");
-                    }
+                // Read in the hash from key
+                std::vector<unsigned char> hash_vec(key.begin() + 1, key.end());
+                uint256 hash(hash_vec);
+                if (sha256_preimages.count(hash) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, input sha256 preimage already provided");
+                }
 
-                    // Read in the preimage from value
-                    std::vector<unsigned char> preimage;
-                    s >> preimage;
+                // Read in the preimage from value
+                std::vector<unsigned char> preimage;
+                s >> preimage;
 
-                    // Add to preimages list
-                    sha256_preimages.emplace(hash, std::move(preimage));
-                    break;
+                // Add to preimages list
+                sha256_preimages.emplace(hash, std::move(preimage));
+                break;
+            }
+            case PSBT_IN_HASH160: {
+                // Make sure that the key is the size of a hash160 hash + 1
+                if (key.size() != CHash160::OUTPUT_SIZE + 1) {
+                    throw std::ios_base::failure("Size of key was not the expected size for the type hash160 preimage");
                 }
-                case PSBT_IN_HASH160:
-                {
-                    // Make sure that the key is the size of a hash160 hash + 1
-                    if (key.size() != CHash160::OUTPUT_SIZE + 1) {
-                        throw std::ios_base::failure("Size of key was not the expected size for the type hash160 preimage");
-                    }
-                    // Read in the hash from key
-                    std::vector<unsigned char> hash_vec(key.begin() + 1, key.end());
-                    uint160 hash(hash_vec);
-                    if (hash160_preimages.count(hash) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, input hash160 preimage already provided");
-                    }
+                // Read in the hash from key
+                std::vector<unsigned char> hash_vec(key.begin() + 1, key.end());
+                uint160 hash(hash_vec);
+                if (hash160_preimages.count(hash) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, input hash160 preimage already provided");
+                }
 
-                    // Read in the preimage from value
-                    std::vector<unsigned char> preimage;
-                    s >> preimage;
+                // Read in the preimage from value
+                std::vector<unsigned char> preimage;
+                s >> preimage;
 
-                    // Add to preimages list
-                    hash160_preimages.emplace(hash, std::move(preimage));
-                    break;
+                // Add to preimages list
+                hash160_preimages.emplace(hash, std::move(preimage));
+                break;
+            }
+            case PSBT_IN_HASH256: {
+                // Make sure that the key is the size of a hash256 hash + 1
+                if (key.size() != CHash256::OUTPUT_SIZE + 1) {
+                    throw std::ios_base::failure("Size of key was not the expected size for the type hash256 preimage");
                 }
-                case PSBT_IN_HASH256:
-                {
-                    // Make sure that the key is the size of a hash256 hash + 1
-                    if (key.size() != CHash256::OUTPUT_SIZE + 1) {
-                        throw std::ios_base::failure("Size of key was not the expected size for the type hash256 preimage");
-                    }
-                    // Read in the hash from key
-                    std::vector<unsigned char> hash_vec(key.begin() + 1, key.end());
-                    uint256 hash(hash_vec);
-                    if (hash256_preimages.count(hash) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, input hash256 preimage already provided");
-                    }
+                // Read in the hash from key
+                std::vector<unsigned char> hash_vec(key.begin() + 1, key.end());
+                uint256 hash(hash_vec);
+                if (hash256_preimages.count(hash) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, input hash256 preimage already provided");
+                }
 
-                    // Read in the preimage from value
-                    std::vector<unsigned char> preimage;
-                    s >> preimage;
+                // Read in the preimage from value
+                std::vector<unsigned char> preimage;
+                s >> preimage;
 
-                    // Add to preimages list
-                    hash256_preimages.emplace(hash, std::move(preimage));
-                    break;
+                // Add to preimages list
+                hash256_preimages.emplace(hash, std::move(preimage));
+                break;
+            }
+            case PSBT_IN_TAP_KEY_SIG: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input Taproot key signature already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Input Taproot key signature key is more than one byte type");
                 }
-                case PSBT_IN_TAP_KEY_SIG:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input Taproot key signature already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Input Taproot key signature key is more than one byte type");
-                    }
-                    s >> m_tap_key_sig;
-                    if (m_tap_key_sig.size() < 64) {
-                        throw std::ios_base::failure("Input Taproot key path signature is shorter than 64 bytes");
-                    } else if (m_tap_key_sig.size() > 65) {
-                        throw std::ios_base::failure("Input Taproot key path signature is longer than 65 bytes");
-                    }
-                    break;
+                s >> m_tap_key_sig;
+                if (m_tap_key_sig.size() < 64) {
+                    throw std::ios_base::failure("Input Taproot key path signature is shorter than 64 bytes");
+                } else if (m_tap_key_sig.size() > 65) {
+                    throw std::ios_base::failure("Input Taproot key path signature is longer than 65 bytes");
                 }
-                case PSBT_IN_TAP_SCRIPT_SIG:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input Taproot script signature already provided");
-                    } else if (key.size() != 65) {
-                        throw std::ios_base::failure("Input Taproot script signature key is not 65 bytes");
-                    }
-                    SpanReader s_key{std::span{key}.subspan(1)};
-                    XOnlyPubKey xonly;
-                    uint256 hash;
-                    s_key >> xonly;
-                    s_key >> hash;
-                    std::vector<unsigned char> sig;
-                    s >> sig;
-                    if (sig.size() < 64) {
-                        throw std::ios_base::failure("Input Taproot script path signature is shorter than 64 bytes");
-                    } else if (sig.size() > 65) {
-                        throw std::ios_base::failure("Input Taproot script path signature is longer than 65 bytes");
-                    }
-                    m_tap_script_sigs.emplace(std::make_pair(xonly, hash), sig);
-                    break;
+                break;
+            }
+            case PSBT_IN_TAP_SCRIPT_SIG: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input Taproot script signature already provided");
+                } else if (key.size() != 65) {
+                    throw std::ios_base::failure("Input Taproot script signature key is not 65 bytes");
                 }
-                case PSBT_IN_TAP_LEAF_SCRIPT:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input Taproot leaf script already provided");
-                    } else if (key.size() < 34) {
-                        throw std::ios_base::failure("Taproot leaf script key is not at least 34 bytes");
-                    } else if ((key.size() - 2) % 32 != 0) {
-                        throw std::ios_base::failure("Input Taproot leaf script key's control block size is not valid");
-                    }
-                    std::vector<unsigned char> script_v;
-                    s >> script_v;
-                    if (script_v.empty()) {
-                        throw std::ios_base::failure("Input Taproot leaf script must be at least 1 byte");
-                    }
-                    uint8_t leaf_ver = script_v.back();
-                    script_v.pop_back();
-                    const auto leaf_script = std::make_pair(script_v, (int)leaf_ver);
-                    m_tap_scripts[leaf_script].insert(std::vector<unsigned char>(key.begin() + 1, key.end()));
-                    break;
+                SpanReader s_key{std::span{key}.subspan(1)};
+                XOnlyPubKey xonly;
+                uint256 hash;
+                s_key >> xonly;
+                s_key >> hash;
+                std::vector<unsigned char> sig;
+                s >> sig;
+                if (sig.size() < 64) {
+                    throw std::ios_base::failure("Input Taproot script path signature is shorter than 64 bytes");
+                } else if (sig.size() > 65) {
+                    throw std::ios_base::failure("Input Taproot script path signature is longer than 65 bytes");
                 }
-                case PSBT_IN_TAP_BIP32_DERIVATION:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input Taproot BIP32 keypath already provided");
-                    } else if (key.size() != 33) {
-                        throw std::ios_base::failure("Input Taproot BIP32 keypath key is not at 33 bytes");
-                    }
-                    SpanReader s_key{std::span{key}.subspan(1)};
-                    XOnlyPubKey xonly;
-                    s_key >> xonly;
-                    std::set<uint256> leaf_hashes;
-                    uint64_t value_len = ReadCompactSize(s);
-                    size_t before_hashes = s.size();
-                    s >> leaf_hashes;
-                    size_t after_hashes = s.size();
-                    size_t hashes_len = before_hashes - after_hashes;
-                    if (hashes_len > value_len) {
-                        throw std::ios_base::failure("Input Taproot BIP32 keypath has an invalid length");
-                    }
-                    size_t origin_len = value_len - hashes_len;
-                    m_tap_bip32_paths.emplace(xonly, std::make_pair(leaf_hashes, DeserializeKeyOrigin(s, origin_len)));
-                    break;
+                m_tap_script_sigs.emplace(std::make_pair(xonly, hash), sig);
+                break;
+            }
+            case PSBT_IN_TAP_LEAF_SCRIPT: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input Taproot leaf script already provided");
+                } else if (key.size() < 34) {
+                    throw std::ios_base::failure("Taproot leaf script key is not at least 34 bytes");
+                } else if ((key.size() - 2) % 32 != 0) {
+                    throw std::ios_base::failure("Input Taproot leaf script key's control block size is not valid");
                 }
-                case PSBT_IN_TAP_INTERNAL_KEY:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input Taproot internal key already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Input Taproot internal key key is more than one byte type");
-                    }
-                    UnserializeFromVector(s, m_tap_internal_key);
-                    break;
+                std::vector<unsigned char> script_v;
+                s >> script_v;
+                if (script_v.empty()) {
+                    throw std::ios_base::failure("Input Taproot leaf script must be at least 1 byte");
                 }
-                case PSBT_IN_TAP_MERKLE_ROOT:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input Taproot merkle root already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Input Taproot merkle root key is more than one byte type");
-                    }
-                    UnserializeFromVector(s, m_tap_merkle_root);
-                    break;
+                uint8_t leaf_ver = script_v.back();
+                script_v.pop_back();
+                const auto leaf_script = std::make_pair(script_v, (int)leaf_ver);
+                m_tap_scripts[leaf_script].insert(std::vector<unsigned char>(key.begin() + 1, key.end()));
+                break;
+            }
+            case PSBT_IN_TAP_BIP32_DERIVATION: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input Taproot BIP32 keypath already provided");
+                } else if (key.size() != 33) {
+                    throw std::ios_base::failure("Input Taproot BIP32 keypath key is not at 33 bytes");
                 }
-                case PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input participant pubkeys for an aggregate key already provided");
-                    } else if (key.size() != CPubKey::COMPRESSED_SIZE + 1) {
-                        throw std::ios_base::failure("Input musig2 participants pubkeys aggregate key is not 34 bytes");
-                    }
-                    DeserializeMuSig2ParticipantPubkeys(s, skey, m_musig2_participants, std::string{"Input"});
-                    break;
+                SpanReader s_key{std::span{key}.subspan(1)};
+                XOnlyPubKey xonly;
+                s_key >> xonly;
+                std::set<uint256> leaf_hashes;
+                uint64_t value_len = ReadCompactSize(s);
+                size_t before_hashes = s.size();
+                s >> leaf_hashes;
+                size_t after_hashes = s.size();
+                size_t hashes_len = before_hashes - after_hashes;
+                if (hashes_len > value_len) {
+                    throw std::ios_base::failure("Input Taproot BIP32 keypath has an invalid length");
                 }
-                case PSBT_IN_MUSIG2_PUB_NONCE:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input musig2 pubnonce already provided");
-                    } else if (key.size() != 2 * CPubKey::COMPRESSED_SIZE + 1 && key.size() != 2 * CPubKey::COMPRESSED_SIZE + CSHA256::OUTPUT_SIZE + 1) {
-                        throw std::ios_base::failure("Input musig2 pubnonce key is not expected size of 67 or 99 bytes");
-                    }
-                    CPubKey agg_pub, part_pub;
-                    uint256 leaf_hash;
-                    DeserializeMuSig2ParticipantDataIdentifier(skey, agg_pub, part_pub, leaf_hash);
+                size_t origin_len = value_len - hashes_len;
+                m_tap_bip32_paths.emplace(xonly, std::make_pair(leaf_hashes, DeserializeKeyOrigin(s, origin_len)));
+                break;
+            }
+            case PSBT_IN_TAP_INTERNAL_KEY: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input Taproot internal key already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Input Taproot internal key key is more than one byte type");
+                }
+                UnserializeFromVector(s, m_tap_internal_key);
+                break;
+            }
+            case PSBT_IN_TAP_MERKLE_ROOT: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input Taproot merkle root already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Input Taproot merkle root key is more than one byte type");
+                }
+                UnserializeFromVector(s, m_tap_merkle_root);
+                break;
+            }
+            case PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input participant pubkeys for an aggregate key already provided");
+                } else if (key.size() != CPubKey::COMPRESSED_SIZE + 1) {
+                    throw std::ios_base::failure("Input musig2 participants pubkeys aggregate key is not 34 bytes");
+                }
+                DeserializeMuSig2ParticipantPubkeys(s, skey, m_musig2_participants, std::string{"Input"});
+                break;
+            }
+            case PSBT_IN_MUSIG2_PUB_NONCE: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input musig2 pubnonce already provided");
+                } else if (key.size() != 2 * CPubKey::COMPRESSED_SIZE + 1 && key.size() != 2 * CPubKey::COMPRESSED_SIZE + CSHA256::OUTPUT_SIZE + 1) {
+                    throw std::ios_base::failure("Input musig2 pubnonce key is not expected size of 67 or 99 bytes");
+                }
+                CPubKey agg_pub, part_pub;
+                uint256 leaf_hash;
+                DeserializeMuSig2ParticipantDataIdentifier(skey, agg_pub, part_pub, leaf_hash);
 
-                    std::vector<uint8_t> pubnonce;
-                    s >> pubnonce;
-                    if (pubnonce.size() != 66) {
-                        throw std::ios_base::failure("Input musig2 pubnonce value is not 66 bytes");
-                    }
-
-                    m_musig2_pubnonces[std::make_pair(agg_pub, leaf_hash)].emplace(part_pub, pubnonce);
-                    break;
+                std::vector<uint8_t> pubnonce;
+                s >> pubnonce;
+                if (pubnonce.size() != 66) {
+                    throw std::ios_base::failure("Input musig2 pubnonce value is not 66 bytes");
                 }
-                case PSBT_IN_MUSIG2_PARTIAL_SIG:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, input musig2 partial sig already provided");
-                    } else if (key.size() != 2 * CPubKey::COMPRESSED_SIZE + 1 && key.size() != 2 * CPubKey::COMPRESSED_SIZE + CSHA256::OUTPUT_SIZE + 1) {
-                        throw std::ios_base::failure("Input musig2 partial sig key is not expected size of 67 or 99 bytes");
-                    }
-                    CPubKey agg_pub, part_pub;
-                    uint256 leaf_hash;
-                    DeserializeMuSig2ParticipantDataIdentifier(skey, agg_pub, part_pub, leaf_hash);
 
-                    uint256 partial_sig;
-                    UnserializeFromVector(s, partial_sig);
-
-                    m_musig2_partial_sigs[std::make_pair(agg_pub, leaf_hash)].emplace(part_pub, partial_sig);
-                    break;
+                m_musig2_pubnonces[std::make_pair(agg_pub, leaf_hash)].emplace(part_pub, pubnonce);
+                break;
+            }
+            case PSBT_IN_MUSIG2_PARTIAL_SIG: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, input musig2 partial sig already provided");
+                } else if (key.size() != 2 * CPubKey::COMPRESSED_SIZE + 1 && key.size() != 2 * CPubKey::COMPRESSED_SIZE + CSHA256::OUTPUT_SIZE + 1) {
+                    throw std::ios_base::failure("Input musig2 partial sig key is not expected size of 67 or 99 bytes");
                 }
-                case PSBT_IN_PROPRIETARY:
-                {
-                    PSBTProprietary this_prop;
-                    skey >> this_prop.identifier;
-                    this_prop.subtype = ReadCompactSize(skey);
-                    this_prop.key = key;
+                CPubKey agg_pub, part_pub;
+                uint256 leaf_hash;
+                DeserializeMuSig2ParticipantDataIdentifier(skey, agg_pub, part_pub, leaf_hash);
 
-                    if (m_proprietary.count(this_prop) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, proprietary key already found");
-                    }
-                    s >> this_prop.value;
-                    m_proprietary.insert(this_prop);
-                    break;
+                uint256 partial_sig;
+                UnserializeFromVector(s, partial_sig);
+
+                m_musig2_partial_sigs[std::make_pair(agg_pub, leaf_hash)].emplace(part_pub, partial_sig);
+                break;
+            }
+            case PSBT_IN_PROPRIETARY: {
+                PSBTProprietary this_prop;
+                skey >> this_prop.identifier;
+                this_prop.subtype = ReadCompactSize(skey);
+                this_prop.key = key;
+
+                if (m_proprietary.count(this_prop) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, proprietary key already found");
                 }
-                // Unknown stuff
-                default:
-                    if (unknown.count(key) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, key for unknown value already provided");
-                    }
-                    // Read in the value
-                    std::vector<unsigned char> val_bytes;
-                    s >> val_bytes;
-                    unknown.emplace(std::move(key), std::move(val_bytes));
-                    break;
+                s >> this_prop.value;
+                m_proprietary.insert(this_prop);
+                break;
+            }
+            // Unknown stuff
+            default:
+                if (unknown.count(key) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, key for unknown value already provided");
+                }
+                // Read in the value
+                std::vector<unsigned char> val_bytes;
+                s >> val_bytes;
+                unknown.emplace(std::move(key), std::move(val_bytes));
+                break;
             }
         }
 
@@ -851,14 +832,14 @@ struct PSBTInput
     }
 
     template <typename Stream>
-    PSBTInput(deserialize_type, Stream& s) {
+    PSBTInput(deserialize_type, Stream& s)
+    {
         Unserialize(s);
     }
 };
 
 /** A structure for PSBTs which contains per output information */
-struct PSBTOutput
-{
+struct PSBTOutput {
     CScript redeem_script;
     CScript witness_script;
     std::map<CPubKey, KeyOriginInfo> hd_keypaths;
@@ -876,7 +857,8 @@ struct PSBTOutput
     PSBTOutput() = default;
 
     template <typename Stream>
-    inline void Serialize(Stream& s) const {
+    inline void Serialize(Stream& s) const
+    {
         // Write the redeem script
         if (!redeem_script.empty()) {
             SerializeToVector(s, CompactSizeWriter(PSBT_OUT_REDEEMSCRIPT));
@@ -950,13 +932,14 @@ struct PSBTOutput
 
 
     template <typename Stream>
-    inline void Unserialize(Stream& s) {
+    inline void Unserialize(Stream& s)
+    {
         // Used for duplicate key detection
         std::set<std::vector<unsigned char>> key_lookup;
 
         // Read loop
         bool found_sep = false;
-        while(!s.empty()) {
+        while (!s.empty()) {
             // Read
             std::vector<unsigned char> key;
             s >> key;
@@ -973,133 +956,125 @@ struct PSBTOutput
             uint64_t type = ReadCompactSize(skey);
 
             // Do stuff based on type
-            switch(type) {
-                case PSBT_OUT_REDEEMSCRIPT:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, output redeemScript already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Output redeemScript key is more than one byte type");
-                    }
-                    s >> redeem_script;
-                    break;
+            switch (type) {
+            case PSBT_OUT_REDEEMSCRIPT: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, output redeemScript already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Output redeemScript key is more than one byte type");
                 }
-                case PSBT_OUT_WITNESSSCRIPT:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, output witnessScript already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Output witnessScript key is more than one byte type");
-                    }
-                    s >> witness_script;
-                    break;
+                s >> redeem_script;
+                break;
+            }
+            case PSBT_OUT_WITNESSSCRIPT: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, output witnessScript already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Output witnessScript key is more than one byte type");
                 }
-                case PSBT_OUT_BIP32_DERIVATION:
-                {
-                    DeserializeHDKeypaths(s, key, hd_keypaths);
-                    break;
+                s >> witness_script;
+                break;
+            }
+            case PSBT_OUT_BIP32_DERIVATION: {
+                DeserializeHDKeypaths(s, key, hd_keypaths);
+                break;
+            }
+            case PSBT_OUT_TAP_INTERNAL_KEY: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, output Taproot internal key already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Output Taproot internal key key is more than one byte type");
                 }
-                case PSBT_OUT_TAP_INTERNAL_KEY:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, output Taproot internal key already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Output Taproot internal key key is more than one byte type");
-                    }
-                    UnserializeFromVector(s, m_tap_internal_key);
-                    break;
+                UnserializeFromVector(s, m_tap_internal_key);
+                break;
+            }
+            case PSBT_OUT_TAP_TREE: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, output Taproot tree already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Output Taproot tree key is more than one byte type");
                 }
-                case PSBT_OUT_TAP_TREE:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, output Taproot tree already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Output Taproot tree key is more than one byte type");
-                    }
-                    std::vector<unsigned char> tree_v;
-                    s >> tree_v;
-                    SpanReader s_tree{tree_v};
-                    if (s_tree.empty()) {
-                        throw std::ios_base::failure("Output Taproot tree must not be empty");
-                    }
-                    TaprootBuilder builder;
-                    while (!s_tree.empty()) {
-                        uint8_t depth;
-                        uint8_t leaf_ver;
-                        std::vector<unsigned char> script;
-                        s_tree >> depth;
-                        s_tree >> leaf_ver;
-                        s_tree >> script;
-                        if (depth > TAPROOT_CONTROL_MAX_NODE_COUNT) {
-                            throw std::ios_base::failure("Output Taproot tree has as leaf greater than Taproot maximum depth");
-                        }
-                        if ((leaf_ver & ~TAPROOT_LEAF_MASK) != 0) {
-                            throw std::ios_base::failure("Output Taproot tree has a leaf with an invalid leaf version");
-                        }
-                        m_tap_tree.emplace_back(depth, leaf_ver, script);
-                        builder.Add((int)depth, script, (int)leaf_ver, /*track=*/true);
-                    }
-                    if (!builder.IsComplete()) {
-                        throw std::ios_base::failure("Output Taproot tree is malformed");
-                    }
-                    break;
+                std::vector<unsigned char> tree_v;
+                s >> tree_v;
+                SpanReader s_tree{tree_v};
+                if (s_tree.empty()) {
+                    throw std::ios_base::failure("Output Taproot tree must not be empty");
                 }
-                case PSBT_OUT_TAP_BIP32_DERIVATION:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, output Taproot BIP32 keypath already provided");
-                    } else if (key.size() != 33) {
-                        throw std::ios_base::failure("Output Taproot BIP32 keypath key is not at 33 bytes");
+                TaprootBuilder builder;
+                while (!s_tree.empty()) {
+                    uint8_t depth;
+                    uint8_t leaf_ver;
+                    std::vector<unsigned char> script;
+                    s_tree >> depth;
+                    s_tree >> leaf_ver;
+                    s_tree >> script;
+                    if (depth > TAPROOT_CONTROL_MAX_NODE_COUNT) {
+                        throw std::ios_base::failure("Output Taproot tree has as leaf greater than Taproot maximum depth");
                     }
-                    XOnlyPubKey xonly(uint256(std::span<uint8_t>(key).last(32)));
-                    std::set<uint256> leaf_hashes;
-                    uint64_t value_len = ReadCompactSize(s);
-                    size_t before_hashes = s.size();
-                    s >> leaf_hashes;
-                    size_t after_hashes = s.size();
-                    size_t hashes_len = before_hashes - after_hashes;
-                    if (hashes_len > value_len) {
-                        throw std::ios_base::failure("Output Taproot BIP32 keypath has an invalid length");
+                    if ((leaf_ver & ~TAPROOT_LEAF_MASK) != 0) {
+                        throw std::ios_base::failure("Output Taproot tree has a leaf with an invalid leaf version");
                     }
-                    size_t origin_len = value_len - hashes_len;
-                    m_tap_bip32_paths.emplace(xonly, std::make_pair(leaf_hashes, DeserializeKeyOrigin(s, origin_len)));
-                    break;
+                    m_tap_tree.emplace_back(depth, leaf_ver, script);
+                    builder.Add((int)depth, script, (int)leaf_ver, /*track=*/true);
                 }
-                case PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, output participant pubkeys for an aggregate key already provided");
-                    } else if (key.size() != CPubKey::COMPRESSED_SIZE + 1) {
-                        throw std::ios_base::failure("Output musig2 participants pubkeys aggregate key is not 34 bytes");
-                    }
-                    DeserializeMuSig2ParticipantPubkeys(s, skey, m_musig2_participants, std::string{"Output"});
-                    break;
+                if (!builder.IsComplete()) {
+                    throw std::ios_base::failure("Output Taproot tree is malformed");
                 }
-                case PSBT_OUT_PROPRIETARY:
-                {
-                    PSBTProprietary this_prop;
-                    skey >> this_prop.identifier;
-                    this_prop.subtype = ReadCompactSize(skey);
-                    this_prop.key = key;
+                break;
+            }
+            case PSBT_OUT_TAP_BIP32_DERIVATION: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, output Taproot BIP32 keypath already provided");
+                } else if (key.size() != 33) {
+                    throw std::ios_base::failure("Output Taproot BIP32 keypath key is not at 33 bytes");
+                }
+                XOnlyPubKey xonly(uint256(std::span<uint8_t>(key).last(32)));
+                std::set<uint256> leaf_hashes;
+                uint64_t value_len = ReadCompactSize(s);
+                size_t before_hashes = s.size();
+                s >> leaf_hashes;
+                size_t after_hashes = s.size();
+                size_t hashes_len = before_hashes - after_hashes;
+                if (hashes_len > value_len) {
+                    throw std::ios_base::failure("Output Taproot BIP32 keypath has an invalid length");
+                }
+                size_t origin_len = value_len - hashes_len;
+                m_tap_bip32_paths.emplace(xonly, std::make_pair(leaf_hashes, DeserializeKeyOrigin(s, origin_len)));
+                break;
+            }
+            case PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, output participant pubkeys for an aggregate key already provided");
+                } else if (key.size() != CPubKey::COMPRESSED_SIZE + 1) {
+                    throw std::ios_base::failure("Output musig2 participants pubkeys aggregate key is not 34 bytes");
+                }
+                DeserializeMuSig2ParticipantPubkeys(s, skey, m_musig2_participants, std::string{"Output"});
+                break;
+            }
+            case PSBT_OUT_PROPRIETARY: {
+                PSBTProprietary this_prop;
+                skey >> this_prop.identifier;
+                this_prop.subtype = ReadCompactSize(skey);
+                this_prop.key = key;
 
-                    if (m_proprietary.count(this_prop) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, proprietary key already found");
-                    }
-                    s >> this_prop.value;
-                    m_proprietary.insert(this_prop);
-                    break;
+                if (m_proprietary.count(this_prop) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, proprietary key already found");
                 }
-                // Unknown stuff
-                default: {
-                    if (unknown.count(key) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, key for unknown value already provided");
-                    }
-                    // Read in the value
-                    std::vector<unsigned char> val_bytes;
-                    s >> val_bytes;
-                    unknown.emplace(std::move(key), std::move(val_bytes));
-                    break;
+                s >> this_prop.value;
+                m_proprietary.insert(this_prop);
+                break;
+            }
+            // Unknown stuff
+            default: {
+                if (unknown.count(key) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, key for unknown value already provided");
                 }
+                // Read in the value
+                std::vector<unsigned char> val_bytes;
+                s >> val_bytes;
+                unknown.emplace(std::move(key), std::move(val_bytes));
+                break;
+            }
             }
         }
 
@@ -1109,14 +1084,14 @@ struct PSBTOutput
     }
 
     template <typename Stream>
-    PSBTOutput(deserialize_type, Stream& s) {
+    PSBTOutput(deserialize_type, Stream& s)
+    {
         Unserialize(s);
     }
 };
 
 /** A version of CTransaction with the PSBT format*/
-struct PartiallySignedTransaction
-{
+struct PartiallySignedTransaction {
     std::optional<CMutableTransaction> tx;
     // We use a vector of CExtPubKey in the event that there happens to be the same KeyOriginInfos for different CExtPubKeys
     // Note that this map swaps the key and values from the serialization
@@ -1131,7 +1106,7 @@ struct PartiallySignedTransaction
     uint32_t GetVersion() const;
 
     /** Merge psbt into this. The two psbts must have the same underlying CTransaction (i.e. the
-      * same actual Bitcoin transaction.) Returns true if the merge succeeded, false otherwise. */
+     * same actual Bitcoin transaction.) Returns true if the merge succeeded, false otherwise. */
     [[nodiscard]] bool Merge(const PartiallySignedTransaction& psbt);
     bool AddInput(const CTxIn& txin, PSBTInput& psbtin);
     bool AddOutput(const CTxOut& txout, const PSBTOutput& psbtout);
@@ -1147,8 +1122,8 @@ struct PartiallySignedTransaction
     bool GetInputUTXO(CTxOut& utxo, int input_index) const;
 
     template <typename Stream>
-    inline void Serialize(Stream& s) const {
-
+    inline void Serialize(Stream& s) const
+    {
         // magic bytes
         s << PSBT_MAGIC_BYTES;
 
@@ -1203,7 +1178,8 @@ struct PartiallySignedTransaction
 
 
     template <typename Stream>
-    inline void Unserialize(Stream& s) {
+    inline void Unserialize(Stream& s)
+    {
         // Read the magic bytes
         uint8_t magic[5];
         s >> magic;
@@ -1219,7 +1195,7 @@ struct PartiallySignedTransaction
 
         // Read global data
         bool found_sep = false;
-        while(!s.empty()) {
+        while (!s.empty()) {
             // Read
             std::vector<unsigned char> key;
             s >> key;
@@ -1236,95 +1212,91 @@ struct PartiallySignedTransaction
             uint64_t type = ReadCompactSize(skey);
 
             // Do stuff based on type
-            switch(type) {
-                case PSBT_GLOBAL_UNSIGNED_TX:
-                {
-                    if (!key_lookup.emplace(key).second) {
-                        throw std::ios_base::failure("Duplicate Key, unsigned tx already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Global unsigned tx key is more than one byte type");
-                    }
-                    CMutableTransaction mtx;
-                    // Set the stream to serialize with non-witness since this should always be non-witness
-                    UnserializeFromVector(s, TX_NO_WITNESS(mtx));
-                    tx = std::move(mtx);
-                    // Make sure that all scriptSigs and scriptWitnesses are empty
-                    for (const CTxIn& txin : tx->vin) {
-                        if (!txin.scriptSig.empty() || !txin.scriptWitness.IsNull()) {
-                            throw std::ios_base::failure("Unsigned tx does not have empty scriptSigs and scriptWitnesses.");
-                        }
-                    }
-                    break;
+            switch (type) {
+            case PSBT_GLOBAL_UNSIGNED_TX: {
+                if (!key_lookup.emplace(key).second) {
+                    throw std::ios_base::failure("Duplicate Key, unsigned tx already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Global unsigned tx key is more than one byte type");
                 }
-                case PSBT_GLOBAL_XPUB:
-                {
-                    if (key.size() != BIP32_EXTKEY_WITH_VERSION_SIZE + 1) {
-                        throw std::ios_base::failure("Size of key was not the expected size for the type global xpub");
+                CMutableTransaction mtx;
+                // Set the stream to serialize with non-witness since this should always be non-witness
+                UnserializeFromVector(s, TX_NO_WITNESS(mtx));
+                tx = std::move(mtx);
+                // Make sure that all scriptSigs and scriptWitnesses are empty
+                for (const CTxIn& txin : tx->vin) {
+                    if (!txin.scriptSig.empty() || !txin.scriptWitness.IsNull()) {
+                        throw std::ios_base::failure("Unsigned tx does not have empty scriptSigs and scriptWitnesses.");
                     }
-                    // Read in the xpub from key
-                    CExtPubKey xpub;
-                    xpub.DecodeWithVersion(&key.data()[1]);
-                    if (!xpub.pubkey.IsFullyValid()) {
-                       throw std::ios_base::failure("Invalid pubkey");
-                    }
-                    if (global_xpubs.count(xpub) > 0) {
-                       throw std::ios_base::failure("Duplicate key, global xpub already provided");
-                    }
-                    global_xpubs.insert(xpub);
-                    // Read in the keypath from stream
-                    KeyOriginInfo keypath;
-                    DeserializeHDKeypath(s, keypath);
+                }
+                break;
+            }
+            case PSBT_GLOBAL_XPUB: {
+                if (key.size() != BIP32_EXTKEY_WITH_VERSION_SIZE + 1) {
+                    throw std::ios_base::failure("Size of key was not the expected size for the type global xpub");
+                }
+                // Read in the xpub from key
+                CExtPubKey xpub;
+                xpub.DecodeWithVersion(&key.data()[1]);
+                if (!xpub.pubkey.IsFullyValid()) {
+                    throw std::ios_base::failure("Invalid pubkey");
+                }
+                if (global_xpubs.count(xpub) > 0) {
+                    throw std::ios_base::failure("Duplicate key, global xpub already provided");
+                }
+                global_xpubs.insert(xpub);
+                // Read in the keypath from stream
+                KeyOriginInfo keypath;
+                DeserializeHDKeypath(s, keypath);
 
-                    // Note that we store these swapped to make searches faster.
-                    // Serialization uses xpub -> keypath to enqure key uniqueness
-                    if (m_xpubs.count(keypath) == 0) {
-                        // Make a new set to put the xpub in
-                        m_xpubs[keypath] = {xpub};
-                    } else {
-                        // Insert xpub into existing set
-                        m_xpubs[keypath].insert(xpub);
-                    }
-                    break;
+                // Note that we store these swapped to make searches faster.
+                // Serialization uses xpub -> keypath to enqure key uniqueness
+                if (m_xpubs.count(keypath) == 0) {
+                    // Make a new set to put the xpub in
+                    m_xpubs[keypath] = {xpub};
+                } else {
+                    // Insert xpub into existing set
+                    m_xpubs[keypath].insert(xpub);
                 }
-                case PSBT_GLOBAL_VERSION:
-                {
-                    if (m_version) {
-                        throw std::ios_base::failure("Duplicate Key, version already provided");
-                    } else if (key.size() != 1) {
-                        throw std::ios_base::failure("Global version key is more than one byte type");
-                    }
-                    uint32_t v;
-                    UnserializeFromVector(s, v);
-                    m_version = v;
-                    if (*m_version > PSBT_HIGHEST_VERSION) {
-                        throw std::ios_base::failure("Unsupported version number");
-                    }
-                    break;
+                break;
+            }
+            case PSBT_GLOBAL_VERSION: {
+                if (m_version) {
+                    throw std::ios_base::failure("Duplicate Key, version already provided");
+                } else if (key.size() != 1) {
+                    throw std::ios_base::failure("Global version key is more than one byte type");
                 }
-                case PSBT_GLOBAL_PROPRIETARY:
-                {
-                    PSBTProprietary this_prop;
-                    skey >> this_prop.identifier;
-                    this_prop.subtype = ReadCompactSize(skey);
-                    this_prop.key = key;
+                uint32_t v;
+                UnserializeFromVector(s, v);
+                m_version = v;
+                if (*m_version > PSBT_HIGHEST_VERSION) {
+                    throw std::ios_base::failure("Unsupported version number");
+                }
+                break;
+            }
+            case PSBT_GLOBAL_PROPRIETARY: {
+                PSBTProprietary this_prop;
+                skey >> this_prop.identifier;
+                this_prop.subtype = ReadCompactSize(skey);
+                this_prop.key = key;
 
-                    if (m_proprietary.count(this_prop) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, proprietary key already found");
-                    }
-                    s >> this_prop.value;
-                    m_proprietary.insert(this_prop);
-                    break;
+                if (m_proprietary.count(this_prop) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, proprietary key already found");
                 }
-                // Unknown stuff
-                default: {
-                    if (unknown.count(key) > 0) {
-                        throw std::ios_base::failure("Duplicate Key, key for unknown value already provided");
-                    }
-                    // Read in the value
-                    std::vector<unsigned char> val_bytes;
-                    s >> val_bytes;
-                    unknown.emplace(std::move(key), std::move(val_bytes));
+                s >> this_prop.value;
+                m_proprietary.insert(this_prop);
+                break;
+            }
+            // Unknown stuff
+            default: {
+                if (unknown.count(key) > 0) {
+                    throw std::ios_base::failure("Duplicate Key, key for unknown value already provided");
                 }
+                // Read in the value
+                std::vector<unsigned char> val_bytes;
+                s >> val_bytes;
+                unknown.emplace(std::move(key), std::move(val_bytes));
+            }
             }
         }
 
@@ -1375,7 +1347,8 @@ struct PartiallySignedTransaction
     }
 
     template <typename Stream>
-    PartiallySignedTransaction(deserialize_type, Stream& s) {
+    PartiallySignedTransaction(deserialize_type, Stream& s)
+    {
         Unserialize(s);
     }
 };

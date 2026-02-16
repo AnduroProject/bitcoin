@@ -82,7 +82,7 @@ PSBTAnalysis AnalyzePSBT(PartiallySignedTransaction psbtx)
             } else {
                 input_analysis.next = PSBTRole::FINALIZER;
             }
-        } else if (!utxo.IsNull()){
+        } else if (!utxo.IsNull()) {
             input_analysis.is_final = true;
         }
     }
@@ -98,13 +98,12 @@ PSBTAnalysis AnalyzePSBT(PartiallySignedTransaction psbtx)
     if (calc_fee) {
         // Get the output amount
         CAmount out_amt = std::accumulate(psbtx.tx->vout.begin(), psbtx.tx->vout.end(), CAmount(0),
-            [](CAmount a, const CTxOut& b) {
-                if (!MoneyRange(a) || !MoneyRange(b.nValue) || !MoneyRange(a + b.nValue)) {
-                    return CAmount(-1);
-                }
-                return a += b.nValue;
-            }
-        );
+                                          [](CAmount a, const CTxOut& b) {
+                                              if (!MoneyRange(a) || !MoneyRange(b.nValue) || !MoneyRange(a + b.nValue)) {
+                                                  return CAmount(-1);
+                                              }
+                                              return a += b.nValue;
+                                          });
         if (!MoneyRange(out_amt)) {
             result.SetInvalid("PSBT is not valid. Output amount invalid");
             return result;
@@ -143,7 +142,6 @@ PSBTAnalysis AnalyzePSBT(PartiallySignedTransaction psbtx)
             CFeeRate feerate(fee, size);
             result.estimated_feerate = feerate;
         }
-
     }
 
     return result;

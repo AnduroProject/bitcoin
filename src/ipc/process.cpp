@@ -11,10 +11,10 @@
 #include <util/strencodings.h>
 #include <util/syserror.h>
 
+#include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <cerrno>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
@@ -69,10 +69,10 @@ public:
 };
 
 static bool ParseAddress(std::string& address,
-                  const fs::path& data_dir,
-                  const std::string& dest_exe_name,
-                  struct sockaddr_un& addr,
-                  std::string& error)
+                         const fs::path& data_dir,
+                         const std::string& dest_exe_name,
+                         struct sockaddr_un& addr,
+                         std::string& error)
 {
     if (address == "unix" || address.starts_with("unix:")) {
         fs::path path;
@@ -89,7 +89,7 @@ static bool ParseAddress(std::string& address,
         }
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, path_str.c_str(), sizeof(addr.sun_path)-1);
+        strncpy(addr.sun_path, path_str.c_str(), sizeof(addr.sun_path) - 1);
         return true;
     }
 

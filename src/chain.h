@@ -11,6 +11,7 @@
 #include <flatfile.h>
 #include <kernel/cs_main.h>
 #include <primitives/block.h>
+#include <primitives/pureheader.h>
 #include <serialize.h>
 #include <sync.h>
 #include <uint256.h>
@@ -21,6 +22,10 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+
+namespace node {
+class BlockManager;
+}
 
 /**
  * Maximum amount of time that a block timestamp is allowed to exceed the
@@ -87,14 +92,14 @@ public:
 
 enum BlockStatus : uint32_t {
     //! Unused.
-    BLOCK_VALID_UNKNOWN      =    0,
+    BLOCK_VALID_UNKNOWN = 0,
 
     //! Reserved (was BLOCK_VALID_HEADER).
-    BLOCK_VALID_RESERVED     =    1,
+    BLOCK_VALID_RESERVED = 1,
 
     //! All parent headers found, difficulty matches, timestamp >= median previous. Implies all parents
     //! are also at least TREE.
-    BLOCK_VALID_TREE         =    2,
+    BLOCK_VALID_TREE = 2,
 
     /**
      * Only first tx is coinbase, 2 <= coinbase input script length <= 100, transactions valid, no duplicate txids,
@@ -104,32 +109,32 @@ enum BlockStatus : uint32_t {
      * blocks back to the genesis block or an assumeutxo snapshot block are at least VALID_TRANSACTIONS,
      * CBlockIndex::m_chain_tx_count will be set.
      */
-    BLOCK_VALID_TRANSACTIONS =    3,
+    BLOCK_VALID_TRANSACTIONS = 3,
 
     //! Outputs do not overspend inputs, no double spends, coinbase output ok, no immature coinbase spends, BIP30.
     //! Implies all previous blocks back to the genesis block or an assumeutxo snapshot block are at least VALID_CHAIN.
-    BLOCK_VALID_CHAIN        =    4,
+    BLOCK_VALID_CHAIN = 4,
 
     //! Scripts & signatures ok. Implies all previous blocks back to the genesis block or an assumeutxo snapshot block
     //! are at least VALID_SCRIPTS.
-    BLOCK_VALID_SCRIPTS      =    5,
+    BLOCK_VALID_SCRIPTS = 5,
 
     //! All validity bits.
-    BLOCK_VALID_MASK         =   BLOCK_VALID_RESERVED | BLOCK_VALID_TREE | BLOCK_VALID_TRANSACTIONS |
-                                 BLOCK_VALID_CHAIN | BLOCK_VALID_SCRIPTS,
+    BLOCK_VALID_MASK = BLOCK_VALID_RESERVED | BLOCK_VALID_TREE | BLOCK_VALID_TRANSACTIONS |
+                       BLOCK_VALID_CHAIN | BLOCK_VALID_SCRIPTS,
 
-    BLOCK_HAVE_DATA          =    8, //!< full block available in blk*.dat
-    BLOCK_HAVE_UNDO          =   16, //!< undo data available in rev*.dat
-    BLOCK_HAVE_MASK          =   BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO,
+    BLOCK_HAVE_DATA = 8,  //!< full block available in blk*.dat
+    BLOCK_HAVE_UNDO = 16, //!< undo data available in rev*.dat
+    BLOCK_HAVE_MASK = BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO,
 
-    BLOCK_FAILED_VALID       =   32, //!< stage after last reached validness failed
-    BLOCK_FAILED_CHILD       =   64, //!< descends from failed block
-    BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD,
+    BLOCK_FAILED_VALID = 32, //!< stage after last reached validness failed
+    BLOCK_FAILED_CHILD = 64, //!< descends from failed block
+    BLOCK_FAILED_MASK = BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD,
 
-    BLOCK_OPT_WITNESS        =   128, //!< block data in blk*.dat was received with a witness-enforcing client
+    BLOCK_OPT_WITNESS = 128, //!< block data in blk*.dat was received with a witness-enforcing client
 
-    BLOCK_STATUS_RESERVED    =   256, //!< Unused flag that was previously set on assumeutxo snapshot blocks and their
-                                      //!< ancestors before they were validated, and unset when they were validated.
+    BLOCK_STATUS_RESERVED = 256, //!< Unused flag that was previously set on assumeutxo snapshot blocks and their
+                                 //!< ancestors before they were validated, and unset when they were validated.
 };
 
 /** The block chain is a tree shaped structure starting with the
@@ -196,7 +201,7 @@ public:
     //! (memory only) Maximum nTime in the chain up to and including this block.
     unsigned int nTimeMax{0};
 
-    explicit CBlockIndex(const CBlockHeader& block)
+    explicit CBlockIndex(const CPureBlockHeader& block)
         : nVersion{block.nVersion},
           hashMerkleRoot{block.hashMerkleRoot},
           nTime{block.nTime},
@@ -227,9 +232,9 @@ public:
         return ret;
     }
 
-    CBlockHeader GetBlockHeader() const
+    CPureBlockHeader GetPureHeader() const
     {
-        CBlockHeader block;
+        CPureBlockHeader block;
         block.nVersion = nVersion;
         if (pprev)
             block.hashPrevBlock = pprev->GetBlockHash();
@@ -239,6 +244,8 @@ public:
         block.nNonce = nNonce;
         return block;
     }
+
+    CBlockHeader GetBlockHeader(const node::BlockManager& blockman) const;
 
     uint256 GetBlockHash() const
     {
@@ -398,7 +405,7 @@ public:
 
     uint256 ConstructBlockHash() const
     {
-        CBlockHeader block;
+        CPureBlockHeader block;
         block.nVersion = nVersion;
         block.hashPrevBlock = hashPrev;
         block.hashMerkleRoot = hashMerkleRoot;

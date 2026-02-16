@@ -36,10 +36,27 @@ CAmount CFeeRate::GetFee(uint32_t num_bytes) const
     return nFee;
 }
 
+CAmount CFeeRate::GetPreConfFee(uint32_t num_bytes, const CAmount& preconfMinFee) const
+{
+    const int64_t nSize{num_bytes};
+
+    // Be explicit that we're converting from a double to int64_t (CAmount) here.
+    // We've previously had issues with the silent double->int64_t conversion.
+    CAmount nFee{static_cast<CAmount>(preconfMinFee * nSize)};
+
+    if (nFee == 0 && nSize != 0) {
+        if (preconfMinFee > 0) nFee = CAmount(preconfMinFee);
+        if (preconfMinFee < 0) nFee = CAmount(-1);
+    }
+
+    return nFee;
+}
+
+
 std::string CFeeRate::ToString(const FeeEstimateMode& fee_estimate_mode) const
 {
     switch (fee_estimate_mode) {
     case FeeEstimateMode::SAT_VB: return strprintf("%d.%03d %s/vB", nSatoshisPerK / 1000, nSatoshisPerK % 1000, CURRENCY_ATOM);
-    default:                      return strprintf("%d.%08d %s/kvB", nSatoshisPerK / COIN, nSatoshisPerK % COIN, CURRENCY_UNIT);
+    default: return strprintf("%d.%08d %s/kvB", nSatoshisPerK / COIN, nSatoshisPerK % COIN, CURRENCY_UNIT);
     }
 }

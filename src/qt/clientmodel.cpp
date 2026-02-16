@@ -33,11 +33,10 @@
 static SteadyClock::time_point g_last_header_tip_update_notification{};
 static SteadyClock::time_point g_last_block_tip_update_notification{};
 
-ClientModel::ClientModel(interfaces::Node& node, OptionsModel *_optionsModel, QObject *parent) :
-    QObject(parent),
-    m_node(node),
-    optionsModel(_optionsModel),
-    m_thread(new QThread(this))
+ClientModel::ClientModel(interfaces::Node& node, OptionsModel* _optionsModel, QObject* parent) : QObject(parent),
+                                                                                                 m_node(node),
+                                                                                                 optionsModel(_optionsModel),
+                                                                                                 m_thread(new QThread(this))
 {
     cachedBestHeaderHeight = -1;
     cachedBestHeaderTime = -1;
@@ -85,7 +84,7 @@ int ClientModel::getNumConnections(unsigned int flags) const
 {
     ConnectionDirection connections = ConnectionDirection::None;
 
-    if(flags == CONNECTIONS_IN)
+    if (flags == CONNECTIONS_IN)
         connections = ConnectionDirection::In;
     else if (flags == CONNECTIONS_OUT)
         connections = ConnectionDirection::Out;
@@ -173,12 +172,12 @@ QString ClientModel::getStatusBarWarnings() const
     return QString::fromStdString(m_node.getWarnings().translated);
 }
 
-OptionsModel *ClientModel::getOptionsModel()
+OptionsModel* ClientModel::getOptionsModel()
 {
     return optionsModel;
 }
 
-PeerTableModel *ClientModel::getPeerTableModel()
+PeerTableModel* ClientModel::getPeerTableModel()
 {
     return peerTableModel;
 }
@@ -188,7 +187,7 @@ PeerTableSortProxy* ClientModel::peerTableSortProxy()
     return m_peer_table_sort_proxy;
 }
 
-BanTableModel *ClientModel::getBanTableModel()
+BanTableModel* ClientModel::getBanTableModel()
 {
     return banTableModel;
 }
@@ -288,9 +287,9 @@ void ClientModel::unsubscribeFromCoreSignals()
 bool ClientModel::getProxyInfo(std::string& ip_port) const
 {
     Proxy ipv4, ipv6;
-    if (m_node.getProxy((Network) 1, ipv4) && m_node.getProxy((Network) 2, ipv6)) {
-      ip_port = ipv4.proxy.ToStringAddrPort();
-      return true;
+    if (m_node.getProxy((Network)1, ipv4) && m_node.getProxy((Network)2, ipv6)) {
+        ip_port = ipv4.proxy.ToStringAddrPort();
+        return true;
     }
     return false;
 }

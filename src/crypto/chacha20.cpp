@@ -5,22 +5,38 @@
 // Based on the public domain implementation 'merged' by D. J. Bernstein
 // See https://cr.yp.to/chacha.html.
 
-#include <crypto/common.h>
 #include <crypto/chacha20.h>
-#include <support/cleanse.h>
+#include <crypto/common.h>
 #include <span.h>
+#include <support/cleanse.h>
 
 #include <algorithm>
 #include <bit>
 #include <cstring>
 
-#define QUARTERROUND(a,b,c,d) \
-  a += b; d = std::rotl(d ^ a, 16); \
-  c += d; b = std::rotl(b ^ c, 12); \
-  a += b; d = std::rotl(d ^ a, 8); \
-  c += d; b = std::rotl(b ^ c, 7);
+#define QUARTERROUND(a, b, c, d) \
+    a += b;                      \
+    d = std::rotl(d ^ a, 16);    \
+    c += d;                      \
+    b = std::rotl(b ^ c, 12);    \
+    a += b;                      \
+    d = std::rotl(d ^ a, 8);     \
+    c += d;                      \
+    b = std::rotl(b ^ c, 7);
 
-#define REPEAT10(a) do { {a}; {a}; {a}; {a}; {a}; {a}; {a}; {a}; {a}; {a}; } while(0)
+#define REPEAT10(a) \
+    do {            \
+        {a};        \
+        {a};        \
+        {a};        \
+        {a};        \
+        {a};        \
+        {a};        \
+        {a};        \
+        {a};        \
+        {a};        \
+        {a};        \
+    } while (0)
 
 void ChaCha20Aligned::SetKey(std::span<const std::byte> key) noexcept
 {
@@ -101,15 +117,14 @@ inline void ChaCha20Aligned::Keystream(std::span<std::byte> output) noexcept
 
         // The 20 inner ChaCha20 rounds are unrolled here for performance.
         REPEAT10(
-            QUARTERROUND( x0, x4, x8,x12);
-            QUARTERROUND( x1, x5, x9,x13);
-            QUARTERROUND( x2, x6,x10,x14);
-            QUARTERROUND( x3, x7,x11,x15);
-            QUARTERROUND( x0, x5,x10,x15);
-            QUARTERROUND( x1, x6,x11,x12);
-            QUARTERROUND( x2, x7, x8,x13);
-            QUARTERROUND( x3, x4, x9,x14);
-        );
+            QUARTERROUND(x0, x4, x8, x12);
+            QUARTERROUND(x1, x5, x9, x13);
+            QUARTERROUND(x2, x6, x10, x14);
+            QUARTERROUND(x3, x7, x11, x15);
+            QUARTERROUND(x0, x5, x10, x15);
+            QUARTERROUND(x1, x6, x11, x12);
+            QUARTERROUND(x2, x7, x8, x13);
+            QUARTERROUND(x3, x4, x9, x14););
 
         x0 += 0x61707865;
         x1 += 0x3320646e;
@@ -204,15 +219,14 @@ inline void ChaCha20Aligned::Crypt(std::span<const std::byte> in_bytes, std::spa
 
         // The 20 inner ChaCha20 rounds are unrolled here for performance.
         REPEAT10(
-            QUARTERROUND( x0, x4, x8,x12);
-            QUARTERROUND( x1, x5, x9,x13);
-            QUARTERROUND( x2, x6,x10,x14);
-            QUARTERROUND( x3, x7,x11,x15);
-            QUARTERROUND( x0, x5,x10,x15);
-            QUARTERROUND( x1, x6,x11,x12);
-            QUARTERROUND( x2, x7, x8,x13);
-            QUARTERROUND( x3, x4, x9,x14);
-        );
+            QUARTERROUND(x0, x4, x8, x12);
+            QUARTERROUND(x1, x5, x9, x13);
+            QUARTERROUND(x2, x6, x10, x14);
+            QUARTERROUND(x3, x7, x11, x15);
+            QUARTERROUND(x0, x5, x10, x15);
+            QUARTERROUND(x1, x6, x11, x12);
+            QUARTERROUND(x2, x7, x8, x13);
+            QUARTERROUND(x3, x4, x9, x14););
 
         x0 += 0x61707865;
         x1 += 0x3320646e;
@@ -341,8 +355,7 @@ void ChaCha20::SetKey(std::span<const std::byte> key) noexcept
     memory_cleanse(m_buffer.data(), m_buffer.size());
 }
 
-FSChaCha20::FSChaCha20(std::span<const std::byte> key, uint32_t rekey_interval) noexcept :
-    m_chacha20(key), m_rekey_interval(rekey_interval)
+FSChaCha20::FSChaCha20(std::span<const std::byte> key, uint32_t rekey_interval) noexcept : m_chacha20(key), m_rekey_interval(rekey_interval)
 {
     assert(key.size() == KEYLEN);
 }

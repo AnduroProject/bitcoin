@@ -194,11 +194,11 @@ void ParsePrevouts(const UniValue& prevTxsUnival, FlatSigningProvider* keystore,
             const UniValue& prevOut = p.get_obj();
 
             RPCTypeCheckObj(prevOut,
-                {
-                    {"txid", UniValueType(UniValue::VSTR)},
-                    {"vout", UniValueType(UniValue::VNUM)},
-                    {"scriptPubKey", UniValueType(UniValue::VSTR)},
-                });
+                            {
+                                {"txid", UniValueType(UniValue::VSTR)},
+                                {"vout", UniValueType(UniValue::VNUM)},
+                                {"scriptPubKey", UniValueType(UniValue::VSTR)},
+                            });
 
             Txid txid = Txid::FromUint256(ParseHashO(prevOut, "txid"));
 
@@ -215,8 +215,8 @@ void ParsePrevouts(const UniValue& prevTxsUnival, FlatSigningProvider* keystore,
                 auto coin = coins.find(out);
                 if (coin != coins.end() && !coin->second.IsSpent() && coin->second.out.scriptPubKey != scriptPubKey) {
                     std::string err("Previous output scriptPubKey mismatch:\n");
-                    err = err + ScriptToAsmStr(coin->second.out.scriptPubKey) + "\nvs:\n"+
-                        ScriptToAsmStr(scriptPubKey);
+                    err = err + ScriptToAsmStr(coin->second.out.scriptPubKey) + "\nvs:\n" +
+                          ScriptToAsmStr(scriptPubKey);
                     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, err);
                 }
                 Coin newcoin;
@@ -234,10 +234,11 @@ void ParsePrevouts(const UniValue& prevTxsUnival, FlatSigningProvider* keystore,
             const bool is_p2wsh = scriptPubKey.IsPayToWitnessScriptHash();
             if (keystore && (is_p2sh || is_p2wsh)) {
                 RPCTypeCheckObj(prevOut,
-                    {
-                        {"redeemScript", UniValueType(UniValue::VSTR)},
-                        {"witnessScript", UniValueType(UniValue::VSTR)},
-                    }, true);
+                                {
+                                    {"redeemScript", UniValueType(UniValue::VSTR)},
+                                    {"witnessScript", UniValueType(UniValue::VSTR)},
+                                },
+                                true);
                 const UniValue& rs{prevOut.find_value("redeemScript")};
                 const UniValue& ws{prevOut.find_value("witnessScript")};
                 if (rs.isNull() && ws.isNull()) {

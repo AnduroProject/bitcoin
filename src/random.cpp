@@ -65,11 +65,11 @@ inline int64_t GetPerformanceCounter() noexcept
     return __rdtsc();
 #elif !defined(_MSC_VER) && defined(__i386__)
     uint64_t r = 0;
-    __asm__ volatile ("rdtsc" : "=A"(r)); // Constrain the r variable to the eax:edx pair.
+    __asm__ volatile("rdtsc" : "=A"(r)); // Constrain the r variable to the eax:edx pair.
     return r;
 #elif !defined(_MSC_VER) && (defined(__x86_64__) || defined(__amd64__))
     uint64_t r1 = 0, r2 = 0;
-    __asm__ volatile ("rdtsc" : "=a"(r1), "=d"(r2)); // Constrain r1 to rax and r2 to rdx.
+    __asm__ volatile("rdtsc" : "=a"(r1), "=d"(r2)); // Constrain r1 to rax and r2 to rdx.
     return (r2 << 32) | r1;
 #else
     // Fall back to using standard library clock (usually microsecond or nanosecond precision)
@@ -128,11 +128,11 @@ uint64_t GetRdRand() noexcept
     // but there is no way that the compiler could know that.
     uint32_t r1 = 0, r2 = 0;
     for (int i = 0; i < 10; ++i) {
-        __asm__ volatile (".byte 0x0f, 0xc7, 0xf0; setc %1" : "=a"(r1), "=q"(ok) :: "cc"); // rdrand %eax
+        __asm__ volatile(".byte 0x0f, 0xc7, 0xf0; setc %1" : "=a"(r1), "=q"(ok)::"cc"); // rdrand %eax
         if (ok) break;
     }
     for (int i = 0; i < 10; ++i) {
-        __asm__ volatile (".byte 0x0f, 0xc7, 0xf0; setc %1" : "=a"(r2), "=q"(ok) :: "cc"); // rdrand %eax
+        __asm__ volatile(".byte 0x0f, 0xc7, 0xf0; setc %1" : "=a"(r2), "=q"(ok)::"cc"); // rdrand %eax
         if (ok) break;
     }
     return (((uint64_t)r2) << 32) | r1;
@@ -140,7 +140,7 @@ uint64_t GetRdRand() noexcept
     uint8_t ok = 0;
     uint64_t r1 = 0; // See above why we initialize to 0.
     for (int i = 0; i < 10; ++i) {
-        __asm__ volatile (".byte 0x48, 0x0f, 0xc7, 0xf0; setc %1" : "=a"(r1), "=q"(ok) :: "cc"); // rdrand %rax
+        __asm__ volatile(".byte 0x48, 0x0f, 0xc7, 0xf0; setc %1" : "=a"(r1), "=q"(ok)::"cc"); // rdrand %rax
         if (ok) break;
     }
     return r1;
@@ -161,24 +161,24 @@ uint64_t GetRdSeed() noexcept
     uint8_t ok = 0;
     uint32_t r1, r2;
     do {
-        __asm__ volatile (".byte 0x0f, 0xc7, 0xf8; setc %1" : "=a"(r1), "=q"(ok) :: "cc"); // rdseed %eax
+        __asm__ volatile(".byte 0x0f, 0xc7, 0xf8; setc %1" : "=a"(r1), "=q"(ok)::"cc"); // rdseed %eax
         if (ok) break;
-        __asm__ volatile ("pause");
-    } while(true);
+        __asm__ volatile("pause");
+    } while (true);
     do {
-        __asm__ volatile (".byte 0x0f, 0xc7, 0xf8; setc %1" : "=a"(r2), "=q"(ok) :: "cc"); // rdseed %eax
+        __asm__ volatile(".byte 0x0f, 0xc7, 0xf8; setc %1" : "=a"(r2), "=q"(ok)::"cc"); // rdseed %eax
         if (ok) break;
-        __asm__ volatile ("pause");
-    } while(true);
+        __asm__ volatile("pause");
+    } while (true);
     return (((uint64_t)r2) << 32) | r1;
 #elif defined(__x86_64__) || defined(__amd64__)
     uint8_t ok;
     uint64_t r1;
     do {
-        __asm__ volatile (".byte 0x48, 0x0f, 0xc7, 0xf8; setc %1" : "=a"(r1), "=q"(ok) :: "cc"); // rdseed %rax
+        __asm__ volatile(".byte 0x48, 0x0f, 0xc7, 0xf8; setc %1" : "=a"(r1), "=q"(ok)::"cc"); // rdseed %rax
         if (ok) break;
-        __asm__ volatile ("pause");
-    } while(true);
+        __asm__ volatile("pause");
+    } while (true);
     return r1;
 #else
 #error "RdSeed is only supported on x86 and x86_64"
@@ -196,7 +196,8 @@ void ReportHardwareRand() {}
 #endif
 
 /** Add 64 bits of entropy gathered from hardware to hasher. Do nothing if not supported. */
-void SeedHardwareFast(CSHA512& hasher) noexcept {
+void SeedHardwareFast(CSHA512& hasher) noexcept
+{
 #if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
     if (g_rdrand_supported) {
         uint64_t out = GetRdRand();
@@ -207,7 +208,8 @@ void SeedHardwareFast(CSHA512& hasher) noexcept {
 }
 
 /** Add 256 bits of entropy gathered from hardware to hasher. Do nothing if not supported. */
-void SeedHardwareSlow(CSHA512& hasher) noexcept {
+void SeedHardwareSlow(CSHA512& hasher) noexcept
+{
 #if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
     // When we want 256 bits of entropy, prefer RdSeed over RdRand, as it's
     // guaranteed to produce independent randomness on every call.
@@ -223,7 +225,8 @@ void SeedHardwareSlow(CSHA512& hasher) noexcept {
     if (g_rdrand_supported) {
         for (int i = 0; i < 4; ++i) {
             uint64_t out = 0;
-            for (int j = 0; j < 1024; ++j) out ^= GetRdRand();
+            for (int j = 0; j < 1024; ++j)
+                out ^= GetRdRand();
             hasher.Write((const unsigned char*)&out, sizeof(out));
         }
         return;
@@ -263,7 +266,7 @@ void Strengthen(const unsigned char (&seed)[32], SteadyClock::duration dur, CSHA
 /** Fallback: get 32 bytes of system entropy from /dev/urandom. The most
  * compatible way to get cryptographic randomness on UNIX-ish platforms.
  */
-[[maybe_unused]] void GetDevURandom(unsigned char *ent32)
+[[maybe_unused]] void GetDevURandom(unsigned char* ent32)
 {
     int f = open("/dev/urandom", O_RDONLY);
     if (f == -1) {
@@ -283,7 +286,7 @@ void Strengthen(const unsigned char (&seed)[32], SteadyClock::duration dur, CSHA
 #endif
 
 /** Get 32 bytes of system entropy. */
-void GetOSRand(unsigned char *ent32)
+void GetOSRand(unsigned char* ent32)
 {
 #if defined(WIN32)
     constexpr uint32_t STATUS_SUCCESS{0x00000000};
@@ -337,7 +340,8 @@ void GetOSRand(unsigned char *ent32)
 #endif
 }
 
-class RNGState {
+class RNGState
+{
     Mutex m_mutex;
     /* The RNG state consists of 256 bits of entropy, taken from the output of
      * one operation's SHA512 output, and fed as input to the next one.
@@ -370,7 +374,7 @@ public:
     {
         LOCK(m_events_mutex);
 
-        m_events_hasher.Write((const unsigned char *)&event_info, sizeof(event_info));
+        m_events_hasher.Write((const unsigned char*)&event_info, sizeof(event_info));
         // Get the low four bytes of the performance counter. This translates to roughly the
         // subsecond part.
         uint32_t perfcounter = (GetPerformanceCounter() & 0xffffffff);
@@ -554,8 +558,8 @@ void SeedStartup(CSHA512& hasher, RNGState& rng) noexcept
 }
 
 enum class RNGLevel {
-    FAST, //!< Automatically called by GetRandBytes
-    SLOW, //!< Automatically called by GetStrongRandBytes
+    FAST,     //!< Automatically called by GetRandBytes
+    SLOW,     //!< Automatically called by GetStrongRandBytes
     PERIODIC, //!< Called by RandAddPeriodic()
 };
 
@@ -655,12 +659,12 @@ bool Random_SanityCheck()
     do {
         memset(data, 0, NUM_OS_RANDOM_BYTES);
         GetOSRand(data);
-        for (int x=0; x < NUM_OS_RANDOM_BYTES; ++x) {
+        for (int x = 0; x < NUM_OS_RANDOM_BYTES; ++x) {
             overwritten[x] |= (data[x] != 0);
         }
 
         num_overwritten = 0;
-        for (int x=0; x < NUM_OS_RANDOM_BYTES; ++x) {
+        for (int x = 0; x < NUM_OS_RANDOM_BYTES; ++x) {
             if (overwritten[x]) {
                 num_overwritten += 1;
             }

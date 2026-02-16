@@ -20,7 +20,8 @@ FUZZ_TARGET(crypto_chacha20)
     const auto key = ConsumeFixedLengthByteVector<std::byte>(fuzzed_data_provider, ChaCha20::KEYLEN);
     ChaCha20 chacha20{key};
 
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10000)
+    {
         CallOneOf(
             fuzzed_data_provider,
             [&] {
@@ -45,8 +46,7 @@ FUZZ_TARGET(crypto_chacha20)
     }
 }
 
-namespace
-{
+namespace {
 
 /** Fuzzer that invokes ChaCha20::Crypt() or ChaCha20::Keystream multiple times:
     once for a large block at once, and then the same data in chunks, comparing
@@ -55,7 +55,7 @@ namespace
     If UseCrypt, seeded InsecureRandomContext output is used as input to Crypt().
     If not, Keystream() is used directly, or sequences of 0x00 are encrypted.
 */
-template<bool UseCrypt>
+template <bool UseCrypt>
 void ChaCha20SplitFuzz(FuzzedDataProvider& provider)
 {
     // Determine key, iv, start position, length.
@@ -103,7 +103,7 @@ void ChaCha20SplitFuzz(FuzzedDataProvider& provider)
         // Determine how many bytes to encrypt in this chunk: a fuzzer-determined
         // amount for all but the last chunk (which processes all remaining bytes).
         uint64_t now = is_last ? total_bytes - bytes2 :
-            provider.ConsumeIntegralInRange<uint64_t>(0, total_bytes - bytes2);
+                                 provider.ConsumeIntegralInRange<uint64_t>(0, total_bytes - bytes2);
         // For each chunk, consider using Crypt() even when UseCrypt is false.
         // This tests that Keystream() has the same behavior as Crypt() applied
         // to 0x00 input bytes.

@@ -7,6 +7,7 @@
 #define BITCOIN_CONSENSUS_AMOUNT_H
 
 #include <cstdint>
+#include <limits>
 
 /** Amount in satoshis (Can be negative) */
 typedef int64_t CAmount;
@@ -24,6 +25,7 @@ static constexpr CAmount COIN = 100000000;
  * for the creation of coins out of thin air modification could lead to a fork.
  * */
 static constexpr CAmount MAX_MONEY = 21000000 * COIN;
+static constexpr CAmount MAX_ASSET_OUT_VALUE = std::numeric_limits<int64_t>::max();
 inline bool MoneyRange(const CAmount& nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 
 #endif // BITCOIN_CONSENSUS_AMOUNT_H

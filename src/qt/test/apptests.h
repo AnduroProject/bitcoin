@@ -30,8 +30,7 @@ private:
     void expectCallback(std::string callback) { m_callbacks.emplace(std::move(callback)); }
 
     //! RAII helper to remove no-longer-pending callback.
-    struct HandleCallback
-    {
+    struct HandleCallback {
         std::string m_callback;
         AppTests& m_app_tests;
         ~HandleCallback();

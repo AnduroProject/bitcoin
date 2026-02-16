@@ -17,18 +17,18 @@
 
 /**
  * Queue for verifications that have to be performed.
-  * The verifications are represented by a type T, which must provide an
-  * operator(), returning an std::optional<R>.
-  *
-  * The overall result of the computation is std::nullopt if all invocations
-  * return std::nullopt, or one of the other results otherwise.
-  *
-  * One thread (the master) is assumed to push batches of verifications
-  * onto the queue, where they are processed by N-1 worker threads. When
-  * the master is done adding work, it temporarily joins the worker pool
-  * as an N'th worker, until all jobs are done.
-  *
-  */
+ * The verifications are represented by a type T, which must provide an
+ * operator(), returning an std::optional<R>.
+ *
+ * The overall result of the computation is std::nullopt if all invocations
+ * return std::nullopt, or one of the other results otherwise.
+ *
+ * One thread (the master) is assumed to push batches of verifications
+ * onto the queue, where they are processed by N-1 worker threads. When
+ * the master is done adding work, it temporarily joins the worker pool
+ * as an N'th worker, until all jobs are done.
+ *
+ */
 template <typename T, typename R = std::remove_cvref_t<decltype(std::declval<T>()().value())>>
 class CCheckQueue
 {

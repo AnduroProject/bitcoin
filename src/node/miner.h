@@ -30,7 +30,9 @@ class CScript;
 class Chainstate;
 class ChainstateManager;
 
-namespace Consensus { struct Params; };
+namespace Consensus {
+struct Params;
+};
 
 using interfaces::BlockRef;
 
@@ -39,8 +41,7 @@ class KernelNotifications;
 
 static const bool DEFAULT_PRINT_MODIFIED_FEE = false;
 
-struct CBlockTemplate
-{
+struct CBlockTemplate {
     CBlock block;
     // Fees per transaction, not including coinbase transaction (unlike CBlock::vtx).
     std::vector<CAmount> vTxFees;
@@ -89,7 +90,7 @@ struct CompareCTxMemPoolIter {
 
 struct modifiedentry_iter {
     typedef CTxMemPool::txiter result_type;
-    result_type operator() (const CTxMemPoolModifiedEntry &entry) const
+    result_type operator()(const CTxMemPoolModifiedEntry& entry) const
     {
         return entry.iter;
     }
@@ -110,33 +111,29 @@ struct CompareTxIterByAncestorCount {
 
 
 struct CTxMemPoolModifiedEntry_Indices final : boost::multi_index::indexed_by<
-    boost::multi_index::ordered_unique<
-        modifiedentry_iter,
-        CompareCTxMemPoolIter
-    >,
-    // sorted by modified ancestor fee rate
-    boost::multi_index::ordered_non_unique<
-        // Reuse same tag from CTxMemPool's similar index
-        boost::multi_index::tag<ancestor_score>,
-        boost::multi_index::identity<CTxMemPoolModifiedEntry>,
-        CompareTxMemPoolEntryByAncestorFee
-    >
->
-{};
+                                                   boost::multi_index::ordered_unique<
+                                                       modifiedentry_iter,
+                                                       CompareCTxMemPoolIter>,
+                                                   // sorted by modified ancestor fee rate
+                                                   boost::multi_index::ordered_non_unique<
+                                                       // Reuse same tag from CTxMemPool's similar index
+                                                       boost::multi_index::tag<ancestor_score>,
+                                                       boost::multi_index::identity<CTxMemPoolModifiedEntry>,
+                                                       CompareTxMemPoolEntryByAncestorFee>> {
+};
 
 typedef boost::multi_index_container<
     CTxMemPoolModifiedEntry,
-    CTxMemPoolModifiedEntry_Indices
-> indexed_modified_transaction_set;
+    CTxMemPoolModifiedEntry_Indices>
+    indexed_modified_transaction_set;
 
 typedef indexed_modified_transaction_set::nth_index<0>::type::iterator modtxiter;
 typedef indexed_modified_transaction_set::index<ancestor_score>::type::iterator modtxscoreiter;
 
-struct update_for_parent_inclusion
-{
+struct update_for_parent_inclusion {
     explicit update_for_parent_inclusion(CTxMemPool::txiter it) : iter(it) {}
 
-    void operator() (CTxMemPoolModifiedEntry &e)
+    void operator()(CTxMemPoolModifiedEntry& e)
     {
         e.nModFeesWithAncestors -= iter->GetModifiedFee();
         e.nSizeWithAncestors -= iter->GetTxSize();
@@ -199,11 +196,11 @@ private:
 
     // Methods for how to add transactions to a block.
     /** Add transactions based on feerate including unconfirmed ancestors
-      * Increments nPackagesSelected / nDescendantsUpdated with corresponding
-      * statistics from the package selection (for logging statistics).
-      *
-      * @pre BlockAssembler::m_mempool must not be nullptr
-    */
+     * Increments nPackagesSelected / nDescendantsUpdated with corresponding
+     * statistics from the package selection (for logging statistics).
+     *
+     * @pre BlockAssembler::m_mempool must not be nullptr
+     */
     void addPackageTxs(int& nPackagesSelected, int& nDescendantsUpdated) EXCLUSIVE_LOCKS_REQUIRED(!m_mempool->cs);
 
     // helper functions for addPackageTxs()
@@ -212,9 +209,9 @@ private:
     /** Test if a new package would "fit" in the block */
     bool TestPackage(uint64_t packageSize, int64_t packageSigOpsCost) const;
     /** Perform checks on each transaction in a package:
-      * locktime, premature-witness, serialized size (if necessary)
-      * These checks should always succeed, and they're here
-      * only as an extra check in case of suboptimal node configuration */
+     * locktime, premature-witness, serialized size (if necessary)
+     * These checks should always succeed, and they're here
+     * only as an extra check in case of suboptimal node configuration */
     bool TestPackageTransactions(const CTxMemPool::setEntries& package) const;
     /** Sort the package in an order that is valid to appear in a block */
     void SortForBlock(const CTxMemPool::setEntries& package, std::vector<CTxMemPool::txiter>& sortedEntries);

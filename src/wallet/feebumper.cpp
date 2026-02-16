@@ -71,8 +71,8 @@ static feebumper::Result CheckFeeRate(const CWallet& wallet, const CMutableTrans
     if (newFeerate.GetFeePerK() < minMempoolFeeRate.GetFeePerK()) {
         errors.push_back(Untranslated(
             strprintf("New fee rate (%s) is lower than the minimum fee rate (%s) to get into the mempool -- ",
-            FormatMoney(newFeerate.GetFeePerK()),
-            FormatMoney(minMempoolFeeRate.GetFeePerK()))));
+                      FormatMoney(newFeerate.GetFeePerK()),
+                      FormatMoney(minMempoolFeeRate.GetFeePerK()))));
         return feebumper::Result::WALLET_ERROR;
     }
 
@@ -95,14 +95,14 @@ static feebumper::Result CheckFeeRate(const CWallet& wallet, const CMutableTrans
 
     if (new_total_fee < minTotalFee) {
         errors.push_back(Untranslated(strprintf("Insufficient total fee %s, must be at least %s (oldFee %s + incrementalFee %s)",
-            FormatMoney(new_total_fee), FormatMoney(minTotalFee), FormatMoney(old_fee), FormatMoney(incrementalRelayFee.GetFee(maxTxSize)))));
+                                                FormatMoney(new_total_fee), FormatMoney(minTotalFee), FormatMoney(old_fee), FormatMoney(incrementalRelayFee.GetFee(maxTxSize)))));
         return feebumper::Result::INVALID_PARAMETER;
     }
 
     CAmount requiredFee = GetRequiredFee(wallet, maxTxSize);
     if (new_total_fee < requiredFee) {
         errors.push_back(Untranslated(strprintf("Insufficient total fee (cannot be less than required fee %s)",
-            FormatMoney(requiredFee))));
+                                                FormatMoney(requiredFee))));
         return feebumper::Result::INVALID_PARAMETER;
     }
 
@@ -110,7 +110,7 @@ static feebumper::Result CheckFeeRate(const CWallet& wallet, const CMutableTrans
     const CAmount max_tx_fee = wallet.m_default_max_tx_fee;
     if (new_total_fee > max_tx_fee) {
         errors.push_back(Untranslated(strprintf("Specified or calculated fee %s is too high (cannot be higher than -maxtxfee %s)",
-            FormatMoney(new_total_fee), FormatMoney(max_tx_fee))));
+                                                FormatMoney(new_total_fee), FormatMoney(max_tx_fee))));
         return feebumper::Result::WALLET_ERROR;
     }
 
@@ -153,7 +153,7 @@ bool TransactionCanBeBumped(const CWallet& wallet, const Txid& txid)
     if (wtx == nullptr) return false;
 
     std::vector<bilingual_str> errors_dummy;
-    feebumper::Result res = PreconditionChecks(wallet, *wtx, /* require_mine=*/ true, errors_dummy);
+    feebumper::Result res = PreconditionChecks(wallet, *wtx, /* require_mine=*/true, errors_dummy);
     return res == feebumper::Result::OK;
 }
 
@@ -209,7 +209,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const Txid& txid, const CCoinC
 
     // Figure out if we need to compute the input weight, and do so if necessary
     PrecomputedTransactionData txdata;
-    txdata.Init(*wtx.tx, std::move(spent_outputs), /* force=*/ true);
+    txdata.Init(*wtx.tx, std::move(spent_outputs), /* force=*/true);
     for (unsigned int i = 0; i < wtx.tx->vin.size(); ++i) {
         const CTxIn& txin = wtx.tx->vin.at(i);
         const Coin& coin = coins.at(txin.prevout);
@@ -254,10 +254,10 @@ Result CreateRateBumpTransaction(CWallet& wallet, const Txid& txid, const CCoinC
         const CTxOut& output = txouts.at(i);
         CTxDestination dest;
         ExtractDestination(output.scriptPubKey, dest);
-        if (original_change_index.has_value() ?  original_change_index.value() == i : OutputIsChange(wallet, output)) {
+        if (original_change_index.has_value() ? original_change_index.value() == i : OutputIsChange(wallet, output)) {
             new_coin_control.destChange = dest;
         } else {
-            CRecipient recipient = {dest, output.nValue, false};
+            CRecipient recipient = {dest, output.nValue, false, false, CScript()};
             recipients.push_back(recipient);
         }
         new_outputs_value += output.nValue;
@@ -273,7 +273,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const Txid& txid, const CCoinC
 
         // Add change as recipient with SFFO flag enabled, so fees are deduced from it.
         // If the output differs from the original tx output (because the user customized it) a new change output will be created.
-        recipients.emplace_back(CRecipient{new_coin_control.destChange, new_outputs_value, /*fSubtractFeeFromAmount=*/true});
+        recipients.emplace_back(CRecipient{new_coin_control.destChange, new_outputs_value, /*fSubtractFeeFromAmount=*/true, false, CScript()});
         new_coin_control.destChange = CNoDestination();
     }
 
@@ -328,7 +328,8 @@ Result CreateRateBumpTransaction(CWallet& wallet, const Txid& txid, const CCoinC
     return Result::OK;
 }
 
-bool SignTransaction(CWallet& wallet, CMutableTransaction& mtx) {
+bool SignTransaction(CWallet& wallet, CMutableTransaction& mtx)
+{
     LOCK(wallet.cs_wallet);
 
     if (wallet.IsWalletFlagSet(WALLET_FLAG_EXTERNAL_SIGNER)) {
@@ -362,7 +363,7 @@ Result CommitTransaction(CWallet& wallet, const Txid& txid, CMutableTransaction&
     const CWalletTx& oldWtx = it->second;
 
     // make sure the transaction still has no descendants and hasn't been mined in the meantime
-    Result result = PreconditionChecks(wallet, oldWtx, /* require_mine=*/ false, errors);
+    Result result = PreconditionChecks(wallet, oldWtx, /* require_mine=*/false, errors);
     if (result != Result::OK) {
         return result;
     }

@@ -44,8 +44,7 @@ public:
     friend bool operator<(const PubKeyDestination& a, const PubKeyDestination& b) { return a.GetPubKey() < b.GetPubKey(); }
 };
 
-struct PKHash : public BaseHash<uint160>
-{
+struct PKHash : public BaseHash<uint160> {
     PKHash() : BaseHash() {}
     explicit PKHash(const uint160& hash) : BaseHash(hash) {}
     explicit PKHash(const CPubKey& pubkey);
@@ -55,8 +54,7 @@ CKeyID ToKeyID(const PKHash& key_hash);
 
 struct WitnessV0KeyHash;
 
-struct ScriptHash : public BaseHash<uint160>
-{
+struct ScriptHash : public BaseHash<uint160> {
     ScriptHash() : BaseHash() {}
     // These don't do what you'd expect.
     // Use ScriptHash(GetScriptForDestination(...)) instead.
@@ -69,15 +67,13 @@ struct ScriptHash : public BaseHash<uint160>
 };
 CScriptID ToScriptID(const ScriptHash& script_hash);
 
-struct WitnessV0ScriptHash : public BaseHash<uint256>
-{
+struct WitnessV0ScriptHash : public BaseHash<uint256> {
     WitnessV0ScriptHash() : BaseHash() {}
     explicit WitnessV0ScriptHash(const uint256& hash) : BaseHash(hash) {}
     explicit WitnessV0ScriptHash(const CScript& script);
 };
 
-struct WitnessV0KeyHash : public BaseHash<uint160>
-{
+struct WitnessV0KeyHash : public BaseHash<uint160> {
     WitnessV0KeyHash() : BaseHash() {}
     explicit WitnessV0KeyHash(const uint160& hash) : BaseHash(hash) {}
     explicit WitnessV0KeyHash(const CPubKey& pubkey);
@@ -85,15 +81,13 @@ struct WitnessV0KeyHash : public BaseHash<uint160>
 };
 CKeyID ToKeyID(const WitnessV0KeyHash& key_hash);
 
-struct WitnessV1Taproot : public XOnlyPubKey
-{
+struct WitnessV1Taproot : public XOnlyPubKey {
     WitnessV1Taproot() : XOnlyPubKey() {}
     explicit WitnessV1Taproot(const XOnlyPubKey& xpk) : XOnlyPubKey(xpk) {}
 };
 
 //! CTxDestination subtype to encode any future Witness version
-struct WitnessUnknown
-{
+struct WitnessUnknown {
 private:
     unsigned int m_version;
     std::vector<unsigned char> m_program;
@@ -105,12 +99,14 @@ public:
     unsigned int GetWitnessVersion() const { return m_version; }
     const std::vector<unsigned char>& GetWitnessProgram() const LIFETIMEBOUND { return m_program; }
 
-    friend bool operator==(const WitnessUnknown& w1, const WitnessUnknown& w2) {
+    friend bool operator==(const WitnessUnknown& w1, const WitnessUnknown& w2)
+    {
         if (w1.GetWitnessVersion() != w2.GetWitnessVersion()) return false;
         return w1.GetWitnessProgram() == w2.GetWitnessProgram();
     }
 
-    friend bool operator<(const WitnessUnknown& w1, const WitnessUnknown& w2) {
+    friend bool operator<(const WitnessUnknown& w1, const WitnessUnknown& w2)
+    {
         if (w1.GetWitnessVersion() < w2.GetWitnessVersion()) return true;
         if (w1.GetWitnessVersion() > w2.GetWitnessVersion()) return false;
         return w1.GetWitnessProgram() < w2.GetWitnessProgram();
@@ -120,9 +116,9 @@ public:
 /** Witness program for Pay-to-Anchor output script type */
 static const std::vector<unsigned char> ANCHOR_BYTES{0x4e, 0x73};
 
-struct PayToAnchor : public WitnessUnknown
-{
-    PayToAnchor() : WitnessUnknown(1, ANCHOR_BYTES) {
+struct PayToAnchor : public WitnessUnknown {
+    PayToAnchor() : WitnessUnknown(1, ANCHOR_BYTES)
+    {
         Assume(CScript::IsPayToAnchor(1, ANCHOR_BYTES));
     };
 };

@@ -115,6 +115,9 @@ inline constexpr const char* GETHEADERS{"getheaders"};
  * The tx message transmits a single transaction.
  */
 inline constexpr const char* TX{"tx"};
+
+inline constexpr const char* PRETX{"pretx"};
+
 /**
  * The headers message sends one or more block headers to a node which
  * previously requested certain headers with a getheaders message.
@@ -137,6 +140,14 @@ inline constexpr const char* GETADDR{"getaddr"};
  *   Only available with service bit NODE_BLOOM, see also BIP111.
  */
 inline constexpr const char* MEMPOOL{"mempool"};
+
+inline constexpr const char* PREBLOCKSIGNREQUEST{"presignreq"};
+
+inline constexpr const char* PREBLOCKSIGNREPONSE{"presignres"};
+
+inline constexpr const char* PRECONFSIGNATUREPUSH{"preconfpush"};
+
+inline constexpr const char* PRECONFFINALIZEPUSH{"signedpush"};
 /**
  * The ping message is sent periodically to help confirm that the receiving
  * peer is still connected.
@@ -478,7 +489,7 @@ enum GetDataMsg : uint32_t {
     UNDEFINED = 0,
     MSG_TX = 1,
     MSG_BLOCK = 2,
-    MSG_WTX = 5,                                      //!< Defined in BIP 339
+    MSG_WTX = 5, //!< Defined in BIP 339
     // The following can only occur in getdata. Invs always use TX/WTX or BLOCK.
     MSG_FILTERED_BLOCK = 3,                           //!< Defined in BIP37
     MSG_CMPCT_BLOCK = 4,                              //!< Defined in BIP152

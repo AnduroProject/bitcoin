@@ -17,7 +17,8 @@
 
 namespace {
 
-uint64_t Combination(uint64_t n, uint64_t k) {
+uint64_t Combination(uint64_t n, uint64_t k)
+{
     if (n - k < k) k = n - k;
     uint64_t ret = 1;
     for (uint64_t i = 1; i <= k; ++i) {
@@ -28,7 +29,8 @@ uint64_t Combination(uint64_t n, uint64_t k) {
 }
 
 /** Create a vector with Minisketch objects, one for each implementation. */
-std::vector<Minisketch> CreateSketches(uint32_t bits, size_t capacity) {
+std::vector<Minisketch> CreateSketches(uint32_t bits, size_t capacity)
+{
     if (!Minisketch::BitsSupported(bits)) return {};
     std::vector<Minisketch> ret;
     for (uint32_t impl = 0; impl <= Minisketch::MaxImplementation(); ++impl) {
@@ -46,16 +48,17 @@ std::vector<Minisketch> CreateSketches(uint32_t bits, size_t capacity) {
 
 /** Test properties by exhaustively decoding all 2**(bits*capacity) sketches
  *  with specified capacity and bits. */
-void TestExhaustive(uint32_t bits, size_t capacity) {
+void TestExhaustive(uint32_t bits, size_t capacity)
+{
     auto sketches = CreateSketches(bits, capacity);
     if (sketches.empty()) return;
     auto sketches_rebuild = CreateSketches(bits, capacity);
 
     std::vector<unsigned char> serialized;
     std::vector<unsigned char> serialized_empty;
-    std::vector<uint64_t> counts; //!< counts[i] = number of results with i elements
-    std::vector<uint64_t> elements_0; //!< Result vector for elements for impl=0
-    std::vector<uint64_t> elements_other; //!< Result vector for elements for other impls
+    std::vector<uint64_t> counts;             //!< counts[i] = number of results with i elements
+    std::vector<uint64_t> elements_0;         //!< Result vector for elements for impl=0
+    std::vector<uint64_t> elements_other;     //!< Result vector for elements for other impls
     std::vector<uint64_t> elements_too_small; //!< Result vector that's too small
 
     counts.resize(capacity + 1);
@@ -123,7 +126,8 @@ void TestExhaustive(uint32_t bits, size_t capacity) {
 }
 
 /** Test properties of sketches with random elements put in. */
-void TestRandomized(uint32_t bits, size_t max_capacity, size_t iter) {
+void TestRandomized(uint32_t bits, size_t max_capacity, size_t iter)
+{
     std::random_device rnd;
     std::uniform_int_distribution<uint64_t> capacity_dist(0, std::min<uint64_t>(std::numeric_limits<uint64_t>::max() >> (64 - bits), max_capacity));
     std::uniform_int_distribution<uint64_t> element_dist(1, std::numeric_limits<uint64_t>::max() >> (64 - bits));
@@ -154,7 +158,8 @@ void TestRandomized(uint32_t bits, size_t max_capacity, size_t iter) {
             uint64_t elem = element_dist(rnd);
             CHECK(elem != 0);
             elements[j] = elem;
-            for (auto& sketch : sketches) sketch.Add(elem);
+            for (auto& sketch : sketches)
+                sketch.Add(elem);
         }
         // Remove pairs of duplicates in elements, as they cancel out.
         std::sort(elements.begin(), elements.end());
@@ -222,7 +227,8 @@ void TestRandomized(uint32_t bits, size_t max_capacity, size_t iter) {
     }
 }
 
-void TestComputeFunctions() {
+void TestComputeFunctions()
+{
     for (uint32_t bits = 0; bits <= 256; ++bits) {
         for (uint32_t fpbits = 0; fpbits <= 512; ++fpbits) {
             std::vector<size_t> table_max_elements(1025);
@@ -267,7 +273,8 @@ void TestComputeFunctions() {
 
 } // namespace
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     uint64_t test_complexity = 4;
     if (argc > 1) {
         size_t len = 0;
@@ -278,7 +285,8 @@ int main(int argc, char** argv) {
             if (complexity >= 1 && len == arg.size() && ((uint64_t)complexity <= std::numeric_limits<uint64_t>::max() >> 10)) {
                 test_complexity = complexity;
             }
-        } catch (const std::logic_error&) {}
+        } catch (const std::logic_error&) {
+        }
         if (test_complexity == 0) {
             fprintf(stderr, "Invalid complexity specified: '%s'\n", arg.c_str());
             return 1;

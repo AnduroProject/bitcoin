@@ -20,7 +20,7 @@
  * - No iterator support.
  * - Data is not stored in a single contiguous block, so no data().
  */
-template<typename T>
+template <typename T>
 class VecDeque
 {
     /** Pointer to allocated memory. Can contain constructed and uninitialized T objects. */
@@ -135,7 +135,8 @@ public:
     /** Copy-assign a deque. */
     VecDeque& operator=(const VecDeque& other)
     {
-        if (&other == this) [[unlikely]] return *this;
+        if (&other == this) [[unlikely]]
+            return *this;
         clear();
         Reallocate(other.m_size);
         if constexpr (std::is_trivially_copyable_v<T>) {
@@ -215,7 +216,7 @@ public:
     }
 
     /** Construct a new element at the end of the deque. */
-    template<typename... Args>
+    template <typename... Args>
     void emplace_back(Args&&... args)
     {
         if (m_size == m_capacity) Reallocate((m_size + 1) * 2);
@@ -230,7 +231,7 @@ public:
     void push_back(const T& elem) { emplace_back(elem); }
 
     /** Construct a new element at the beginning of the deque. */
-    template<typename... Args>
+    template <typename... Args>
     void emplace_front(Args&&... args)
     {
         if (m_size == m_capacity) Reallocate((m_size + 1) * 2);

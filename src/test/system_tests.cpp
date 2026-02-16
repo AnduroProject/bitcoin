@@ -4,8 +4,8 @@
 //
 
 #include <bitcoin-build-config.h> // IWYU pragma: keep
-#include <test/util/setup_common.h>
 #include <common/run_command.h>
+#include <test/util/setup_common.h>
 #include <univalue.h>
 
 #ifdef ENABLE_EXTERNAL_SIGNER

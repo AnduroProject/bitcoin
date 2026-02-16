@@ -14,7 +14,7 @@ namespace util {
  * Returns a pointer to the object if passed instance has a value and the type
  * matches, nullptr otherwise.
  */
-template<typename T>
+template <typename T>
 T* AnyPtr(const std::any& any) noexcept
 {
     T* const* ptr = std::any_cast<T*>(&any);

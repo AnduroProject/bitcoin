@@ -11,11 +11,9 @@
 #include <numeric>
 #include <optional>
 
-namespace bech32
-{
+namespace bech32 {
 
-namespace
-{
+namespace {
 
 typedef std::vector<uint8_t> data;
 
@@ -27,12 +25,11 @@ const int8_t CHARSET_REV[128] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    15, -1, 10, 17, 21, 20, 26, 30,  7,  5, -1, -1, -1, -1, -1, -1,
-    -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
-     1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1,
-    -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
-     1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1
-};
+    15, -1, 10, 17, 21, 20, 26, 30, 7, 5, -1, -1, -1, -1, -1, -1,
+    -1, 29, -1, 24, 13, 25, 9, 8, 23, -1, 18, 22, 31, 27, 19, -1,
+    1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1,
+    -1, 29, -1, 24, 13, 25, 9, 8, 23, -1, 18, 22, 31, 27, 19, -1,
+    1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1};
 
 /** We work with the finite field GF(1024) defined as a degree 2 extension of the base field GF(32)
  * The defining polynomial of the extension is x^2 + 9x + 23.
@@ -119,7 +116,8 @@ constexpr const std::array<int16_t, 1023>& GF1024_EXP = tables.first;
 constexpr const std::array<int16_t, 1024>& GF1024_LOG = tables.second;
 
 /* Determine the final constant to use for the specified encoding. */
-uint32_t EncodingConstant(Encoding encoding) {
+uint32_t EncodingConstant(Encoding encoding)
+{
     assert(encoding == Encoding::BECH32 || encoding == Encoding::BECH32M);
     return encoding == Encoding::BECH32 ? 1 : 0x2bc830a3;
 }
@@ -205,12 +203,11 @@ uint32_t PolyMod(const data& v)
         //         v = v*32 + coef.integer_representation()
         //     print("0x%x" % v)
         //
-        if (c0 & 1)  c ^= 0x3b6a57b2; //     k(x) = {29}x^5 + {22}x^4 + {20}x^3 + {21}x^2 + {29}x + {18}
-        if (c0 & 2)  c ^= 0x26508e6d; //  {2}k(x) = {19}x^5 +  {5}x^4 +     x^3 +  {3}x^2 + {19}x + {13}
-        if (c0 & 4)  c ^= 0x1ea119fa; //  {4}k(x) = {15}x^5 + {10}x^4 +  {2}x^3 +  {6}x^2 + {15}x + {26}
-        if (c0 & 8)  c ^= 0x3d4233dd; //  {8}k(x) = {30}x^5 + {20}x^4 +  {4}x^3 + {12}x^2 + {30}x + {29}
+        if (c0 & 1) c ^= 0x3b6a57b2;  //     k(x) = {29}x^5 + {22}x^4 + {20}x^3 + {21}x^2 + {29}x + {18}
+        if (c0 & 2) c ^= 0x26508e6d;  //  {2}k(x) = {19}x^5 +  {5}x^4 +     x^3 +  {3}x^2 + {19}x + {13}
+        if (c0 & 4) c ^= 0x1ea119fa;  //  {4}k(x) = {15}x^5 + {10}x^4 +  {2}x^3 +  {6}x^2 + {15}x + {26}
+        if (c0 & 8) c ^= 0x3d4233dd;  //  {8}k(x) = {30}x^5 + {20}x^4 +  {4}x^3 + {12}x^2 + {30}x + {29}
         if (c0 & 16) c ^= 0x2a1462b3; // {16}k(x) = {21}x^5 +     x^4 +  {8}x^3 + {24}x^2 + {21}x + {19}
-
     }
     return c;
 }
@@ -237,16 +234,17 @@ uint32_t PolyMod(const data& v)
  * Then we just add each of these corresponding constants to our final value based on the
  * bit values b_i. This is exactly what is done in the Syndrome function below.
  */
-constexpr std::array<uint32_t, 25> GenerateSyndromeConstants() {
+constexpr std::array<uint32_t, 25> GenerateSyndromeConstants()
+{
     std::array<uint32_t, 25> SYNDROME_CONSTS{};
     for (int k = 1; k < 6; ++k) {
         for (int shift = 0; shift < 5; ++shift) {
             int16_t b = GF1024_LOG.at(size_t{1} << shift);
-            int16_t c0 = GF1024_EXP.at((997*k + b) % 1023);
-            int16_t c1 = GF1024_EXP.at((998*k + b) % 1023);
-            int16_t c2 = GF1024_EXP.at((999*k + b) % 1023);
+            int16_t c0 = GF1024_EXP.at((997 * k + b) % 1023);
+            int16_t c1 = GF1024_EXP.at((998 * k + b) % 1023);
+            int16_t c2 = GF1024_EXP.at((999 * k + b) % 1023);
             uint32_t c = c2 << 20 | c1 << 10 | c0;
-            int ind = 5*(k-1) + shift;
+            int ind = 5 * (k - 1) + shift;
             SYNDROME_CONSTS[ind] = c;
         }
     }
@@ -258,7 +256,8 @@ constexpr std::array<uint32_t, 25> SYNDROME_CONSTS = GenerateSyndromeConstants()
  * Syndrome returns the three values s_997, s_998, and s_999 described above,
  * packed into a 30-bit integer, where each group of 10 bits encodes one value.
  */
-uint32_t Syndrome(const uint32_t residue) {
+uint32_t Syndrome(const uint32_t residue)
+{
     // low is the first 5 bits, corresponding to the r6 in the residue
     // (the constant term of the polynomial).
     uint32_t low = residue & 0x1f;
@@ -272,7 +271,7 @@ uint32_t Syndrome(const uint32_t residue) {
     // GF1024_EXP above). In this way, we compute all three values of s_j for j in (997, 998, 999)
     // simultaneously. Recall that XOR corresponds to addition in a characteristic 2 field.
     for (int i = 0; i < 25; ++i) {
-        result ^= ((residue >> (5+i)) & 1 ? SYNDROME_CONSTS.at(i) : 0);
+        result ^= ((residue >> (5 + i)) & 1 ? SYNDROME_CONSTS.at(i) : 0);
     }
     return result;
 }
@@ -314,9 +313,11 @@ std::vector<unsigned char> PreparePolynomialCoefficients(const std::string& hrp,
     ret.reserve(hrp.size() + 1 + hrp.size() + values.size() + CHECKSUM_SIZE);
 
     /** Expand a HRP for use in checksum computation. */
-    for (size_t i = 0; i < hrp.size(); ++i) ret.push_back(hrp[i] >> 5);
+    for (size_t i = 0; i < hrp.size(); ++i)
+        ret.push_back(hrp[i] >> 5);
     ret.push_back(0);
-    for (size_t i = 0; i < hrp.size(); ++i) ret.push_back(hrp[i] & 0x1f);
+    for (size_t i = 0; i < hrp.size(); ++i)
+        ret.push_back(hrp[i] & 0x1f);
 
     ret.insert(ret.end(), values.begin(), values.end());
 
@@ -355,23 +356,28 @@ data CreateChecksum(Encoding encoding, const std::string& hrp, const data& value
 } // namespace
 
 /** Encode a Bech32 or Bech32m string. */
-std::string Encode(Encoding encoding, const std::string& hrp, const data& values) {
+std::string Encode(Encoding encoding, const std::string& hrp, const data& values)
+{
     // First ensure that the HRP is all lowercase. BIP-173 and BIP350 require an encoder
     // to return a lowercase Bech32/Bech32m string, but if given an uppercase HRP, the
     // result will always be invalid.
-    for (const char& c : hrp) assert(c < 'A' || c > 'Z');
+    for (const char& c : hrp)
+        assert(c < 'A' || c > 'Z');
 
     std::string ret;
     ret.reserve(hrp.size() + 1 + values.size() + CHECKSUM_SIZE);
     ret += hrp;
     ret += SEPARATOR;
-    for (const uint8_t& i : values) ret += CHARSET[i];
-    for (const uint8_t& i : CreateChecksum(encoding, hrp, values)) ret += CHARSET[i];
+    for (const uint8_t& i : values)
+        ret += CHARSET[i];
+    for (const uint8_t& i : CreateChecksum(encoding, hrp, values))
+        ret += CHARSET[i];
     return ret;
 }
 
 /** Decode a Bech32 or Bech32m string. */
-DecodeResult Decode(const std::string& str, CharLimit limit) {
+DecodeResult Decode(const std::string& str, CharLimit limit)
+{
     std::vector<int> errors;
     if (!CheckCharacters(str, errors)) return {};
     size_t pos = str.rfind(SEPARATOR);
@@ -400,7 +406,8 @@ DecodeResult Decode(const std::string& str, CharLimit limit) {
 }
 
 /** Find index of an incorrect character in a Bech32 string. */
-std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str, CharLimit limit) {
+std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str, CharLimit limit)
+{
     std::vector<int> error_locations{};
 
     if (str.size() > limit) {
@@ -409,7 +416,7 @@ std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str, Ch
         return std::make_pair("Bech32 string too long", std::move(error_locations));
     }
 
-    if (!CheckCharacters(str, error_locations)){
+    if (!CheckCharacters(str, error_locations)) {
         return std::make_pair("Invalid character or mixed case", std::move(error_locations));
     }
 
@@ -487,7 +494,7 @@ std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str, Ch
                     // the user should check the address themselves.
                     possible_errors.push_back(str.size() - p1 - 1);
                 }
-            // Otherwise, suppose there are two errors. Then E(x) = e1*x^p1 + e2*x^p2.
+                // Otherwise, suppose there are two errors. Then E(x) = e1*x^p1 + e2*x^p2.
             } else {
                 // For all possible first error positions p1
                 for (size_t p1 = 0; p1 < length; ++p1) {
@@ -564,9 +571,8 @@ std::pair<std::string, std::vector<int>> LocateErrors(const std::string& str, Ch
             if (!error_locations.empty()) error_encoding = encoding;
         }
     }
-    std::string error_message = error_encoding == Encoding::BECH32M ? "Invalid Bech32m checksum"
-                              : error_encoding == Encoding::BECH32 ? "Invalid Bech32 checksum"
-                              : "Invalid checksum";
+    std::string error_message = error_encoding == Encoding::BECH32M ? "Invalid Bech32m checksum" : error_encoding == Encoding::BECH32 ? "Invalid Bech32 checksum" :
+                                                                                                                                        "Invalid checksum";
 
     return std::make_pair(error_message, std::move(error_locations));
 }

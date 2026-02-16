@@ -2,9 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <util/feefrac.h>
 #include <algorithm>
 #include <array>
+#include <util/feefrac.h>
 #include <vector>
 
 std::partial_ordering CompareChunks(std::span<const FeeFrac> chunks0, std::span<const FeeFrac> chunks1)
@@ -66,7 +66,7 @@ std::partial_ordering CompareChunks(std::span<const FeeFrac> chunks0, std::span<
 
         // If both diagrams are better somewhere, they are incomparable.
         if (better_somewhere[0] && better_somewhere[1]) return std::partial_ordering::unordered;
-    } while(true);
+    } while (true);
 
     // Otherwise compare the better_somewhere values.
     return better_somewhere[0] <=> better_somewhere[1];

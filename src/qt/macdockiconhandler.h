@@ -14,7 +14,7 @@ class MacDockIconHandler : public QObject
     Q_OBJECT
 
 public:
-    static MacDockIconHandler *instance();
+    static MacDockIconHandler* instance();
     static void cleanup();
 
 Q_SIGNALS:

@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(txgraph_trim_huge)
             top_refs.push_back(graph->AddTransaction(feerate));
             // Add internal dependencies linked the chain transactions together.
             if (chaintx > 0) {
-                 graph->AddDependency(*(top_refs.rbegin()), *(top_refs.rbegin() + 1));
+                graph->AddDependency(*(top_refs.rbegin()), *(top_refs.rbegin() + 1));
             }
         }
         // Remember the last transaction in each chain, to attach the bottom transactions to.

@@ -4,17 +4,19 @@
 
 #include <span.h>
 
-#include <boost/test/unit_test.hpp>
 #include <array>
+#include <boost/test/unit_test.hpp>
 #include <set>
 #include <vector>
 
 namespace spannable {
-struct Ignore
-{
-    template<typename T> Ignore(T&&) {}
+struct Ignore {
+    template <typename T>
+    Ignore(T&&)
+    {
+    }
 };
-template<typename T>
+template <typename T>
 bool Spannable(T&& value, decltype(std::span{value})* enable = nullptr)
 {
     return true;
@@ -24,15 +26,13 @@ bool Spannable(Ignore)
     return false;
 }
 
-struct SpannableYes
-{
+struct SpannableYes {
     int* data();
     int* begin();
     int* end();
     size_t size();
 };
-struct SpannableNo
-{
+struct SpannableNo {
     void data();
     size_t size();
 };

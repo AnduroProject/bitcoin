@@ -74,7 +74,7 @@ void ALWAYS_INLINE Save(unsigned char* out, __m128i s)
 {
     _mm_storeu_si128((__m128i*)out, _mm_shuffle_epi8(s, _mm_load_si128((const __m128i*)MASK)));
 }
-}
+} // namespace
 
 namespace sha256_x86_shani {
 void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
@@ -139,7 +139,7 @@ void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
     _mm_storeu_si128((__m128i*)s, s0);
     _mm_storeu_si128((__m128i*)(s + 4), s1);
 }
-}
+} // namespace sha256_x86_shani
 
 namespace sha256d64_x86_shani {
 
@@ -353,6 +353,6 @@ void Transform_2way(unsigned char* out, const unsigned char* in)
     Save(out + 48, bs1);
 }
 
-}
+} // namespace sha256d64_x86_shani
 
 #endif

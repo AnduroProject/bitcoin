@@ -13,7 +13,7 @@
 static constexpr int HEADER_HEIGHT_DELTA_SYNC = 24;
 
 namespace Ui {
-    class ModalOverlay;
+class ModalOverlay;
 }
 
 /** Modal overlay to display information about the chain-sync state */
@@ -22,7 +22,7 @@ class ModalOverlay : public QWidget
     Q_OBJECT
 
 public:
-    explicit ModalOverlay(bool enable_wallet, QWidget *parent);
+    explicit ModalOverlay(bool enable_wallet, QWidget* parent);
     ~ModalOverlay();
 
     void tipUpdate(int count, const QDateTime& blockDate, double nVerificationProgress);
@@ -40,14 +40,14 @@ Q_SIGNALS:
     void triggered(bool hidden);
 
 protected:
-    bool eventFilter(QObject * obj, QEvent * ev) override;
+    bool eventFilter(QObject* obj, QEvent* ev) override;
     bool event(QEvent* ev) override;
 
 private:
-    Ui::ModalOverlay *ui;
+    Ui::ModalOverlay* ui;
     int bestHeaderHeight{0}; // best known height (based on the headers)
     QDateTime bestHeaderDate;
-    QVector<QPair<qint64, double> > blockProcessTime;
+    QVector<QPair<qint64, double>> blockProcessTime;
     bool layerIsVisible{false};
     bool userClosed{false};
     QPropertyAnimation m_animation;

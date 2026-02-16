@@ -33,7 +33,7 @@ void SetRPCWarmupStatus(const std::string& newStatus);
 void SetRPCWarmupFinished();
 
 /* returns the current warmup state.  */
-bool RPCIsInWarmup(std::string *outStatus);
+bool RPCIsInWarmup(std::string* outStatus);
 
 typedef RPCHelpMan (*RpcMethodFnType)();
 
@@ -86,6 +86,7 @@ class CRPCTable
 {
 private:
     std::map<std::string, std::vector<const CRPCCommand*>> mapCommands;
+
 public:
     CRPCTable();
     std::string help(const std::string& name, const JSONRPCRequest& helpreq) const;
@@ -96,12 +97,12 @@ public:
      * @returns Result of the call.
      * @throws an exception (UniValue) when an error happens.
      */
-    UniValue execute(const JSONRPCRequest &request) const;
+    UniValue execute(const JSONRPCRequest& request) const;
 
     /**
-    * Returns a list of registered commands
-    * @returns List of registered commands.
-    */
+     * Returns a list of registered commands
+     * @returns List of registered commands.
+     */
     std::vector<std::string> listCommands() const;
 
     /**

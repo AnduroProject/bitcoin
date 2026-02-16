@@ -4,8 +4,8 @@
 
 #include <bitcoin-build-config.h> // IWYU pragma: keep
 
-#include <qt/modaloverlay.h>
 #include <qt/forms/ui_modaloverlay.h>
+#include <qt/modaloverlay.h>
 
 #include <chainparams.h>
 #include <qt/guiutil.h>
@@ -45,10 +45,11 @@ ModalOverlay::~ModalOverlay()
     delete ui;
 }
 
-bool ModalOverlay::eventFilter(QObject * obj, QEvent * ev) {
+bool ModalOverlay::eventFilter(QObject* obj, QEvent* ev)
+{
     if (obj == parent()) {
         if (ev->type() == QEvent::Resize) {
-            QResizeEvent * rev = static_cast<QResizeEvent*>(ev);
+            QResizeEvent* rev = static_cast<QResizeEvent*>(ev);
             resize(rev->size());
             if (!layerIsVisible)
                 setGeometry(0, height(), width(), height());
@@ -56,8 +57,7 @@ bool ModalOverlay::eventFilter(QObject * obj, QEvent * ev) {
             if (m_animation.endValue().toPoint().y() > 0) {
                 m_animation.setEndValue(QPoint(0, height()));
             }
-        }
-        else if (ev->type() == QEvent::ChildAdded) {
+        } else if (ev->type() == QEvent::ChildAdded) {
             raise();
         }
     }
@@ -70,11 +70,11 @@ bool ModalOverlay::eventFilter(QObject * obj, QEvent * ev) {
 }
 
 //! Tracks parent widget changes
-bool ModalOverlay::event(QEvent* ev) {
+bool ModalOverlay::event(QEvent* ev)
+{
     if (ev->type() == QEvent::ParentAboutToChange) {
         if (parent()) parent()->removeEventFilter(this);
-    }
-    else if (ev->type() == QEvent::ParentChange) {
+    } else if (ev->type() == QEvent::ParentChange) {
         if (parent()) {
             parent()->installEventFilter(this);
             raise();
@@ -122,10 +122,10 @@ void ModalOverlay::tipUpdate(int count, const QDateTime& blockDate, double nVeri
             }
         }
         // show progress increase per hour
-        ui->progressIncreasePerH->setText(QString::number(progressPerHour * 100, 'f', 2)+"%");
+        ui->progressIncreasePerH->setText(QString::number(progressPerHour * 100, 'f', 2) + "%");
 
         // show expected remaining time
-        if(remainingMSecs >= 0) {
+        if (remainingMSecs >= 0) {
             ui->expectedTimeLeft->setText(GUIUtil::formatNiceTimeOffset(remainingMSecs / 1000.0));
         } else {
             ui->expectedTimeLeft->setText(QObject::tr("unknown"));
@@ -141,7 +141,7 @@ void ModalOverlay::tipUpdate(int count, const QDateTime& blockDate, double nVeri
     ui->newestBlockDate->setText(blockDate.toString());
 
     // show the percentage done according to nVerificationProgress
-    ui->percentageProgress->setText(QString::number(nVerificationProgress*100, 'f', 2)+"%");
+    ui->percentageProgress->setText(QString::number(nVerificationProgress * 100, 'f', 2) + "%");
 
     if (!bestHeaderDate.isValid())
         // not syncing
@@ -161,12 +161,14 @@ void ModalOverlay::tipUpdate(int count, const QDateTime& blockDate, double nVeri
     }
 }
 
-void ModalOverlay::UpdateHeaderSyncLabel() {
+void ModalOverlay::UpdateHeaderSyncLabel()
+{
     int est_headers_left = bestHeaderDate.secsTo(QDateTime::currentDateTime()) / Params().GetConsensus().nPowTargetSpacing;
     ui->numberOfBlocksLeft->setText(tr("Unknown. Syncing Headers (%1, %2%)…").arg(bestHeaderHeight).arg(QString::number(100.0 / (bestHeaderHeight + est_headers_left) * bestHeaderHeight, 'f', 1)));
 }
 
-void ModalOverlay::UpdateHeaderPresyncLabel(int height, const QDateTime& blockDate) {
+void ModalOverlay::UpdateHeaderPresyncLabel(int height, const QDateTime& blockDate)
+{
     int est_headers_left = blockDate.secsTo(QDateTime::currentDateTime()) / Params().GetConsensus().nPowTargetSpacing;
     ui->numberOfBlocksLeft->setText(tr("Unknown. Pre-syncing Headers (%1, %2%)…").arg(height).arg(QString::number(100.0 / (height + est_headers_left) * height, 'f', 1)));
 }
@@ -180,7 +182,7 @@ void ModalOverlay::toggleVisibility()
 
 void ModalOverlay::showHide(bool hide, bool userRequested)
 {
-    if ( (layerIsVisible && !hide) || (!layerIsVisible && hide) || (!hide && userClosed && !userRequested))
+    if ((layerIsVisible && !hide) || (!layerIsVisible && hide) || (!hide && userClosed && !userRequested))
         return;
 
     Q_EMIT triggered(hide);

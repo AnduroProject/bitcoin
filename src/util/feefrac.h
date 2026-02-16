@@ -36,8 +36,7 @@
  * different size as equivalent. The empty FeeFrac is neither lower or higher in feerate than any
  * other.
  */
-struct FeeFrac
-{
+struct FeeFrac {
     /** Helper function for 32*64 signed multiplication, returning an unspecified but totally
      *  ordered type. This is a fallback version, separate so it can be tested on platforms where
      *  it isn't actually needed. */
@@ -117,7 +116,8 @@ struct FeeFrac
     constexpr inline FeeFrac& operator=(const FeeFrac&) noexcept = default;
 
     /** Check if this is empty (size and fee are 0). */
-    bool inline IsEmpty() const noexcept {
+    bool inline IsEmpty() const noexcept
+    {
         return size == 0;
     }
 
@@ -198,7 +198,7 @@ struct FeeFrac
      * Requires this->size > 0, at_size >= 0, and that the correct result fits in a int64_t. This
      * is guaranteed to be the case when 0 <= at_size <= this->size.
      */
-    template<bool RoundDown>
+    template <bool RoundDown>
     int64_t EvaluateFee(int32_t at_size) const noexcept
     {
         Assume(size > 0);
@@ -234,9 +234,8 @@ public:
 std::partial_ordering CompareChunks(std::span<const FeeFrac> chunks0, std::span<const FeeFrac> chunks1);
 
 /** Tagged wrapper around FeeFrac to avoid unit confusion. */
-template<typename Tag>
-struct FeePerUnit : public FeeFrac
-{
+template <typename Tag>
+struct FeePerUnit : public FeeFrac {
     // Inherit FeeFrac constructors.
     using FeeFrac::FeeFrac;
 
@@ -248,11 +247,13 @@ struct FeePerUnit : public FeeFrac
 };
 
 // FeePerUnit instance for satoshi / vbyte.
-struct VSizeTag {};
+struct VSizeTag {
+};
 using FeePerVSize = FeePerUnit<VSizeTag>;
 
 // FeePerUnit instance for satoshi / WU.
-struct WeightTag {};
+struct WeightTag {
+};
 using FeePerWeight = FeePerUnit<WeightTag>;
 
 #endif // BITCOIN_UTIL_FEEFRAC_H

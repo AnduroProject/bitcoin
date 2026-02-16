@@ -43,10 +43,10 @@ BOOST_AUTO_TEST_CASE(manythreads)
     CScheduler microTasks;
 
     std::mutex counterMutex[10];
-    int counter[10] = { 0 };
+    int counter[10] = {0};
     FastRandomContext rng{/*fDeterministic=*/true};
-    auto zeroToNine = [](FastRandomContext& rc) -> int { return rc.randrange(10); }; // [0, 9]
-    auto randomMsec = [](FastRandomContext& rc) -> int { return -11 + (int)rc.randrange(1012); }; // [-11, 1000]
+    auto zeroToNine = [](FastRandomContext& rc) -> int { return rc.randrange(10); };                 // [0, 9]
+    auto randomMsec = [](FastRandomContext& rc) -> int { return -11 + (int)rc.randrange(1012); };    // [-11, 1000]
     auto randomDelta = [](FastRandomContext& rc) -> int { return -1000 + (int)rc.randrange(2001); }; // [-1000, 1000]
 
     auto start = std::chrono::steady_clock::now();
@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_CASE(manythreads)
         auto tReschedule = now + std::chrono::microseconds(500 + randomMsec(rng));
         int whichCounter = zeroToNine(rng);
         CScheduler::Function f = std::bind(&microTask, std::ref(microTasks),
-                                             std::ref(counterMutex[whichCounter]), std::ref(counter[whichCounter]),
-                                             randomDelta(rng), tReschedule);
+                                           std::ref(counterMutex[whichCounter]), std::ref(counter[whichCounter]),
+                                           randomDelta(rng), tReschedule);
         microTasks.schedule(f, t);
     }
     nTasks = microTasks.getQueueInfo(first, last);
@@ -86,15 +86,15 @@ BOOST_AUTO_TEST_CASE(manythreads)
         auto tReschedule = now + std::chrono::microseconds(500 + randomMsec(rng));
         int whichCounter = zeroToNine(rng);
         CScheduler::Function f = std::bind(&microTask, std::ref(microTasks),
-                                             std::ref(counterMutex[whichCounter]), std::ref(counter[whichCounter]),
-                                             randomDelta(rng), tReschedule);
+                                           std::ref(counterMutex[whichCounter]), std::ref(counter[whichCounter]),
+                                           randomDelta(rng), tReschedule);
         microTasks.schedule(f, t);
     }
 
     // Drain the task queue then exit threads
     microTasks.StopWhenDrained();
     // wait until all the threads are done
-    for (auto& thread: microThreads) {
+    for (auto& thread : microThreads) {
         if (thread.joinable()) thread.join();
     }
 
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(singlethreadedscheduler_ordered)
 
     // finish up
     scheduler.StopWhenDrained();
-    for (auto& thread: threads) {
+    for (auto& thread : threads) {
         if (thread.joinable()) thread.join();
     }
 
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(mockforward)
     CScheduler scheduler;
 
     int counter{0};
-    CScheduler::Function dummy = [&counter]{counter++;};
+    CScheduler::Function dummy = [&counter] { counter++; };
 
     // schedule jobs for 2, 5 & 8 minutes into the future
 
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(mockforward)
     auto now = std::chrono::steady_clock::now();
     int delta = std::chrono::duration_cast<std::chrono::seconds>(first - now).count();
     // should be between 2 & 3 minutes from now
-    BOOST_CHECK(delta > 2*60 && delta < 3*60);
+    BOOST_CHECK(delta > 2 * 60 && delta < 3 * 60);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

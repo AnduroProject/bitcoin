@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(reverselock_errors)
     bool failed = false;
     try {
         REVERSE_LOCK(lock, mutex);
-    } catch(...) {
+    } catch (...) {
         failed = true;
     }
 

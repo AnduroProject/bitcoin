@@ -2,14 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or https://www.opensource.org/licenses/mit-license.php.
 
+#include <boost/test/unit_test.hpp>
 #include <chainparams.h>
-#include <node/miner.h>
 #include <net_processing.h>
+#include <node/miner.h>
 #include <pow.h>
 #include <test/util/setup_common.h>
 #include <validation.h>
-
-#include <boost/test/unit_test.hpp>
 
 BOOST_FIXTURE_TEST_SUITE(peerman_tests, RegTestingSetup)
 
@@ -21,8 +20,10 @@ static void mineBlock(const node::NodeContext& node, std::chrono::seconds block_
     auto curr_time = GetTime<std::chrono::seconds>();
     SetMockTime(block_time); // update time so the block is created with it
     CBlock block = node::BlockAssembler{node.chainman->ActiveChainstate(), nullptr, {}}.CreateNewBlock()->block;
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, node.chainman->GetConsensus())) ++block.nNonce;
-    block.fChecked = true; // little speedup
+    auto& miningHeader = CAuxPow::initAuxPow(block);
+    while (!CheckProofOfWork(miningHeader.GetHash(), block.nBits, node.chainman->GetConsensus()))
+        ++miningHeader.nNonce;
+    block.fChecked = true;  // little speedup
     SetMockTime(curr_time); // process block at current time
     Assert(node.chainman->ProcessNewBlock(std::make_shared<const CBlock>(block), /*force_processing=*/true, /*min_pow_checked=*/true, nullptr));
     node.validation_signals->SyncWithValidationInterfaceQueue(); // drain events queue
@@ -31,7 +32,7 @@ static void mineBlock(const node::NodeContext& node, std::chrono::seconds block_
 // Verifying when network-limited peer connections are desirable based on the node's proximity to the tip
 BOOST_AUTO_TEST_CASE(connections_desirable_service_flags)
 {
-    std::unique_ptr<PeerManager> peerman = PeerManager::make(*m_node.connman, *m_node.addrman, nullptr, *m_node.chainman, *m_node.mempool, *m_node.warnings, {});
+    std::unique_ptr<PeerManager> peerman = PeerManager::make(*m_node.connman, *m_node.addrman, nullptr, *m_node.chainman, *m_node.mempool, *m_node.preconfmempool, *m_node.warnings, {});
     auto consensus = m_node.chainman->GetParams().GetConsensus();
 
     // Check we start connecting to full nodes

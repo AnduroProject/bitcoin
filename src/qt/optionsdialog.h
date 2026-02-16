@@ -27,9 +27,9 @@ class ProxyAddressValidator : public QValidator
     Q_OBJECT
 
 public:
-    explicit ProxyAddressValidator(QObject *parent);
+    explicit ProxyAddressValidator(QObject* parent);
 
-    State validate(QString &input, int &pos) const override;
+    State validate(QString& input, int& pos) const override;
 };
 
 /** Preferences dialog. */
@@ -38,7 +38,7 @@ class OptionsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit OptionsDialog(QWidget *parent, bool enableWallet);
+    explicit OptionsDialog(QWidget* parent, bool enableWallet);
     ~OptionsDialog();
 
     enum Tab {
@@ -47,7 +47,7 @@ public:
     };
 
     void setClientModel(ClientModel* client_model);
-    void setModel(OptionsModel *model);
+    void setModel(OptionsModel* model);
     void setMapper();
     void setCurrentTab(OptionsDialog::Tab tab);
 
@@ -69,11 +69,11 @@ private Q_SLOTS:
     void updateDefaultProxyNets();
 
 Q_SIGNALS:
-    void proxyIpChecks(QValidatedLineEdit *pUiProxyIp, uint16_t nProxyPort);
+    void proxyIpChecks(QValidatedLineEdit* pUiProxyIp, uint16_t nProxyPort);
     void quitOnReset();
 
 private:
-    Ui::OptionsDialog *ui;
+    Ui::OptionsDialog* ui;
     ClientModel* m_client_model{nullptr};
     OptionsModel* model{nullptr};
     QDataWidgetMapper* mapper{nullptr};

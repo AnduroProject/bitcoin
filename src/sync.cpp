@@ -79,7 +79,8 @@ struct LockData {
     std::mutex dd_mutex;
 };
 
-LockData& GetLockData() {
+LockData& GetLockData()
+{
     // This approach guarantees that the object is not destroyed until after its last use.
     // The operating system automatically reclaims all the memory in a program's heap when that program exits.
     // Since the ~LockData() destructor is never called, the LockData class and all

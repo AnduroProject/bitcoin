@@ -22,21 +22,20 @@
 static constexpr double LN2SQUARED = 0.4804530139182014246671025263266649717305529515945455;
 static constexpr double LN2 = 0.6931471805599453094172321214581765680755001343602552;
 
-CBloomFilter::CBloomFilter(const unsigned int nElements, const double nFPRate, const unsigned int nTweakIn, unsigned char nFlagsIn) :
-    /**
-     * The ideal size for a bloom filter with a given number of elements and false positive rate is:
-     * - nElements * log(fp rate) / ln(2)^2
-     * We ignore filter parameters which will create a bloom filter larger than the protocol limits
-     */
-    vData(std::min((unsigned int)(-1  / LN2SQUARED * nElements * log(nFPRate)), MAX_BLOOM_FILTER_SIZE * 8) / 8),
-    /**
-     * The ideal number of hash functions is filter size * ln(2) / number of elements
-     * Again, we ignore filter parameters which will create a bloom filter with more hash functions than the protocol limits
-     * See https://en.wikipedia.org/wiki/Bloom_filter for an explanation of these formulas
-     */
-    nHashFuncs(std::min((unsigned int)(vData.size() * 8 / nElements * LN2), MAX_HASH_FUNCS)),
-    nTweak(nTweakIn),
-    nFlags(nFlagsIn)
+CBloomFilter::CBloomFilter(const unsigned int nElements, const double nFPRate, const unsigned int nTweakIn, unsigned char nFlagsIn) : /**
+                                                                                                                                       * The ideal size for a bloom filter with a given number of elements and false positive rate is:
+                                                                                                                                       * - nElements * log(fp rate) / ln(2)^2
+                                                                                                                                       * We ignore filter parameters which will create a bloom filter larger than the protocol limits
+                                                                                                                                       */
+                                                                                                                                      vData(std::min((unsigned int)(-1 / LN2SQUARED * nElements * log(nFPRate)), MAX_BLOOM_FILTER_SIZE * 8) / 8),
+                                                                                                                                      /**
+                                                                                                                                       * The ideal number of hash functions is filter size * ln(2) / number of elements
+                                                                                                                                       * Again, we ignore filter parameters which will create a bloom filter with more hash functions than the protocol limits
+                                                                                                                                       * See https://en.wikipedia.org/wiki/Bloom_filter for an explanation of these formulas
+                                                                                                                                       */
+                                                                                                                                      nHashFuncs(std::min((unsigned int)(vData.size() * 8 / nElements * LN2), MAX_HASH_FUNCS)),
+                                                                                                                                      nTweak(nTweakIn),
+                                                                                                                                      nFlags(nFlagsIn)
 {
 }
 
@@ -50,8 +49,7 @@ void CBloomFilter::insert(std::span<const unsigned char> vKey)
 {
     if (vData.empty()) // Avoid divide-by-zero (CVE-2013-5700)
         return;
-    for (unsigned int i = 0; i < nHashFuncs; i++)
-    {
+    for (unsigned int i = 0; i < nHashFuncs; i++) {
         unsigned int nIndex = Hash(i, vKey);
         // Sets bit nIndex of vData
         vData[nIndex >> 3] |= (1 << (7 & nIndex));
@@ -69,8 +67,7 @@ bool CBloomFilter::contains(std::span<const unsigned char> vKey) const
 {
     if (vData.empty()) // Avoid divide-by-zero (CVE-2013-5700)
         return true;
-    for (unsigned int i = 0; i < nHashFuncs; i++)
-    {
+    for (unsigned int i = 0; i < nHashFuncs; i++) {
         unsigned int nIndex = Hash(i, vKey);
         // Checks bit nIndex of vData
         if (!(vData[nIndex >> 3] & (1 << (7 & nIndex))))
@@ -102,8 +99,7 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
     if (contains(hash.ToUint256()))
         fFound = true;
 
-    for (unsigned int i = 0; i < tx.vout.size(); i++)
-    {
+    for (unsigned int i = 0; i < tx.vout.size(); i++) {
         const CTxOut& txout = tx.vout[i];
         // Match if the filter contains any arbitrary script data element in any scriptPubKey in tx
         // If this matches, also add the specific output that was matched.
@@ -111,19 +107,16 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
         // is discovered in order to find spending transactions, which avoids round-tripping and race conditions.
         CScript::const_iterator pc = txout.scriptPubKey.begin();
         std::vector<unsigned char> data;
-        while (pc < txout.scriptPubKey.end())
-        {
+        while (pc < txout.scriptPubKey.end()) {
             opcodetype opcode;
             if (!txout.scriptPubKey.GetOp(pc, opcode, data))
                 break;
-            if (data.size() != 0 && contains(data))
-            {
+            if (data.size() != 0 && contains(data)) {
                 fFound = true;
                 if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_ALL)
                     insert(COutPoint(hash, i));
-                else if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_P2PUBKEY_ONLY)
-                {
-                    std::vector<std::vector<unsigned char> > vSolutions;
+                else if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_P2PUBKEY_ONLY) {
+                    std::vector<std::vector<unsigned char>> vSolutions;
                     TxoutType type = Solver(txout.scriptPubKey, vSolutions);
                     if (type == TxoutType::PUBKEY || type == TxoutType::MULTISIG) {
                         insert(COutPoint(hash, i));
@@ -137,8 +130,7 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
     if (fFound)
         return true;
 
-    for (const CTxIn& txin : tx.vin)
-    {
+    for (const CTxIn& txin : tx.vin) {
         // Match if the filter contains an outpoint tx spends
         if (contains(txin.prevout))
             return true;
@@ -146,8 +138,7 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx)
         // Match if the filter contains any arbitrary script data element in any scriptSig in tx
         CScript::const_iterator pc = txin.scriptSig.begin();
         std::vector<unsigned char> data;
-        while (pc < txin.scriptSig.end())
-        {
+        while (pc < txin.scriptSig.end()) {
             opcodetype opcode;
             if (!txin.scriptSig.GetOp(pc, opcode, data))
                 break;

@@ -14,11 +14,11 @@
 static const bool DEFAULT_CHOOSE_DATADIR = false;
 
 namespace interfaces {
-    class Node;
+class Node;
 }
 
 namespace Ui {
-    class Intro;
+class Intro;
 }
 
 /** Introduction screen (pre-GUI startup).
@@ -30,12 +30,12 @@ class Intro : public QDialog, public FreespaceChecker::PathQuery
     Q_OBJECT
 
 public:
-    explicit Intro(QWidget *parent = nullptr,
+    explicit Intro(QWidget* parent = nullptr,
                    int64_t blockchain_size_gb = 0, int64_t chain_state_size_gb = 0);
     ~Intro();
 
     QString getDataDirectory();
-    void setDataDirectory(const QString &dataDir);
+    void setDataDirectory(const QString& dataDir);
     int64_t getPruneMiB() const;
 
     /**
@@ -54,16 +54,16 @@ Q_SIGNALS:
     void requestCheck();
 
 public Q_SLOTS:
-    void setStatus(int status, const QString &message, quint64 bytesAvailable);
+    void setStatus(int status, const QString& message, quint64 bytesAvailable);
 
 private Q_SLOTS:
-    void on_dataDirectory_textChanged(const QString &arg1);
+    void on_dataDirectory_textChanged(const QString& arg1);
     void on_ellipsisButton_clicked();
     void on_dataDirDefault_clicked();
     void on_dataDirCustom_clicked();
 
 private:
-    Ui::Intro *ui;
+    Ui::Intro* ui;
     bool m_prune_checkbox_is_default{true};
     QThread* thread{nullptr};
     QMutex mutex;
@@ -77,7 +77,7 @@ private:
     int64_t m_prune_target_gb;
 
     void startThread();
-    void checkPath(const QString &dataDir);
+    void checkPath(const QString& dataDir);
     QString getPathToCheck() override;
     void UpdatePruneLabels(bool prune_checked);
     void UpdateFreeSpaceLabel();

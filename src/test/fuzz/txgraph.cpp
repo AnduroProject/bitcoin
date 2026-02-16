@@ -26,8 +26,7 @@ namespace {
 /** Data type representing a naive simulated TxGraph, keeping all transactions (even from
  *  disconnected components) in a single DepGraph. Unlike the real TxGraph, this only models
  *  a single graph, and multiple instances are used to simulate main/staging. */
-struct SimTxGraph
-{
+struct SimTxGraph {
     /** Maximum number of transactions to support simultaneously. Set this higher than txgraph's
      *  cluster count, so we can exercise situations with more transactions than fit in one
      *  cluster. */
@@ -63,8 +62,7 @@ struct SimTxGraph
     bool real_is_optimal{false};
 
     /** Construct a new SimTxGraph with the specified maximum cluster count and size. */
-    explicit SimTxGraph(DepGraphIndex cluster_count, uint64_t cluster_size) :
-        max_cluster_count(cluster_count), max_cluster_size(cluster_size) {}
+    explicit SimTxGraph(DepGraphIndex cluster_count, uint64_t cluster_size) : max_cluster_count(cluster_count), max_cluster_size(cluster_size) {}
 
     // Permit copying and moving.
     SimTxGraph(const SimTxGraph&) noexcept = default;
@@ -96,7 +94,8 @@ struct SimTxGraph
             for (auto component : GetComponents()) {
                 if (component.Count() > max_cluster_count) oversized = true;
                 uint64_t component_size{0};
-                for (auto i : component) component_size += graph.FeeRate(i).size;
+                for (auto i : component)
+                    component_size += graph.FeeRate(i).size;
                 if (component_size > max_cluster_size) oversized = true;
             }
         }
@@ -282,7 +281,8 @@ struct SimTxGraph
             // Determine whether component is oversized, due to either the size or count limit.
             bool is_oversized = component.Count() > max_cluster_count;
             uint64_t component_size{0};
-            for (auto i : component) component_size += graph.FeeRate(i).size;
+            for (auto i : component)
+                component_size += graph.FeeRate(i).size;
             is_oversized |= component_size > max_cluster_size;
             // Check whether overlap with set matches is_oversized.
             if (is_oversized != set.Overlaps(component)) return false;
@@ -327,8 +327,7 @@ FUZZ_TARGET(txgraph)
     sims.emplace_back(max_cluster_count, max_cluster_size);
 
     /** Struct encapsulating information about a BlockBuilder that's currently live. */
-    struct BlockBuilderData
-    {
+    struct BlockBuilderData {
         /** BlockBuilder object from real. */
         std::unique_ptr<TxGraph::BlockBuilder> builder;
         /** The set of transactions marked as included in *builder. */
@@ -399,7 +398,8 @@ FUZZ_TARGET(txgraph)
             num_tx += cluster.size();
             std::vector<SimTxGraph::Pos> linearization;
             linearization.reserve(cluster.size());
-            for (auto refptr : cluster) linearization.push_back(sim.Find(refptr));
+            for (auto refptr : cluster)
+                linearization.push_back(sim.Find(refptr));
             for (const FeeFrac& chunk_feerate : ChunkLinearization(sim.graph, linearization)) {
                 chunk_feerates.push_back(chunk_feerate);
             }
@@ -414,7 +414,8 @@ FUZZ_TARGET(txgraph)
         return chunk_feerates;
     };
 
-    LIMITED_WHILE(provider.remaining_bytes() > 0, 200) {
+    LIMITED_WHILE(provider.remaining_bytes() > 0, 200)
+    {
         // Read a one-byte command.
         int command = provider.ConsumeIntegral<uint8_t>();
         int orig_command = command;
@@ -518,7 +519,8 @@ FUZZ_TARGET(txgraph)
                     // will trigger deletions in both, so to have consistent TxGraph behavior, the
                     // set must be closed under ancestors, or descendants, in both graphs.
                     auto old_size = to_destroy.size();
-                    for (auto& sim : sims) sim.IncludeAncDesc(to_destroy, alt);
+                    for (auto& sim : sims)
+                        sim.IncludeAncDesc(to_destroy, alt);
                     if (to_destroy.size() == old_size) break;
                 }
                 // The order in which these ancestors/descendants are destroyed should not matter;
@@ -590,8 +592,7 @@ FUZZ_TARGET(txgraph)
             } else if (!sel_sim.IsOversized() && command-- == 0) {
                 // GetAncestors/GetDescendants.
                 auto ref = pick_fn();
-                auto result = alt ? real->GetDescendants(*ref, use_main)
-                                  : real->GetAncestors(*ref, use_main);
+                auto result = alt ? real->GetDescendants(*ref, use_main) : real->GetAncestors(*ref, use_main);
                 assert(result.size() <= max_cluster_count);
                 auto result_set = sel_sim.MakeSet(result);
                 assert(result.size() == result_set.Count());
@@ -610,13 +611,13 @@ FUZZ_TARGET(txgraph)
                 // Their order should not matter, shuffle them.
                 std::shuffle(refs.begin(), refs.end(), rng);
                 // Invoke the real function, and convert to SimPos set.
-                auto result = alt ? real->GetDescendantsUnion(refs, use_main)
-                                  : real->GetAncestorsUnion(refs, use_main);
+                auto result = alt ? real->GetDescendantsUnion(refs, use_main) : real->GetAncestorsUnion(refs, use_main);
                 auto result_set = sel_sim.MakeSet(result);
                 assert(result.size() == result_set.Count());
                 // Compute the expected result.
                 SimTxGraph::SetType expect_set;
-                for (TxGraph::Ref* ref : refs) expect_set |= sel_sim.GetAncDesc(ref, alt);
+                for (TxGraph::Ref* ref : refs)
+                    expect_set |= sel_sim.GetAncDesc(ref, alt);
                 // Compare.
                 assert(result_set == expect_set);
                 break;
@@ -669,7 +670,7 @@ FUZZ_TARGET(txgraph)
                 // CommitStaging.
                 real->CommitStaging();
                 // Resulting main level is only guaranteed to be optimal if all levels are
-                const bool main_optimal = std::all_of(sims.cbegin(), sims.cend(), [](const auto &sim) { return sim.real_is_optimal; });
+                const bool main_optimal = std::all_of(sims.cbegin(), sims.cend(), [](const auto& sim) { return sim.real_is_optimal; });
                 sims.erase(sims.begin());
                 sims.front().real_is_optimal = main_optimal;
                 break;
@@ -966,7 +967,8 @@ FUZZ_TARGET(txgraph)
                         made_oversized = new_cluster.Count() > max_cluster_count;
                         if (!made_oversized) {
                             FeeFrac total;
-                            for (auto i : new_cluster) total += top_sim.graph.FeeRate(i);
+                            for (auto i : new_cluster)
+                                total += top_sim.graph.FeeRate(i);
                             if (uint32_t(total.size) > max_cluster_size) made_oversized = true;
                         }
                         if (made_oversized) merges_left = rng.randrange(clusters.size());
@@ -978,7 +980,8 @@ FUZZ_TARGET(txgraph)
                 for (auto& cluster : clusters) {
                     // Gather all transaction sizes in the to-be-combined cluster.
                     std::vector<uint32_t> sizes;
-                    for (auto i : cluster) sizes.push_back(top_sim.graph.FeeRate(i).size);
+                    for (auto i : cluster)
+                        sizes.push_back(top_sim.graph.FeeRate(i).size);
                     auto sum_sizes = std::accumulate(sizes.begin(), sizes.end(), uint64_t{0});
                     // Sort from large to small.
                     std::sort(sizes.begin(), sizes.end(), std::greater{});
@@ -1025,7 +1028,8 @@ FUZZ_TARGET(txgraph)
         // CompareMainOrder.
         // First construct two distinct randomized permutations of the positions in sims[0].
         std::vector<SimTxGraph::Pos> vec1;
-        for (auto i : sims[0].graph.Positions()) vec1.push_back(i);
+        for (auto i : sims[0].graph.Positions())
+            vec1.push_back(i);
         std::shuffle(vec1.begin(), vec1.end(), rng);
         auto vec2 = vec1;
         std::shuffle(vec2.begin(), vec2.end(), rng);
@@ -1157,7 +1161,8 @@ FUZZ_TARGET(txgraph)
             // copied from main. Note that due to the reordering of removals w.r.t. dependency
             // additions, it is possible that the real implementation found more unaffected things.
             FeeFrac missing_real;
-            for (const auto& feerate : missing_main_cmp) missing_real += feerate;
+            for (const auto& feerate : missing_main_cmp)
+                missing_real += feerate;
             FeeFrac missing_expected = sims[1].graph.FeeRate(sims[1].graph.Positions() - sims[1].modified);
             // Note that missing_real.fee < missing_expected.fee is possible to due the presence of
             // negative-fee transactions.

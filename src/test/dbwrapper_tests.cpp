@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_basic_data)
         // Ensure that we're doing real obfuscation when obfuscate=true
         BOOST_CHECK_EQUAL(obfuscate, dbwrapper_private::GetObfuscation(dbw));
 
-        //Simulate block raw data - "b + block hash"
+        // Simulate block raw data - "b + block hash"
         std::string key_block = "b" + m_rng.rand256().ToString();
 
         uint256 in_block = m_rng.rand256();
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_basic_data)
         BOOST_CHECK(dbw.Read(key_block, res));
         BOOST_CHECK_EQUAL(res.ToString(), in_block.ToString());
 
-        //Simulate file raw data - "f + file_number"
+        // Simulate file raw data - "f + file_number"
         std::string key_file = strprintf("f%04x", m_rng.rand32());
 
         uint256 in_file_info = m_rng.rand256();
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_basic_data)
         BOOST_CHECK(dbw.Read(key_file, res));
         BOOST_CHECK_EQUAL(res.ToString(), in_file_info.ToString());
 
-        //Simulate transaction raw data - "t + transaction hash"
+        // Simulate transaction raw data - "t + transaction hash"
         std::string key_transaction = "t" + m_rng.rand256().ToString();
 
         uint256 in_transaction = m_rng.rand256();
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_basic_data)
         BOOST_CHECK(dbw.Read(key_transaction, res));
         BOOST_CHECK_EQUAL(res.ToString(), in_transaction.ToString());
 
-        //Simulate UTXO raw data - "c + transaction hash"
+        // Simulate UTXO raw data - "c + transaction hash"
         std::string key_utxo = "c" + m_rng.rand256().ToString();
 
         uint256 in_utxo = m_rng.rand256();
@@ -114,28 +114,28 @@ BOOST_AUTO_TEST_CASE(dbwrapper_basic_data)
         BOOST_CHECK(dbw.Read(key_utxo, res));
         BOOST_CHECK_EQUAL(res.ToString(), in_utxo.ToString());
 
-        //Simulate last block file number - "l"
+        // Simulate last block file number - "l"
         uint8_t key_last_blockfile_number{'l'};
         uint32_t lastblockfilenumber = m_rng.rand32();
         BOOST_CHECK(dbw.Write(key_last_blockfile_number, lastblockfilenumber));
         BOOST_CHECK(dbw.Read(key_last_blockfile_number, res_uint_32));
         BOOST_CHECK_EQUAL(lastblockfilenumber, res_uint_32);
 
-        //Simulate Is Reindexing - "R"
+        // Simulate Is Reindexing - "R"
         uint8_t key_IsReindexing{'R'};
         bool isInReindexing = m_rng.randbool();
         BOOST_CHECK(dbw.Write(key_IsReindexing, isInReindexing));
         BOOST_CHECK(dbw.Read(key_IsReindexing, res_bool));
         BOOST_CHECK_EQUAL(isInReindexing, res_bool);
 
-        //Simulate last block hash up to which UXTO covers - 'B'
+        // Simulate last block hash up to which UXTO covers - 'B'
         uint8_t key_lastblockhash_uxto{'B'};
         uint256 lastblock_hash = m_rng.rand256();
         BOOST_CHECK(dbw.Write(key_lastblockhash_uxto, lastblock_hash));
         BOOST_CHECK(dbw.Read(key_lastblockhash_uxto, res));
         BOOST_CHECK_EQUAL(lastblock_hash, res);
 
-        //Simulate file raw data - "F + filename_number + filename"
+        // Simulate file raw data - "F + filename_number + filename"
         std::string file_option_tag = "F";
         uint8_t filename_length = m_rng.randbits(8);
         std::string filename = "randomfilename";
@@ -307,24 +307,24 @@ BOOST_AUTO_TEST_CASE(iterator_ordering)
 {
     fs::path ph = m_args.GetDataDirBase() / "iterator_ordering";
     CDBWrapper dbw({.path = ph, .cache_bytes = 1 << 20, .memory_only = true, .wipe_data = false, .obfuscate = false});
-    for (int x=0x00; x<256; ++x) {
+    for (int x = 0x00; x < 256; ++x) {
         uint8_t key = x;
-        uint32_t value = x*x;
+        uint32_t value = x * x;
         if (!(x & 1)) BOOST_CHECK(dbw.Write(key, value));
     }
 
     // Check that creating an iterator creates a snapshot
     std::unique_ptr<CDBIterator> it(const_cast<CDBWrapper&>(dbw).NewIterator());
 
-    for (unsigned int x=0x00; x<256; ++x) {
+    for (unsigned int x = 0x00; x < 256; ++x) {
         uint8_t key = x;
-        uint32_t value = x*x;
+        uint32_t value = x * x;
         if (x & 1) BOOST_CHECK(dbw.Write(key, value));
     }
 
     for (const int seek_start : {0x00, 0x80}) {
         it->Seek((uint8_t)seek_start);
-        for (unsigned int x=seek_start; x<255; ++x) {
+        for (unsigned int x = seek_start; x < 255; ++x) {
             uint8_t key;
             uint32_t value;
             BOOST_CHECK(it->Valid());
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(iterator_ordering)
             }
             BOOST_CHECK(it->GetValue(value));
             BOOST_CHECK_EQUAL(key, x);
-            BOOST_CHECK_EQUAL(value, x*x);
+            BOOST_CHECK_EQUAL(value, x * x);
             it->Next();
         }
         BOOST_CHECK(!it->Valid());
@@ -351,7 +351,7 @@ struct StringContentsSerializer {
     StringContentsSerializer() = default;
     explicit StringContentsSerializer(const std::string& inp) : str(inp) {}
 
-    template<typename Stream>
+    template <typename Stream>
     void Serialize(Stream& s) const
     {
         for (size_t i = 0; i < str.size(); i++) {
@@ -359,7 +359,7 @@ struct StringContentsSerializer {
         }
     }
 
-    template<typename Stream>
+    template <typename Stream>
     void Unserialize(Stream& s)
     {
         str.clear();
@@ -380,7 +380,7 @@ BOOST_AUTO_TEST_CASE(iterator_string_ordering)
             std::string key{ToString(x)};
             for (int z = 0; z < y; ++z)
                 key += key;
-            uint32_t value = x*x;
+            uint32_t value = x * x;
             BOOST_CHECK(dbw.Write(StringContentsSerializer{key}, value));
         }
     }
@@ -401,7 +401,7 @@ BOOST_AUTO_TEST_CASE(iterator_string_ordering)
                 BOOST_CHECK(it->GetKey(key));
                 BOOST_CHECK(it->GetValue(value));
                 BOOST_CHECK_EQUAL(key.str, exp_key);
-                BOOST_CHECK_EQUAL(value, x*x);
+                BOOST_CHECK_EQUAL(value, x * x);
                 it->Next();
             }
         }

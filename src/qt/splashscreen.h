@@ -15,7 +15,7 @@ namespace interfaces {
 class Handler;
 class Node;
 class Wallet;
-};
+}; // namespace interfaces
 
 /** Class for the splashscreen with information of the running client.
  *
@@ -28,23 +28,23 @@ class SplashScreen : public QWidget
     Q_OBJECT
 
 public:
-    explicit SplashScreen(const NetworkStyle *networkStyle);
+    explicit SplashScreen(const NetworkStyle* networkStyle);
     ~SplashScreen();
     void setNode(interfaces::Node& node);
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
-    void closeEvent(QCloseEvent *event) override;
+    void paintEvent(QPaintEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 public Q_SLOTS:
     /** Show message and progress */
-    void showMessage(const QString &message, int alignment, const QColor &color);
+    void showMessage(const QString& message, int alignment, const QColor& color);
 
     /** Handle wallet load notifications. */
     void handleLoadWallet();
 
 protected:
-    bool eventFilter(QObject * obj, QEvent * ev) override;
+    bool eventFilter(QObject* obj, QEvent* ev) override;
 
 private:
     /** Connect core signals to splash screen */

@@ -6,6 +6,7 @@
 #include <chainparams.h>
 #include <consensus/merkle.h>
 #include <pow.h>
+#include <primitives/pureheader.h>
 #include <streams.h>
 #include <test/util/random.h>
 #include <test/util/txmempool.h>
@@ -18,7 +19,15 @@ const std::vector<CTransactionRef> empty_extra_txn;
 
 BOOST_FIXTURE_TEST_SUITE(blockencodings_tests, RegTestingSetup)
 
-static CMutableTransaction BuildTransactionTestCase() {
+static void SetBlockVersion(CPureBlockHeader& header, int32_t baseVersion)
+{
+    const int32_t nChainId = Params().GetConsensus().nAuxpowChainId;
+    header.SetBaseVersion(baseVersion, nChainId);
+}
+
+
+static CMutableTransaction BuildTransactionTestCase()
+{
     CMutableTransaction tx;
     tx.vin.resize(1);
     tx.vin[0].scriptSig.resize(10);
@@ -27,13 +36,14 @@ static CMutableTransaction BuildTransactionTestCase() {
     return tx;
 }
 
-static CBlock BuildBlockTestCase(FastRandomContext& ctx) {
+static CBlock BuildBlockTestCase(FastRandomContext& ctx)
+{
     CBlock block;
     CMutableTransaction tx = BuildTransactionTestCase();
 
     block.vtx.resize(3);
     block.vtx[0] = MakeTransactionRef(tx);
-    block.nVersion = 42;
+    SetBlockVersion(block, 42);
     block.hashPrevBlock = ctx.rand256();
     block.nBits = 0x207fffff;
 
@@ -51,7 +61,8 @@ static CBlock BuildBlockTestCase(FastRandomContext& ctx) {
     bool mutated;
     block.hashMerkleRoot = BlockMerkleRoot(block, &mutated);
     assert(!mutated);
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus())) ++block.nNonce;
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus()))
+        ++block.nNonce;
     return block;
 }
 
@@ -82,9 +93,9 @@ BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
 
         PartiallyDownloadedBlock partialBlock(&pool);
         BOOST_CHECK(partialBlock.InitData(shortIDs2, empty_extra_txn) == READ_STATUS_OK);
-        BOOST_CHECK( partialBlock.IsTxAvailable(0));
+        BOOST_CHECK(partialBlock.IsTxAvailable(0));
         BOOST_CHECK(!partialBlock.IsTxAvailable(1));
-        BOOST_CHECK( partialBlock.IsTxAvailable(2));
+        BOOST_CHECK(partialBlock.IsTxAvailable(2));
 
         BOOST_CHECK_EQUAL(pool.get(block.vtx[2]->GetHash()).use_count(), SHARED_TX_OFFSET + 1);
 
@@ -116,7 +127,8 @@ BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
     }
 }
 
-class TestHeaderAndShortIDs {
+class TestHeaderAndShortIDs
+{
     // Utility to encode custom CBlockHeaderAndShortTxIDs
 public:
     CBlockHeader header;
@@ -124,15 +136,16 @@ public:
     std::vector<uint64_t> shorttxids;
     std::vector<PrefilledTransaction> prefilledtxn;
 
-    explicit TestHeaderAndShortIDs(const CBlockHeaderAndShortTxIDs& orig) {
+    explicit TestHeaderAndShortIDs(const CBlockHeaderAndShortTxIDs& orig)
+    {
         DataStream stream{};
         stream << orig;
         stream >> *this;
     }
-    explicit TestHeaderAndShortIDs(const CBlock& block, FastRandomContext& ctx) :
-        TestHeaderAndShortIDs(CBlockHeaderAndShortTxIDs{block, ctx.rand64()}) {}
+    explicit TestHeaderAndShortIDs(const CBlock& block, FastRandomContext& ctx) : TestHeaderAndShortIDs(CBlockHeaderAndShortTxIDs{block, ctx.rand64()}) {}
 
-    uint64_t GetShortID(const Wtxid& txhash) const {
+    uint64_t GetShortID(const Wtxid& txhash) const
+    {
         DataStream stream{};
         stream << *this;
         CBlockHeaderAndShortTxIDs base;
@@ -174,8 +187,8 @@ BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
         PartiallyDownloadedBlock partialBlock(&pool);
         BOOST_CHECK(partialBlock.InitData(shortIDs2, empty_extra_txn) == READ_STATUS_OK);
         BOOST_CHECK(!partialBlock.IsTxAvailable(0));
-        BOOST_CHECK( partialBlock.IsTxAvailable(1));
-        BOOST_CHECK( partialBlock.IsTxAvailable(2));
+        BOOST_CHECK(partialBlock.IsTxAvailable(1));
+        BOOST_CHECK(partialBlock.IsTxAvailable(2));
 
         BOOST_CHECK_EQUAL(pool.get(block.vtx[2]->GetHash()).use_count(), SHARED_TX_OFFSET + 1); // +1 because of partialBlock
 
@@ -244,9 +257,9 @@ BOOST_AUTO_TEST_CASE(SufficientPreforwardRTTest)
 
         PartiallyDownloadedBlock partialBlock(&pool);
         BOOST_CHECK(partialBlock.InitData(shortIDs2, empty_extra_txn) == READ_STATUS_OK);
-        BOOST_CHECK( partialBlock.IsTxAvailable(0));
-        BOOST_CHECK( partialBlock.IsTxAvailable(1));
-        BOOST_CHECK( partialBlock.IsTxAvailable(2));
+        BOOST_CHECK(partialBlock.IsTxAvailable(0));
+        BOOST_CHECK(partialBlock.IsTxAvailable(1));
+        BOOST_CHECK(partialBlock.IsTxAvailable(2));
 
         BOOST_CHECK_EQUAL(pool.get(block.vtx[1]->GetHash()).use_count(), SHARED_TX_OFFSET + 1);
 
@@ -275,14 +288,15 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
     auto rand_ctx(FastRandomContext(uint256{42}));
     block.vtx.resize(1);
     block.vtx[0] = MakeTransactionRef(std::move(coinbase));
-    block.nVersion = 42;
+    SetBlockVersion(block, 42);
     block.hashPrevBlock = rand_ctx.rand256();
     block.nBits = 0x207fffff;
 
     bool mutated;
     block.hashMerkleRoot = BlockMerkleRoot(block, &mutated);
     assert(!mutated);
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus())) ++block.nNonce;
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus()))
+        ++block.nNonce;
 
     // Test simple header round-trip with only coinbase
     {
@@ -307,7 +321,8 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
     }
 }
 
-BOOST_AUTO_TEST_CASE(ReceiveWithExtraTransactions) {
+BOOST_AUTO_TEST_CASE(ReceiveWithExtraTransactions)
+{
     CTxMemPool& pool = *Assert(m_node.mempool);
     TestMemPoolEntryHelper entry;
     auto rand_ctx(FastRandomContext(uint256{42}));
@@ -325,7 +340,7 @@ BOOST_AUTO_TEST_CASE(ReceiveWithExtraTransactions) {
     AddToMempool(pool, entry.FromTx(block.vtx[2]));
     BOOST_CHECK_EQUAL(pool.get(block.vtx[2]->GetHash()).use_count(), SHARED_TX_OFFSET + 0);
     // Ensure the non_block_tx is actually not in the block
-    for (const auto &block_tx : block.vtx) {
+    for (const auto& block_tx : block.vtx) {
         BOOST_CHECK_NE(block_tx->GetHash(), non_block_tx->GetHash());
     }
     // Ensure block.vtx[1] is not in pool
@@ -337,9 +352,9 @@ BOOST_AUTO_TEST_CASE(ReceiveWithExtraTransactions) {
         PartiallyDownloadedBlock partial_block_with_extra(&pool);
 
         BOOST_CHECK(partial_block.InitData(cmpctblock, extra_txn) == READ_STATUS_OK);
-        BOOST_CHECK( partial_block.IsTxAvailable(0));
+        BOOST_CHECK(partial_block.IsTxAvailable(0));
         BOOST_CHECK(!partial_block.IsTxAvailable(1));
-        BOOST_CHECK( partial_block.IsTxAvailable(2));
+        BOOST_CHECK(partial_block.IsTxAvailable(2));
 
         // Add an unrelated tx to extra_txn:
         extra_txn[0] = non_block_tx;
@@ -354,7 +369,8 @@ BOOST_AUTO_TEST_CASE(ReceiveWithExtraTransactions) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(TransactionsRequestSerializationTest) {
+BOOST_AUTO_TEST_CASE(TransactionsRequestSerializationTest)
+{
     BlockTransactionsRequest req1;
     req1.blockhash = m_rng.rand256();
     req1.indexes.resize(4);
@@ -377,7 +393,8 @@ BOOST_AUTO_TEST_CASE(TransactionsRequestSerializationTest) {
     BOOST_CHECK_EQUAL(req1.indexes[3], req2.indexes[3]);
 }
 
-BOOST_AUTO_TEST_CASE(TransactionsRequestDeserializationMaxTest) {
+BOOST_AUTO_TEST_CASE(TransactionsRequestDeserializationMaxTest)
+{
     // Check that the highest legal index is decoded correctly
     BlockTransactionsRequest req0;
     req0.blockhash = m_rng.rand256();
@@ -392,7 +409,8 @@ BOOST_AUTO_TEST_CASE(TransactionsRequestDeserializationMaxTest) {
     BOOST_CHECK_EQUAL(req0.indexes[0], req1.indexes[0]);
 }
 
-BOOST_AUTO_TEST_CASE(TransactionsRequestDeserializationOverflowTest) {
+BOOST_AUTO_TEST_CASE(TransactionsRequestDeserializationOverflowTest)
+{
     // Any set of index deltas that starts with N values that sum to (0x10000 - N)
     // causes the edge-case overflow that was originally not checked for. Such
     // a request cannot be created by serializing a real BlockTransactionsRequest
@@ -417,7 +435,7 @@ BOOST_AUTO_TEST_CASE(TransactionsRequestDeserializationOverflowTest) {
         BOOST_CHECK(req1.indexes[1] < req1.indexes[2]);
         // this shouldn't be reachable before or after patch
         BOOST_CHECK(0);
-    } catch(std::ios_base::failure &) {
+    } catch (std::ios_base::failure&) {
         // deserialize should fail
         BOOST_CHECK(true); // Needed to suppress "Test case [...] did not check any assertions"
     }

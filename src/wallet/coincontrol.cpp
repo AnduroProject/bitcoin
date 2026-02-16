@@ -58,9 +58,9 @@ std::vector<COutPoint> CCoinControl::ListSelected() const
 {
     std::vector<COutPoint> outpoints;
     std::transform(m_selected.begin(), m_selected.end(), std::back_inserter(outpoints),
-        [](const std::map<COutPoint, PreselectedInput>::value_type& pair) {
-            return pair.first;
-        });
+                   [](const std::map<COutPoint, PreselectedInput>::value_type& pair) {
+                       return pair.first;
+                   });
     return outpoints;
 }
 

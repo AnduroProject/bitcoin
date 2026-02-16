@@ -20,7 +20,9 @@
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <rpc/blockchain.h>
+#include <rpc/coordinaterpc.h>
 #include <rpc/mempool.h>
+#include <rpc/preconf_mempool.h>
 #include <rpc/protocol.h>
 #include <rpc/server.h>
 #include <rpc/server_util.h>
@@ -42,17 +44,17 @@ using node::GetTransaction;
 using node::NodeContext;
 using util::SplitString;
 
-static const size_t MAX_GETUTXOS_OUTPOINTS = 15; //allow a max of 15 outpoints to be queried at once
+static const size_t MAX_GETUTXOS_OUTPOINTS = 15; // allow a max of 15 outpoints to be queried at once
 static constexpr unsigned int MAX_REST_HEADERS_RESULTS = 2000;
 
 static const struct {
     RESTResponseFormat rf;
     const char* name;
 } rf_names[] = {
-      {RESTResponseFormat::UNDEF, ""},
-      {RESTResponseFormat::BINARY, "bin"},
-      {RESTResponseFormat::HEX, "hex"},
-      {RESTResponseFormat::JSON, "json"},
+    {RESTResponseFormat::UNDEF, ""},
+    {RESTResponseFormat::BINARY, "bin"},
+    {RESTResponseFormat::HEX, "hex"},
+    {RESTResponseFormat::JSON, "json"},
 };
 
 struct CCoin {
@@ -181,7 +183,7 @@ static bool CheckWarmup(HTTPRequest* req)
 {
     std::string statusmessage;
     if (RPCIsInWarmup(&statusmessage))
-         return RESTERR(req, HTTP_SERVICE_UNAVAILABLE, "Service temporarily unavailable: " + statusmessage);
+        return RESTERR(req, HTTP_SERVICE_UNAVAILABLE, "Service temporarily unavailable: " + statusmessage);
     return true;
 }
 
@@ -229,6 +231,7 @@ static bool rest_headers(const std::any& context,
     ChainstateManager* maybe_chainman = GetChainman(context, req);
     if (!maybe_chainman) return false;
     ChainstateManager& chainman = *maybe_chainman;
+    const node::BlockManager& blockman = chainman.m_blockman;
     {
         LOCK(cs_main);
         CChain& active_chain = chainman.ActiveChain();
@@ -246,8 +249,8 @@ static bool rest_headers(const std::any& context,
     switch (rf) {
     case RESTResponseFormat::BINARY: {
         DataStream ssHeader{};
-        for (const CBlockIndex *pindex : headers) {
-            ssHeader << pindex->GetBlockHeader();
+        for (const CBlockIndex* pindex : headers) {
+            ssHeader << pindex->GetBlockHeader(blockman);
         }
 
         req->WriteHeader("Content-Type", "application/octet-stream");
@@ -257,8 +260,8 @@ static bool rest_headers(const std::any& context,
 
     case RESTResponseFormat::HEX: {
         DataStream ssHeader{};
-        for (const CBlockIndex *pindex : headers) {
-            ssHeader << pindex->GetBlockHeader();
+        for (const CBlockIndex* pindex : headers) {
+            ssHeader << pindex->GetBlockHeader(blockman);
         }
 
         std::string strHex = HexStr(ssHeader) + "\n";
@@ -268,8 +271,8 @@ static bool rest_headers(const std::any& context,
     }
     case RESTResponseFormat::JSON: {
         UniValue jsonHeaders(UniValue::VARR);
-        for (const CBlockIndex *pindex : headers) {
-            jsonHeaders.push_back(blockheaderToJSON(*tip, *pindex, chainman.GetConsensus().powLimit));
+        for (const CBlockIndex* pindex : headers) {
+            jsonHeaders.push_back(blockheaderToJSON(blockman, *tip, *pindex, chainman.GetConsensus().powLimit));
         }
         std::string strJSON = jsonHeaders.write() + "\n";
         req->WriteHeader("Content-Type", "application/json");
@@ -751,7 +754,6 @@ static bool rest_deploymentinfo(const std::any& context, HTTPRequest* req, const
         return RESTERR(req, HTTP_NOT_FOUND, "output format not found (available: json)");
     }
     }
-
 }
 
 static bool rest_mempool(const std::any& context, HTTPRequest* req, const std::string& str_uri_part)
@@ -856,7 +858,7 @@ static bool rest_tx(const std::any& context, HTTPRequest* req, const std::string
 
     case RESTResponseFormat::JSON: {
         UniValue objTx(UniValue::VOBJ);
-        TxToUniv(*tx, /*block_hash=*/hashBlock, /*entry=*/ objTx);
+        TxToUniv(*tx, /*block_hash=*/hashBlock, /*entry=*/objTx);
         std::string strJSON = objTx.write() + "\n";
         req->WriteHeader("Content-Type", "application/json");
         req->WriteReply(HTTP_OK, strJSON);
@@ -877,8 +879,7 @@ static bool rest_getutxos(const std::any& context, HTTPRequest* req, const std::
     const RESTResponseFormat rf = ParseDataFormat(param, uri_part);
 
     std::vector<std::string> uriParts;
-    if (param.length() > 1)
-    {
+    if (param.length() > 1) {
         std::string strUriParams = param.substr(1);
         uriParts = SplitString(strUriParams, '/');
     }
@@ -895,13 +896,11 @@ static bool rest_getutxos(const std::any& context, HTTPRequest* req, const std::
     // parse/deserialize input
     // input-format = output-format, rest/getutxos/bin requires binary input, gives binary output, ...
 
-    if (uriParts.size() > 0)
-    {
-        //inputs is sent over URI scheme (/rest/getutxos/checkmempool/txid1-n/txid2-n/...)
+    if (uriParts.size() > 0) {
+        // inputs is sent over URI scheme (/rest/getutxos/checkmempool/txid1-n/txid2-n/...)
         if (uriParts[0] == "checkmempool") fCheckMemPool = true;
 
-        for (size_t i = (fCheckMemPool) ? 1 : 0; i < uriParts.size(); i++)
-        {
+        for (size_t i = (fCheckMemPool) ? 1 : 0; i < uriParts.size(); i++) {
             const auto txid_out{util::Split<std::string_view>(uriParts[i], '-')};
             if (txid_out.size() != 2) {
                 return RESTERR(req, HTTP_BAD_REQUEST, "Parse error");
@@ -932,10 +931,9 @@ static bool rest_getutxos(const std::any& context, HTTPRequest* req, const std::
 
     case RESTResponseFormat::BINARY: {
         try {
-            //deserialize only if user sent a request
-            if (strRequestMutable.size() > 0)
-            {
-                if (fInputParsed) //don't allow sending input over URI and HTTP RAW DATA
+            // deserialize only if user sent a request
+            if (strRequestMutable.size() > 0) {
+                if (fInputParsed) // don't allow sending input over URI and HTTP RAW DATA
                     return RESTERR(req, HTTP_BAD_REQUEST, "Combination of URI scheme inputs and raw post data is not allowed");
 
                 DataStream oss{};
@@ -1064,7 +1062,7 @@ static bool rest_getutxos(const std::any& context, HTTPRequest* req, const std::
 }
 
 static bool rest_blockhash_by_height(const std::any& context, HTTPRequest* req,
-                       const std::string& str_uri_part)
+                                     const std::string& str_uri_part)
 {
     if (!CheckWarmup(req)) return false;
     std::string height_str;
@@ -1117,19 +1115,19 @@ static const struct {
     const char* prefix;
     bool (*handler)(const std::any& context, HTTPRequest* req, const std::string& strReq);
 } uri_prefixes[] = {
-      {"/rest/tx/", rest_tx},
-      {"/rest/block/notxdetails/", rest_block_notxdetails},
-      {"/rest/block/", rest_block_extended},
-      {"/rest/blockfilter/", rest_block_filter},
-      {"/rest/blockfilterheaders/", rest_filter_header},
-      {"/rest/chaininfo", rest_chaininfo},
-      {"/rest/mempool/", rest_mempool},
-      {"/rest/headers/", rest_headers},
-      {"/rest/getutxos", rest_getutxos},
-      {"/rest/deploymentinfo/", rest_deploymentinfo},
-      {"/rest/deploymentinfo", rest_deploymentinfo},
-      {"/rest/blockhashbyheight/", rest_blockhash_by_height},
-      {"/rest/spenttxouts/", rest_spent_txouts},
+    {"/rest/tx/", rest_tx},
+    {"/rest/block/notxdetails/", rest_block_notxdetails},
+    {"/rest/block/", rest_block_extended},
+    {"/rest/blockfilter/", rest_block_filter},
+    {"/rest/blockfilterheaders/", rest_filter_header},
+    {"/rest/chaininfo", rest_chaininfo},
+    {"/rest/mempool/", rest_mempool},
+    {"/rest/headers/", rest_headers},
+    {"/rest/getutxos", rest_getutxos},
+    {"/rest/deploymentinfo/", rest_deploymentinfo},
+    {"/rest/deploymentinfo", rest_deploymentinfo},
+    {"/rest/blockhashbyheight/", rest_blockhash_by_height},
+    {"/rest/spenttxouts/", rest_spent_txouts},
 };
 
 void StartREST(const std::any& context)

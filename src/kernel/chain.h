@@ -5,7 +5,7 @@
 #ifndef BITCOIN_KERNEL_CHAIN_H
 #define BITCOIN_KERNEL_CHAIN_H
 
-#include<iostream>
+#include <iostream>
 
 class CBlock;
 class CBlockIndex;

@@ -56,9 +56,9 @@ struct AssumeutxoData {
  * See also: CChainParams::TxData, GuessVerificationProgress.
  */
 struct ChainTxData {
-    int64_t nTime;    //!< UNIX timestamp of last known number of transactions
+    int64_t nTime;     //!< UNIX timestamp of last known number of transactions
     uint64_t tx_count; //!< total number of transactions between genesis and that timestamp
-    double dTxRate;   //!< estimated number of transactions per second after that timestamp
+    double dTxRate;    //!< estimated number of transactions per second after that timestamp
 };
 
 /**
@@ -91,6 +91,7 @@ public:
     /** If this chain allows time to be mocked */
     bool IsMockableChain() const { return m_is_mockable_chain; }
     uint64_t PruneAfterHeight() const { return nPruneAfterHeight; }
+    uint64_t AssetPruneAfterHeight() const { return nAssetPruneAfterHeight; }
     /** Minimum free space (in GB) needed for data directory */
     uint64_t AssumedBlockchainSize() const { return m_assumed_blockchain_size; }
     /** Minimum free space (in GB) needed for data directory when pruned; Does not include prune target*/
@@ -105,7 +106,11 @@ public:
     const std::vector<std::string>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     const std::string& Bech32HRP() const { return bech32_hrp; }
+    const std::string& ParentBech32HRP() const { return parent_bech32_hrp; }
     const std::vector<uint8_t>& FixedSeeds() const { return vFixedSeeds; }
+
+    const uint256& ParentGenesisBlockHash() const { return parentGenesisBlockHash; }
+    const uint256& ParentPowList() const { return parentPowLimit; }
 
     std::optional<AssumeutxoData> AssumeutxoForHeight(int height) const
     {
@@ -158,11 +163,13 @@ protected:
     MessageStartChars pchMessageStart;
     uint16_t nDefaultPort;
     uint64_t nPruneAfterHeight;
+    uint64_t nAssetPruneAfterHeight;
     uint64_t m_assumed_blockchain_size;
     uint64_t m_assumed_chain_state_size;
     std::vector<std::string> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     std::string bech32_hrp;
+    std::string parent_bech32_hrp;
     ChainType m_chain_type;
     CBlock genesis;
     std::vector<uint8_t> vFixedSeeds;
@@ -170,6 +177,8 @@ protected:
     bool m_is_mockable_chain;
     std::vector<AssumeutxoData> m_assumeutxo_data;
     ChainTxData chainTxData;
+    uint256 parentGenesisBlockHash;
+    uint256 parentPowLimit;
 };
 
 std::optional<ChainType> GetNetworkForMagic(const MessageStartChars& pchMessageStart);

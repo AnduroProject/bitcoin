@@ -26,8 +26,7 @@ constexpr uint32_t MAX_CACHES = 4;
 /** Data type large enough to hold NUM_COINS-1. */
 using coinidx_type = uint8_t;
 
-struct PrecomputedData
-{
+struct PrecomputedData {
     //! Randomly generated COutPoint values.
     COutPoint outpoints[NUM_OUTPOINTS];
 
@@ -100,8 +99,7 @@ struct PrecomputedData
     }
 };
 
-enum class EntryType : uint8_t
-{
+enum class EntryType : uint8_t {
     /* This entry in the cache does not exist (so we'd have to look in the parent cache). */
     NONE,
 
@@ -112,8 +110,7 @@ enum class EntryType : uint8_t
     SPENT,
 };
 
-struct CacheEntry
-{
+struct CacheEntry {
     /* Type of entry. */
     EntryType entrytype;
 
@@ -124,11 +121,11 @@ struct CacheEntry
     uint32_t height;
 };
 
-struct CacheLevel
-{
+struct CacheLevel {
     CacheEntry entry[NUM_OUTPOINTS];
 
-    void Wipe() {
+    void Wipe()
+    {
         for (uint32_t i = 0; i < NUM_OUTPOINTS; ++i) {
             entry[i].entrytype = EntryType::NONE;
         }
@@ -242,7 +239,8 @@ FUZZ_TARGET(coinscache_sim)
     // Main simulation loop: read commands from the fuzzer input, and apply them
     // to both the real cache stack and the simulation.
     FuzzedDataProvider provider(buffer.data(), buffer.size());
-    LIMITED_WHILE(provider.remaining_bytes(), 10000) {
+    LIMITED_WHILE(provider.remaining_bytes(), 10000)
+    {
         // Every operation (except "Change height") moves current height forward,
         // so it functions as a kind of epoch, making ~all UTXOs unique.
         ++current_height;
@@ -341,7 +339,11 @@ FUZZ_TARGET(coinscache_sim)
             [&]() { // SpendCoin (moveto = nullptr)
                 uint32_t outpointidx = provider.ConsumeIntegralInRange<uint32_t>(0, NUM_OUTPOINTS - 1);
                 // Invoke on real caches.
-                caches.back()->SpendCoin(data.outpoints[outpointidx], nullptr);
+                bool fBitAsset = false;
+                bool fBitAssetControl = false;
+                bool isPreconf = false;
+                std::vector<unsigned char> nAssetID = {};
+                caches.back()->SpendCoin(data.outpoints[outpointidx], fBitAsset, fBitAssetControl, isPreconf, nAssetID, nullptr);
                 // Apply to simulation data.
                 sim_caches[caches.size()].entry[outpointidx].entrytype = EntryType::SPENT;
             },
@@ -352,7 +354,11 @@ FUZZ_TARGET(coinscache_sim)
                 auto sim = lookup(outpointidx);
                 // Invoke on real caches.
                 Coin realcoin;
-                caches.back()->SpendCoin(data.outpoints[outpointidx], &realcoin);
+                bool fBitAsset = false;
+                bool fBitAssetControl = false;
+                bool isPreconf = false;
+                std::vector<unsigned char> nAssetID = {};
+                caches.back()->SpendCoin(data.outpoints[outpointidx], fBitAsset, fBitAssetControl, isPreconf, nAssetID, &realcoin);
                 // Apply to simulation data.
                 sim_caches[caches.size()].entry[outpointidx].entrytype = EntryType::SPENT;
                 // Compare *moveto with the value expected based on simulation data.
@@ -420,8 +426,7 @@ FUZZ_TARGET(coinscache_sim)
 
             [&]() { // Change height
                 current_height = provider.ConsumeIntegralInRange<uint32_t>(1, current_height - 1);
-            }
-        );
+            });
     }
 
     // Sanity check all the remaining caches

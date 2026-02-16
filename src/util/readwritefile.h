@@ -18,11 +18,11 @@
  * @param maxsize Puts a maximum size limit on the file that is read. If the file is larger than this, truncated data
  *         (with len > maxsize) will be returned.
  */
-std::pair<bool,std::string> ReadBinaryFile(const fs::path &filename, size_t maxsize=std::numeric_limits<size_t>::max());
+std::pair<bool, std::string> ReadBinaryFile(const fs::path& filename, size_t maxsize = std::numeric_limits<size_t>::max());
 
 /** Write contents of std::string to a file.
  * @return true on success.
  */
-bool WriteBinaryFile(const fs::path &filename, const std::string &data);
+bool WriteBinaryFile(const fs::path& filename, const std::string& data);
 
 #endif // BITCOIN_UTIL_READWRITEFILE_H

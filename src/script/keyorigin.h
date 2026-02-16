@@ -8,8 +8,7 @@
 #include <serialize.h>
 #include <vector>
 
-struct KeyOriginInfo
-{
+struct KeyOriginInfo {
     unsigned char fingerprint[4]; //!< First 32 bits of the Hash160 of the public key at the root of the path
     std::vector<uint32_t> path;
 

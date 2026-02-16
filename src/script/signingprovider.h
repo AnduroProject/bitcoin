@@ -14,8 +14,7 @@
 #include <script/script.h>
 #include <sync.h>
 
-struct ShortestVectorFirstComparator
-{
+struct ShortestVectorFirstComparator {
     bool operator()(const std::vector<unsigned char>& a, const std::vector<unsigned char>& b) const
     {
         if (a.size() < b.size()) return true;
@@ -24,8 +23,7 @@ struct ShortestVectorFirstComparator
     }
 };
 
-struct TaprootSpendData
-{
+struct TaprootSpendData {
     /** The BIP341 internal key. */
     XOnlyPubKey internal_key;
     /** The Merkle root of the script tree (0 if no scripts). */
@@ -46,16 +44,14 @@ class TaprootBuilder
 {
 private:
     /** Information about a tracked leaf in the Merkle tree. */
-    struct LeafInfo
-    {
-        std::vector<unsigned char> script;   //!< The script.
-        int leaf_version;                    //!< The leaf version for that script.
-        std::vector<uint256> merkle_branch;  //!< The hashing partners above this leaf.
+    struct LeafInfo {
+        std::vector<unsigned char> script;  //!< The script.
+        int leaf_version;                   //!< The leaf version for that script.
+        std::vector<uint256> merkle_branch; //!< The hashing partners above this leaf.
     };
 
     /** Information associated with a node in the Merkle tree. */
-    struct NodeInfo
-    {
+    struct NodeInfo {
         /** Merkle hash of this node. */
         uint256 hash;
         /** Tracked leaves underneath this node (either from the node itself, or its children).
@@ -102,9 +98,9 @@ private:
      */
     std::vector<std::optional<NodeInfo>> m_branch;
 
-    XOnlyPubKey m_internal_key;  //!< The internal key, set when finalizing.
-    XOnlyPubKey m_output_key;    //!< The output key, computed when finalizing.
-    bool m_parity;               //!< The tweak parity, computed when finalizing.
+    XOnlyPubKey m_internal_key; //!< The internal key, set when finalizing.
+    XOnlyPubKey m_output_key;   //!< The output key, computed when finalizing.
+    bool m_parity;              //!< The tweak parity, computed when finalizing.
 
     /** Combine information about a parent Merkle tree node from its child nodes. */
     static NodeInfo Combine(NodeInfo&& a, NodeInfo&& b);
@@ -153,11 +149,11 @@ class SigningProvider
 {
 public:
     virtual ~SigningProvider() = default;
-    virtual bool GetCScript(const CScriptID &scriptid, CScript& script) const { return false; }
-    virtual bool HaveCScript(const CScriptID &scriptid) const { return false; }
-    virtual bool GetPubKey(const CKeyID &address, CPubKey& pubkey) const { return false; }
-    virtual bool GetKey(const CKeyID &address, CKey& key) const { return false; }
-    virtual bool HaveKey(const CKeyID &address) const { return false; }
+    virtual bool GetCScript(const CScriptID& scriptid, CScript& script) const { return false; }
+    virtual bool HaveCScript(const CScriptID& scriptid) const { return false; }
+    virtual bool GetPubKey(const CKeyID& address, CPubKey& pubkey) const { return false; }
+    virtual bool GetKey(const CKeyID& address, CKey& key) const { return false; }
+    virtual bool HaveKey(const CKeyID& address) const { return false; }
     virtual bool GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const { return false; }
     virtual bool GetTaprootSpendData(const XOnlyPubKey& output_key, TaprootSpendData& spenddata) const { return false; }
     virtual bool GetTaprootBuilder(const XOnlyPubKey& output_key, TaprootBuilder& builder) const { return false; }
@@ -208,19 +204,18 @@ public:
     std::vector<CPubKey> GetMuSig2ParticipantPubkeys(const CPubKey& pubkey) const override;
 };
 
-struct FlatSigningProvider final : public SigningProvider
-{
+struct FlatSigningProvider final : public SigningProvider {
     std::map<CScriptID, CScript> scripts;
     std::map<CKeyID, CPubKey> pubkeys;
     std::map<CKeyID, std::pair<CPubKey, KeyOriginInfo>> origins;
     std::map<CKeyID, CKey> keys;
-    std::map<XOnlyPubKey, TaprootBuilder> tr_trees; /** Map from output key to Taproot tree (which can then make the TaprootSpendData */
+    std::map<XOnlyPubKey, TaprootBuilder> tr_trees;            /** Map from output key to Taproot tree (which can then make the TaprootSpendData */
     std::map<CPubKey, std::vector<CPubKey>> aggregate_pubkeys; /** MuSig2 aggregate pubkeys */
 
     bool GetCScript(const CScriptID& scriptid, CScript& script) const override;
     bool GetPubKey(const CKeyID& keyid, CPubKey& pubkey) const override;
     bool GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const override;
-    bool HaveKey(const CKeyID &keyid) const override;
+    bool HaveKey(const CKeyID& keyid) const override;
     bool GetKey(const CKeyID& keyid, CKey& key) const override;
     bool GetTaprootSpendData(const XOnlyPubKey& output_key, TaprootSpendData& spenddata) const override;
     bool GetTaprootBuilder(const XOnlyPubKey& output_key, TaprootBuilder& builder) const override;
@@ -290,23 +285,24 @@ protected:
 public:
     mutable RecursiveMutex cs_KeyStore;
 
-    virtual bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey);
-    virtual bool AddKey(const CKey &key) { return AddKeyPubKey(key, key.GetPubKey()); }
-    virtual bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const override;
-    virtual bool HaveKey(const CKeyID &address) const override;
+    virtual bool AddKeyPubKey(const CKey& key, const CPubKey& pubkey);
+    virtual bool AddKey(const CKey& key) { return AddKeyPubKey(key, key.GetPubKey()); }
+    virtual bool GetPubKey(const CKeyID& address, CPubKey& vchPubKeyOut) const override;
+    virtual bool HaveKey(const CKeyID& address) const override;
     virtual std::set<CKeyID> GetKeys() const;
-    virtual bool GetKey(const CKeyID &address, CKey &keyOut) const override;
+    virtual bool GetKey(const CKeyID& address, CKey& keyOut) const override;
     virtual bool AddCScript(const CScript& redeemScript);
-    virtual bool HaveCScript(const CScriptID &hash) const override;
+    virtual bool HaveCScript(const CScriptID& hash) const override;
     virtual std::set<CScriptID> GetCScripts() const;
-    virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const override;
+    virtual bool GetCScript(const CScriptID& hash, CScript& redeemScriptOut) const override;
 };
 
 /** Return the CKeyID of the key involved in a script (if there is a unique one). */
 CKeyID GetKeyForDestination(const SigningProvider& store, const CTxDestination& dest);
 
 /** A signing provider to be used to interface with multiple signing providers at once. */
-class MultiSigningProvider: public SigningProvider {
+class MultiSigningProvider : public SigningProvider
+{
     std::vector<std::unique_ptr<SigningProvider>> m_providers;
 
 public:

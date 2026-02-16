@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <qt/receiverequestdialog.h>
 #include <qt/forms/ui_receiverequestdialog.h>
+#include <qt/receiverequestdialog.h>
 
 #include <qt/bitcoinunits.h>
 #include <qt/guiutil.h>
@@ -29,7 +29,7 @@ ReceiveRequestDialog::~ReceiveRequestDialog()
     delete ui;
 }
 
-void ReceiveRequestDialog::setModel(WalletModel *_model)
+void ReceiveRequestDialog::setModel(WalletModel* _model)
 {
     this->model = _model;
 
@@ -40,7 +40,7 @@ void ReceiveRequestDialog::setModel(WalletModel *_model)
     update();
 }
 
-void ReceiveRequestDialog::setInfo(const SendCoinsRecipient &_info)
+void ReceiveRequestDialog::setInfo(const SendCoinsRecipient& _info)
 {
     this->info = _info;
     setWindowTitle(tr("Request payment to %1").arg(info.label.isEmpty() ? info.address : info.label));

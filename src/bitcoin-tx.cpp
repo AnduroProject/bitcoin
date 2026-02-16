@@ -38,12 +38,12 @@ using util::TrimString;
 using util::TrimStringView;
 
 static bool fCreateBlank;
-static std::map<std::string,UniValue> registers;
-static const int CONTINUE_EXECUTION=-1;
+static std::map<std::string, UniValue> registers;
+static const int CONTINUE_EXECUTION = -1;
 
 const TranslateFn G_TRANSLATION_FUN{nullptr};
 
-static void SetupBitcoinTxArgs(ArgsManager &argsman)
+static void SetupBitcoinTxArgs(ArgsManager& argsman)
 {
     SetupHelpOptions(argsman);
 
@@ -61,22 +61,27 @@ static void SetupBitcoinTxArgs(ArgsManager &argsman)
     argsman.AddArg("outaddr=VALUE:ADDRESS", "Add address-based output to TX", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
     argsman.AddArg("outdata=[VALUE:]DATA", "Add data-based output to TX", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
     argsman.AddArg("outmultisig=VALUE:REQUIRED:PUBKEYS:PUBKEY1:PUBKEY2:....[:FLAGS]", "Add Pay To n-of-m Multi-sig output to TX. n = REQUIRED, m = PUBKEYS. "
-        "Optionally add the \"W\" flag to produce a pay-to-witness-script-hash output. "
-        "Optionally add the \"S\" flag to wrap the output in a pay-to-script-hash.", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
+                                                                                      "Optionally add the \"W\" flag to produce a pay-to-witness-script-hash output. "
+                                                                                      "Optionally add the \"S\" flag to wrap the output in a pay-to-script-hash.",
+                   ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
     argsman.AddArg("outpubkey=VALUE:PUBKEY[:FLAGS]", "Add pay-to-pubkey output to TX. "
-        "Optionally add the \"W\" flag to produce a pay-to-witness-pubkey-hash output. "
-        "Optionally add the \"S\" flag to wrap the output in a pay-to-script-hash.", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
+                                                     "Optionally add the \"W\" flag to produce a pay-to-witness-pubkey-hash output. "
+                                                     "Optionally add the \"S\" flag to wrap the output in a pay-to-script-hash.",
+                   ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
     argsman.AddArg("outscript=VALUE:SCRIPT[:FLAGS]", "Add raw script output to TX. "
-        "Optionally add the \"W\" flag to produce a pay-to-witness-script-hash output. "
-        "Optionally add the \"S\" flag to wrap the output in a pay-to-script-hash.", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
+                                                     "Optionally add the \"W\" flag to produce a pay-to-witness-script-hash output. "
+                                                     "Optionally add the \"S\" flag to wrap the output in a pay-to-script-hash.",
+                   ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
     argsman.AddArg("replaceable(=N)", "Sets Replace-By-Fee (RBF) opt-in sequence number for input N. "
-        "If N is not provided, the command attempts to opt-in all available inputs for RBF. "
-        "If the transaction has no inputs, this option is ignored.", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
+                                      "If N is not provided, the command attempts to opt-in all available inputs for RBF. "
+                                      "If the transaction has no inputs, this option is ignored.",
+                   ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
     argsman.AddArg("sign=SIGHASH-FLAGS", "Add zero or more signatures to transaction. "
-        "This command requires JSON registers:"
-        "prevtxs=JSON object, "
-        "privatekeys=JSON object. "
-        "See signrawtransactionwithkey docs for format of sighash flags, JSON objects.", ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
+                                         "This command requires JSON registers:"
+                                         "prevtxs=JSON object, "
+                                         "privatekeys=JSON object. "
+                                         "See signrawtransactionwithkey docs for format of sighash flags, JSON objects.",
+                   ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
 
     argsman.AddArg("load=NAME:FILENAME", "Load JSON file FILENAME into register NAME", ArgsManager::ALLOW_ANY, OptionsCategory::REGISTER_COMMANDS);
     argsman.AddArg("set=NAME:JSON-STRING", "Set register NAME to given JSON-STRING", ArgsManager::ALLOW_ANY, OptionsCategory::REGISTER_COMMANDS);
@@ -113,12 +118,12 @@ static int AppInitRawTx(int argc, char* argv[])
             strUsage += FormatParagraph(LicenseInfo());
         } else {
             strUsage += "\n"
-                "The bitcoin-tx tool is used for creating and modifying bitcoin transactions.\n\n"
-                "bitcoin-tx can be used with \"<hex-tx> [commands]\" to update a hex-encoded bitcoin transaction, or with \"-create [commands]\" to create a hex-encoded bitcoin transaction.\n"
-                "\n"
-                "Usage: bitcoin-tx [options] <hex-tx> [commands]\n"
-                "or:    bitcoin-tx [options] -create [commands]\n"
-                "\n";
+                        "The bitcoin-tx tool is used for creating and modifying bitcoin transactions.\n\n"
+                        "bitcoin-tx can be used with \"<hex-tx> [commands]\" to update a hex-encoded bitcoin transaction, or with \"-create [commands]\" to create a hex-encoded bitcoin transaction.\n"
+                        "\n"
+                        "Usage: bitcoin-tx [options] <hex-tx> [commands]\n"
+                        "or:    bitcoin-tx [options] -create [commands]\n"
+                        "\n";
             strUsage += gArgs.GetHelpMessage();
         }
 
@@ -171,7 +176,7 @@ static void RegisterLoad(const std::string& strInput)
     std::string key = strInput.substr(0, pos);
     std::string filename = strInput.substr(pos + 1, std::string::npos);
 
-    FILE *f = fsbridge::fopen(filename.c_str(), "r");
+    FILE* f = fsbridge::fopen(filename.c_str(), "r");
     if (!f) {
         std::string strErr = "Cannot open file " + filename;
         throw std::runtime_error(strErr);
@@ -261,7 +266,7 @@ static void MutateTxAddInput(CMutableTransaction& tx, const std::string& strInpu
     std::vector<std::string> vStrInputParts = SplitString(strInput, ':');
 
     // separate TXID:VOUT in string
-    if (vStrInputParts.size()<2)
+    if (vStrInputParts.size() < 2)
         throw std::runtime_error("TX input missing separator");
 
     // extract and validate TXID
@@ -364,7 +369,7 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
     std::vector<std::string> vStrInputParts = SplitString(strInput, ':');
 
     // Check that there are enough parameters
-    if (vStrInputParts.size()<3)
+    if (vStrInputParts.size() < 3)
         throw std::runtime_error("Not enough multisig parameters");
 
     // Extract and validate VALUE
@@ -381,12 +386,11 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
         throw std::runtime_error("incorrect number of multisig pubkeys");
 
     if (required < 1 || required > MAX_PUBKEYS_PER_MULTISIG || numkeys < 1 || numkeys > MAX_PUBKEYS_PER_MULTISIG || numkeys < required)
-        throw std::runtime_error("multisig parameter mismatch. Required " \
-                            + ToString(required) + " of " + ToString(numkeys) + "signatures.");
+        throw std::runtime_error("multisig parameter mismatch. Required " + ToString(required) + " of " + ToString(numkeys) + "signatures.");
 
     // extract and validate PUBKEYs
     std::vector<CPubKey> pubkeys;
-    for(int pos = 1; pos <= int(numkeys); pos++) {
+    for (int pos = 1; pos <= int(numkeys); pos++) {
         CPubKey pubkey(ParseHex(vStrInputParts[pos + 2]));
         if (!pubkey.IsFullyValid())
             throw std::runtime_error("invalid TX output pubkey");
@@ -400,8 +404,7 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
         const std::string& flags = vStrInputParts.back();
         bSegWit = (flags.find('W') != std::string::npos);
         bScriptHash = (flags.find('S') != std::string::npos);
-    }
-    else if (vStrInputParts.size() > numkeys + 4) {
+    } else if (vStrInputParts.size() > numkeys + 4) {
         // Validate that there were no more parameters passed
         throw std::runtime_error("Too many parameters");
     }
@@ -420,7 +423,7 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
     if (bScriptHash) {
         if (scriptPubKey.size() > MAX_SCRIPT_ELEMENT_SIZE) {
             throw std::runtime_error(strprintf(
-                        "redeemScript exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_ELEMENT_SIZE));
+                "redeemScript exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_ELEMENT_SIZE));
         }
         // Get the ID for the script, and then construct a P2SH destination for it.
         scriptPubKey = GetScriptForDestination(ScriptHash(scriptPubKey));
@@ -438,7 +441,7 @@ static void MutateTxAddOutData(CMutableTransaction& tx, const std::string& strIn
     // separate [VALUE:]DATA in string
     size_t pos = strInput.find(':');
 
-    if (pos==0)
+    if (pos == 0)
         throw std::runtime_error("TX output value not specified");
 
     if (pos == std::string::npos) {
@@ -486,7 +489,7 @@ static void MutateTxAddOutScript(CMutableTransaction& tx, const std::string& str
 
     if (scriptPubKey.size() > MAX_SCRIPT_SIZE) {
         throw std::runtime_error(strprintf(
-                    "script exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_SIZE));
+            "script exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_SIZE));
     }
 
     if (bSegWit) {
@@ -495,7 +498,7 @@ static void MutateTxAddOutScript(CMutableTransaction& tx, const std::string& str
     if (bScriptHash) {
         if (scriptPubKey.size() > MAX_SCRIPT_ELEMENT_SIZE) {
             throw std::runtime_error(strprintf(
-                        "redeemScript exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_ELEMENT_SIZE));
+                "redeemScript exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_ELEMENT_SIZE));
         }
         scriptPubKey = GetScriptForDestination(ScriptHash(scriptPubKey));
     }
@@ -525,16 +528,16 @@ static void MutateTxDelOutput(CMutableTransaction& tx, const std::string& strOut
 
 static const unsigned int N_SIGHASH_OPTS = 7;
 static const struct {
-    const char *flagStr;
+    const char* flagStr;
     int flags;
 } sighashOptions[N_SIGHASH_OPTS] = {
     {"DEFAULT", SIGHASH_DEFAULT},
     {"ALL", SIGHASH_ALL},
     {"NONE", SIGHASH_NONE},
     {"SINGLE", SIGHASH_SINGLE},
-    {"ALL|ANYONECANPAY", SIGHASH_ALL|SIGHASH_ANYONECANPAY},
-    {"NONE|ANYONECANPAY", SIGHASH_NONE|SIGHASH_ANYONECANPAY},
-    {"SINGLE|ANYONECANPAY", SIGHASH_SINGLE|SIGHASH_ANYONECANPAY},
+    {"ALL|ANYONECANPAY", SIGHASH_ALL | SIGHASH_ANYONECANPAY},
+    {"NONE|ANYONECANPAY", SIGHASH_NONE | SIGHASH_ANYONECANPAY},
+    {"SINGLE|ANYONECANPAY", SIGHASH_SINGLE | SIGHASH_ANYONECANPAY},
 };
 
 static bool findSighashFlags(int& flags, const std::string& flagStr)
@@ -638,8 +641,8 @@ static void MutateTxSign(CMutableTransaction& tx, const std::string& flagStr)
                 const Coin& coin = view.AccessCoin(out);
                 if (!coin.IsSpent() && coin.out.scriptPubKey != scriptPubKey) {
                     std::string err("Previous output scriptPubKey mismatch:\n");
-                    err = err + ScriptToAsmStr(coin.out.scriptPubKey) + "\nvs:\n"+
-                        ScriptToAsmStr(scriptPubKey);
+                    err = err + ScriptToAsmStr(coin.out.scriptPubKey) + "\nvs:\n" +
+                          ScriptToAsmStr(scriptPubKey);
                     throw std::runtime_error(err);
                 }
                 Coin newcoin;
@@ -814,7 +817,7 @@ static int CommandLineRawTx(int argc, char* argv[])
 
             // param: hex-encoded bitcoin transaction
             std::string strHexTx(argv[1]);
-            if (strHexTx == "-")                 // "-" implies standard input
+            if (strHexTx == "-") // "-" implies standard input
                 strHexTx = readStdin();
 
             if (!DecodeHexTx(tx, strHexTx, true))
@@ -839,12 +842,10 @@ static int CommandLineRawTx(int argc, char* argv[])
         }
 
         OutputTx(CTransaction(tx));
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         strPrint = std::string("error: ") + e.what();
         nRet = EXIT_FAILURE;
-    }
-    catch (...) {
+    } catch (...) {
         PrintExceptionContinue(nullptr, "CommandLineRawTx()");
         throw;
     }
@@ -863,8 +864,7 @@ MAIN_FUNCTION
         int ret = AppInitRawTx(argc, argv);
         if (ret != CONTINUE_EXECUTION)
             return ret;
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "AppInitRawTx()");
         return EXIT_FAILURE;
     } catch (...) {
@@ -875,8 +875,7 @@ MAIN_FUNCTION
     int ret = EXIT_FAILURE;
     try {
         ret = CommandLineRawTx(argc, argv);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "CommandLineRawTx()");
     } catch (...) {
         PrintExceptionContinue(nullptr, "CommandLineRawTx()");

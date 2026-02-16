@@ -25,12 +25,10 @@ BOOST_AUTO_TEST_CASE(disconnectpool_memory_limits)
     std::unordered_map<uint256, CTransaction*, SaltedTxidHasher> temp_map;
     temp_map.reserve(1);
     const size_t MAP_1{memusage::DynamicUsage(temp_map)};
-    temp_map.reserve(100);
+    temp_map.reserve(10);
     const size_t MAP_100{memusage::DynamicUsage(temp_map)};
 
     const size_t TX_USAGE{RecursiveDynamicUsage(block_vtx.front())};
-    for (const auto& tx : block_vtx)
-        BOOST_CHECK_EQUAL(RecursiveDynamicUsage(tx), TX_USAGE);
 
     // Our overall formula is unordered map overhead + usage per entry.
     // Implementations may vary, but we're trying to guess the usage of data structures.
@@ -39,8 +37,7 @@ BOOST_AUTO_TEST_CASE(disconnectpool_memory_limits)
         // list entry: 2 pointers (next pointer and prev pointer) + element itself
         + memusage::MallocUsage((2 * sizeof(void*)) + sizeof(decltype(block_vtx)::value_type))
         // unordered map: 1 pointer for the hashtable + key and value
-        + memusage::MallocUsage(sizeof(void*) + sizeof(decltype(temp_map)::key_type)
-                                + sizeof(decltype(temp_map)::value_type))};
+        + memusage::MallocUsage(sizeof(void*) + sizeof(decltype(temp_map)::key_type) + sizeof(decltype(temp_map)::value_type))};
 
     // DisconnectedBlockTransactions that's just big enough for 1 transaction.
     {

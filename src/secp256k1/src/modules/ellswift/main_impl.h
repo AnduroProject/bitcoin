@@ -21,7 +21,8 @@ static const secp256k1_fe secp256k1_ellswift_c3 = SECP256K1_FE_CONST(0x7ae96a2b,
 static const secp256k1_fe secp256k1_ellswift_c4 = SECP256K1_FE_CONST(0x851695d4, 0x9a83f8ef, 0x919bb861, 0x53cbcb16, 0x630fb68a, 0xed0a766a, 0x3ec693d6, 0x8e6afa41);
 
 /** Decode ElligatorSwift encoding (u, t) to a fraction xn/xd representing a curve X coordinate. */
-static void secp256k1_ellswift_xswiftec_frac_var(secp256k1_fe *xn, secp256k1_fe *xd, const secp256k1_fe *u, const secp256k1_fe *t) {
+static void secp256k1_ellswift_xswiftec_frac_var(secp256k1_fe* xn, secp256k1_fe* xd, const secp256k1_fe* u, const secp256k1_fe* t)
+{
     /* The implemented algorithm is the following (all operations in GF(p)):
      *
      * - Let c0 = sqrt(-3) = 0xa2d2ba93507f1df233770c2a797962cc61f6d15da14ecd47d8d27ae1cd5f852.
@@ -88,23 +89,23 @@ static void secp256k1_ellswift_xswiftec_frac_var(secp256k1_fe *xn, secp256k1_fe 
     if (EXPECT(secp256k1_fe_normalizes_to_zero_var(&u1), 0)) u1 = secp256k1_fe_one;
     secp256k1_fe_sqr(&s, t);
     if (EXPECT(secp256k1_fe_normalizes_to_zero_var(t), 0)) s = secp256k1_fe_one;
-    secp256k1_fe_sqr(&l, &u1);                                   /* l = u^2 */
-    secp256k1_fe_mul(&g, &l, &u1);                               /* g = u^3 */
-    secp256k1_fe_add_int(&g, SECP256K1_B);                       /* g = u^3 + 7 */
-    p = g;                                                       /* p = g */
-    secp256k1_fe_add(&p, &s);                                    /* p = g+s */
+    secp256k1_fe_sqr(&l, &u1);             /* l = u^2 */
+    secp256k1_fe_mul(&g, &l, &u1);         /* g = u^3 */
+    secp256k1_fe_add_int(&g, SECP256K1_B); /* g = u^3 + 7 */
+    p = g;                                 /* p = g */
+    secp256k1_fe_add(&p, &s);              /* p = g+s */
     if (EXPECT(secp256k1_fe_normalizes_to_zero_var(&p), 0)) {
         secp256k1_fe_mul_int(&s, 4);
         /* Recompute p = g+s */
-        p = g;                                                   /* p = g */
-        secp256k1_fe_add(&p, &s);                                /* p = g+s */
+        p = g;                    /* p = g */
+        secp256k1_fe_add(&p, &s); /* p = g+s */
     }
-    secp256k1_fe_mul(&d, &s, &l);                                /* d = s*u^2 */
-    secp256k1_fe_mul_int(&d, 3);                                 /* d = 3*s*u^2 */
-    secp256k1_fe_sqr(&l, &p);                                    /* l = (g+s)^2 */
-    secp256k1_fe_negate(&l, &l, 1);                              /* l = -(g+s)^2 */
-    secp256k1_fe_mul(&n, &d, &u1);                               /* n = 3*s*u^3 */
-    secp256k1_fe_add(&n, &l);                                    /* n = 3*s*u^3-(g+s)^2 */
+    secp256k1_fe_mul(&d, &s, &l);   /* d = s*u^2 */
+    secp256k1_fe_mul_int(&d, 3);    /* d = 3*s*u^2 */
+    secp256k1_fe_sqr(&l, &p);       /* l = (g+s)^2 */
+    secp256k1_fe_negate(&l, &l, 1); /* l = -(g+s)^2 */
+    secp256k1_fe_mul(&n, &d, &u1);  /* n = 3*s*u^3 */
+    secp256k1_fe_add(&n, &l);       /* n = 3*s*u^3-(g+s)^2 */
     if (secp256k1_ge_x_frac_on_curve_var(&n, &d)) {
         /* Return x3 = n/d = (3*s*u^3-(g+s)^2)/(3*s*u^2) */
         *xn = n;
@@ -112,10 +113,10 @@ static void secp256k1_ellswift_xswiftec_frac_var(secp256k1_fe *xn, secp256k1_fe 
         return;
     }
     *xd = p;
-    secp256k1_fe_mul(&l, &secp256k1_ellswift_c1, &s);            /* l = c1*s */
-    secp256k1_fe_mul(&n, &secp256k1_ellswift_c2, &g);            /* n = c2*g */
-    secp256k1_fe_add(&n, &l);                                    /* n = c1*s+c2*g */
-    secp256k1_fe_mul(&n, &n, &u1);                               /* n = u*(c1*s+c2*g) */
+    secp256k1_fe_mul(&l, &secp256k1_ellswift_c1, &s); /* l = c1*s */
+    secp256k1_fe_mul(&n, &secp256k1_ellswift_c2, &g); /* n = c2*g */
+    secp256k1_fe_add(&n, &l);                         /* n = c1*s+c2*g */
+    secp256k1_fe_mul(&n, &n, &u1);                    /* n = u*(c1*s+c2*g) */
     /* Possible optimization: in the invocation below, p^2 = (g+s)^2 is computed,
      * which we already have computed above. This could be deduplicated. */
     if (secp256k1_ge_x_frac_on_curve_var(&n, &p)) {
@@ -123,16 +124,17 @@ static void secp256k1_ellswift_xswiftec_frac_var(secp256k1_fe *xn, secp256k1_fe 
         *xn = n;
         return;
     }
-    secp256k1_fe_mul(&l, &p, &u1);                               /* l = u*(g+s) */
-    secp256k1_fe_add(&n, &l);                                    /* n = u*(c1*s+c2*g)+u*(g+s) */
-    secp256k1_fe_negate(xn, &n, 2);                              /* n = -u*(c1*s+c2*g)-u*(g+s) */
+    secp256k1_fe_mul(&l, &p, &u1);  /* l = u*(g+s) */
+    secp256k1_fe_add(&n, &l);       /* n = u*(c1*s+c2*g)+u*(g+s) */
+    secp256k1_fe_negate(xn, &n, 2); /* n = -u*(c1*s+c2*g)-u*(g+s) */
 
     VERIFY_CHECK(secp256k1_ge_x_frac_on_curve_var(xn, &p));
     /* Return x3 = n/p = -(u*(c1*s+c2*g)/(g+s)+u) */
 }
 
 /** Decode ElligatorSwift encoding (u, t) to X coordinate. */
-static void secp256k1_ellswift_xswiftec_var(secp256k1_fe *x, const secp256k1_fe *u, const secp256k1_fe *t) {
+static void secp256k1_ellswift_xswiftec_var(secp256k1_fe* x, const secp256k1_fe* u, const secp256k1_fe* t)
+{
     secp256k1_fe xn, xd;
     secp256k1_ellswift_xswiftec_frac_var(&xn, &xd, u, t);
     secp256k1_fe_inv_var(&xd, &xd);
@@ -140,7 +142,8 @@ static void secp256k1_ellswift_xswiftec_var(secp256k1_fe *x, const secp256k1_fe 
 }
 
 /** Decode ElligatorSwift encoding (u, t) to point P. */
-static void secp256k1_ellswift_swiftec_var(secp256k1_ge *p, const secp256k1_fe *u, const secp256k1_fe *t) {
+static void secp256k1_ellswift_swiftec_var(secp256k1_ge* p, const secp256k1_fe* u, const secp256k1_fe* t)
+{
     secp256k1_fe x;
     secp256k1_ellswift_xswiftec_var(&x, u, t);
     secp256k1_ge_set_xo_var(p, &x, secp256k1_fe_is_odd(t));
@@ -165,7 +168,8 @@ static void secp256k1_ellswift_swiftec_var(secp256k1_ge *p, const secp256k1_fe *
  * encoding more closely: c=0 through c=3 match branches 1..4 in the paper, while c=4 through
  * c=7 are copies of those with an additional negation of sqrt(w).
  */
-static int secp256k1_ellswift_xswiftec_inv_var(secp256k1_fe *t, const secp256k1_fe *x_in, const secp256k1_fe *u_in, int c) {
+static int secp256k1_ellswift_xswiftec_inv_var(secp256k1_fe* t, const secp256k1_fe* x_in, const secp256k1_fe* u_in, int c)
+{
     /* The implemented algorithm is this (all arithmetic, except involving c, is mod p):
      *
      * - If (c & 2) = 0:
@@ -202,17 +206,17 @@ static int secp256k1_ellswift_xswiftec_inv_var(secp256k1_fe *t, const secp256k1_
         /* If -u-x is a valid X coordinate, fail. This would yield an encoding that roundtrips
          * back under the x3 formula instead (which has priority over x1 and x2, so the decoding
          * would not match x). */
-        m = x;                                          /* m = x */
-        secp256k1_fe_add(&m, &u);                       /* m = u+x */
-        secp256k1_fe_negate(&m, &m, 2);                 /* m = -u-x */
+        m = x;                          /* m = x */
+        secp256k1_fe_add(&m, &u);       /* m = u+x */
+        secp256k1_fe_negate(&m, &m, 2); /* m = -u-x */
         /* Test if (-u-x) is a valid X coordinate. If so, fail. */
         if (secp256k1_ge_x_on_curve_var(&m)) return 0;
 
         /* Let s = -(u^3 + 7)/(u^2 + u*x + x^2) [first part] */
-        secp256k1_fe_sqr(&s, &m);                       /* s = (u+x)^2 */
-        secp256k1_fe_negate(&s, &s, 1);                 /* s = -(u+x)^2 */
-        secp256k1_fe_mul(&m, &u, &x);                   /* m = u*x */
-        secp256k1_fe_add(&s, &m);                       /* s = -(u^2 + u*x + x^2) */
+        secp256k1_fe_sqr(&s, &m);       /* s = (u+x)^2 */
+        secp256k1_fe_negate(&s, &s, 1); /* s = -(u+x)^2 */
+        secp256k1_fe_mul(&m, &u, &x);   /* m = u*x */
+        secp256k1_fe_add(&s, &m);       /* s = -(u^2 + u*x + x^2) */
 
         /* Note that at this point, s = 0 is impossible. If it were the case:
          *             s = -(u^2 + u*x + x^2) = 0
@@ -232,15 +236,15 @@ static int secp256k1_ellswift_xswiftec_inv_var(secp256k1_fe *t, const secp256k1_
         /* If s is not square, fail. We have not fully computed s yet, but s is square iff
          * -(u^3+7)*(u^2+u*x+x^2) is square (because a/b is square iff a*b is square and b is
          * nonzero). */
-        secp256k1_fe_sqr(&g, &u);                       /* g = u^2 */
-        secp256k1_fe_mul(&g, &g, &u);                   /* g = u^3 */
-        secp256k1_fe_add_int(&g, SECP256K1_B);          /* g = u^3+7 */
-        secp256k1_fe_mul(&m, &s, &g);                   /* m = -(u^3 + 7)*(u^2 + u*x + x^2) */
+        secp256k1_fe_sqr(&g, &u);              /* g = u^2 */
+        secp256k1_fe_mul(&g, &g, &u);          /* g = u^3 */
+        secp256k1_fe_add_int(&g, SECP256K1_B); /* g = u^3+7 */
+        secp256k1_fe_mul(&m, &s, &g);          /* m = -(u^3 + 7)*(u^2 + u*x + x^2) */
         if (!secp256k1_fe_is_square_var(&m)) return 0;
 
         /* Let s = -(u^3 + 7)/(u^2 + u*x + x^2) [second part] */
-        secp256k1_fe_inv_var(&s, &s);                   /* s = -1/(u^2 + u*x + x^2) [no div by 0] */
-        secp256k1_fe_mul(&s, &s, &g);                   /* s = -(u^3 + 7)/(u^2 + u*x + x^2) */
+        secp256k1_fe_inv_var(&s, &s); /* s = -1/(u^2 + u*x + x^2) [no div by 0] */
+        secp256k1_fe_mul(&s, &s, &g); /* s = -(u^3 + 7)/(u^2 + u*x + x^2) */
 
         /* Let v = x. */
         v = x;
@@ -248,25 +252,25 @@ static int secp256k1_ellswift_xswiftec_inv_var(secp256k1_fe *t, const secp256k1_
         /* c is in {2, 3, 6, 7}. In this case we look for an inverse under the x3 formula. */
 
         /* Let s = x-u. */
-        secp256k1_fe_negate(&m, &u, 1);                 /* m = -u */
-        s = m;                                          /* s = -u */
-        secp256k1_fe_add(&s, &x);                       /* s = x-u */
+        secp256k1_fe_negate(&m, &u, 1); /* m = -u */
+        s = m;                          /* s = -u */
+        secp256k1_fe_add(&s, &x);       /* s = x-u */
 
         /* If s is not square, fail. */
         if (!secp256k1_fe_is_square_var(&s)) return 0;
 
         /* Let r = sqrt(-s*(4*(u^3+7)+3*u^2*s)); fail if it doesn't exist. */
-        secp256k1_fe_sqr(&g, &u);                       /* g = u^2 */
-        secp256k1_fe_mul(&q, &s, &g);                   /* q = s*u^2 */
-        secp256k1_fe_mul_int(&q, 3);                    /* q = 3*s*u^2 */
-        secp256k1_fe_mul(&g, &g, &u);                   /* g = u^3 */
-        secp256k1_fe_mul_int(&g, 4);                    /* g = 4*u^3 */
-        secp256k1_fe_add_int(&g, 4 * SECP256K1_B);      /* g = 4*(u^3+7) */
-        secp256k1_fe_add(&q, &g);                       /* q = 4*(u^3+7)+3*s*u^2 */
-        secp256k1_fe_mul(&q, &q, &s);                   /* q = s*(4*(u^3+7)+3*u^2*s) */
-        secp256k1_fe_negate(&q, &q, 1);                 /* q = -s*(4*(u^3+7)+3*u^2*s) */
+        secp256k1_fe_sqr(&g, &u);                  /* g = u^2 */
+        secp256k1_fe_mul(&q, &s, &g);              /* q = s*u^2 */
+        secp256k1_fe_mul_int(&q, 3);               /* q = 3*s*u^2 */
+        secp256k1_fe_mul(&g, &g, &u);              /* g = u^3 */
+        secp256k1_fe_mul_int(&g, 4);               /* g = 4*u^3 */
+        secp256k1_fe_add_int(&g, 4 * SECP256K1_B); /* g = 4*(u^3+7) */
+        secp256k1_fe_add(&q, &g);                  /* q = 4*(u^3+7)+3*s*u^2 */
+        secp256k1_fe_mul(&q, &q, &s);              /* q = s*(4*(u^3+7)+3*u^2*s) */
+        secp256k1_fe_negate(&q, &q, 1);            /* q = -s*(4*(u^3+7)+3*u^2*s) */
         if (!secp256k1_fe_is_square_var(&q)) return 0;
-        ret = secp256k1_fe_sqrt(&r, &q);                /* r = sqrt(-s*(4*(u^3+7)+3*u^2*s)) */
+        ret = secp256k1_fe_sqrt(&r, &q); /* r = sqrt(-s*(4*(u^3+7)+3*u^2*s)) */
 #ifdef VERIFY
         VERIFY_CHECK(ret);
 #else
@@ -280,24 +284,24 @@ static int secp256k1_ellswift_xswiftec_inv_var(secp256k1_fe *t, const secp256k1_
         if (EXPECT(secp256k1_fe_normalizes_to_zero_var(&s), 0)) return 0;
 
         /* Let v = (r/s-u)/2. */
-        secp256k1_fe_inv_var(&v, &s);                   /* v = 1/s [no div by 0] */
-        secp256k1_fe_mul(&v, &v, &r);                   /* v = r/s */
-        secp256k1_fe_add(&v, &m);                       /* v = r/s-u */
-        secp256k1_fe_half(&v);                          /* v = (r/s-u)/2 */
+        secp256k1_fe_inv_var(&v, &s); /* v = 1/s [no div by 0] */
+        secp256k1_fe_mul(&v, &v, &r); /* v = r/s */
+        secp256k1_fe_add(&v, &m);     /* v = r/s-u */
+        secp256k1_fe_half(&v);        /* v = (r/s-u)/2 */
     }
 
     /* Let w = sqrt(s). */
-    ret = secp256k1_fe_sqrt(&m, &s);                    /* m = sqrt(s) = w */
+    ret = secp256k1_fe_sqrt(&m, &s); /* m = sqrt(s) = w */
     VERIFY_CHECK(ret);
 
     /* Return logic. */
     if ((c & 5) == 0 || (c & 5) == 5) {
-        secp256k1_fe_negate(&m, &m, 1);                 /* m = -w */
+        secp256k1_fe_negate(&m, &m, 1); /* m = -w */
     }
     /* Now m = {-w if c&5=0 or c&5=5; w otherwise}. */
-    secp256k1_fe_mul(&u, &u, c&1 ? &secp256k1_ellswift_c4 : &secp256k1_ellswift_c3);
+    secp256k1_fe_mul(&u, &u, c & 1 ? &secp256k1_ellswift_c4 : &secp256k1_ellswift_c3);
     /* u = {c4 if c&1=1; c3 otherwise}*u */
-    secp256k1_fe_add(&u, &v);                           /* u = {c4 if c&1=1; c3 otherwise}*u + v */
+    secp256k1_fe_add(&u, &v); /* u = {c4 if c&1=1; c3 otherwise}*u + v */
     secp256k1_fe_mul(t, &m, &u);
     return 1;
 }
@@ -307,7 +311,8 @@ static int secp256k1_ellswift_xswiftec_inv_var(secp256k1_fe *t, const secp256k1_
  * hasher is a SHA256 object to which an incrementing 4-byte counter is written to generate randomness.
  * Writing 13 bytes (4 bytes for counter, plus 9 bytes for the SHA256 padding) cannot cross a
  * 64-byte block size boundary (to make sure it only triggers a single SHA256 compression). */
-static void secp256k1_ellswift_prng(unsigned char* out32, const secp256k1_sha256 *hasher, uint32_t cnt) {
+static void secp256k1_ellswift_prng(unsigned char* out32, const secp256k1_sha256* hasher, uint32_t cnt)
+{
     secp256k1_sha256 hash = *hasher;
     unsigned char buf4[4];
 #ifdef VERIFY
@@ -330,7 +335,8 @@ static void secp256k1_ellswift_prng(unsigned char* out32, const secp256k1_sha256
  * needs encoding.
  *
  * hasher is a hasher in the secp256k1_ellswift_prng sense, with the same restrictions. */
-static void secp256k1_ellswift_xelligatorswift_var(unsigned char *u32, secp256k1_fe *t, const secp256k1_fe *x, const secp256k1_sha256 *hasher) {
+static void secp256k1_ellswift_xelligatorswift_var(unsigned char* u32, secp256k1_fe* t, const secp256k1_fe* x, const secp256k1_sha256* hasher)
+{
     /* Pool of 3-bit branch values. */
     unsigned char branch_hash[32];
     /* Number of 3-bit values in branch_hash left. */
@@ -372,7 +378,8 @@ static void secp256k1_ellswift_xelligatorswift_var(unsigned char *u32, secp256k1
  * as input, and returns an encoding that matches the provided Y coordinate rather than a random
  * one.
  */
-static void secp256k1_ellswift_elligatorswift_var(unsigned char *u32, secp256k1_fe *t, const secp256k1_ge *p, const secp256k1_sha256 *hasher) {
+static void secp256k1_ellswift_elligatorswift_var(unsigned char* u32, secp256k1_fe* t, const secp256k1_ge* p, const secp256k1_sha256* hasher)
+{
     secp256k1_ellswift_xelligatorswift_var(u32, t, &p->x, hasher);
     secp256k1_fe_normalize_var(t);
     if (secp256k1_fe_is_odd(t) != secp256k1_fe_is_odd(&p->y)) {
@@ -382,7 +389,8 @@ static void secp256k1_ellswift_elligatorswift_var(unsigned char *u32, secp256k1_
 }
 
 /** Set hash state to the BIP340 tagged hash midstate for "secp256k1_ellswift_encode". */
-static void secp256k1_ellswift_sha256_init_encode(secp256k1_sha256* hash) {
+static void secp256k1_ellswift_sha256_init_encode(secp256k1_sha256* hash)
+{
     secp256k1_sha256_initialize(hash);
     hash->s[0] = 0xd1a6524bul;
     hash->s[1] = 0x028594b3ul;
@@ -396,7 +404,8 @@ static void secp256k1_ellswift_sha256_init_encode(secp256k1_sha256* hash) {
     hash->bytes = 64;
 }
 
-int secp256k1_ellswift_encode(const secp256k1_context *ctx, unsigned char *ell64, const secp256k1_pubkey *pubkey, const unsigned char *rnd32) {
+int secp256k1_ellswift_encode(const secp256k1_context* ctx, unsigned char* ell64, const secp256k1_pubkey* pubkey, const unsigned char* rnd32)
+{
     secp256k1_ge p;
     VERIFY_CHECK(ctx != NULL);
     ARG_CHECK(ell64 != NULL);
@@ -424,7 +433,7 @@ int secp256k1_ellswift_encode(const secp256k1_context *ctx, unsigned char *ell64
 
         /* Compute ElligatorSwift encoding and construct output. */
         secp256k1_ellswift_elligatorswift_var(ell64, &t, &p, &hash); /* puts u in ell64[0..32] */
-        secp256k1_fe_get_b32(ell64 + 32, &t); /* puts t in ell64[32..64] */
+        secp256k1_fe_get_b32(ell64 + 32, &t);                        /* puts t in ell64[32..64] */
         return 1;
     }
     /* Only reached in case the provided pubkey is invalid. */
@@ -433,7 +442,8 @@ int secp256k1_ellswift_encode(const secp256k1_context *ctx, unsigned char *ell64
 }
 
 /** Set hash state to the BIP340 tagged hash midstate for "secp256k1_ellswift_create". */
-static void secp256k1_ellswift_sha256_init_create(secp256k1_sha256* hash) {
+static void secp256k1_ellswift_sha256_init_create(secp256k1_sha256* hash)
+{
     secp256k1_sha256_initialize(hash);
     hash->s[0] = 0xd29e1bf5ul;
     hash->s[1] = 0xf7025f42ul;
@@ -447,7 +457,8 @@ static void secp256k1_ellswift_sha256_init_create(secp256k1_sha256* hash) {
     hash->bytes = 64;
 }
 
-int secp256k1_ellswift_create(const secp256k1_context *ctx, unsigned char *ell64, const unsigned char *seckey32, const unsigned char *auxrnd32) {
+int secp256k1_ellswift_create(const secp256k1_context* ctx, unsigned char* ell64, const unsigned char* seckey32, const unsigned char* auxrnd32)
+{
     secp256k1_ge p;
     secp256k1_fe t;
     secp256k1_sha256 hash;
@@ -478,7 +489,7 @@ int secp256k1_ellswift_create(const secp256k1_context *ctx, unsigned char *ell64
 
     /* Compute ElligatorSwift encoding and construct output. */
     secp256k1_ellswift_elligatorswift_var(ell64, &t, &p, &hash); /* puts u in ell64[0..32] */
-    secp256k1_fe_get_b32(ell64 + 32, &t); /* puts t in ell64[32..64] */
+    secp256k1_fe_get_b32(ell64 + 32, &t);                        /* puts t in ell64[32..64] */
 
     secp256k1_memczero(ell64, 64, !ret);
     secp256k1_scalar_clear(&seckey_scalar);
@@ -486,7 +497,8 @@ int secp256k1_ellswift_create(const secp256k1_context *ctx, unsigned char *ell64
     return ret;
 }
 
-int secp256k1_ellswift_decode(const secp256k1_context *ctx, secp256k1_pubkey *pubkey, const unsigned char *ell64) {
+int secp256k1_ellswift_decode(const secp256k1_context* ctx, secp256k1_pubkey* pubkey, const unsigned char* ell64)
+{
     secp256k1_fe u, t;
     secp256k1_ge p;
     VERIFY_CHECK(ctx != NULL);
@@ -501,7 +513,8 @@ int secp256k1_ellswift_decode(const secp256k1_context *ctx, secp256k1_pubkey *pu
     return 1;
 }
 
-static int ellswift_xdh_hash_function_prefix(unsigned char *output, const unsigned char *x32, const unsigned char *ell_a64, const unsigned char *ell_b64, void *data) {
+static int ellswift_xdh_hash_function_prefix(unsigned char* output, const unsigned char* x32, const unsigned char* ell_a64, const unsigned char* ell_b64, void* data)
+{
     secp256k1_sha256 sha;
 
     secp256k1_sha256_initialize(&sha);
@@ -516,7 +529,8 @@ static int ellswift_xdh_hash_function_prefix(unsigned char *output, const unsign
 }
 
 /** Set hash state to the BIP340 tagged hash midstate for "bip324_ellswift_xonly_ecdh". */
-static void secp256k1_ellswift_sha256_init_bip324(secp256k1_sha256* hash) {
+static void secp256k1_ellswift_sha256_init_bip324(secp256k1_sha256* hash)
+{
     secp256k1_sha256_initialize(hash);
     hash->s[0] = 0x8c12d730ul;
     hash->s[1] = 0x827bd392ul;
@@ -530,7 +544,8 @@ static void secp256k1_ellswift_sha256_init_bip324(secp256k1_sha256* hash) {
     hash->bytes = 64;
 }
 
-static int ellswift_xdh_hash_function_bip324(unsigned char* output, const unsigned char *x32, const unsigned char *ell_a64, const unsigned char *ell_b64, void *data) {
+static int ellswift_xdh_hash_function_bip324(unsigned char* output, const unsigned char* x32, const unsigned char* ell_a64, const unsigned char* ell_b64, void* data)
+{
     secp256k1_sha256 sha;
 
     (void)data;
@@ -548,7 +563,8 @@ static int ellswift_xdh_hash_function_bip324(unsigned char* output, const unsign
 const secp256k1_ellswift_xdh_hash_function secp256k1_ellswift_xdh_hash_function_prefix = ellswift_xdh_hash_function_prefix;
 const secp256k1_ellswift_xdh_hash_function secp256k1_ellswift_xdh_hash_function_bip324 = ellswift_xdh_hash_function_bip324;
 
-int secp256k1_ellswift_xdh(const secp256k1_context *ctx, unsigned char *output, const unsigned char *ell_a64, const unsigned char *ell_b64, const unsigned char *seckey32, int party, secp256k1_ellswift_xdh_hash_function hashfp, void *data) {
+int secp256k1_ellswift_xdh(const secp256k1_context* ctx, unsigned char* output, const unsigned char* ell_a64, const unsigned char* ell_b64, const unsigned char* seckey32, int party, secp256k1_ellswift_xdh_hash_function hashfp, void* data)
+{
     int ret = 0;
     int overflow;
     secp256k1_scalar s;

@@ -13,7 +13,7 @@ typedef struct secp256k1_scratch_space_struct {
     /** guard against interpreting this object as other types */
     unsigned char magic[8];
     /** actual allocated data */
-    void *data;
+    void* data;
     /** amount that has been allocated (i.e. `data + offset` is the next
      *  available pointer)  */
     size_t alloc_size;
@@ -39,6 +39,6 @@ static void secp256k1_scratch_apply_checkpoint(const secp256k1_callback* error_c
 static size_t secp256k1_scratch_max_allocation(const secp256k1_callback* error_callback, const secp256k1_scratch* scratch, size_t n_objects);
 
 /** Returns a pointer into the most recently allocated frame, or NULL if there is insufficient available space */
-static void *secp256k1_scratch_alloc(const secp256k1_callback* error_callback, secp256k1_scratch* scratch, size_t n);
+static void* secp256k1_scratch_alloc(const secp256k1_callback* error_callback, secp256k1_scratch* scratch, size_t n);
 
 #endif

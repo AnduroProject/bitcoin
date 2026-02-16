@@ -23,11 +23,11 @@ class RPCExecutor;
 class WalletModel;
 
 namespace interfaces {
-    class Node;
+class Node;
 }
 
 namespace Ui {
-    class RPCConsole;
+class RPCConsole;
 }
 
 QT_BEGIN_NAMESPACE
@@ -37,20 +37,21 @@ class QItemSelection;
 QT_END_NAMESPACE
 
 /** Local Bitcoin RPC console. */
-class RPCConsole: public QWidget
+class RPCConsole : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit RPCConsole(interfaces::Node& node, const PlatformStyle *platformStyle, QWidget *parent);
+    explicit RPCConsole(interfaces::Node& node, const PlatformStyle* platformStyle, QWidget* parent);
     ~RPCConsole();
 
-    static bool RPCParseCommandLine(interfaces::Node* node, std::string &strResult, const std::string &strCommand, bool fExecute, std::string * const pstrFilteredOut = nullptr, const QString& wallet_name = {});
-    static bool RPCExecuteCommandLine(interfaces::Node& node, std::string &strResult, const std::string &strCommand, std::string * const pstrFilteredOut = nullptr, const QString& wallet_name = {}) {
+    static bool RPCParseCommandLine(interfaces::Node* node, std::string& strResult, const std::string& strCommand, bool fExecute, std::string* const pstrFilteredOut = nullptr, const QString& wallet_name = {});
+    static bool RPCExecuteCommandLine(interfaces::Node& node, std::string& strResult, const std::string& strCommand, std::string* const pstrFilteredOut = nullptr, const QString& wallet_name = {})
+    {
         return RPCParseCommandLine(&node, strResult, strCommand, true, pstrFilteredOut, wallet_name);
     }
 
-    void setClientModel(ClientModel *model = nullptr, int bestblock_height = 0, int64_t bestblock_date = 0, double verification_progress = 0.0);
+    void setClientModel(ClientModel* model = nullptr, int bestblock_height = 0, int64_t bestblock_date = 0, double verification_progress = 0.0);
 
 #ifdef ENABLE_WALLET
     void addWallet(WalletModel* const walletModel);
@@ -78,8 +79,8 @@ public:
     QKeySequence tabShortcut(TabTypes tab_type) const;
 
 protected:
-    virtual bool eventFilter(QObject* obj, QEvent *event) override;
-    void keyPressEvent(QKeyEvent *) override;
+    virtual bool eventFilter(QObject* obj, QEvent* event) override;
+    void keyPressEvent(QKeyEvent*) override;
     void changeEvent(QEvent* e) override;
 
 private Q_SLOTS:
@@ -91,9 +92,9 @@ private Q_SLOTS:
     void on_sldGraphRange_valueChanged(int value);
     /** update traffic statistics */
     void updateTrafficStats(quint64 totalBytesIn, quint64 totalBytesOut);
-    void resizeEvent(QResizeEvent *event) override;
-    void showEvent(QShowEvent *event) override;
-    void hideEvent(QHideEvent *event) override;
+    void resizeEvent(QResizeEvent* event) override;
+    void showEvent(QShowEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
     /** Show custom context menu on Peers tab */
     void showPeersTableContextMenu(const QPoint& point);
     /** Show custom context menu on Bans tab */
@@ -111,8 +112,8 @@ public Q_SLOTS:
     void fontSmaller();
     void setFontSize(int newSize);
     /** Append the message to the message widget */
-    void message(int category, const QString &msg) { message(category, msg, false); }
-    void message(int category, const QString &message, bool html);
+    void message(int category, const QString& msg) { message(category, msg, false); }
+    void message(int category, const QString& message, bool html);
     /** Set number of connections shown in the UI */
     void setNumConnections(int count);
     /** Set network state shown in the UI */
@@ -147,8 +148,7 @@ private:
     void startExecutor();
     void setTrafficGraphRange(int mins);
 
-    enum ColumnWidths
-    {
+    enum ColumnWidths {
         ADDRESS_COLUMN_WIDTH = 200,
         SUBVERSION_COLUMN_WIDTH = 150,
         PING_COLUMN_WIDTH = 80,
@@ -159,16 +159,16 @@ private:
 
     interfaces::Node& m_node;
     Ui::RPCConsole* const ui;
-    ClientModel *clientModel = nullptr;
+    ClientModel* clientModel = nullptr;
     QStringList history;
     int historyPtr = 0;
     QString cmdBeforeBrowsing;
     QList<NodeId> cachedNodeids;
     const PlatformStyle* const platformStyle;
-    QMenu *peersTableContextMenu = nullptr;
-    QMenu *banTableContextMenu = nullptr;
+    QMenu* peersTableContextMenu = nullptr;
+    QMenu* banTableContextMenu = nullptr;
     int consoleFontSize = 0;
-    QCompleter *autoCompleter = nullptr;
+    QCompleter* autoCompleter = nullptr;
     QThread thread;
     RPCExecutor* m_executor{nullptr};
     WalletModel* m_last_wallet_model{nullptr};

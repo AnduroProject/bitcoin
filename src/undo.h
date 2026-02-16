@@ -19,24 +19,33 @@
  *  zero. This is compatible with older versions which expect to see
  *  the transaction version there.
  */
-struct TxInUndoFormatter
-{
-    template<typename Stream>
-    void Ser(Stream &s, const Coin& txout) {
-        ::Serialize(s, VARINT(txout.nHeight * uint32_t{2} + txout.fCoinBase ));
+struct TxInUndoFormatter {
+    template <typename Stream>
+    void Ser(Stream& s, const Coin& txout)
+    {
+        ::Serialize(s, VARINT(txout.nHeight * uint32_t{2} + txout.fCoinBase));
         if (txout.nHeight > 0) {
             // Required to maintain compatibility with older undo format.
             ::Serialize(s, (unsigned char)0);
         }
+        ::Serialize(s, txout.fBitAsset);
+        ::Serialize(s, txout.fBitAssetControl);
+        ::Serialize(s, txout.isPreconf);
+        ::Serialize(s, txout.nAssetID);
         ::Serialize(s, Using<TxOutCompression>(txout.out));
     }
 
-    template<typename Stream>
-    void Unser(Stream &s, Coin& txout) {
+    template <typename Stream>
+    void Unser(Stream& s, Coin& txout)
+    {
         uint32_t nCode = 0;
         ::Unserialize(s, VARINT(nCode));
         txout.nHeight = nCode >> 1;
         txout.fCoinBase = nCode & 1;
+        ::Unserialize(s, txout.fBitAsset);
+        ::Unserialize(s, txout.fBitAssetControl);
+        ::Unserialize(s, txout.isPreconf);
+        ::Unserialize(s, txout.nAssetID);
         if (txout.nHeight > 0) {
             // Old versions stored the version number for the last spend of
             // a transaction's outputs. Non-final spends were indicated with

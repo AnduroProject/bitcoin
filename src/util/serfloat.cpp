@@ -7,7 +7,8 @@
 #include <cmath>
 #include <limits>
 
-double DecodeDouble(uint64_t v) noexcept {
+double DecodeDouble(uint64_t v) noexcept
+{
     static constexpr double NANVAL = std::numeric_limits<double>::quiet_NaN();
     static constexpr double INFVAL = std::numeric_limits<double>::infinity();
     double sign = 1.0;
@@ -34,7 +35,8 @@ double DecodeDouble(uint64_t v) noexcept {
     }
 }
 
-uint64_t EncodeDouble(double f) noexcept {
+uint64_t EncodeDouble(double f) noexcept
+{
     int cls = std::fpclassify(f);
     uint64_t sign = 0;
     if (copysign(1.0, f) == -1.0) {

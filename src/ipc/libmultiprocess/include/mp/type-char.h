@@ -10,10 +10,10 @@
 namespace mp {
 template <typename Output, size_t size>
 void CustomBuildField(TypeList<const unsigned char*>,
-    Priority<3>,
-    InvokeContext& invoke_context,
-    const unsigned char (&value)[size],
-    Output&& output)
+                      Priority<3>,
+                      InvokeContext& invoke_context,
+                      const unsigned char (&value)[size],
+                      Output&& output)
 {
     auto result = output.init(size);
     memcpy(result.begin(), value, size);
@@ -21,10 +21,10 @@ void CustomBuildField(TypeList<const unsigned char*>,
 
 template <size_t size, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<unsigned char[size]>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Input&& input,
-    ReadDest&& read_dest)
+                               Priority<1>,
+                               InvokeContext& invoke_context,
+                               Input&& input,
+                               ReadDest&& read_dest)
 {
     return read_dest.update([&](auto& value) {
         auto data = input.get();

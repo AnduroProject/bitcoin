@@ -71,8 +71,7 @@ static QSet<QString> savedPaymentRequests;
 //
 void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
 {
-    for (int i = 1; i < argc; i++)
-    {
+    for (int i = 1; i < argc; i++) {
         QString arg(argv[i]);
         if (arg.startsWith("-")) continue;
 
@@ -92,12 +91,10 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
 bool PaymentServer::ipcSendCommandLine()
 {
     bool fResult = false;
-    for (const QString& r : savedPaymentRequests)
-    {
+    for (const QString& r : savedPaymentRequests) {
         QLocalSocket* socket = new QLocalSocket();
         socket->connectToServer(ipcServerName(), QIODevice::WriteOnly);
-        if (!socket->waitForConnected(BITCOIN_IPC_CONNECT_TIMEOUT))
-        {
+        if (!socket->waitForConnected(BITCOIN_IPC_CONNECT_TIMEOUT)) {
             delete socket;
             socket = nullptr;
             return false;
@@ -136,16 +133,14 @@ PaymentServer::PaymentServer(QObject* parent, bool startLocalServer)
     // Clean up old socket leftover from a crash:
     QLocalServer::removeServer(name);
 
-    if (startLocalServer)
-    {
+    if (startLocalServer) {
         uriServer = new QLocalServer(this);
 
         if (!uriServer->listen(name)) {
             // constructor is called early in init, so don't use "Q_EMIT message()" here
             QMessageBox::critical(nullptr, tr("Payment request error"),
-                tr("Cannot start bitcoin: click-to-pay handler"));
-        }
-        else {
+                                  tr("Cannot start bitcoin: click-to-pay handler"));
+        } else {
             connect(uriServer, &QLocalServer::newConnection, this, &PaymentServer::handleURIConnection);
         }
     }
@@ -156,10 +151,10 @@ PaymentServer::~PaymentServer() = default;
 //
 // OSX-specific way of handling bitcoin: URIs
 //
-bool PaymentServer::eventFilter(QObject *object, QEvent *event)
+bool PaymentServer::eventFilter(QObject* object, QEvent* event)
 {
     if (event->type() == QEvent::FileOpen) {
-        QFileOpenEvent *fileEvent = static_cast<QFileOpenEvent*>(event);
+        QFileOpenEvent* fileEvent = static_cast<QFileOpenEvent*>(event);
         if (!fileEvent->file().isEmpty())
             handleURIOrFile(fileEvent->file());
         else if (!fileEvent->url().isEmpty())
@@ -174,8 +169,7 @@ bool PaymentServer::eventFilter(QObject *object, QEvent *event)
 void PaymentServer::uiReady()
 {
     saveURIs = false;
-    for (const QString& s : savedPaymentRequests)
-    {
+    for (const QString& s : savedPaymentRequests) {
         handleURIOrFile(s);
     }
     savedPaymentRequests.clear();
@@ -183,46 +177,40 @@ void PaymentServer::uiReady()
 
 void PaymentServer::handleURIOrFile(const QString& s)
 {
-    if (saveURIs)
-    {
+    if (saveURIs) {
         savedPaymentRequests.insert(s);
         return;
     }
 
-    if (s.startsWith("bitcoin://", Qt::CaseInsensitive))
-    {
+    if (s.startsWith("bitcoin://", Qt::CaseInsensitive)) {
         Q_EMIT message(tr("URI handling"), tr("'bitcoin://' is not a valid URI. Use 'bitcoin:' instead."),
-            CClientUIInterface::MSG_ERROR);
-    }
-    else if (s.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // bitcoin: URI
+                       CClientUIInterface::MSG_ERROR);
+    } else if (s.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // bitcoin: URI
     {
         QUrlQuery uri((QUrl(s)));
         // normal URI
         {
             SendCoinsRecipient recipient;
-            if (GUIUtil::parseBitcoinURI(s, &recipient))
-            {
+            if (GUIUtil::parseBitcoinURI(s, &recipient)) {
                 std::string error_msg;
                 const CTxDestination dest = DecodeDestination(recipient.address.toStdString(), error_msg);
 
                 if (!IsValidDestination(dest)) {
-                    if (uri.hasQueryItem("r")) {  // payment request
+                    if (uri.hasQueryItem("r")) { // payment request
                         Q_EMIT message(tr("URI handling"),
-                            tr("Cannot process payment request because BIP70 is not supported.\n"
-                               "Due to widespread security flaws in BIP70 it's strongly recommended that any merchant instructions to switch wallets be ignored.\n"
-                               "If you are receiving this error you should request the merchant provide a BIP21 compatible URI."),
-                            CClientUIInterface::ICON_WARNING);
+                                       tr("Cannot process payment request because BIP70 is not supported.\n"
+                                          "Due to widespread security flaws in BIP70 it's strongly recommended that any merchant instructions to switch wallets be ignored.\n"
+                                          "If you are receiving this error you should request the merchant provide a BIP21 compatible URI."),
+                                       CClientUIInterface::ICON_WARNING);
                     }
                     Q_EMIT message(tr("URI handling"), QString::fromStdString(error_msg),
-                        CClientUIInterface::MSG_ERROR);
-                }
-                else
+                                   CClientUIInterface::MSG_ERROR);
+                } else
                     Q_EMIT receivedPaymentRequest(recipient);
-            }
-            else
+            } else
                 Q_EMIT message(tr("URI handling"),
-                    tr("URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters."),
-                    CClientUIInterface::ICON_WARNING);
+                               tr("URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters."),
+                               CClientUIInterface::ICON_WARNING);
 
             return;
         }
@@ -231,16 +219,16 @@ void PaymentServer::handleURIOrFile(const QString& s)
     if (QFile::exists(s)) // payment request file
     {
         Q_EMIT message(tr("Payment request file handling"),
-            tr("Cannot process payment request because BIP70 is not supported.\n"
-               "Due to widespread security flaws in BIP70 it's strongly recommended that any merchant instructions to switch wallets be ignored.\n"
-               "If you are receiving this error you should request the merchant provide a BIP21 compatible URI."),
-            CClientUIInterface::ICON_WARNING);
+                       tr("Cannot process payment request because BIP70 is not supported.\n"
+                          "Due to widespread security flaws in BIP70 it's strongly recommended that any merchant instructions to switch wallets be ignored.\n"
+                          "If you are receiving this error you should request the merchant provide a BIP21 compatible URI."),
+                       CClientUIInterface::ICON_WARNING);
     }
 }
 
 void PaymentServer::handleURIConnection()
 {
-    QLocalSocket *clientConnection = uriServer->nextPendingConnection();
+    QLocalSocket* clientConnection = uriServer->nextPendingConnection();
 
     while (clientConnection->bytesAvailable() < (int)sizeof(quint32))
         clientConnection->waitForReadyRead();
@@ -258,7 +246,7 @@ void PaymentServer::handleURIConnection()
     handleURIOrFile(msg);
 }
 
-void PaymentServer::setOptionsModel(OptionsModel *_optionsModel)
+void PaymentServer::setOptionsModel(OptionsModel* _optionsModel)
 {
     this->optionsModel = _optionsModel;
 }

@@ -29,8 +29,7 @@ namespace mp {
 //! Example:
 //!   TypeList<int, bool, void>
 template <typename... Types>
-struct TypeList
-{
+struct TypeList {
     static constexpr size_t size = sizeof...(Types);
 };
 
@@ -58,16 +57,14 @@ struct Split;
 
 //! Specialization of above (base case)
 template <typename _Second, typename _First>
-struct Split<0, _Second, _First, true>
-{
+struct Split<0, _Second, _First, true> {
     using First = _First;
     using Second = _Second;
 };
 
 //! Specialization of above (recursive case)
 template <std::size_t index, typename Type, typename... _Second, typename... _First>
-struct Split<index, TypeList<Type, _Second...>, TypeList<_First...>, false>
-{
+struct Split<index, TypeList<Type, _Second...>, TypeList<_First...>, false> {
     using _Next = Split<index - 1, TypeList<_Second...>, TypeList<_First..., Type>>;
     using First = typename _Next::First;
     using Second = typename _Next::Second;
@@ -87,8 +84,7 @@ using Decay = std::decay_t<T>;
 
 //! SFINAE helper, see using Require below.
 template <typename SfinaeExpr, typename Result_>
-struct _Require
-{
+struct _Require {
     using Result = Result_;
 };
 
@@ -105,14 +101,12 @@ using Require = typename _Require<SfinaeExpr, Result>::Result;
 //!
 //!   foo(Priority<1>());   // Calls higher priority overload if enabled.
 template <int priority>
-struct Priority : Priority<priority - 1>
-{
+struct Priority : Priority<priority - 1> {
 };
 
 //! Specialization of above (base case)
 template <>
-struct Priority<0>
-{
+struct Priority<0> {
 };
 
 //! Return capnp type name with filename prefix removed.
@@ -132,8 +126,7 @@ const char* TypeName()
 
 //! Analog to std::lock_guard that unlocks instead of locks.
 template <typename Lock>
-struct UnlockGuard
-{
+struct UnlockGuard {
     UnlockGuard(Lock& lock) : m_lock(lock) { m_lock.unlock(); }
     ~UnlockGuard() { m_lock.lock(); }
     Lock& m_lock;
@@ -149,14 +142,14 @@ void Unlock(Lock& lock, Callback&& callback)
 //! Needed for libc++/macOS compatibility. Lets code work with shared_ptr nothrow declaration
 //! https://github.com/capnproto/capnproto/issues/553#issuecomment-328554603
 template <typename T>
-struct DestructorCatcher
-{
+struct DestructorCatcher {
     T value;
     template <typename... Params>
     DestructorCatcher(Params&&... params) : value(kj::fwd<Params>(params)...)
     {
     }
-    ~DestructorCatcher() noexcept try {
+    ~DestructorCatcher() noexcept
+    try {
     } catch (const kj::Exception& e) { // NOLINT(bugprone-empty-catch)
     }
 };
@@ -167,8 +160,7 @@ struct DestructorCatcher
 //! destructors, but this doesn't work well with kj types which are generally
 //! move-only and not noexcept.
 template <typename Callable>
-struct AsyncCallable
-{
+struct AsyncCallable {
     AsyncCallable(Callable&& callable) : m_callable(std::make_shared<DestructorCatcher<Callable>>(std::move(callable)))
     {
     }

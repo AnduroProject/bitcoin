@@ -35,6 +35,7 @@ class SnapshotMetadata
     inline static const uint16_t VERSION{2};
     const std::set<uint16_t> m_supported_versions{VERSION};
     const MessageStartChars m_network_magic;
+
 public:
     //! The hash of the block that reflects the tip of the chain for the
     //! UTXO set contained in this snapshot.
@@ -46,18 +47,17 @@ public:
     uint64_t m_coins_count = 0;
 
     SnapshotMetadata(
-        const MessageStartChars network_magic) :
-            m_network_magic(network_magic) { }
+        const MessageStartChars network_magic) : m_network_magic(network_magic) {}
     SnapshotMetadata(
         const MessageStartChars network_magic,
         const uint256& base_blockhash,
-        uint64_t coins_count) :
-            m_network_magic(network_magic),
-            m_base_blockhash(base_blockhash),
-            m_coins_count(coins_count) { }
+        uint64_t coins_count) : m_network_magic(network_magic),
+                                m_base_blockhash(base_blockhash),
+                                m_coins_count(coins_count) {}
 
     template <typename Stream>
-    inline void Serialize(Stream& s) const {
+    inline void Serialize(Stream& s) const
+    {
         s << SNAPSHOT_MAGIC_BYTES;
         s << VERSION;
         s << m_network_magic;
@@ -66,7 +66,8 @@ public:
     }
 
     template <typename Stream>
-    inline void Unserialize(Stream& s) {
+    inline void Unserialize(Stream& s)
+    {
         // Read the snapshot magic bytes
         std::array<uint8_t, SNAPSHOT_MAGIC_BYTES.size()> snapshot_magic;
         s >> snapshot_magic;

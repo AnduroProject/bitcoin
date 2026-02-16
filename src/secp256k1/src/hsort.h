@@ -27,7 +27,7 @@
  *              less than, equal to, or greater than the second.
  *    cmp_data: pointer passed as third argument to cmp.
  */
-static void secp256k1_hsort(void *ptr, size_t count, size_t size,
-                            int (*cmp)(const void *, const void *, void *),
-                            void *cmp_data);
+static void secp256k1_hsort(void* ptr, size_t count, size_t size,
+                            int (*cmp)(const void*, const void*, void*),
+                            void* cmp_data);
 #endif

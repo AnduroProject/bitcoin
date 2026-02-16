@@ -23,37 +23,30 @@ static RPCHelpMan getzmqnotifications()
     return RPCHelpMan{
         "getzmqnotifications",
         "Returns information about the active ZeroMQ notifications.\n",
-                {},
-                RPCResult{
-                    RPCResult::Type::ARR, "", "",
-                    {
-                        {RPCResult::Type::OBJ, "", "",
-                        {
-                            {RPCResult::Type::STR, "type", "Type of notification"},
-                            {RPCResult::Type::STR, "address", "Address of the publisher"},
-                            {RPCResult::Type::NUM, "hwm", "Outbound message high water mark"},
-                        }},
-                    }
-                },
-                RPCExamples{
-                    HelpExampleCli("getzmqnotifications", "")
-            + HelpExampleRpc("getzmqnotifications", "")
-                },
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
-{
-    UniValue result(UniValue::VARR);
-    if (g_zmq_notification_interface != nullptr) {
-        for (const auto* n : g_zmq_notification_interface->GetActiveNotifiers()) {
-            UniValue obj(UniValue::VOBJ);
-            obj.pushKV("type", n->GetType());
-            obj.pushKV("address", n->GetAddress());
-            obj.pushKV("hwm", n->GetOutboundMessageHighWaterMark());
-            result.push_back(std::move(obj));
-        }
-    }
+        {},
+        RPCResult{
+            RPCResult::Type::ARR, "", "", {
+                                              {RPCResult::Type::OBJ, "", "", {
+                                                                                 {RPCResult::Type::STR, "type", "Type of notification"},
+                                                                                 {RPCResult::Type::STR, "address", "Address of the publisher"},
+                                                                                 {RPCResult::Type::NUM, "hwm", "Outbound message high water mark"},
+                                                                             }},
+                                          }},
+        RPCExamples{HelpExampleCli("getzmqnotifications", "") + HelpExampleRpc("getzmqnotifications", "")},
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
+            UniValue result(UniValue::VARR);
+            if (g_zmq_notification_interface != nullptr) {
+                for (const auto* n : g_zmq_notification_interface->GetActiveNotifiers()) {
+                    UniValue obj(UniValue::VOBJ);
+                    obj.pushKV("type", n->GetType());
+                    obj.pushKV("address", n->GetAddress());
+                    obj.pushKV("hwm", n->GetOutboundMessageHighWaterMark());
+                    result.push_back(std::move(obj));
+                }
+            }
 
-    return result;
-},
+            return result;
+        },
     };
 }
 

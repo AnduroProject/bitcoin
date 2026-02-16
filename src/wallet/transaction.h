@@ -100,28 +100,28 @@ static inline TxState TxStateInterpretSerialized(TxStateUnrecognized data)
 static inline uint256 TxStateSerializedBlockHash(const TxState& state)
 {
     return std::visit(util::Overloaded{
-        [](const TxStateInactive& inactive) { return inactive.abandoned ? uint256::ONE : uint256::ZERO; },
-        [](const TxStateInMempool& in_mempool) { return uint256::ZERO; },
-        [](const TxStateConfirmed& confirmed) { return confirmed.confirmed_block_hash; },
-        [](const TxStateBlockConflicted& conflicted) { return conflicted.conflicting_block_hash; },
-        [](const TxStateUnrecognized& unrecognized) { return unrecognized.block_hash; }
-    }, state);
+                          [](const TxStateInactive& inactive) { return inactive.abandoned ? uint256::ONE : uint256::ZERO; },
+                          [](const TxStateInMempool& in_mempool) { return uint256::ZERO; },
+                          [](const TxStateConfirmed& confirmed) { return confirmed.confirmed_block_hash; },
+                          [](const TxStateBlockConflicted& conflicted) { return conflicted.conflicting_block_hash; },
+                          [](const TxStateUnrecognized& unrecognized) { return unrecognized.block_hash; }},
+                      state);
 }
 
 //! Get TxState serialized block index. Inverse of TxStateInterpretSerialized.
 static inline int TxStateSerializedIndex(const TxState& state)
 {
     return std::visit(util::Overloaded{
-        [](const TxStateInactive& inactive) { return inactive.abandoned ? -1 : 0; },
-        [](const TxStateInMempool& in_mempool) { return 0; },
-        [](const TxStateConfirmed& confirmed) { return confirmed.position_in_block; },
-        [](const TxStateBlockConflicted& conflicted) { return -1; },
-        [](const TxStateUnrecognized& unrecognized) { return unrecognized.index; }
-    }, state);
+                          [](const TxStateInactive& inactive) { return inactive.abandoned ? -1 : 0; },
+                          [](const TxStateInMempool& in_mempool) { return 0; },
+                          [](const TxStateConfirmed& confirmed) { return confirmed.position_in_block; },
+                          [](const TxStateBlockConflicted& conflicted) { return -1; },
+                          [](const TxStateUnrecognized& unrecognized) { return unrecognized.index; }},
+                      state);
 }
 
 //! Return TxState or SyncTxState as a string for logging or debugging.
-template<typename T>
+template <typename T>
 std::string TxStateString(const T& state)
 {
     return std::visit([](const auto& s) { return s.toString(); }, state);
@@ -130,8 +130,7 @@ std::string TxStateString(const T& state)
 /**
  * Cachable amount subdivided into watchonly and spendable parts.
  */
-struct CachableAmount
-{
+struct CachableAmount {
     // NO and ALL are never (supposed to be) cached
     std::bitset<ISMINE_ENUM_ELEMENTS> m_cached;
     CAmount m_value[ISMINE_ENUM_ELEMENTS];
@@ -158,7 +157,7 @@ typedef std::map<std::string, std::string> mapValue_t;
 class CMerkleTx
 {
 public:
-    template<typename Stream>
+    template <typename Stream>
     void Unserialize(Stream& s)
     {
         CTransactionRef tx;
@@ -203,7 +202,7 @@ public:
      *                         2014 (removed in commit 93a18a3)
      */
     mapValue_t mapValue;
-    std::vector<std::pair<std::string, std::string> > vOrderForm;
+    std::vector<std::pair<std::string, std::string>> vOrderForm;
     unsigned int nTimeReceived; //!< time received by this node
     /**
      * Stable timestamp that never changes, and reflects the order a transaction
@@ -219,7 +218,9 @@ public:
     std::multimap<int64_t, CWalletTx*>::const_iterator m_it_wtxOrdered;
 
     // memory only
-    enum AmountType { DEBIT, CREDIT, AMOUNTTYPE_ENUM_ELEMENTS };
+    enum AmountType { DEBIT,
+                      CREDIT,
+                      AMOUNTTYPE_ENUM_ELEMENTS };
     mutable CachableAmount m_amounts[AMOUNTTYPE_ENUM_ELEMENTS];
     /**
      * This flag is true if all m_amounts caches are empty. This is particularly
@@ -258,7 +259,7 @@ public:
     // BlockConflicted.
     std::set<Txid> mempool_conflicts;
 
-    template<typename Stream>
+    template <typename Stream>
     void Serialize(Stream& s) const
     {
         mapValue_t mapValueCopy = mapValue;
@@ -273,22 +274,22 @@ public:
 
         std::vector<uint8_t> dummy_vector1; //!< Used to be vMerkleBranch
         std::vector<uint8_t> dummy_vector2; //!< Used to be vtxPrev
-        bool dummy_bool = false; //!< Used to be fFromMe, and fSpent
-        uint32_t dummy_int = 0; // Used to be fTimeReceivedIsTxTime
+        bool dummy_bool = false;            //!< Used to be fFromMe, and fSpent
+        uint32_t dummy_int = 0;             // Used to be fTimeReceivedIsTxTime
         uint256 serializedHash = TxStateSerializedBlockHash(m_state);
         int serializedIndex = TxStateSerializedIndex(m_state);
         s << TX_WITH_WITNESS(tx) << serializedHash << dummy_vector1 << serializedIndex << dummy_vector2 << mapValueCopy << vOrderForm << dummy_int << nTimeReceived << dummy_bool << dummy_bool;
     }
 
-    template<typename Stream>
+    template <typename Stream>
     void Unserialize(Stream& s)
     {
         Init();
 
-        std::vector<uint256> dummy_vector1; //!< Used to be vMerkleBranch
+        std::vector<uint256> dummy_vector1;   //!< Used to be vMerkleBranch
         std::vector<CMerkleTx> dummy_vector2; //!< Used to be vtxPrev
-        bool dummy_bool; //! Used to be fFromMe, and fSpent
-        uint32_t dummy_int; // Used to be fTimeReceivedIsTxTime
+        bool dummy_bool;                      //! Used to be fFromMe, and fSpent
+        uint32_t dummy_int;                   // Used to be fTimeReceivedIsTxTime
         uint256 serialized_block_hash;
         int serializedIndex;
         s >> TX_WITH_WITNESS(tx) >> serialized_block_hash >> dummy_vector1 >> serializedIndex >> dummy_vector2 >> mapValue >> vOrderForm >> dummy_int >> nTimeReceived >> dummy_bool >> dummy_bool;
@@ -327,8 +328,16 @@ public:
 
     int64_t GetTxTime() const;
 
-    template<typename T> const T* state() const { return std::get_if<T>(&m_state); }
-    template<typename T> T* state() { return std::get_if<T>(&m_state); }
+    template <typename T>
+    const T* state() const
+    {
+        return std::get_if<T>(&m_state);
+    }
+    template <typename T>
+    T* state()
+    {
+        return std::get_if<T>(&m_state);
+    }
 
     //! Update transaction state when attaching to a chain, filling in heights
     //! of conflicted and confirmed blocks
@@ -350,6 +359,7 @@ private:
     // wrong copy.
     CWalletTx(const CWalletTx&) = default;
     CWalletTx& operator=(const CWalletTx&) = default;
+
 public:
     // Instead have an explicit copy function
     void CopyFrom(const CWalletTx&);
@@ -368,12 +378,20 @@ private:
     const CWalletTx& m_wtx;
     const CTxOut& m_output;
     isminetype m_ismine;
+    bool is_asset;
+    bool is_asset_controller;
+    bool is_preconf;
+    CAmount reserve;
+    
 
 public:
     WalletTXO(const CWalletTx& wtx, const CTxOut& output, const isminetype ismine)
-    : m_wtx(wtx),
-    m_output(output),
-    m_ismine(ismine)
+        : m_wtx(wtx),
+          m_output(output),
+          m_ismine(ismine),
+          is_asset(false),
+          is_asset_controller(false),
+          reserve{0}
     {
         Assume(std::ranges::find(wtx.tx->vout, output) != wtx.tx->vout.end());
     }
@@ -384,6 +402,18 @@ public:
 
     isminetype GetIsMine() const { return m_ismine; }
     void SetIsMine(isminetype ismine) { m_ismine = ismine; }
+
+    void setAsset() { is_asset = true; }
+
+    bool isAsset() { return is_asset; }
+
+    void setAssetController() { is_asset_controller = true; }
+
+    bool isAssetController() { return is_asset_controller; }
+
+    void setPreconf(CAmount amt) { reserve = amt; }
+    bool isPreconf() { return is_preconf; }
+    CAmount getReserve() { return reserve; }
 };
 } // namespace wallet
 

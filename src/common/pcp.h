@@ -28,8 +28,7 @@ enum class MappingError {
 
 //! Successful response to a port mapping.
 struct MappingResult {
-    MappingResult(uint8_t version, const CService &internal_in, const CService &external_in, uint32_t lifetime_in):
-        version(version), internal(internal_in), external(external_in), lifetime(lifetime_in) {}
+    MappingResult(uint8_t version, const CService& internal_in, const CService& external_in, uint32_t lifetime_in) : version(version), internal(internal_in), external(external_in), lifetime(lifetime_in) {}
     //! Protocol version, one of NATPMP_VERSION or PCP_VERSION.
     uint8_t version;
     //! Internal host:port.
@@ -51,7 +50,7 @@ struct MappingResult {
 //! * num_tries: Number of tries in case of no response.
 //!
 //! Returns the external_ip:external_port of the mapping if successful, otherwise a MappingError.
-std::variant<MappingResult, MappingError> NATPMPRequestPortMap(const CNetAddr &gateway, uint16_t port, uint32_t lifetime, int num_tries = 3, std::chrono::milliseconds timeout_per_try = std::chrono::milliseconds(1000));
+std::variant<MappingResult, MappingError> NATPMPRequestPortMap(const CNetAddr& gateway, uint16_t port, uint32_t lifetime, int num_tries = 3, std::chrono::milliseconds timeout_per_try = std::chrono::milliseconds(1000));
 
 //! Try to open a port using RFC 6887 Port Control Protocol (PCP). Handles IPv4 and IPv6.
 //!
@@ -63,6 +62,6 @@ std::variant<MappingResult, MappingError> NATPMPRequestPortMap(const CNetAddr &g
 //! * num_tries: Number of tries in case of no response.
 //!
 //! Returns the external_ip:external_port of the mapping if successful, otherwise a MappingError.
-std::variant<MappingResult, MappingError> PCPRequestPortMap(const PCPMappingNonce &nonce, const CNetAddr &gateway, const CNetAddr &bind, uint16_t port, uint32_t lifetime, int num_tries = 3, std::chrono::milliseconds timeout_per_try = std::chrono::milliseconds(1000));
+std::variant<MappingResult, MappingError> PCPRequestPortMap(const PCPMappingNonce& nonce, const CNetAddr& gateway, const CNetAddr& bind, uint16_t port, uint32_t lifetime, int num_tries = 3, std::chrono::milliseconds timeout_per_try = std::chrono::milliseconds(1000));
 
 #endif // BITCOIN_COMMON_PCP_H

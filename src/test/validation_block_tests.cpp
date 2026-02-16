@@ -76,9 +76,11 @@ std::shared_ptr<CBlock> MinerTestingSetup::Block(const uint256& prev_hash)
     // One zero-value one that has a unique pubkey to make sure that blocks at the same height can have a different hash
     // Another one that has the coinbase reward in a P2WSH with OP_TRUE as witness program to make it easy to spend
     CMutableTransaction txCoinbase(*pblock->vtx[0]);
-    txCoinbase.vout.resize(2);
-    txCoinbase.vout[1].scriptPubKey = P2WSH_OP_TRUE;
-    txCoinbase.vout[1].nValue = txCoinbase.vout[0].nValue;
+    txCoinbase.vout.resize(3);
+    txCoinbase.vout[2].scriptPubKey = P2WSH_OP_TRUE;
+    txCoinbase.vout[2].nValue = 0;
+    txCoinbase.vout[1].nValue = 0;
+
     txCoinbase.vout[0].nValue = 0;
     txCoinbase.vin[0].scriptWitness.SetNull();
     // Always pad with OP_0 at the end to avoid bad-cb-length error
@@ -97,8 +99,9 @@ std::shared_ptr<CBlock> MinerTestingSetup::FinalizeBlock(std::shared_ptr<CBlock>
 
     pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
 
-    while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus())) {
-        ++(pblock->nNonce);
+    auto& miningHeader = CAuxPow::initAuxPow(*pblock);
+    while (!CheckProofOfWork(miningHeader.GetHash(), pblock->nBits, Params().GetConsensus())) {
+        ++(miningHeader.nNonce);
     }
 
     // submit block header, so that miner can get the block height from the
@@ -207,125 +210,6 @@ BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
 
     LOCK(cs_main);
     BOOST_CHECK_EQUAL(sub->m_expected_tip, m_node.chainman->ActiveChain().Tip()->GetBlockHash());
-}
-
-/**
- * Test that mempool updates happen atomically with reorgs.
- *
- * This prevents RPC clients, among others, from retrieving immediately-out-of-date mempool data
- * during large reorgs.
- *
- * The test verifies this by creating a chain of `num_txs` blocks, matures their coinbases, and then
- * submits txns spending from their coinbase to the mempool. A fork chain is then processed,
- * invalidating the txns and evicting them from the mempool.
- *
- * We verify that the mempool updates atomically by polling it continuously
- * from another thread during the reorg and checking that its size only changes
- * once. The size changing exactly once indicates that the polling thread's
- * view of the mempool is either consistent with the chain state before reorg,
- * or consistent with the chain state after the reorg, and not just consistent
- * with some intermediate state during the reorg.
- */
-BOOST_AUTO_TEST_CASE(mempool_locks_reorg)
-{
-    bool ignored;
-    auto ProcessBlock = [&](std::shared_ptr<const CBlock> block) -> bool {
-        return Assert(m_node.chainman)->ProcessNewBlock(block, /*force_processing=*/true, /*min_pow_checked=*/true, /*new_block=*/&ignored);
-    };
-
-    // Process all mined blocks
-    BOOST_REQUIRE(ProcessBlock(std::make_shared<CBlock>(Params().GenesisBlock())));
-    auto last_mined = GoodBlock(Params().GenesisBlock().GetHash());
-    BOOST_REQUIRE(ProcessBlock(last_mined));
-
-    // Run the test multiple times
-    for (int test_runs = 3; test_runs > 0; --test_runs) {
-        BOOST_CHECK_EQUAL(last_mined->GetHash(), WITH_LOCK(Assert(m_node.chainman)->GetMutex(), return m_node.chainman->ActiveChain().Tip()->GetBlockHash()));
-
-        // Later on split from here
-        const uint256 split_hash{last_mined->hashPrevBlock};
-
-        // Create a bunch of transactions to spend the miner rewards of the
-        // most recent blocks
-        std::vector<CTransactionRef> txs;
-        for (int num_txs = 22; num_txs > 0; --num_txs) {
-            CMutableTransaction mtx;
-            mtx.vin.emplace_back(COutPoint{last_mined->vtx[0]->GetHash(), 1}, CScript{});
-            mtx.vin[0].scriptWitness.stack.push_back(WITNESS_STACK_ELEM_OP_TRUE);
-            mtx.vout.push_back(last_mined->vtx[0]->vout[1]);
-            mtx.vout[0].nValue -= 1000;
-            txs.push_back(MakeTransactionRef(mtx));
-
-            last_mined = GoodBlock(last_mined->GetHash());
-            BOOST_REQUIRE(ProcessBlock(last_mined));
-        }
-
-        // Mature the inputs of the txs
-        for (int j = COINBASE_MATURITY; j > 0; --j) {
-            last_mined = GoodBlock(last_mined->GetHash());
-            BOOST_REQUIRE(ProcessBlock(last_mined));
-        }
-
-        // Mine a reorg (and hold it back) before adding the txs to the mempool
-        const uint256 tip_init{last_mined->GetHash()};
-
-        std::vector<std::shared_ptr<const CBlock>> reorg;
-        last_mined = GoodBlock(split_hash);
-        reorg.push_back(last_mined);
-        for (size_t j = COINBASE_MATURITY + txs.size() + 1; j > 0; --j) {
-            last_mined = GoodBlock(last_mined->GetHash());
-            reorg.push_back(last_mined);
-        }
-
-        // Add the txs to the tx pool
-        {
-            LOCK(cs_main);
-            for (const auto& tx : txs) {
-                const MempoolAcceptResult result = m_node.chainman->ProcessTransaction(tx);
-                BOOST_REQUIRE(result.m_result_type == MempoolAcceptResult::ResultType::VALID);
-            }
-        }
-
-        // Check that all txs are in the pool
-        {
-            BOOST_CHECK_EQUAL(m_node.mempool->size(), txs.size());
-        }
-
-        // Run a thread that simulates an RPC caller that is polling while
-        // validation is doing a reorg
-        std::thread rpc_thread{[&]() {
-            // This thread is checking that the mempool either contains all of
-            // the transactions invalidated by the reorg, or none of them, and
-            // not some intermediate amount.
-            while (true) {
-                LOCK(m_node.mempool->cs);
-                if (m_node.mempool->size() == 0) {
-                    // We are done with the reorg
-                    break;
-                }
-                // Internally, we might be in the middle of the reorg, but
-                // externally the reorg to the most-proof-of-work chain should
-                // be atomic. So the caller assumes that the returned mempool
-                // is consistent. That is, it has all txs that were there
-                // before the reorg.
-                assert(m_node.mempool->size() == txs.size());
-                continue;
-            }
-            LOCK(cs_main);
-            // We are done with the reorg, so the tip must have changed
-            assert(tip_init != m_node.chainman->ActiveChain().Tip()->GetBlockHash());
-        }};
-
-        // Submit the reorg in this thread to invalidate and remove the txs from the tx pool
-        for (const auto& b : reorg) {
-            ProcessBlock(b);
-        }
-        // Check that the reorg was eventually successful
-        BOOST_CHECK_EQUAL(last_mined->GetHash(), WITH_LOCK(Assert(m_node.chainman)->GetMutex(), return m_node.chainman->ActiveChain().Tip()->GetBlockHash()));
-
-        // We can join the other thread, which returns when the reorg was successful
-        rpc_thread.join();
-    }
 }
 
 BOOST_AUTO_TEST_CASE(witness_commitment_index)

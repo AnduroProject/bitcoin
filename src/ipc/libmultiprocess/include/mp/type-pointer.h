@@ -18,10 +18,10 @@ void CustomBuildField(TypeList<LocalType*>, Priority<3>, InvokeContext& invoke_c
 
 template <typename LocalType, typename Value, typename Output>
 void CustomBuildField(TypeList<std::shared_ptr<LocalType>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Value&& value,
-    Output&& output)
+                      Priority<1>,
+                      InvokeContext& invoke_context,
+                      Value&& value,
+                      Output&& output)
 {
     if (value) {
         BuildField(TypeList<LocalType>(), invoke_context, output, *value);
@@ -30,10 +30,10 @@ void CustomBuildField(TypeList<std::shared_ptr<LocalType>>,
 
 template <typename LocalType, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<LocalType*>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Input&& input,
-    ReadDest&& read_dest)
+                               Priority<1>,
+                               InvokeContext& invoke_context,
+                               Input&& input,
+                               ReadDest&& read_dest)
 {
     return read_dest.update([&](auto& value) {
         if (value) {
@@ -44,10 +44,10 @@ decltype(auto) CustomReadField(TypeList<LocalType*>,
 
 template <typename LocalType, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<std::shared_ptr<LocalType>>,
-    Priority<0>,
-    InvokeContext& invoke_context,
-    Input&& input,
-    ReadDest&& read_dest)
+                               Priority<0>,
+                               InvokeContext& invoke_context,
+                               Input&& input,
+                               ReadDest&& read_dest)
 {
     return read_dest.update([&](auto& value) {
         if (!input.has()) {
@@ -56,20 +56,20 @@ decltype(auto) CustomReadField(TypeList<std::shared_ptr<LocalType>>,
             ReadField(TypeList<LocalType>(), invoke_context, input, ReadDestUpdate(*value));
         } else {
             ReadField(TypeList<LocalType>(), invoke_context, input,
-                ReadDestEmplace(TypeList<LocalType>(), [&](auto&&... args) -> auto& {
-                    value = std::make_shared<LocalType>(std::forward<decltype(args)>(args)...);
-                    return *value;
-                }));
+                      ReadDestEmplace(TypeList<LocalType>(), [&](auto&&... args) -> auto& {
+                          value = std::make_shared<LocalType>(std::forward<decltype(args)>(args)...);
+                          return *value;
+                      }));
         }
     });
 }
 
 template <typename LocalType, typename Input, typename ReadDest>
 decltype(auto) CustomReadField(TypeList<std::shared_ptr<const LocalType>>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    Input&& input,
-    ReadDest&& read_dest)
+                               Priority<1>,
+                               InvokeContext& invoke_context,
+                               Input&& input,
+                               ReadDest&& read_dest)
 {
     return read_dest.update([&](auto& value) {
         if (!input.has()) {
@@ -77,10 +77,10 @@ decltype(auto) CustomReadField(TypeList<std::shared_ptr<const LocalType>>,
             return;
         }
         ReadField(TypeList<LocalType>(), invoke_context, std::forward<Input>(input),
-            ReadDestEmplace(TypeList<LocalType>(), [&](auto&&... args) -> auto& {
-                value = std::make_shared<LocalType>(std::forward<decltype(args)>(args)...);
-                return *value;
-            }));
+                  ReadDestEmplace(TypeList<LocalType>(), [&](auto&&... args) -> auto& {
+                      value = std::make_shared<LocalType>(std::forward<decltype(args)>(args)...);
+                      return *value;
+                  }));
     });
 }
 
@@ -100,13 +100,13 @@ void PassField(Priority<1>, TypeList<LocalType*>, ServerContext& server_context,
     Decay<LocalType> param;
 
     MaybeReadField(std::integral_constant<bool, Accessor::in>(), TypeList<LocalType>(), invoke_context, input,
-        ReadDestUpdate(param));
+                   ReadDestUpdate(param));
 
     fn.invoke(server_context, std::forward<Args>(args)..., &param);
 
     auto&& results = server_context.call_context.getResults();
     MaybeBuildField(std::integral_constant<bool, Accessor::out>(), TypeList<LocalType>(), invoke_context,
-        Make<StructField, Accessor>(results), param);
+                    Make<StructField, Accessor>(results), param);
 }
 } // namespace mp
 

@@ -20,7 +20,7 @@ namespace interfaces {
 class Node;
 }
 
-extern const char *DEFAULT_GUI_PROXY_HOST;
+extern const char* DEFAULT_GUI_PROXY_HOST;
 static constexpr uint16_t DEFAULT_GUI_PROXY_PORT = 9050;
 
 /**
@@ -44,36 +44,36 @@ class OptionsModel : public QAbstractListModel
     Q_OBJECT
 
 public:
-    explicit OptionsModel(interfaces::Node& node, QObject *parent = nullptr);
+    explicit OptionsModel(interfaces::Node& node, QObject* parent = nullptr);
 
     enum OptionID {
-        StartAtStartup,         // bool
-        ShowTrayIcon,           // bool
-        MinimizeToTray,         // bool
-        MapPortNatpmp,          // bool
-        MinimizeOnClose,        // bool
-        ProxyUse,               // bool
-        ProxyIP,                // QString
-        ProxyPort,              // int
-        ProxyUseTor,            // bool
-        ProxyIPTor,             // QString
-        ProxyPortTor,           // int
-        DisplayUnit,            // BitcoinUnit
-        ThirdPartyTxUrls,       // QString
-        Language,               // QString
-        FontForMoney,           // FontChoice
-        CoinControlFeatures,    // bool
-        SubFeeFromAmount,       // bool
-        ThreadsScriptVerif,     // int
-        Prune,                  // bool
-        PruneSize,              // int
-        DatabaseCache,          // int
-        ExternalSignerPath,     // QString
-        SpendZeroConfChange,    // bool
-        Listen,                 // bool
-        Server,                 // bool
-        EnablePSBTControls,     // bool
-        MaskValues,             // bool
+        StartAtStartup,      // bool
+        ShowTrayIcon,        // bool
+        MinimizeToTray,      // bool
+        MapPortNatpmp,       // bool
+        MinimizeOnClose,     // bool
+        ProxyUse,            // bool
+        ProxyIP,             // QString
+        ProxyPort,           // int
+        ProxyUseTor,         // bool
+        ProxyIPTor,          // QString
+        ProxyPortTor,        // int
+        DisplayUnit,         // BitcoinUnit
+        ThirdPartyTxUrls,    // QString
+        Language,            // QString
+        FontForMoney,        // FontChoice
+        CoinControlFeatures, // bool
+        SubFeeFromAmount,    // bool
+        ThreadsScriptVerif,  // int
+        Prune,               // bool
+        PruneSize,           // int
+        DatabaseCache,       // int
+        ExternalSignerPath,  // QString
+        SpendZeroConfChange, // bool
+        Listen,              // bool
+        Server,              // bool
+        EnablePSBTControls,  // bool
+        MaskValues,          // bool
         OptionIDRowCount,
     };
 
@@ -88,11 +88,11 @@ public:
     bool Init(bilingual_str& error);
     void Reset();
 
-    int rowCount(const QModelIndex & parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
-    QVariant getOption(OptionID option, const std::string& suffix="") const;
-    bool setOption(OptionID option, const QVariant& value, const std::string& suffix="");
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
+    QVariant getOption(OptionID option, const std::string& suffix = "") const;
+    bool setOption(OptionID option, const QVariant& value, const std::string& suffix = "");
     /** Updates current unit in memory, settings and emits displayUnitChanged(new_unit) signal */
     void setDisplayUnit(const QVariant& new_unit);
 
@@ -142,7 +142,7 @@ private:
     static FontChoice FontChoiceFromString(const QString&);
 
     // Add option to list of GUI options overridden through command line/config file
-    void addOverriddenOption(const std::string &option);
+    void addOverriddenOption(const std::string& option);
 
     // Check settings version and upgrade default values if required
     void checkAndMigrate();

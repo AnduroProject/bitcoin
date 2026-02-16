@@ -9,7 +9,7 @@
 
 #define MINISKETCH_BUILD
 #ifdef _MINISKETCH_H_
-#  error "minisketch.h cannot be included before minisketch.cpp"
+#error "minisketch.h cannot be included before minisketch.cpp"
 #endif
 #include "../include/minisketch.h"
 
@@ -18,11 +18,11 @@
 #include "sketch.h"
 
 #ifdef HAVE_CLMUL
-#  ifdef _MSC_VER
-#    include <intrin.h>
-#  else
-#    include <cpuid.h>
-#  endif
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
+#include <cpuid.h>
+#endif
 #endif
 
 Sketch* ConstructGeneric1Byte(int bits, int implementation);
@@ -156,11 +156,12 @@ Sketch* Construct(int bits, int impl)
     return nullptr;
 }
 
-}
+} // namespace
 
 extern "C" {
 
-int minisketch_bits_supported(uint32_t bits) {
+int minisketch_bits_supported(uint32_t bits)
+{
 #ifdef ENABLE_FIELD_INT_2
     if (bits == 2) return true;
 #endif
@@ -353,7 +354,8 @@ int minisketch_bits_supported(uint32_t bits) {
     return false;
 }
 
-uint32_t minisketch_implementation_max() {
+uint32_t minisketch_implementation_max()
+{
     uint32_t ret = 0;
 #ifdef HAVE_CLMUL
     ret += 2;
@@ -361,7 +363,8 @@ uint32_t minisketch_implementation_max() {
     return ret;
 }
 
-int minisketch_implementation_supported(uint32_t bits, uint32_t implementation) {
+int minisketch_implementation_supported(uint32_t bits, uint32_t implementation)
+{
     if (!minisketch_bits_supported(bits) || implementation > minisketch_implementation_max()) {
         return 0;
     }
@@ -371,11 +374,13 @@ int minisketch_implementation_supported(uint32_t bits, uint32_t implementation) 
             delete sketch;
             return 1;
         }
-    } catch (const std::bad_alloc&) {}
+    } catch (const std::bad_alloc&) {
+    }
     return 0;
 }
 
-minisketch* minisketch_create(uint32_t bits, uint32_t implementation, size_t capacity) {
+minisketch* minisketch_create(uint32_t bits, uint32_t implementation, size_t capacity)
+{
     try {
         Sketch* sketch = Construct(bits, implementation);
         if (sketch) {
@@ -393,35 +398,40 @@ minisketch* minisketch_create(uint32_t bits, uint32_t implementation, size_t cap
     }
 }
 
-uint32_t minisketch_bits(const minisketch* sketch) {
+uint32_t minisketch_bits(const minisketch* sketch)
+{
     const Sketch* s = (const Sketch*)sketch;
     s->Check();
     return s->Bits();
 }
 
-size_t minisketch_capacity(const minisketch* sketch) {
+size_t minisketch_capacity(const minisketch* sketch)
+{
     const Sketch* s = (const Sketch*)sketch;
     s->Check();
     return s->Syndromes();
 }
 
-uint32_t minisketch_implementation(const minisketch* sketch) {
+uint32_t minisketch_implementation(const minisketch* sketch)
+{
     const Sketch* s = (const Sketch*)sketch;
     s->Check();
     return s->Implementation();
 }
 
-minisketch* minisketch_clone(const minisketch* sketch) {
+minisketch* minisketch_clone(const minisketch* sketch)
+{
     const Sketch* s = (const Sketch*)sketch;
     s->Check();
-    Sketch* r = (Sketch*) minisketch_create(s->Bits(), s->Implementation(), s->Syndromes());
+    Sketch* r = (Sketch*)minisketch_create(s->Bits(), s->Implementation(), s->Syndromes());
     if (r) {
         r->Merge(s);
     }
-    return (minisketch*) r;
+    return (minisketch*)r;
 }
 
-void minisketch_destroy(minisketch* sketch) {
+void minisketch_destroy(minisketch* sketch)
+{
     if (sketch) {
         Sketch* s = (Sketch*)sketch;
         s->UnReady();
@@ -429,7 +439,8 @@ void minisketch_destroy(minisketch* sketch) {
     }
 }
 
-size_t minisketch_serialized_size(const minisketch* sketch) {
+size_t minisketch_serialized_size(const minisketch* sketch)
+{
     const Sketch* s = (const Sketch*)sketch;
     s->Check();
     size_t bits = s->Bits();
@@ -437,25 +448,29 @@ size_t minisketch_serialized_size(const minisketch* sketch) {
     return (bits * syndromes + 7) / 8;
 }
 
-void minisketch_serialize(const minisketch* sketch, unsigned char* output) {
+void minisketch_serialize(const minisketch* sketch, unsigned char* output)
+{
     const Sketch* s = (const Sketch*)sketch;
     s->Check();
     s->Serialize(output);
 }
 
-void minisketch_deserialize(minisketch* sketch, const unsigned char* input) {
+void minisketch_deserialize(minisketch* sketch, const unsigned char* input)
+{
     Sketch* s = (Sketch*)sketch;
     s->Check();
     s->Deserialize(input);
 }
 
-void minisketch_add_uint64(minisketch* sketch, uint64_t element) {
+void minisketch_add_uint64(minisketch* sketch, uint64_t element)
+{
     Sketch* s = (Sketch*)sketch;
     s->Check();
     s->Add(element);
 }
 
-size_t minisketch_merge(minisketch* sketch, const minisketch* other_sketch) {
+size_t minisketch_merge(minisketch* sketch, const minisketch* other_sketch)
+{
     Sketch* s1 = (Sketch*)sketch;
     const Sketch* s2 = (const Sketch*)other_sketch;
     s1->Check();
@@ -465,24 +480,27 @@ size_t minisketch_merge(minisketch* sketch, const minisketch* other_sketch) {
     return s1->Merge(s2);
 }
 
-ssize_t minisketch_decode(const minisketch* sketch, size_t max_elements, uint64_t* output) {
+ssize_t minisketch_decode(const minisketch* sketch, size_t max_elements, uint64_t* output)
+{
     const Sketch* s = (const Sketch*)sketch;
     s->Check();
     return s->Decode(static_cast<int>(max_elements), output);
 }
 
-void minisketch_set_seed(minisketch* sketch, uint64_t seed) {
+void minisketch_set_seed(minisketch* sketch, uint64_t seed)
+{
     Sketch* s = (Sketch*)sketch;
     s->Check();
     s->SetSeed(seed);
 }
 
-size_t minisketch_compute_capacity(uint32_t bits, size_t max_elements, uint32_t fpbits) {
+size_t minisketch_compute_capacity(uint32_t bits, size_t max_elements, uint32_t fpbits)
+{
     return ComputeCapacity(bits, max_elements, fpbits);
 }
 
-size_t minisketch_compute_max_elements(uint32_t bits, size_t capacity, uint32_t fpbits) {
+size_t minisketch_compute_max_elements(uint32_t bits, size_t capacity, uint32_t fpbits)
+{
     return ComputeMaxElements(bits, capacity, fpbits);
 }
-
 }

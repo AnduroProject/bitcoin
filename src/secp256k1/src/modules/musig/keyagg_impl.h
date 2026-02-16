@@ -8,15 +8,15 @@
 
 #include <string.h>
 
-#include "keyagg.h"
 #include "../../eckey.h"
 #include "../../ecmult.h"
 #include "../../field.h"
 #include "../../group.h"
 #include "../../hash.h"
 #include "../../util.h"
+#include "keyagg.h"
 
-static const unsigned char secp256k1_musig_keyagg_cache_magic[4] = { 0xf4, 0xad, 0xbb, 0xdf };
+static const unsigned char secp256k1_musig_keyagg_cache_magic[4] = {0xf4, 0xad, 0xbb, 0xdf};
 
 /* A keyagg cache consists of
  * - 4 byte magic set during initialization to allow detecting an uninitialized
@@ -28,8 +28,9 @@ static const unsigned char secp256k1_musig_keyagg_cache_magic[4] = { 0xf4, 0xad,
  * - 32 byte tweak
  */
 /* Requires that cache_i->pk is not infinity. */
-static void secp256k1_keyagg_cache_save(secp256k1_musig_keyagg_cache *cache, const secp256k1_keyagg_cache_internal *cache_i) {
-    unsigned char *ptr = cache->data;
+static void secp256k1_keyagg_cache_save(secp256k1_musig_keyagg_cache* cache, const secp256k1_keyagg_cache_internal* cache_i)
+{
+    unsigned char* ptr = cache->data;
     memcpy(ptr, secp256k1_musig_keyagg_cache_magic, 4);
     ptr += 4;
     secp256k1_ge_to_bytes(ptr, &cache_i->pk);
@@ -43,8 +44,9 @@ static void secp256k1_keyagg_cache_save(secp256k1_musig_keyagg_cache *cache, con
     secp256k1_scalar_get_b32(ptr, &cache_i->tweak);
 }
 
-static int secp256k1_keyagg_cache_load(const secp256k1_context* ctx, secp256k1_keyagg_cache_internal *cache_i, const secp256k1_musig_keyagg_cache *cache) {
-    const unsigned char *ptr = cache->data;
+static int secp256k1_keyagg_cache_load(const secp256k1_context* ctx, secp256k1_keyagg_cache_internal* cache_i, const secp256k1_musig_keyagg_cache* cache)
+{
+    const unsigned char* ptr = cache->data;
     ARG_CHECK(secp256k1_memcmp_var(ptr, secp256k1_musig_keyagg_cache_magic, 4) == 0);
     ptr += 4;
     secp256k1_ge_from_bytes(&cache_i->pk, ptr);
@@ -61,7 +63,8 @@ static int secp256k1_keyagg_cache_load(const secp256k1_context* ctx, secp256k1_k
 
 /* Initializes SHA256 with fixed midstate. This midstate was computed by applying
  * SHA256 to SHA256("KeyAgg list")||SHA256("KeyAgg list"). */
-static void secp256k1_musig_keyagglist_sha256(secp256k1_sha256 *sha) {
+static void secp256k1_musig_keyagglist_sha256(secp256k1_sha256* sha)
+{
     secp256k1_sha256_initialize(sha);
 
     sha->s[0] = 0xb399d5e0ul;
@@ -76,7 +79,8 @@ static void secp256k1_musig_keyagglist_sha256(secp256k1_sha256 *sha) {
 }
 
 /* Computes pks_hash = tagged_hash(pk[0], ..., pk[np-1]) */
-static int secp256k1_musig_compute_pks_hash(const secp256k1_context *ctx, unsigned char *pks_hash, const secp256k1_pubkey * const* pks, size_t np) {
+static int secp256k1_musig_compute_pks_hash(const secp256k1_context* ctx, unsigned char* pks_hash, const secp256k1_pubkey* const* pks, size_t np)
+{
     secp256k1_sha256 sha;
     size_t i;
 
@@ -96,7 +100,8 @@ static int secp256k1_musig_compute_pks_hash(const secp256k1_context *ctx, unsign
 
 /* Initializes SHA256 with fixed midstate. This midstate was computed by applying
  * SHA256 to SHA256("KeyAgg coefficient")||SHA256("KeyAgg coefficient"). */
-static void secp256k1_musig_keyaggcoef_sha256(secp256k1_sha256 *sha) {
+static void secp256k1_musig_keyaggcoef_sha256(secp256k1_sha256* sha)
+{
     secp256k1_sha256_initialize(sha);
 
     sha->s[0] = 0x6ef02c5aul;
@@ -115,11 +120,11 @@ static void secp256k1_musig_keyaggcoef_sha256(secp256k1_sha256 *sha) {
  * second_pk is the point at infinity in case there is no second_pk. Assumes
  * that pk is not the point at infinity and that the Y-coordinates of pk and
  * second_pk are normalized. */
-static void secp256k1_musig_keyaggcoef_internal(secp256k1_scalar *r, const unsigned char *pks_hash, secp256k1_ge *pk, const secp256k1_ge *second_pk) {
+static void secp256k1_musig_keyaggcoef_internal(secp256k1_scalar* r, const unsigned char* pks_hash, secp256k1_ge* pk, const secp256k1_ge* second_pk)
+{
     VERIFY_CHECK(!secp256k1_ge_is_infinity(pk));
 
-    if (!secp256k1_ge_is_infinity(second_pk)
-          && secp256k1_ge_eq_var(pk, second_pk)) {
+    if (!secp256k1_ge_is_infinity(second_pk) && secp256k1_ge_eq_var(pk, second_pk)) {
         secp256k1_scalar_set_int(r, 1);
     } else {
         secp256k1_sha256 sha;
@@ -134,7 +139,7 @@ static void secp256k1_musig_keyaggcoef_internal(secp256k1_scalar *r, const unsig
          * (according to this function's precondition). */
         VERIFY_CHECK(ret && buflen == sizeof(buf));
 #else
-        (void) ret;
+        (void)ret;
 #endif
         secp256k1_sha256_write(&sha, buf, sizeof(buf));
         secp256k1_sha256_finalize(&sha, buf);
@@ -144,21 +149,23 @@ static void secp256k1_musig_keyaggcoef_internal(secp256k1_scalar *r, const unsig
 
 /* Assumes that pk is not the point at infinity and that the Y-coordinates of pk
  * and cache_i->second_pk are normalized. */
-static void secp256k1_musig_keyaggcoef(secp256k1_scalar *r, const secp256k1_keyagg_cache_internal *cache_i, secp256k1_ge *pk) {
+static void secp256k1_musig_keyaggcoef(secp256k1_scalar* r, const secp256k1_keyagg_cache_internal* cache_i, secp256k1_ge* pk)
+{
     secp256k1_musig_keyaggcoef_internal(r, cache_i->pks_hash, pk, &cache_i->second_pk);
 }
 
 typedef struct {
-    const secp256k1_context *ctx;
+    const secp256k1_context* ctx;
     /* pks_hash is the hash of the public keys */
     unsigned char pks_hash[32];
-    const secp256k1_pubkey * const* pks;
+    const secp256k1_pubkey* const* pks;
     secp256k1_ge second_pk;
 } secp256k1_musig_pubkey_agg_ecmult_data;
 
 /* Callback for batch EC multiplication to compute keyaggcoef_0*P0 + keyaggcoef_1*P1 + ...  */
-static int secp256k1_musig_pubkey_agg_callback(secp256k1_scalar *sc, secp256k1_ge *pt, size_t idx, void *data) {
-    secp256k1_musig_pubkey_agg_ecmult_data *ctx = (secp256k1_musig_pubkey_agg_ecmult_data *) data;
+static int secp256k1_musig_pubkey_agg_callback(secp256k1_scalar* sc, secp256k1_ge* pt, size_t idx, void* data)
+{
+    secp256k1_musig_pubkey_agg_ecmult_data* ctx = (secp256k1_musig_pubkey_agg_ecmult_data*)data;
     int ret;
     ret = secp256k1_pubkey_load(ctx->ctx, pt, ctx->pks[idx]);
 #ifdef VERIFY
@@ -166,13 +173,14 @@ static int secp256k1_musig_pubkey_agg_callback(secp256k1_scalar *sc, secp256k1_g
      * `musig_compute_pks_hash` (and we test this). */
     VERIFY_CHECK(ret);
 #else
-    (void) ret;
+    (void)ret;
 #endif
     secp256k1_musig_keyaggcoef_internal(sc, ctx->pks_hash, pt, &ctx->second_pk);
     return 1;
 }
 
-int secp256k1_musig_pubkey_agg(const secp256k1_context* ctx, secp256k1_xonly_pubkey *agg_pk, secp256k1_musig_keyagg_cache *keyagg_cache, const secp256k1_pubkey * const* pubkeys, size_t n_pubkeys) {
+int secp256k1_musig_pubkey_agg(const secp256k1_context* ctx, secp256k1_xonly_pubkey* agg_pk, secp256k1_musig_keyagg_cache* keyagg_cache, const secp256k1_pubkey* const* pubkeys, size_t n_pubkeys)
+{
     secp256k1_musig_pubkey_agg_ecmult_data ecmult_data;
     secp256k1_gej pkj;
     secp256k1_ge pkp;
@@ -205,7 +213,7 @@ int secp256k1_musig_pubkey_agg(const secp256k1_context* ctx, secp256k1_xonly_pub
     }
     /* TODO: actually use optimized ecmult_multi algorithms by providing a
      * scratch space */
-    if (!secp256k1_ecmult_multi_var(&ctx->error_callback, NULL, &pkj, NULL, secp256k1_musig_pubkey_agg_callback, (void *) &ecmult_data, n_pubkeys)) {
+    if (!secp256k1_ecmult_multi_var(&ctx->error_callback, NULL, &pkj, NULL, secp256k1_musig_pubkey_agg_callback, (void*)&ecmult_data, n_pubkeys)) {
         /* In order to reach this line with the current implementation of
          * ecmult_multi_var one would need to provide a callback that can
          * fail. */
@@ -216,7 +224,7 @@ int secp256k1_musig_pubkey_agg(const secp256k1_context* ctx, secp256k1_xonly_pub
     /* The resulting public key is infinity with negligible probability */
     VERIFY_CHECK(!secp256k1_ge_is_infinity(&pkp));
     if (keyagg_cache != NULL) {
-        secp256k1_keyagg_cache_internal cache_i = { 0 };
+        secp256k1_keyagg_cache_internal cache_i = {0};
         cache_i.pk = pkp;
         cache_i.second_pk = ecmult_data.second_pk;
         memcpy(cache_i.pks_hash, ecmult_data.pks_hash, sizeof(cache_i.pks_hash));
@@ -230,7 +238,8 @@ int secp256k1_musig_pubkey_agg(const secp256k1_context* ctx, secp256k1_xonly_pub
     return 1;
 }
 
-int secp256k1_musig_pubkey_get(const secp256k1_context* ctx, secp256k1_pubkey *agg_pk, const secp256k1_musig_keyagg_cache *keyagg_cache) {
+int secp256k1_musig_pubkey_get(const secp256k1_context* ctx, secp256k1_pubkey* agg_pk, const secp256k1_musig_keyagg_cache* keyagg_cache)
+{
     secp256k1_keyagg_cache_internal cache_i;
     VERIFY_CHECK(ctx != NULL);
     ARG_CHECK(agg_pk != NULL);
@@ -244,7 +253,8 @@ int secp256k1_musig_pubkey_get(const secp256k1_context* ctx, secp256k1_pubkey *a
     return 1;
 }
 
-static int secp256k1_musig_pubkey_tweak_add_internal(const secp256k1_context* ctx, secp256k1_pubkey *output_pubkey, secp256k1_musig_keyagg_cache *keyagg_cache, const unsigned char *tweak32, int xonly) {
+static int secp256k1_musig_pubkey_tweak_add_internal(const secp256k1_context* ctx, secp256k1_pubkey* output_pubkey, secp256k1_musig_keyagg_cache* keyagg_cache, const unsigned char* tweak32, int xonly)
+{
     secp256k1_keyagg_cache_internal cache_i;
     int overflow = 0;
     secp256k1_scalar tweak;
@@ -280,11 +290,13 @@ static int secp256k1_musig_pubkey_tweak_add_internal(const secp256k1_context* ct
     return 1;
 }
 
-int secp256k1_musig_pubkey_ec_tweak_add(const secp256k1_context* ctx, secp256k1_pubkey *output_pubkey, secp256k1_musig_keyagg_cache *keyagg_cache, const unsigned char *tweak32) {
+int secp256k1_musig_pubkey_ec_tweak_add(const secp256k1_context* ctx, secp256k1_pubkey* output_pubkey, secp256k1_musig_keyagg_cache* keyagg_cache, const unsigned char* tweak32)
+{
     return secp256k1_musig_pubkey_tweak_add_internal(ctx, output_pubkey, keyagg_cache, tweak32, 0);
 }
 
-int secp256k1_musig_pubkey_xonly_tweak_add(const secp256k1_context* ctx, secp256k1_pubkey *output_pubkey, secp256k1_musig_keyagg_cache *keyagg_cache, const unsigned char *tweak32) {
+int secp256k1_musig_pubkey_xonly_tweak_add(const secp256k1_context* ctx, secp256k1_pubkey* output_pubkey, secp256k1_musig_keyagg_cache* keyagg_cache, const unsigned char* tweak32)
+{
     return secp256k1_musig_pubkey_tweak_add_internal(ctx, output_pubkey, keyagg_cache, tweak32, 1);
 }
 

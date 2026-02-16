@@ -50,7 +50,8 @@ std::optional<uint256> ReadSnapshotBaseBlockhash(fs::path chaindir)
 {
     if (!fs::exists(chaindir)) {
         LogPrintf("[snapshot] cannot read base blockhash: no chainstate dir "
-            "exists at path %s\n", fs::PathToString(chaindir));
+                  "exists at path %s\n",
+                  fs::PathToString(chaindir));
         return std::nullopt;
     }
     const fs::path read_from = chaindir / node::SNAPSHOT_BLOCKHASH_FILENAME;
@@ -58,8 +59,8 @@ std::optional<uint256> ReadSnapshotBaseBlockhash(fs::path chaindir)
 
     if (!fs::exists(read_from)) {
         LogPrintf("[snapshot] snapshot chainstate dir is malformed! no base blockhash file "
-            "exists at path %s. Try deleting %s and calling loadtxoutset again?\n",
-            fs::PathToString(chaindir), read_from_str);
+                  "exists at path %s. Try deleting %s and calling loadtxoutset again?\n",
+                  fs::PathToString(chaindir), read_from_str);
         return std::nullopt;
     }
 
@@ -68,7 +69,7 @@ std::optional<uint256> ReadSnapshotBaseBlockhash(fs::path chaindir)
     AutoFile afile{file};
     if (afile.IsNull()) {
         LogPrintf("[snapshot] failed to open base blockhash file for reading: %s\n",
-            read_from_str);
+                  read_from_str);
         return std::nullopt;
     }
     afile >> base_blockhash;

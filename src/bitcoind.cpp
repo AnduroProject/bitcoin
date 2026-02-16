@@ -142,13 +142,13 @@ static bool ProcessInitCommands(ArgsManager& args)
             strUsage += FormatParagraph(LicenseInfo());
         } else {
             strUsage += "\n"
-                "The " CLIENT_NAME " daemon (bitcoind) is a headless program that connects to the Bitcoin network to validate and relay transactions and blocks, as well as relaying addresses.\n\n"
-                "It provides the backbone of the Bitcoin network and its RPC, REST and ZMQ services can provide various transaction, block and address-related services.\n\n"
-                "There is an optional wallet component which provides transaction services.\n\n"
-                "It can be used in a headless environment or as part of a server setup.\n"
-                "\n"
-                "Usage: bitcoind [options]\n"
-                "\n";
+                        "The " CLIENT_NAME " daemon (bitcoind) is a headless program that connects to the Bitcoin network to validate and relay transactions and blocks, as well as relaying addresses.\n\n"
+                        "It provides the backbone of the Bitcoin network and its RPC, REST and ZMQ services can provide various transaction, block and address-related services.\n\n"
+                        "There is an optional wallet component which provides transaction services.\n\n"
+                        "It can be used in a headless environment or as part of a server setup.\n"
+                        "\n"
+                        "Usage: bitcoind [options]\n"
+                        "\n";
             strUsage += args.GetHelpMessage();
         }
 
@@ -173,8 +173,7 @@ static bool AppInit(NodeContext& node)
     TokenPipeEnd daemon_ep;
 #endif
     std::any context{&node};
-    try
-    {
+    try {
         // -server defaults to true for bitcoind but not for the GUI so do this here
         args.SoftSetBoolArg("-server", true);
         // Set this early so that parameter interactions go to console
@@ -193,8 +192,7 @@ static bool AppInit(NodeContext& node)
 
         node.kernel = std::make_unique<kernel::Context>();
         node.ecc_context = std::make_unique<ECC_Context>();
-        if (!AppInitSanityChecks(*node.kernel))
-        {
+        if (!AppInitSanityChecks(*node.kernel)) {
             // InitError will have been called with detailed error, which ends up on console
             return false;
         }
@@ -205,7 +203,7 @@ static bool AppInit(NodeContext& node)
 
             // Daemonize
             switch (fork_daemon(1, 0, daemon_ep)) { // don't chdir (1), do close FDs (0)
-            case 0: // Child: continue.
+            case 0:                                 // Child: continue.
                 // If -daemonwait is not enabled, immediately send a success token the parent.
                 if (!args.GetBoolArg("-daemonwait", DEFAULT_DAEMONWAIT)) {
                     daemon_ep.TokenWrite(1);
@@ -229,14 +227,12 @@ static bool AppInit(NodeContext& node)
 #endif // HAVE_DECL_FORK
         }
         // Lock critical directories after daemonization
-        if (!AppInitLockDirectories())
-        {
+        if (!AppInitLockDirectories()) {
             // If locking a directory failed, exit immediately
             return false;
         }
         fRet = AppInitInterfaces(node) && AppInitMain(node);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "AppInit()");
     } catch (...) {
         PrintExceptionContinue(nullptr, "AppInit()");

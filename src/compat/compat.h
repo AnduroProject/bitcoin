@@ -14,9 +14,9 @@
 #undef FD_SETSIZE
 #endif
 #define FD_SETSIZE 1024
+#include <cstdint>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <cstdint>
 #else
 #include <arpa/inet.h>   // IWYU pragma: export
 #include <fcntl.h>       // IWYU pragma: export
@@ -44,16 +44,16 @@ typedef u_short sa_family_t;
 #ifndef WIN32
 typedef unsigned int SOCKET;
 #include <cerrno>
-#define WSAGetLastError()   errno
-#define WSAEINVAL           EINVAL
-#define WSAEWOULDBLOCK      EWOULDBLOCK
-#define WSAEAGAIN           EAGAIN
-#define WSAEMSGSIZE         EMSGSIZE
-#define WSAEINTR            EINTR
-#define WSAEINPROGRESS      EINPROGRESS
-#define WSAEADDRINUSE       EADDRINUSE
-#define INVALID_SOCKET      (SOCKET)(~0)
-#define SOCKET_ERROR        -1
+#define WSAGetLastError() errno
+#define WSAEINVAL EINVAL
+#define WSAEWOULDBLOCK EWOULDBLOCK
+#define WSAEAGAIN EAGAIN
+#define WSAEMSGSIZE EMSGSIZE
+#define WSAEINTR EINTR
+#define WSAEINPROGRESS EINPROGRESS
+#define WSAEADDRINUSE EADDRINUSE
+#define INVALID_SOCKET (SOCKET)(~0)
+#define SOCKET_ERROR -1
 #else
 // WSAEAGAIN doesn't exist on Windows
 #ifdef EAGAIN
@@ -66,7 +66,7 @@ typedef unsigned int SOCKET;
 // Windows defines MAX_PATH as it's maximum path length.
 // We define MAX_PATH for use on non-Windows systems.
 #ifndef WIN32
-#define MAX_PATH            1024
+#define MAX_PATH 1024
 #endif
 
 // ssize_t is POSIX, and not present when using MSVC.

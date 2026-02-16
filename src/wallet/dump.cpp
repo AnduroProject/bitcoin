@@ -71,7 +71,6 @@ bool DumpWallet(const ArgsManager& args, WalletDatabase& db, bilingual_str& erro
     hasher << std::span{line};
 
     if (ret) {
-
         // Read the records
         while (true) {
             DataStream ss_key{};

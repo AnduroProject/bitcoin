@@ -52,8 +52,7 @@ std::unique_ptr<CZMQNotificationInterface> CZMQNotificationInterface::Create(std
     factories["pubsequence"] = CZMQAbstractNotifier::Create<CZMQPublishSequenceNotifier>;
 
     std::list<std::unique_ptr<CZMQAbstractNotifier>> notifiers;
-    for (const auto& entry : factories)
-    {
+    for (const auto& entry : factories) {
         std::string arg("-zmq" + entry.first);
         const auto& factory = entry.second;
         for (std::string& address : gArgs.GetArgs(arg)) {
@@ -70,8 +69,7 @@ std::unique_ptr<CZMQNotificationInterface> CZMQNotificationInterface::Create(std
         }
     }
 
-    if (!notifiers.empty())
-    {
+    if (!notifiers.empty()) {
         std::unique_ptr<CZMQNotificationInterface> notificationInterface(new CZMQNotificationInterface());
         notificationInterface->notifiers = std::move(notifiers);
 
@@ -95,8 +93,7 @@ bool CZMQNotificationInterface::Initialize()
 
     pcontext = zmq_ctx_new();
 
-    if (!pcontext)
-    {
+    if (!pcontext) {
         zmqError("Unable to initialize context");
         return false;
     }
@@ -117,8 +114,7 @@ bool CZMQNotificationInterface::Initialize()
 void CZMQNotificationInterface::Shutdown()
 {
     LogDebug(BCLog::ZMQ, "Shutdown notification interface\n");
-    if (pcontext)
-    {
+    if (pcontext) {
         for (auto& notifier : notifiers) {
             LogDebug(BCLog::ZMQ, "Shutdown notifier %s at %s\n", notifier->GetType(), notifier->GetAddress());
             notifier->Shutdown();
@@ -134,7 +130,7 @@ namespace {
 template <typename Function>
 void TryForEachAndRemoveFailed(std::list<std::unique_ptr<CZMQAbstractNotifier>>& notifiers, const Function& func)
 {
-    for (auto i = notifiers.begin(); i != notifiers.end(); ) {
+    for (auto i = notifiers.begin(); i != notifiers.end();) {
         CZMQAbstractNotifier* notifier = i->get();
         if (func(notifier)) {
             ++i;
@@ -147,7 +143,7 @@ void TryForEachAndRemoveFailed(std::list<std::unique_ptr<CZMQAbstractNotifier>>&
 
 } // anonymous namespace
 
-void CZMQNotificationInterface::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload)
+void CZMQNotificationInterface::UpdatedBlockTip(const CBlockIndex* pindexNew, const CBlockIndex* pindexFork, bool fInitialDownload)
 {
     if (fInitialDownload || pindexNew == pindexFork) // In IBD or blocks were disconnected without any new ones
         return;
@@ -193,6 +189,15 @@ void CZMQNotificationInterface::BlockConnected(ChainstateRole role, const std::s
         return notifier->NotifyBlockConnect(pindexConnected);
     });
 }
+
+void CZMQNotificationInterface::SignedBlockConnected(const SignedBlock& pblock)
+{
+    const CTransaction& tx = *pblock.vtx[0];
+    TryForEachAndRemoveFailed(notifiers, [&tx](CZMQAbstractNotifier* notifier) {
+        return notifier->NotifyTransaction(tx);
+    });
+}
+
 
 void CZMQNotificationInterface::BlockDisconnected(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindexDisconnected)
 {

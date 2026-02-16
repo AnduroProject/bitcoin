@@ -25,8 +25,7 @@ uint256 TXHASHES[MAX_TXHASHES];
 //! Precomputed random durations (positive and negative, each ~exponentially distributed).
 std::chrono::microseconds DELAYS[256];
 
-struct Initializer
-{
+struct Initializer {
     Initializer()
     {
         for (uint8_t txhash = 0; txhash < MAX_TXHASHES; txhash += 1) {
@@ -85,11 +84,11 @@ class Tester
 
     //! List of future 'events' (all inserted reqtimes/exptimes). This is used to implement AdvanceToEvent.
     std::priority_queue<std::chrono::microseconds, std::vector<std::chrono::microseconds>,
-        std::greater<std::chrono::microseconds>> m_events;
+                        std::greater<std::chrono::microseconds>>
+        m_events;
 
     //! Information about a txhash/peer combination.
-    struct Announcement
-    {
+    struct Announcement {
         std::chrono::microseconds m_time;
         uint64_t m_sequence;
         State m_state{State::NOTHING};
@@ -148,12 +147,14 @@ public:
     void AdvanceTime(std::chrono::microseconds offset)
     {
         m_now += offset;
-        while (!m_events.empty() && m_events.top() <= m_now) m_events.pop();
+        while (!m_events.empty() && m_events.top() <= m_now)
+            m_events.pop();
     }
 
     void AdvanceToEvent()
     {
-        while (!m_events.empty() && m_events.top() <= m_now) m_events.pop();
+        while (!m_events.empty() && m_events.top() <= m_now)
+            m_events.pop();
         if (!m_events.empty()) {
             m_now = m_events.top();
             m_events.pop();
@@ -360,7 +361,7 @@ FUZZ_TARGET(txrequest)
             peer = it == buffer.end() ? 0 : *(it++) % MAX_PEERS;
             txidnum = it == buffer.end() ? 0 : *(it++);
             tester.ReceivedInv(peer, txidnum % MAX_TXHASHES, (txidnum / MAX_TXHASHES) & 1, cmd & 1,
-                std::chrono::microseconds::min());
+                               std::chrono::microseconds::min());
             break;
         case 7: // Received delayed preferred inv
         case 8: // Same, but non-preferred.
@@ -368,7 +369,7 @@ FUZZ_TARGET(txrequest)
             txidnum = it == buffer.end() ? 0 : *(it++);
             delaynum = it == buffer.end() ? 0 : *(it++);
             tester.ReceivedInv(peer, txidnum % MAX_TXHASHES, (txidnum / MAX_TXHASHES) & 1, cmd & 1,
-                tester.Now() + DELAYS[delaynum]);
+                               tester.Now() + DELAYS[delaynum]);
             break;
         case 9: // Requested tx from peer
             peer = it == buffer.end() ? 0 : *(it++) % MAX_PEERS;

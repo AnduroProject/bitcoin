@@ -12,18 +12,18 @@
 #endif
 
 #if !defined(__GNUC_PREREQ)
-# if defined(__GNUC__)&&defined(__GNUC_MINOR__)
-#  define __GNUC_PREREQ(_maj,_min) \
- ((__GNUC__<<16)+__GNUC_MINOR__>=((_maj)<<16)+(_min))
-# else
-#  define __GNUC_PREREQ(_maj,_min) 0
-# endif
+#if defined(__GNUC__) && defined(__GNUC_MINOR__)
+#define __GNUC_PREREQ(_maj, _min) \
+    ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((_maj) << 16) + (_min))
+#else
+#define __GNUC_PREREQ(_maj, _min) 0
+#endif
 #endif
 
 #if __GNUC_PREREQ(3, 0)
-#define EXPECT(x,c) __builtin_expect((x),(c))
+#define EXPECT(x, c) __builtin_expect((x), (c))
 #else
-#define EXPECT(x,c) (x)
+#define EXPECT(x, c) (x)
 #endif
 
 /* Assertion macros */
@@ -32,12 +32,13 @@
  * Unconditional failure on condition failure.
  * Primarily used in testing harnesses.
  */
-#define CHECK(cond) do { \
-    if (EXPECT(!(cond), 0)) { \
-        fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, "Check condition failed: " #cond); \
-        abort(); \
-    } \
-} while(0)
+#define CHECK(cond)                                                                               \
+    do {                                                                                          \
+        if (EXPECT(!(cond), 0)) {                                                                 \
+            fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, "Check condition failed: " #cond); \
+            abort();                                                                              \
+        }                                                                                         \
+    } while (0)
 
 /**
  * Check macro that does nothing in normal non-verify builds but crashes in verify builds.
@@ -56,19 +57,21 @@
  * a graceful exit is possible.
  */
 #ifdef MINISKETCH_VERIFY
-#define CHECK_RETURN(cond, rvar) do { \
-    if (EXPECT(!(cond), 0)) { \
-        fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, "Check condition failed: " #cond); \
-        abort(); \
-        return rvar; /* Does nothing, but causes compile to warn on incorrect return types. */ \
-    } \
-} while(0)
+#define CHECK_RETURN(cond, rvar)                                                                   \
+    do {                                                                                           \
+        if (EXPECT(!(cond), 0)) {                                                                  \
+            fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, "Check condition failed: " #cond);  \
+            abort();                                                                               \
+            return rvar; /* Does nothing, but causes compile to warn on incorrect return types. */ \
+        }                                                                                          \
+    } while (0)
 #else
-#define CHECK_RETURN(cond, rvar) do { \
-    if (EXPECT(!(cond), 0)) { \
-        return rvar; \
-    } \
-} while(0)
+#define CHECK_RETURN(cond, rvar)  \
+    do {                          \
+        if (EXPECT(!(cond), 0)) { \
+            return rvar;          \
+        }                         \
+    } while (0)
 #endif
 
 #endif

@@ -13,10 +13,10 @@ class CoinControlTreeWidget : public QTreeWidget
     Q_OBJECT
 
 public:
-    explicit CoinControlTreeWidget(QWidget *parent = nullptr);
+    explicit CoinControlTreeWidget(QWidget* parent = nullptr);
 
 protected:
-    virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent* event) override;
 };
 
 #endif // BITCOIN_QT_COINCONTROLTREEWIDGET_H

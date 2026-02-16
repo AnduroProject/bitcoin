@@ -90,7 +90,7 @@ constexpr StatTable16 SQR_TABLE_16({0x1, 0x4, 0x10, 0x40, 0x100, 0x400, 0x1000, 
 constexpr StatTable16 QRT_TABLE_16({0x732, 0x72b8, 0x72ba, 0x7e96, 0x72be, 0x78b2, 0x7e9e, 0x8cba, 0x72ae, 0xfa24, 0x7892, 0x5892, 0x7ede, 0xbec6, 0x8c3a, 0});
 typedef Field<uint16_t, 16, 43, StatTable16, DynTable16, &SQR_TABLE_16, &QRT_TABLE_16> Field16;
 #endif
-}
+} // namespace
 
 Sketch* ConstructGeneric2Bytes(int bits, int implementation)
 {

@@ -53,7 +53,7 @@ auto& PickValue(FuzzedDataProvider& fuzzed_data_provider, Collection& col)
     return *it;
 }
 
-template<typename B = uint8_t>
+template <typename B = uint8_t>
 [[nodiscard]] inline std::vector<B> ConsumeRandomLengthByteVector(FuzzedDataProvider& fuzzed_data_provider, const std::optional<size_t>& max_length = std::nullopt) noexcept
 {
     static_assert(sizeof(B) == 1);
@@ -252,7 +252,7 @@ inline void SetFuzzedErrNo(FuzzedDataProvider& fuzzed_data_provider) noexcept
  * Returns a byte vector of specified size regardless of the number of remaining bytes available
  * from the fuzzer. Pads with zero value bytes if needed to achieve the specified size.
  */
-template<typename B = uint8_t>
+template <typename B = uint8_t>
 [[nodiscard]] inline std::vector<B> ConsumeFixedLengthByteVector(FuzzedDataProvider& fuzzed_data_provider, const size_t length) noexcept
 {
     static_assert(sizeof(B) == 1);

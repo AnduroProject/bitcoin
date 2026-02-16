@@ -6,10 +6,10 @@
 #ifndef BITCOIN_CONSENSUS_VALIDATION_H
 #define BITCOIN_CONSENSUS_VALIDATION_H
 
-#include <string>
 #include <consensus/consensus.h>
-#include <primitives/transaction.h>
 #include <primitives/block.h>
+#include <primitives/transaction.h>
+#include <string>
 
 /** Index marker for when no witness commitment is present in a coinbase transaction. */
 static constexpr int NO_WITNESS_COMMITMENT{-1};
@@ -18,15 +18,15 @@ static constexpr int NO_WITNESS_COMMITMENT{-1};
 static constexpr size_t MINIMUM_WITNESS_COMMITMENT{38};
 
 /** A "reason" why a transaction was invalid, suitable for determining whether the
-  * provider of the transaction should be banned/ignored/disconnected/etc.
-  */
+ * provider of the transaction should be banned/ignored/disconnected/etc.
+ */
 enum class TxValidationResult {
-    TX_RESULT_UNSET = 0,     //!< initial value. Tx has not yet been rejected
-    TX_CONSENSUS,            //!< invalid by consensus rules
-    TX_INPUTS_NOT_STANDARD,   //!< inputs (covered by txid) failed policy rules
-    TX_NOT_STANDARD,          //!< otherwise didn't meet our local policy rules
-    TX_MISSING_INPUTS,        //!< transaction was missing some of its inputs
-    TX_PREMATURE_SPEND,       //!< transaction spends a coinbase too early, or violates locktime/sequence locks
+    TX_RESULT_UNSET = 0,    //!< initial value. Tx has not yet been rejected
+    TX_CONSENSUS,           //!< invalid by consensus rules
+    TX_INPUTS_NOT_STANDARD, //!< inputs (covered by txid) failed policy rules
+    TX_NOT_STANDARD,        //!< otherwise didn't meet our local policy rules
+    TX_MISSING_INPUTS,      //!< transaction was missing some of its inputs
+    TX_PREMATURE_SPEND,     //!< transaction spends a coinbase too early, or violates locktime/sequence locks
     /**
      * Transaction might have a witness prior to SegWit
      * activation, or witness may have been malleated (which includes
@@ -43,29 +43,28 @@ enum class TxValidationResult {
      * Currently this is only used if the transaction already exists in the mempool or on chain.
      */
     TX_CONFLICT,
-    TX_MEMPOOL_POLICY,        //!< violated mempool's fee/size/descendant/RBF/etc limits
-    TX_NO_MEMPOOL,            //!< this node does not have a mempool so can't validate the transaction
-    TX_RECONSIDERABLE,        //!< fails some policy, but might be acceptable if submitted in a (different) package
-    TX_UNKNOWN,               //!< transaction was not validated because package failed
+    TX_MEMPOOL_POLICY, //!< violated mempool's fee/size/descendant/RBF/etc limits
+    TX_NO_MEMPOOL,     //!< this node does not have a mempool so can't validate the transaction
+    TX_RECONSIDERABLE, //!< fails some policy, but might be acceptable if submitted in a (different) package
+    TX_UNKNOWN,        //!< transaction was not validated because package failed
 };
 
 /** A "reason" why a block was invalid, suitable for determining whether the
-  * provider of the block should be banned/ignored/disconnected/etc.
-  * These are much more granular than the rejection codes, which may be more
-  * useful for some other use-cases.
-  */
+ * provider of the block should be banned/ignored/disconnected/etc.
+ * These are much more granular than the rejection codes, which may be more
+ * useful for some other use-cases.
+ */
 enum class BlockValidationResult {
-    BLOCK_RESULT_UNSET = 0,  //!< initial value. Block has not yet been rejected
-    BLOCK_CONSENSUS,         //!< invalid by consensus rules (excluding any below reasons)
-    BLOCK_CACHED_INVALID,    //!< this block was cached as being invalid and we didn't store the reason why
-    BLOCK_INVALID_HEADER,    //!< invalid proof of work or time too old
-    BLOCK_MUTATED,           //!< the block's data didn't match the data committed to by the PoW
-    BLOCK_MISSING_PREV,      //!< We don't have the previous block the checked one is built on
-    BLOCK_INVALID_PREV,      //!< A block this one builds on is invalid
-    BLOCK_TIME_FUTURE,       //!< block timestamp was > 2 hours in the future (or our clock is bad)
-    BLOCK_HEADER_LOW_WORK    //!< the block header may be on a too-little-work chain
+    BLOCK_RESULT_UNSET = 0, //!< initial value. Block has not yet been rejected
+    BLOCK_CONSENSUS,        //!< invalid by consensus rules (excluding any below reasons)
+    BLOCK_CACHED_INVALID,   //!< this block was cached as being invalid and we didn't store the reason why
+    BLOCK_INVALID_HEADER,   //!< invalid proof of work or time too old
+    BLOCK_MUTATED,          //!< the block's data didn't match the data committed to by the PoW
+    BLOCK_MISSING_PREV,     //!< We don't have the previous block the checked one is built on
+    BLOCK_INVALID_PREV,     //!< A block this one builds on is invalid
+    BLOCK_TIME_FUTURE,      //!< block timestamp was > 2 hours in the future (or our clock is bad)
+    BLOCK_HEADER_LOW_WORK   //!< the block header may be on a too-little-work chain
 };
-
 
 
 /** Template for capturing information about block/transaction validation. This is instantiated
@@ -122,8 +121,12 @@ public:
     }
 };
 
-class TxValidationState : public ValidationState<TxValidationResult> {};
-class BlockValidationState : public ValidationState<BlockValidationResult> {};
+class TxValidationState : public ValidationState<TxValidationResult>
+{
+};
+class BlockValidationState : public ValidationState<BlockValidationResult>
+{
+};
 
 // These implement the weight = (stripped_size * 4) + witness_size formula,
 // using only serialization with and without witness data. As witness_size

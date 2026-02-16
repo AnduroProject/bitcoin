@@ -11,7 +11,7 @@ BOOST_FIXTURE_TEST_SUITE(httpserver_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(test_query_parameters)
 {
-    std::string uri {};
+    std::string uri{};
 
     // No parameters
     uri = "localhost:8080/rest/headers/someresource.json";

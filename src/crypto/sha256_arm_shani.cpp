@@ -10,31 +10,79 @@
 
 #ifdef ENABLE_ARM_SHANI
 
-#include <array>
-#include <cstdint>
-#include <cstddef>
 #include <arm_acle.h>
 #include <arm_neon.h>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 
 namespace {
 alignas(uint32x4_t) static constexpr std::array<uint32_t, 64> K =
-{
-    0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5,
-    0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
-    0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3,
-    0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174,
-    0xE49B69C1, 0xEFBE4786, 0x0FC19DC6, 0x240CA1CC,
-    0x2DE92C6F, 0x4A7484AA, 0x5CB0A9DC, 0x76F988DA,
-    0x983E5152, 0xA831C66D, 0xB00327C8, 0xBF597FC7,
-    0xC6E00BF3, 0xD5A79147, 0x06CA6351, 0x14292967,
-    0x27B70A85, 0x2E1B2138, 0x4D2C6DFC, 0x53380D13,
-    0x650A7354, 0x766A0ABB, 0x81C2C92E, 0x92722C85,
-    0xA2BFE8A1, 0xA81A664B, 0xC24B8B70, 0xC76C51A3,
-    0xD192E819, 0xD6990624, 0xF40E3585, 0x106AA070,
-    0x19A4C116, 0x1E376C08, 0x2748774C, 0x34B0BCB5,
-    0x391C0CB3, 0x4ED8AA4A, 0x5B9CCA4F, 0x682E6FF3,
-    0x748F82EE, 0x78A5636F, 0x84C87814, 0x8CC70208,
-    0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2,
+    {
+        0x428A2F98,
+        0x71374491,
+        0xB5C0FBCF,
+        0xE9B5DBA5,
+        0x3956C25B,
+        0x59F111F1,
+        0x923F82A4,
+        0xAB1C5ED5,
+        0xD807AA98,
+        0x12835B01,
+        0x243185BE,
+        0x550C7DC3,
+        0x72BE5D74,
+        0x80DEB1FE,
+        0x9BDC06A7,
+        0xC19BF174,
+        0xE49B69C1,
+        0xEFBE4786,
+        0x0FC19DC6,
+        0x240CA1CC,
+        0x2DE92C6F,
+        0x4A7484AA,
+        0x5CB0A9DC,
+        0x76F988DA,
+        0x983E5152,
+        0xA831C66D,
+        0xB00327C8,
+        0xBF597FC7,
+        0xC6E00BF3,
+        0xD5A79147,
+        0x06CA6351,
+        0x14292967,
+        0x27B70A85,
+        0x2E1B2138,
+        0x4D2C6DFC,
+        0x53380D13,
+        0x650A7354,
+        0x766A0ABB,
+        0x81C2C92E,
+        0x92722C85,
+        0xA2BFE8A1,
+        0xA81A664B,
+        0xC24B8B70,
+        0xC76C51A3,
+        0xD192E819,
+        0xD6990624,
+        0xF40E3585,
+        0x106AA070,
+        0x19A4C116,
+        0x1E376C08,
+        0x2748774C,
+        0x34B0BCB5,
+        0x391C0CB3,
+        0x4ED8AA4A,
+        0x5B9CCA4F,
+        0x682E6FF3,
+        0x748F82EE,
+        0x78A5636F,
+        0x84C87814,
+        0x8CC70208,
+        0x90BEFFFA,
+        0xA4506CEB,
+        0xBEF9A3F7,
+        0xC67178F2,
 };
 }
 
@@ -49,8 +97,7 @@ void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
     STATE0 = vld1q_u32(&s[0]);
     STATE1 = vld1q_u32(&s[4]);
 
-    while (blocks--)
-    {
+    while (blocks--) {
         // Save state
         ABEF_SAVE = STATE0;
         CDGH_SAVE = STATE1;
@@ -195,7 +242,7 @@ void Transform(uint32_t* s, const unsigned char* chunk, size_t blocks)
     vst1q_u32(&s[0], STATE0);
     vst1q_u32(&s[4], STATE1);
 }
-}
+} // namespace sha256_arm_shani
 
 namespace sha256d64_arm_shani {
 void Transform_2way(unsigned char* output, const unsigned char* input)
@@ -203,8 +250,7 @@ void Transform_2way(unsigned char* output, const unsigned char* input)
     /* Initial state. */
     alignas(uint32x4_t) static constexpr std::array<uint32_t, 8> INIT = {
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-    };
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
 
     /* Precomputed message schedule for the 2nd transform. */
     alignas(uint32x4_t) static constexpr std::array<uint32_t, 64> MIDS = {
@@ -223,15 +269,13 @@ void Transform_2way(unsigned char* output, const unsigned char* input)
         0x83613bda, 0xdb48a363, 0x0b02e931, 0x6fd15ca7,
         0x521afaca, 0x31338431, 0x6ed41a95, 0x6d437890,
         0xc39c91f2, 0x9eccabbd, 0xb5c9a0e6, 0x532fb63c,
-        0xd2c741c6, 0x07237ea3, 0xa4954b68, 0x4c191d76
-    };
+        0xd2c741c6, 0x07237ea3, 0xa4954b68, 0x4c191d76};
 
     /* A few precomputed message schedule values for the 3rd transform. */
     alignas(uint32x4_t) static constexpr std::array<uint32_t, 12> FINS = {
         0x5807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
         0x80000000, 0x00000000, 0x00000000, 0x00000000,
-        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf274
-    };
+        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf274};
 
     /* Padding processed in the 3rd transform (byteswapped). */
     alignas(uint32x4_t) static constexpr std::array<uint32_t, 8> FINAL = {0x80000000, 0, 0, 0, 0, 0, 0, 0x100};
@@ -894,6 +938,6 @@ void Transform_2way(unsigned char* output, const unsigned char* input)
     vst1q_u8(output + 32, vrev32q_u8(vreinterpretq_u8_u32(STATE0B)));
     vst1q_u8(output + 48, vrev32q_u8(vreinterpretq_u8_u32(STATE1B)));
 }
-}
+} // namespace sha256d64_arm_shani
 
 #endif

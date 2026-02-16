@@ -25,7 +25,7 @@ class WalletDatabase;
 struct WalletContext;
 
 static const DatabaseFormat DATABASE_FORMATS[] = {
-       DatabaseFormat::SQLITE,
+    DatabaseFormat::SQLITE,
 };
 
 const std::string ADDRESS_BCRT1_UNSPENDABLE = "bcrt1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3xueyj";
@@ -46,7 +46,7 @@ CTxDestination getNewDestination(CWallet& w, OutputType output_type);
 
 using MockableData = std::map<SerializeData, SerializeData, std::less<>>;
 
-class MockableCursor: public DatabaseCursor
+class MockableCursor : public DatabaseCursor
 {
 public:
     MockableData::const_iterator m_cursor;
@@ -67,7 +67,7 @@ private:
     bool m_pass;
 
     bool ReadKey(DataStream&& key, DataStream& value) override;
-    bool WriteKey(DataStream&& key, DataStream&& value, bool overwrite=true) override;
+    bool WriteKey(DataStream&& key, DataStream&& value, bool overwrite = true) override;
     bool EraseKey(DataStream&& key) override;
     bool HasKey(DataStream&& key) override;
     bool ErasePrefix(std::span<const std::byte> prefix) override;
@@ -82,7 +82,8 @@ public:
     {
         return std::make_unique<MockableCursor>(m_records, m_pass);
     }
-    std::unique_ptr<DatabaseCursor> GetNewPrefixCursor(std::span<const std::byte> prefix) override {
+    std::unique_ptr<DatabaseCursor> GetNewPrefixCursor(std::span<const std::byte> prefix) override
+    {
         return std::make_unique<MockableCursor>(m_records, m_pass, prefix);
     }
     bool TxnBegin() override { return m_pass; }

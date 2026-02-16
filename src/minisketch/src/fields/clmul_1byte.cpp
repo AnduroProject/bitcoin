@@ -80,9 +80,10 @@ constexpr StatTable8 SQR2_TABLE_8({0x1, 0x10, 0x1b, 0xab, 0x5e, 0x97, 0xb3, 0xc5
 constexpr StatTable8 QRT_TABLE_8({0xbc, 0x2a, 0x28, 0x86, 0x2c, 0xde, 0x8e, 0});
 typedef Field<uint8_t, 8, 27, StatTable8, &SQR_TABLE_8, &SQR2_TABLE_8, &QRT_TABLE_8, &QRT_TABLE_8, &QRT_TABLE_8, &QRT_TABLE_8, IdTrans, &ID_TRANS, &ID_TRANS> Field8;
 #endif
-}
+} // namespace
 
-Sketch* ConstructClMul1Byte(int bits, int implementation) {
+Sketch* ConstructClMul1Byte(int bits, int implementation)
+{
     switch (bits) {
 #ifdef ENABLE_FIELD_INT_5
     case 5: return new SketchImpl<Field5>(implementation, 5);
@@ -94,7 +95,8 @@ Sketch* ConstructClMul1Byte(int bits, int implementation) {
     return nullptr;
 }
 
-Sketch* ConstructClMulTri1Byte(int bits, int implementation) {
+Sketch* ConstructClMulTri1Byte(int bits, int implementation)
+{
     switch (bits) {
 #ifdef ENABLE_FIELD_INT_2
     case 2: return new SketchImpl<FieldTri2>(implementation, 2);

@@ -15,6 +15,7 @@ enum class MemPoolRemovalReason {
     SIZELIMIT,   //!< Removed in size limiting
     REORG,       //!< Removed for reorganization
     BLOCK,       //!< Removed for block
+    SIGNEDBLOCK, //!< Removed for block
     CONFLICT,    //!< Removed for conflict with in-block transaction
     REPLACED,    //!< Removed for replacement
 };

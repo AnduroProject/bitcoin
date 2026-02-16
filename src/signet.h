@@ -23,9 +23,12 @@ bool CheckSignetBlockSolution(const CBlock& block, const Consensus::Params& cons
  * 1. It hashes a modified merkle root with the signet signature removed.
  * 2. It skips the nonce.
  */
-class SignetTxs {
-    template<class T1, class T2>
-    SignetTxs(const T1& to_spend, const T2& to_sign) : m_to_spend{to_spend}, m_to_sign{to_sign} { }
+class SignetTxs
+{
+    template <class T1, class T2>
+    SignetTxs(const T1& to_spend, const T2& to_sign) : m_to_spend{to_spend}, m_to_sign{to_sign}
+    {
+    }
 
 public:
     static std::optional<SignetTxs> Create(const CBlock& block, const CScript& challenge);

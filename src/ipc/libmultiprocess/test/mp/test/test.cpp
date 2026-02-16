@@ -9,13 +9,13 @@
 
 #include <capnp/capability.h>
 #include <cstdio>
-#include <future>
 #include <functional>
+#include <future>
 #include <iostream>
-#include <memory>
 #include <kj/common.h>
 #include <kj/memory.h>
 #include <kj/test.h>
+#include <memory>
 #include <string>
 #include <thread>
 #include <utility>
@@ -132,7 +132,7 @@ KJ_TEST("Call FooInterface methods")
     thread.join();
 
     bool destroyed = false;
-    foo->m_context.cleanup_fns.emplace_front([&destroyed]{ destroyed = true; });
+    foo->m_context.cleanup_fns.emplace_front([&destroyed] { destroyed = true; });
     foo.reset();
     KJ_EXPECT(destroyed);
 }

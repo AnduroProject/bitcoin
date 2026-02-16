@@ -28,8 +28,9 @@
 #include <validation.h>
 
 #include <algorithm>
+#include <coordinate/anduro_deposit.h>
+#include <coordinate/coordinate_preconf.h>
 #include <utility>
-
 namespace node {
 
 int64_t GetMinimumTime(const CBlockIndex* pindexPrev, const int64_t difficulty_adjustment_interval)
@@ -136,7 +137,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
 
-    pblock->nVersion = m_chainstate.m_chainman.m_versionbitscache.ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+    const int32_t nChainId = chainparams.GetConsensus().nAuxpowChainId;
+    const int32_t nVersion = 4;
+    pblock->SetBaseVersion(nVersion, nChainId);
+
+    // pblock->nVersion = m_chainstate.m_chainman.m_versionbitscache.ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (chainparams.MineBlocksOnDemand()) {
@@ -157,27 +162,93 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
     m_last_block_num_txs = nBlockTx;
     m_last_block_weight = nBlockWeight;
 
-    // Create coinbase transaction.
+    CAmount minerFee = 0;
+    CAmount totalPreconfFee = 0;
+    CAmount federationFee = 0;
+    if (nHeight > 3) {
+        minerFee = getFeeForBlock(m_chainstate.m_chainman, nHeight);
+        totalPreconfFee = getPreconfFeeForBlock(m_chainstate.m_chainman, nHeight);
+        if (totalPreconfFee > 0) {
+            federationFee = std::ceil(totalPreconfFee * 0.20);
+            minerFee = minerFee + (totalPreconfFee - federationFee);
+        }
+    }
+
+
+    int resize = 2;
     CMutableTransaction coinbaseTx;
+    std::vector<AnduroPreCommitment> pending_commitments = listPendingCommitment(nHeight);
+    if (Params().GetChainType() != ChainType::REGTEST) {
+        // get next block presigned data
+        LogPrintf("commitment queue count %i\n", pending_commitments.size());
+        // prevent to get block template if not presigned signature available for next block
+        if (nHeight > 2) {
+            if (pending_commitments.size() == 0) {
+                LogPrintf("commitment queue unavailable\n");
+                return nullptr;
+            }
+
+            // increase transaction out size based on available pegin
+            if (!isPreCommitmentValid(pending_commitments, m_chainstate.m_chainman)) {
+                LogPrintf("anduro commitment invalid \n");
+                return nullptr;
+            }
+        }
+
+        // increase transaction out size by one for include witness
+        resize = resize + 1;
+
+        if (nHeight > 2) {
+            // if new commitment included, then existing anduro key replaced in next block
+            AnduroPreCommitment& commtiment = pending_commitments[0];
+            pblock->currentKeys = commtiment.nextKeys;
+            pblock->currentIndex = commtiment.nextIndex;
+
+        } else {
+            pblock->currentKeys = getCurrentKeys(m_chainstate.m_chainman);
+            pblock->currentIndex = getCurrentIndex(m_chainstate.m_chainman);
+        }
+    } else {
+        pblock->currentKeys = getCurrentKeys(m_chainstate.m_chainman);
+        pblock->currentIndex = getCurrentIndex(m_chainstate.m_chainman);
+    }
+
     coinbaseTx.vin.resize(1);
     coinbaseTx.vin[0].prevout.SetNull();
     coinbaseTx.vin[0].nSequence = CTxIn::MAX_SEQUENCE_NONFINAL; // Make sure timelock is enforced.
-    coinbaseTx.vout.resize(1);
+    coinbaseTx.vout.resize(resize);
     coinbaseTx.vout[0].scriptPubKey = m_options.coinbase_output_script;
-    coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+    coinbaseTx.vout[0].nValue = GetBlockSubsidy(nHeight, chainparams.GetConsensus());
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
+
+    int oIncr = 1;
+    coinbaseTx.vout[oIncr].scriptPubKey = getMinerScript(m_chainstate.m_chainman, nHeight);
+    coinbaseTx.vout[oIncr].nValue = minerFee;
+
+    if (Params().GetChainType() != ChainType::REGTEST) {
+        // including anduro signature information
+        std::string preCommitmentWitness = "";
+        if (nHeight > 2) {
+            preCommitmentWitness = pending_commitments[0].witness;
+        }
+        oIncr = oIncr + 1;
+        std::vector<unsigned char> data = ParseHex(preCommitmentWitness);
+        CTxOut out(0, CScript() << OP_RETURN << data);
+        coinbaseTx.vout[oIncr] = out;
+    }
+
+
     Assert(nHeight > 0);
     coinbaseTx.nLockTime = static_cast<uint32_t>(nHeight - 1);
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vchCoinbaseCommitment = m_chainstate.m_chainman.GenerateCoinbaseCommitment(*pblock, pindexPrev);
-
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
 
     // Fill in header
-    pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
+    pblock->hashPrevBlock = pindexPrev->GetBlockHash();
     UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
-    pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
-    pblock->nNonce         = 0;
+    pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
+    pblock->nNonce = 0;
 
     if (m_options.test_block_validity) {
         if (BlockValidationState state{TestBlockValidity(m_chainstate, *pblock, /*check_pow=*/false, /*check_merkle_root=*/false)}; !state.IsValid()) {
@@ -193,10 +264,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock()
 
     return std::move(pblocktemplate);
 }
-
 void BlockAssembler::onlyUnconfirmed(CTxMemPool::setEntries& testSet)
 {
-    for (CTxMemPool::setEntries::iterator iit = testSet.begin(); iit != testSet.end(); ) {
+    for (CTxMemPool::setEntries::iterator iit = testSet.begin(); iit != testSet.end();) {
         // Only test txs not already in the block
         if (inBlock.count((*iit)->GetSharedTx()->GetHash())) {
             testSet.erase(iit++);
@@ -319,6 +389,7 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
     const int64_t MAX_CONSECUTIVE_FAILURES = 1000;
     constexpr int32_t BLOCK_FULL_ENOUGH_WEIGHT_DELTA = 4000;
     int64_t nConsecutiveFailed = 0;
+    int16_t assetIncr = 0;
 
     while (mi != mempool.mapTx.get<ancestor_score>().end() || !mapModifiedTx.empty()) {
         // First try to find a new transaction in mapTx to evaluate.
@@ -356,7 +427,7 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
             // Try to compare the mapTx entry to the mapModifiedTx entry
             iter = mempool.mapTx.project<0>(mi);
             if (modit != mapModifiedTx.get<ancestor_score>().end() &&
-                    CompareTxMemPoolEntryByAncestorFee()(*modit, CTxMemPoolModifiedEntry(iter))) {
+                CompareTxMemPoolEntryByAncestorFee()(*modit, CTxMemPoolModifiedEntry(iter))) {
                 // The best entry in mapModifiedTx has higher score
                 // than the one from mapTx.
                 // Switch which transaction (package) to consider
@@ -399,7 +470,7 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
             ++nConsecutiveFailed;
 
             if (nConsecutiveFailed > MAX_CONSECUTIVE_FAILURES && nBlockWeight >
-                    m_options.nBlockMaxWeight - BLOCK_FULL_ENOUGH_WEIGHT_DELTA) {
+                                                                     m_options.nBlockMaxWeight - BLOCK_FULL_ENOUGH_WEIGHT_DELTA) {
                 // Give up if we're close to full and haven't succeeded in a while
                 break;
             }
@@ -428,6 +499,14 @@ void BlockAssembler::addPackageTxs(int& nPackagesSelected, int& nDescendantsUpda
         SortForBlock(ancestors, sortedEntries);
 
         for (size_t i = 0; i < sortedEntries.size(); ++i) {
+
+            CTransactionRef txRef = sortedEntries[i]->GetSharedTx();
+            if(txRef->version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+                if(assetIncr == NUMOF_NEWASSET_IN_BLOCK) {
+                    continue;
+                }
+                assetIncr++;
+            }
             AddToBlock(sortedEntries[i]);
             // Erase from the modified set, if present
             mapModifiedTx.erase(sortedEntries[i]);

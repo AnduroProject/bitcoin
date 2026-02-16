@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(key_io_valid_parse)
         }
         std::string exp_base58string = test[0].get_str();
         const std::vector<std::byte> exp_payload{ParseHex<std::byte>(test[1].get_str())};
-        const UniValue &metadata = test[2].get_obj();
+        const UniValue& metadata = test[2].get_obj();
         bool isPrivkey = metadata.find_value("isPrivkey").get_bool();
         SelectParams(ChainTypeFromString(metadata.find_value("chain").get_str()).value());
         bool try_case_flip = metadata.find_value("tryCaseFlip").isNull() ? false : metadata.find_value("tryCaseFlip").get_bool();
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(key_io_valid_gen)
         }
         std::string exp_base58string = test[0].get_str();
         std::vector<unsigned char> exp_payload = ParseHex(test[1].get_str());
-        const UniValue &metadata = test[2].get_obj();
+        const UniValue& metadata = test[2].get_obj();
         bool isPrivkey = metadata.find_value("isPrivkey").get_bool();
         SelectParams(ChainTypeFromString(metadata.find_value("chain").get_str()).value());
         if (isPrivkey) {

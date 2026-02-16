@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <support/lockedpool.h>
 #include <support/cleanse.h>
+#include <support/lockedpool.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -36,8 +36,7 @@ static inline size_t align_up(size_t x, size_t align)
 /*******************************************************************************/
 // Implementation: Arena
 
-Arena::Arena(void *base_in, size_t size_in, size_t alignment_in):
-    base(base_in), end(static_cast<char*>(base_in) + size_in), alignment(alignment_in)
+Arena::Arena(void* base_in, size_t size_in, size_t alignment_in) : base(base_in), end(static_cast<char*>(base_in) + size_in), alignment(alignment_in)
 {
     // Start with one free chunk that covers the entire arena
     auto it = size_to_free_chunk.emplace(size_in, base);
@@ -83,7 +82,7 @@ void* Arena::alloc(size_t size)
     return allocated->first;
 }
 
-void Arena::free(void *ptr)
+void Arena::free(void* ptr)
 {
     // Freeing the nullptr pointer is OK.
     if (ptr == nullptr) {
@@ -123,28 +122,26 @@ void Arena::free(void *ptr)
 
 Arena::Stats Arena::stats() const
 {
-    Arena::Stats r{ 0, 0, 0, chunks_used.size(), chunks_free.size() };
-    for (const auto& chunk: chunks_used)
+    Arena::Stats r{0, 0, 0, chunks_used.size(), chunks_free.size()};
+    for (const auto& chunk : chunks_used)
         r.used += chunk.second;
-    for (const auto& chunk: chunks_free)
+    for (const auto& chunk : chunks_free)
         r.free += chunk.second->first;
     r.total = r.used + r.free;
     return r;
 }
 
 #ifdef ARENA_DEBUG
-static void printchunk(void* base, size_t sz, bool used) {
-    std::cout <<
-        "0x" << std::hex << std::setw(16) << std::setfill('0') << base <<
-        " 0x" << std::hex << std::setw(16) << std::setfill('0') << sz <<
-        " 0x" << used << std::endl;
+static void printchunk(void* base, size_t sz, bool used)
+{
+    std::cout << "0x" << std::hex << std::setw(16) << std::setfill('0') << base << " 0x" << std::hex << std::setw(16) << std::setfill('0') << sz << " 0x" << used << std::endl;
 }
 void Arena::walk() const
 {
-    for (const auto& chunk: chunks_used)
+    for (const auto& chunk : chunks_used)
         printchunk(chunk.first, chunk.second, true);
     std::cout << std::endl;
-    for (const auto& chunk: chunks_free)
+    for (const auto& chunk : chunks_free)
         printchunk(chunk.first, chunk.second->first, false);
     std::cout << std::endl;
 }
@@ -156,13 +153,14 @@ void Arena::walk() const
 #ifdef WIN32
 /** LockedPageAllocator specialized for Windows.
  */
-class Win32LockedPageAllocator: public LockedPageAllocator
+class Win32LockedPageAllocator : public LockedPageAllocator
 {
 public:
     Win32LockedPageAllocator();
-    void* AllocateLocked(size_t len, bool *lockingSuccess) override;
+    void* AllocateLocked(size_t len, bool* lockingSuccess) override;
     void FreeLocked(void* addr, size_t len) override;
     size_t GetLimit() override;
+
 private:
     size_t page_size;
 };
@@ -174,10 +172,10 @@ Win32LockedPageAllocator::Win32LockedPageAllocator()
     GetSystemInfo(&sSysInfo);
     page_size = sSysInfo.dwPageSize;
 }
-void *Win32LockedPageAllocator::AllocateLocked(size_t len, bool *lockingSuccess)
+void* Win32LockedPageAllocator::AllocateLocked(size_t len, bool* lockingSuccess)
 {
     len = align_up(len, page_size);
-    void *addr = VirtualAlloc(nullptr, len, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    void* addr = VirtualAlloc(nullptr, len, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (addr) {
         // VirtualLock is used to attempt to keep keying material out of swap. Note
         // that it does not provide this as a guarantee, but, in practice, memory
@@ -197,7 +195,7 @@ void Win32LockedPageAllocator::FreeLocked(void* addr, size_t len)
 size_t Win32LockedPageAllocator::GetLimit()
 {
     size_t min, max;
-    if(GetProcessWorkingSetSize(GetCurrentProcess(), &min, &max) != 0) {
+    if (GetProcessWorkingSetSize(GetCurrentProcess(), &min, &max) != 0) {
         return min;
     }
     return std::numeric_limits<size_t>::max();
@@ -211,13 +209,14 @@ size_t Win32LockedPageAllocator::GetLimit()
 /** LockedPageAllocator specialized for OSes that don't try to be
  * special snowflakes.
  */
-class PosixLockedPageAllocator: public LockedPageAllocator
+class PosixLockedPageAllocator : public LockedPageAllocator
 {
 public:
     PosixLockedPageAllocator();
-    void* AllocateLocked(size_t len, bool *lockingSuccess) override;
+    void* AllocateLocked(size_t len, bool* lockingSuccess) override;
     void FreeLocked(void* addr, size_t len) override;
     size_t GetLimit() override;
+
 private:
     size_t page_size;
 };
@@ -227,16 +226,16 @@ PosixLockedPageAllocator::PosixLockedPageAllocator()
     // Determine system page size in bytes
 #if defined(PAGESIZE) // defined in limits.h
     page_size = PAGESIZE;
-#else                   // assume some POSIX OS
+#else // assume some POSIX OS
     page_size = sysconf(_SC_PAGESIZE);
 #endif
 }
 
-void *PosixLockedPageAllocator::AllocateLocked(size_t len, bool *lockingSuccess)
+void* PosixLockedPageAllocator::AllocateLocked(size_t len, bool* lockingSuccess)
 {
-    void *addr;
+    void* addr;
     len = align_up(len, page_size);
-    addr = mmap(nullptr, len, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    addr = mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (addr == MAP_FAILED) {
         return nullptr;
     }
@@ -290,8 +289,8 @@ void* LockedPool::alloc(size_t size)
         return nullptr;
 
     // Try allocating from each current arena
-    for (auto &arena: arenas) {
-        void *addr = arena.alloc(size);
+    for (auto& arena : arenas) {
+        void* addr = arena.alloc(size);
         if (addr) {
             return addr;
         }
@@ -303,12 +302,12 @@ void* LockedPool::alloc(size_t size)
     return nullptr;
 }
 
-void LockedPool::free(void *ptr)
+void LockedPool::free(void* ptr)
 {
     std::lock_guard<std::mutex> lock(mutex);
     // TODO we can do better than this linear search by keeping a map of arena
     // extents to arena, and looking up the address.
-    for (auto &arena: arenas) {
+    for (auto& arena : arenas) {
         if (arena.addressInArena(ptr)) {
             arena.free(ptr);
             return;
@@ -321,7 +320,7 @@ LockedPool::Stats LockedPool::stats() const
 {
     std::lock_guard<std::mutex> lock(mutex);
     LockedPool::Stats r{0, 0, 0, cumulative_bytes_locked, 0, 0};
-    for (const auto &arena: arenas) {
+    for (const auto& arena : arenas) {
         Arena::Stats i = arena.stats();
         r.used += i.used;
         r.free += i.free;
@@ -345,7 +344,7 @@ bool LockedPool::new_arena(size_t size, size_t align)
             size = std::min(size, limit);
         }
     }
-    void *addr = allocator->AllocateLocked(size, &locked);
+    void* addr = allocator->AllocateLocked(size, &locked);
     if (!addr) {
         return false;
     }
@@ -361,8 +360,7 @@ bool LockedPool::new_arena(size_t size, size_t align)
     return true;
 }
 
-LockedPool::LockedPageArena::LockedPageArena(LockedPageAllocator *allocator_in, void *base_in, size_t size_in, size_t align_in):
-    Arena(base_in, size_in, align_in), base(base_in), size(size_in), allocator(allocator_in)
+LockedPool::LockedPageArena::LockedPageArena(LockedPageAllocator* allocator_in, void* base_in, size_t size_in, size_t align_in) : Arena(base_in, size_in, align_in), base(base_in), size(size_in), allocator(allocator_in)
 {
 }
 LockedPool::LockedPageArena::~LockedPageArena()
@@ -373,8 +371,7 @@ LockedPool::LockedPageArena::~LockedPageArena()
 /*******************************************************************************/
 // Implementation: LockedPoolManager
 //
-LockedPoolManager::LockedPoolManager(std::unique_ptr<LockedPageAllocator> allocator_in):
-    LockedPool(std::move(allocator_in), &LockedPoolManager::LockingFailed)
+LockedPoolManager::LockedPoolManager(std::unique_ptr<LockedPageAllocator> allocator_in) : LockedPool(std::move(allocator_in), &LockedPoolManager::LockingFailed)
 {
 }
 

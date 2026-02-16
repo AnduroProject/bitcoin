@@ -55,69 +55,69 @@
 #define ANKERL_NANOBENCH_PRIVATE_CXX17() 201703L
 
 #if ANKERL_NANOBENCH(CXX) >= ANKERL_NANOBENCH(CXX17)
-#    define ANKERL_NANOBENCH_PRIVATE_NODISCARD() [[nodiscard]]
+#define ANKERL_NANOBENCH_PRIVATE_NODISCARD() [[nodiscard]]
 #else
-#    define ANKERL_NANOBENCH_PRIVATE_NODISCARD()
+#define ANKERL_NANOBENCH_PRIVATE_NODISCARD()
 #endif
 
 #if defined(__clang__)
-#    define ANKERL_NANOBENCH_PRIVATE_IGNORE_PADDED_PUSH() \
-        _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wpadded\"")
-#    define ANKERL_NANOBENCH_PRIVATE_IGNORE_PADDED_POP() _Pragma("clang diagnostic pop")
+#define ANKERL_NANOBENCH_PRIVATE_IGNORE_PADDED_PUSH() \
+    _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wpadded\"")
+#define ANKERL_NANOBENCH_PRIVATE_IGNORE_PADDED_POP() _Pragma("clang diagnostic pop")
 #else
-#    define ANKERL_NANOBENCH_PRIVATE_IGNORE_PADDED_PUSH()
-#    define ANKERL_NANOBENCH_PRIVATE_IGNORE_PADDED_POP()
+#define ANKERL_NANOBENCH_PRIVATE_IGNORE_PADDED_PUSH()
+#define ANKERL_NANOBENCH_PRIVATE_IGNORE_PADDED_POP()
 #endif
 
 #if defined(__GNUC__)
-#    define ANKERL_NANOBENCH_PRIVATE_IGNORE_EFFCPP_PUSH() _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Weffc++\"")
-#    define ANKERL_NANOBENCH_PRIVATE_IGNORE_EFFCPP_POP() _Pragma("GCC diagnostic pop")
+#define ANKERL_NANOBENCH_PRIVATE_IGNORE_EFFCPP_PUSH() _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Weffc++\"")
+#define ANKERL_NANOBENCH_PRIVATE_IGNORE_EFFCPP_POP() _Pragma("GCC diagnostic pop")
 #else
-#    define ANKERL_NANOBENCH_PRIVATE_IGNORE_EFFCPP_PUSH()
-#    define ANKERL_NANOBENCH_PRIVATE_IGNORE_EFFCPP_POP()
+#define ANKERL_NANOBENCH_PRIVATE_IGNORE_EFFCPP_PUSH()
+#define ANKERL_NANOBENCH_PRIVATE_IGNORE_EFFCPP_POP()
 #endif
 
 #if defined(ANKERL_NANOBENCH_LOG_ENABLED)
-#    include <iostream>
-#    define ANKERL_NANOBENCH_LOG(x)                                                 \
-        do {                                                                        \
-            std::cout << __FUNCTION__ << "@" << __LINE__ << ": " << x << std::endl; \
-        } while (0)
+#include <iostream>
+#define ANKERL_NANOBENCH_LOG(x)                                                 \
+    do {                                                                        \
+        std::cout << __FUNCTION__ << "@" << __LINE__ << ": " << x << std::endl; \
+    } while (0)
 #else
-#    define ANKERL_NANOBENCH_LOG(x) \
-        do {                        \
-        } while (0)
+#define ANKERL_NANOBENCH_LOG(x) \
+    do {                        \
+    } while (0)
 #endif
 
 #define ANKERL_NANOBENCH_PRIVATE_PERF_COUNTERS() 0
 #if defined(__linux__) && !defined(ANKERL_NANOBENCH_DISABLE_PERF_COUNTERS)
-#    include <linux/version.h>
-#    if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
 // PERF_COUNT_HW_REF_CPU_CYCLES only available since kernel 3.3
 // PERF_FLAG_FD_CLOEXEC since kernel 3.14
-#        undef ANKERL_NANOBENCH_PRIVATE_PERF_COUNTERS
-#        define ANKERL_NANOBENCH_PRIVATE_PERF_COUNTERS() 1
-#    endif
+#undef ANKERL_NANOBENCH_PRIVATE_PERF_COUNTERS
+#define ANKERL_NANOBENCH_PRIVATE_PERF_COUNTERS() 1
+#endif
 #endif
 
 #if defined(__clang__)
-#    define ANKERL_NANOBENCH_NO_SANITIZE(...) __attribute__((no_sanitize(__VA_ARGS__)))
+#define ANKERL_NANOBENCH_NO_SANITIZE(...) __attribute__((no_sanitize(__VA_ARGS__)))
 #else
-#    define ANKERL_NANOBENCH_NO_SANITIZE(...)
+#define ANKERL_NANOBENCH_NO_SANITIZE(...)
 #endif
 
 #if defined(_MSC_VER)
-#    define ANKERL_NANOBENCH_PRIVATE_NOINLINE() __declspec(noinline)
+#define ANKERL_NANOBENCH_PRIVATE_NOINLINE() __declspec(noinline)
 #else
-#    define ANKERL_NANOBENCH_PRIVATE_NOINLINE() __attribute__((noinline))
+#define ANKERL_NANOBENCH_PRIVATE_NOINLINE() __attribute__((noinline))
 #endif
 
 // workaround missing "is_trivially_copyable" in g++ < 5.0
 // See https://stackoverflow.com/a/31798726/48181
 #if defined(__GNUC__) && __GNUC__ < 5
-#    define ANKERL_NANOBENCH_IS_TRIVIALLY_COPYABLE(...) __has_trivial_copy(__VA_ARGS__)
+#define ANKERL_NANOBENCH_IS_TRIVIALLY_COPYABLE(...) __has_trivial_copy(__VA_ARGS__)
 #else
-#    define ANKERL_NANOBENCH_IS_TRIVIALLY_COPYABLE(...) std::is_trivially_copyable<__VA_ARGS__>::value
+#define ANKERL_NANOBENCH_IS_TRIVIALLY_COPYABLE(...) std::is_trivially_copyable<__VA_ARGS__>::value
 #endif
 
 // noexcept may be missing for std::string.
@@ -416,7 +416,8 @@ ANKERL_NANOBENCH(IGNORE_PADDED_POP)
 
 // Result returned after a benchmark has finished. Can be used as a baseline for relative().
 ANKERL_NANOBENCH(IGNORE_PADDED_PUSH)
-class Result {
+class Result
+{
 public:
     enum class Measure : size_t {
         elapsed,
@@ -442,22 +443,36 @@ public:
     // all values are scaled by iters (except iters...)
     void add(Clock::duration totalElapsed, uint64_t iters, detail::PerformanceCounters const& pc);
 
-    ANKERL_NANOBENCH(NODISCARD) Config const& config() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    Config const& config() const noexcept;
 
-    ANKERL_NANOBENCH(NODISCARD) double median(Measure m) const;
-    ANKERL_NANOBENCH(NODISCARD) double medianAbsolutePercentError(Measure m) const;
-    ANKERL_NANOBENCH(NODISCARD) double average(Measure m) const;
-    ANKERL_NANOBENCH(NODISCARD) double sum(Measure m) const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) double sumProduct(Measure m1, Measure m2) const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) double minimum(Measure m) const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) double maximum(Measure m) const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) std::string const& context(char const* variableName) const;
-    ANKERL_NANOBENCH(NODISCARD) std::string const& context(std::string const& variableName) const;
+    ANKERL_NANOBENCH(NODISCARD)
+    double median(Measure m) const;
+    ANKERL_NANOBENCH(NODISCARD)
+    double medianAbsolutePercentError(Measure m) const;
+    ANKERL_NANOBENCH(NODISCARD)
+    double average(Measure m) const;
+    ANKERL_NANOBENCH(NODISCARD)
+    double sum(Measure m) const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    double sumProduct(Measure m1, Measure m2) const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    double minimum(Measure m) const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    double maximum(Measure m) const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string const& context(char const* variableName) const;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string const& context(std::string const& variableName) const;
 
-    ANKERL_NANOBENCH(NODISCARD) bool has(Measure m) const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) double get(size_t idx, Measure m) const;
-    ANKERL_NANOBENCH(NODISCARD) bool empty() const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) size_t size() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    bool has(Measure m) const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    double get(size_t idx, Measure m) const;
+    ANKERL_NANOBENCH(NODISCARD)
+    bool empty() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    size_t size() const noexcept;
 
     // Finds string, if not found, returns _size.
     static Measure fromString(std::string const& str);
@@ -485,7 +500,8 @@ ANKERL_NANOBENCH(IGNORE_PADDED_POP)
  *
  * Rng also provides a few non-standard helpers, optimized for speed.
  */
-class Rng final {
+class Rng final
+{
 public:
     /**
      * @brief This RNG provides 64bit randomness.
@@ -544,7 +560,8 @@ public:
     /**
      * Creates a copy of the Rng, thus the copy provides exactly the same random sequence as the original.
      */
-    ANKERL_NANOBENCH(NODISCARD) Rng copy() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    Rng copy() const noexcept;
 
     /**
      * @brief Produces a 64bit random value. This should be very fast, thus it is marked as inline. In my benchmark, this is ~46 times
@@ -600,7 +617,8 @@ public:
      *
      * @return Vector containing the full state:
      */
-    ANKERL_NANOBENCH(NODISCARD) std::vector<uint64_t> state() const;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::vector<uint64_t> state() const;
 
 private:
     static constexpr uint64_t rotl(uint64_t x, unsigned k) noexcept;
@@ -624,7 +642,8 @@ private:
  * in the Bench instance, but in this case the object is immediately destroyed so it's not available any more.
  */
 ANKERL_NANOBENCH(IGNORE_PADDED_PUSH)
-class Bench {
+class Bench
+{
 public:
     /**
      * @brief Creates a new benchmark for configuration and running of benchmarks.
@@ -682,12 +701,14 @@ public:
     /**
      * @brief Gets the title of the benchmark
      */
-    ANKERL_NANOBENCH(NODISCARD) std::string const& title() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string const& title() const noexcept;
 
     /// Name of the benchmark, will be shown in the table row.
     Bench& name(char const* benchmarkName);
     Bench& name(std::string const& benchmarkName);
-    ANKERL_NANOBENCH(NODISCARD) std::string const& name() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string const& name() const noexcept;
 
     /**
      * @brief Set context information.
@@ -725,7 +746,8 @@ public:
      */
     template <typename T>
     Bench& batch(T b) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) double batch() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    double batch() const noexcept;
 
     /**
      * @brief Sets the operation unit.
@@ -737,7 +759,8 @@ public:
      */
     Bench& unit(char const* unit);
     Bench& unit(std::string const& unit);
-    ANKERL_NANOBENCH(NODISCARD) std::string const& unit() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string const& unit() const noexcept;
 
     /**
      * @brief Sets the time unit to be used for the default output.
@@ -749,8 +772,10 @@ public:
      * @param tuName Name for the time unit, default is "ns"
      */
     Bench& timeUnit(std::chrono::duration<double> const& tu, std::string const& tuName);
-    ANKERL_NANOBENCH(NODISCARD) std::string const& timeUnitName() const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) std::chrono::duration<double> const& timeUnit() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string const& timeUnitName() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::chrono::duration<double> const& timeUnit() const noexcept;
 
     /**
      * @brief Set the output stream where the resulting markdown table will be printed to.
@@ -760,7 +785,8 @@ public:
      * @param outstream Pointer to output stream, can be `nullptr`.
      */
     Bench& output(std::ostream* outstream) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) std::ostream* output() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::ostream* output() const noexcept;
 
     /**
      * Modern processors have a very accurate clock, being able to measure as low as 20 nanoseconds. This is the main trick nanobech to
@@ -783,7 +809,8 @@ public:
      * @param multiple Target number of times of clock resolution. Usually 1000 is a good compromise between runtime and accuracy.
      */
     Bench& clockResolutionMultiple(size_t multiple) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) size_t clockResolutionMultiple() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    size_t clockResolutionMultiple() const noexcept;
 
     /**
      * @brief Controls number of epochs, the number of measurements to perform.
@@ -801,7 +828,8 @@ public:
      * @param numEpochs Number of epochs.
      */
     Bench& epochs(size_t numEpochs) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) size_t epochs() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    size_t epochs() const noexcept;
 
     /**
      * @brief Upper limit for the runtime of each epoch.
@@ -814,7 +842,8 @@ public:
      * @param t Maximum target runtime for a single epoch.
      */
     Bench& maxEpochTime(std::chrono::nanoseconds t) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) std::chrono::nanoseconds maxEpochTime() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::chrono::nanoseconds maxEpochTime() const noexcept;
 
     /**
      * @brief Minimum time each epoch should take.
@@ -827,7 +856,8 @@ public:
      * @param t Minimum time each epoch should take.
      */
     Bench& minEpochTime(std::chrono::nanoseconds t) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) std::chrono::nanoseconds minEpochTime() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::chrono::nanoseconds minEpochTime() const noexcept;
 
     /**
      * @brief Sets the minimum number of iterations each epoch should take.
@@ -840,7 +870,8 @@ public:
      * @param numIters Minimum number of iterations per epoch.
      */
     Bench& minEpochIterations(uint64_t numIters) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) uint64_t minEpochIterations() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    uint64_t minEpochIterations() const noexcept;
 
     /**
      * Sets exactly the number of iterations for each epoch. Ignores all other epoch limits. This forces nanobench to use exactly
@@ -849,7 +880,8 @@ public:
      * @param numIters Exact number of iterations to use. Set to 0 to disable.
      */
     Bench& epochIterations(uint64_t numIters) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) uint64_t epochIterations() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    uint64_t epochIterations() const noexcept;
 
     /**
      * @brief Sets a number of iterations that are initially performed without any measurements.
@@ -861,7 +893,8 @@ public:
      * @param numWarmupIters Number of warmup iterations.
      */
     Bench& warmup(uint64_t numWarmupIters) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) uint64_t warmup() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    uint64_t warmup() const noexcept;
 
     /**
      * @brief Marks the next run as the baseline.
@@ -881,7 +914,8 @@ public:
      * @param isRelativeEnabled True to enable processing
      */
     Bench& relative(bool isRelativeEnabled) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) bool relative() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    bool relative() const noexcept;
 
     /**
      * @brief Enables/disables performance counters.
@@ -892,7 +926,8 @@ public:
      * @param showPerformanceCounters True to enable, false to disable.
      */
     Bench& performanceCounters(bool showPerformanceCounters) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) bool performanceCounters() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    bool performanceCounters() const noexcept;
 
     /**
      * @brief Retrieves all benchmark results collected by the bench object so far.
@@ -902,7 +937,8 @@ public:
      *
      * @return All results collected so far.
      */
-    ANKERL_NANOBENCH(NODISCARD) std::vector<Result> const& results() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::vector<Result> const& results() const noexcept;
 
     /*!
       @verbatim embed:rst
@@ -930,7 +966,8 @@ public:
      */
     template <typename T>
     Bench& complexityN(T n) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) double complexityN() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    double complexityN() const noexcept;
 
     /*!
       Calculates [Big O](https://en.wikipedia.org/wiki/Big_O_notation>) of the results with all preconfigured complexity functions.
@@ -1005,7 +1042,8 @@ public:
     Bench& render(std::string const& templateContent, std::ostream& os);
 
     Bench& config(Config const& benchmarkConfig);
-    ANKERL_NANOBENCH(NODISCARD) Config const& config() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    Config const& config() const noexcept;
 
 private:
     Config mConfig{};
@@ -1036,20 +1074,22 @@ void doNotOptimizeAway(T const& val);
 // this seemed to have compilation problems in some cases. Google Benchmark seemed to be the most well tested anyways.
 // see https://github.com/google/benchmark/blob/v1.7.1/include/benchmark/benchmark.h#L443-L446
 template <typename T>
-void doNotOptimizeAway(T const& val) {
+void doNotOptimizeAway(T const& val)
+{
     // NOLINTNEXTLINE(hicpp-no-assembler)
     asm volatile("" : : "r,m"(val) : "memory");
 }
 
 template <typename T>
-void doNotOptimizeAway(T& val) {
-#    if defined(__clang__)
+void doNotOptimizeAway(T& val)
+{
+#if defined(__clang__)
     // NOLINTNEXTLINE(hicpp-no-assembler)
     asm volatile("" : "+r,m"(val) : : "memory");
-#    else
+#else
     // NOLINTNEXTLINE(hicpp-no-assembler)
     asm volatile("" : "+m,r"(val) : : "memory");
-#    endif
+#endif
 }
 #endif
 
@@ -1057,7 +1097,8 @@ void doNotOptimizeAway(T& val) {
 // Not movable/copy-able, so we simply use a pointer instead of unique_ptr. This saves us from
 // having to include <memory>, and the template instantiation overhead of unique_ptr which is unfortunately quite significant.
 ANKERL_NANOBENCH(IGNORE_EFFCPP_PUSH)
-class IterationLogic {
+class IterationLogic
+{
 public:
     explicit IterationLogic(Bench const& bench);
     IterationLogic(IterationLogic&&) = delete;
@@ -1066,7 +1107,8 @@ public:
     IterationLogic& operator=(IterationLogic const&) = delete;
     ~IterationLogic();
 
-    ANKERL_NANOBENCH(NODISCARD) uint64_t numIters() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    uint64_t numIters() const noexcept;
     void add(std::chrono::nanoseconds elapsed, PerformanceCounters const& pc) noexcept;
     void moveResultTo(std::vector<Result>& results) noexcept;
 
@@ -1077,7 +1119,8 @@ private:
 ANKERL_NANOBENCH(IGNORE_EFFCPP_POP)
 
 ANKERL_NANOBENCH(IGNORE_PADDED_PUSH)
-class PerformanceCounters {
+class PerformanceCounters
+{
 public:
     PerformanceCounters(PerformanceCounters const&) = delete;
     PerformanceCounters(PerformanceCounters&&) = delete;
@@ -1091,8 +1134,10 @@ public:
     void endMeasure();
     void updateResults(uint64_t numIters);
 
-    ANKERL_NANOBENCH(NODISCARD) PerfCountSet<uint64_t> const& val() const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) PerfCountSet<bool> const& has() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    PerfCountSet<uint64_t> const& val() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    PerfCountSet<bool> const& has() const noexcept;
 
 private:
 #if ANKERL_NANOBENCH(PERF_COUNTERS)
@@ -1108,12 +1153,14 @@ PerformanceCounters& performanceCounters();
 
 } // namespace detail
 
-class BigO {
+class BigO
+{
 public:
     using RangeMeasure = std::vector<std::pair<double, double>>;
 
     template <typename Op>
-    static RangeMeasure mapRangeMeasure(RangeMeasure data, Op op) {
+    static RangeMeasure mapRangeMeasure(RangeMeasure data, Op op)
+    {
         for (auto& rangeMeasure : data) {
             rangeMeasure.first = op(rangeMeasure.first);
         }
@@ -1124,18 +1171,26 @@ public:
 
     template <typename Op>
     BigO(char const* bigOName, RangeMeasure const& rangeMeasure, Op rangeToN)
-        : BigO(bigOName, mapRangeMeasure(rangeMeasure, rangeToN)) {}
+        : BigO(bigOName, mapRangeMeasure(rangeMeasure, rangeToN))
+    {
+    }
 
     template <typename Op>
     BigO(std::string bigOName, RangeMeasure const& rangeMeasure, Op rangeToN)
-        : BigO(std::move(bigOName), mapRangeMeasure(rangeMeasure, rangeToN)) {}
+        : BigO(std::move(bigOName), mapRangeMeasure(rangeMeasure, rangeToN))
+    {
+    }
 
     BigO(char const* bigOName, RangeMeasure const& scaledRangeMeasure);
     BigO(std::string bigOName, RangeMeasure const& scaledRangeMeasure);
-    ANKERL_NANOBENCH(NODISCARD) std::string const& name() const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) double constant() const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) double normalizedRootMeanSquare() const noexcept;
-    ANKERL_NANOBENCH(NODISCARD) bool operator<(BigO const& other) const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string const& name() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    double constant() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    double normalizedRootMeanSquare() const noexcept;
+    ANKERL_NANOBENCH(NODISCARD)
+    bool operator<(BigO const& other) const noexcept;
 
 private:
     std::string mName{};
@@ -1153,16 +1208,19 @@ std::ostream& operator<<(std::ostream& os, std::vector<ankerl::nanobench::BigO> 
 namespace ankerl {
 namespace nanobench {
 
-constexpr uint64_t(Rng::min)() {
+constexpr uint64_t(Rng::min)()
+{
     return 0;
 }
 
-constexpr uint64_t(Rng::max)() {
+constexpr uint64_t(Rng::max)()
+{
     return (std::numeric_limits<uint64_t>::max)();
 }
 
 ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
-uint64_t Rng::operator()() noexcept {
+uint64_t Rng::operator()() noexcept
+{
     auto x = mX;
 
     mX = UINT64_C(15241094284759029579) * mY;
@@ -1172,13 +1230,15 @@ uint64_t Rng::operator()() noexcept {
 }
 
 ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
-uint32_t Rng::bounded(uint32_t range) noexcept {
+uint32_t Rng::bounded(uint32_t range) noexcept
+{
     uint64_t const r32 = static_cast<uint32_t>(operator()());
     auto multiresult = r32 * range;
     return static_cast<uint32_t>(multiresult >> 32U);
 }
 
-double Rng::uniform01() noexcept {
+double Rng::uniform01() noexcept
+{
     auto i = (UINT64_C(0x3ff) << 52U) | (operator()() >> 12U);
     // can't use union in c++ here for type puning, it's undefined behavior.
     // std::memcpy is optimized anyways.
@@ -1188,7 +1248,8 @@ double Rng::uniform01() noexcept {
 }
 
 template <typename Container>
-void Rng::shuffle(Container& container) noexcept {
+void Rng::shuffle(Container& container) noexcept
+{
     auto i = container.size();
     while (i > 1U) {
         using std::swap;
@@ -1203,13 +1264,15 @@ void Rng::shuffle(Container& container) noexcept {
 }
 
 ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
-constexpr uint64_t Rng::rotl(uint64_t x, unsigned k) noexcept {
+constexpr uint64_t Rng::rotl(uint64_t x, unsigned k) noexcept
+{
     return (x << k) | (x >> (64U - k));
 }
 
 template <typename Op>
 ANKERL_NANOBENCH_NO_SANITIZE("integer")
-Bench& Bench::run(Op&& op) {
+Bench& Bench::run(Op&& op)
+{
     // It is important that this method is kept short so the compiler can do better optimizations/ inlining of op()
     detail::IterationLogic iterationLogic(*this);
     auto& pc = detail::performanceCounters();
@@ -1231,52 +1294,60 @@ Bench& Bench::run(Op&& op) {
 
 // Performs all evaluations.
 template <typename Op>
-Bench& Bench::run(char const* benchmarkName, Op&& op) {
+Bench& Bench::run(char const* benchmarkName, Op&& op)
+{
     name(benchmarkName);
     return run(std::forward<Op>(op));
 }
 
 template <typename Op>
-Bench& Bench::run(std::string const& benchmarkName, Op&& op) {
+Bench& Bench::run(std::string const& benchmarkName, Op&& op)
+{
     name(benchmarkName);
     return run(std::forward<Op>(op));
 }
 
 template <typename Op>
-BigO Bench::complexityBigO(char const* benchmarkName, Op op) const {
+BigO Bench::complexityBigO(char const* benchmarkName, Op op) const
+{
     return BigO(benchmarkName, BigO::collectRangeMeasure(mResults), op);
 }
 
 template <typename Op>
-BigO Bench::complexityBigO(std::string const& benchmarkName, Op op) const {
+BigO Bench::complexityBigO(std::string const& benchmarkName, Op op) const
+{
     return BigO(benchmarkName, BigO::collectRangeMeasure(mResults), op);
 }
 
 // Set the batch size, e.g. number of processed bytes, or some other metric for the size of the processed data in each iteration.
 // Any argument is cast to double.
 template <typename T>
-Bench& Bench::batch(T b) noexcept {
+Bench& Bench::batch(T b) noexcept
+{
     mConfig.mBatch = static_cast<double>(b);
     return *this;
 }
 
 // Sets the computation complexity of the next run. Any argument is cast to double.
 template <typename T>
-Bench& Bench::complexityN(T n) noexcept {
+Bench& Bench::complexityN(T n) noexcept
+{
     mConfig.mComplexityN = static_cast<double>(n);
     return *this;
 }
 
 // Convenience: makes sure none of the given arguments are optimized away by the compiler.
 template <typename Arg>
-Bench& Bench::doNotOptimizeAway(Arg&& arg) {
+Bench& Bench::doNotOptimizeAway(Arg&& arg)
+{
     detail::doNotOptimizeAway(std::forward<Arg>(arg));
     return *this;
 }
 
 // Makes sure none of the given arguments are optimized away by the compiler.
 template <typename Arg>
-void doNotOptimizeAway(Arg&& arg) {
+void doNotOptimizeAway(Arg&& arg)
+{
     detail::doNotOptimizeAway(std::forward<Arg>(arg));
 }
 
@@ -1284,7 +1355,8 @@ namespace detail {
 
 #if defined(_MSC_VER)
 template <typename T>
-void doNotOptimizeAway(T const& val) {
+void doNotOptimizeAway(T const& val)
+{
     doNotOptimizeAwaySink(&val);
 }
 
@@ -1300,28 +1372,28 @@ void doNotOptimizeAway(T const& val) {
 // implementation part - only visible in .cpp
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#    include <algorithm> // sort, reverse
-#    include <atomic>    // compare_exchange_strong in loop overhead
-#    include <cstdlib>   // getenv
-#    include <cstring>   // strstr, strncmp
-#    include <fstream>   // ifstream to parse proc files
-#    include <iomanip>   // setw, setprecision
-#    include <iostream>  // cout
-#    include <numeric>   // accumulate
-#    include <random>    // random_device
-#    include <sstream>   // to_s in Number
-#    include <stdexcept> // throw for rendering templates
-#    include <tuple>     // std::tie
-#    if defined(__linux__)
-#        include <unistd.h> //sysconf
-#    endif
-#    if ANKERL_NANOBENCH(PERF_COUNTERS)
-#        include <map> // map
+#include <algorithm> // sort, reverse
+#include <atomic>    // compare_exchange_strong in loop overhead
+#include <cstdlib>   // getenv
+#include <cstring>   // strstr, strncmp
+#include <fstream>   // ifstream to parse proc files
+#include <iomanip>   // setw, setprecision
+#include <iostream>  // cout
+#include <numeric>   // accumulate
+#include <random>    // random_device
+#include <sstream>   // to_s in Number
+#include <stdexcept> // throw for rendering templates
+#include <tuple>     // std::tie
+#if defined(__linux__)
+#include <unistd.h> //sysconf
+#endif
+#if ANKERL_NANOBENCH(PERF_COUNTERS)
+#include <map> // map
 
-#        include <linux/perf_event.h>
-#        include <sys/ioctl.h>
-#        include <sys/syscall.h>
-#    endif
+#include <linux/perf_event.h>
+#include <sys/ioctl.h>
+#include <sys/syscall.h>
+#endif
 
 // declarations ///////////////////////////////////////////////////////////////////////////////////
 
@@ -1358,10 +1430,12 @@ namespace detail {
 
 // helpers to get double values
 template <typename T>
-inline double d(T t) noexcept {
+inline double d(T t) noexcept
+{
     return static_cast<double>(t);
 }
-inline double d(Clock::duration duration) noexcept {
+inline double d(Clock::duration duration) noexcept
+{
     return std::chrono::duration_cast<std::chrono::duration<double>>(duration).count();
 }
 
@@ -1372,13 +1446,15 @@ inline Clock::duration clockResolution() noexcept;
 
 namespace templates {
 
-char const* csv() noexcept {
+char const* csv() noexcept
+{
     return R"DELIM("title";"name";"unit";"batch";"elapsed";"error %";"instructions";"branches";"branch misses";"total"
 {{#result}}"{{title}}";"{{name}}";"{{unit}}";{{batch}};{{median(elapsed)}};{{medianAbsolutePercentError(elapsed)}};{{median(instructions)}};{{median(branchinstructions)}};{{median(branchmisses)}};{{sumProduct(iterations, elapsed)}}
 {{/result}})DELIM";
 }
 
-char const* htmlBoxplot() noexcept {
+char const* htmlBoxplot() noexcept
+{
     return R"DELIM(<html>
 
 <head>
@@ -1405,7 +1481,8 @@ char const* htmlBoxplot() noexcept {
 </html>)DELIM";
 }
 
-char const* pyperf() noexcept {
+char const* pyperf() noexcept
+{
     return R"DELIM({
     "benchmarks": [
         {
@@ -1429,7 +1506,8 @@ char const* pyperf() noexcept {
 })DELIM";
 }
 
-char const* json() noexcept {
+char const* json() noexcept
+{
     return R"DELIM({
     "results": [
 {{#result}}        {
@@ -1476,7 +1554,10 @@ char const* json() noexcept {
 
 ANKERL_NANOBENCH(IGNORE_PADDED_PUSH)
 struct Node {
-    enum class Type { tag, content, section, inverted_section };
+    enum class Type { tag,
+                      content,
+                      section,
+                      inverted_section };
 
     char const* begin;
     char const* end;
@@ -1485,7 +1566,8 @@ struct Node {
 
     template <size_t N>
     // NOLINTNEXTLINE(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    bool operator==(char const (&str)[N]) const noexcept {
+    bool operator==(char const (&str)[N]) const noexcept
+    {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
         return static_cast<size_t>(std::distance(begin, end) + 1) == N && 0 == strncmp(str, begin, N - 1);
     }
@@ -1493,7 +1575,8 @@ struct Node {
 ANKERL_NANOBENCH(IGNORE_PADDED_POP)
 
 // NOLINTNEXTLINE(misc-no-recursion)
-static std::vector<Node> parseMustacheTemplate(char const** tpl) {
+static std::vector<Node> parseMustacheTemplate(char const** tpl)
+{
     std::vector<Node> nodes;
 
     while (true) {
@@ -1540,7 +1623,8 @@ static std::vector<Node> parseMustacheTemplate(char const** tpl) {
     }
 }
 
-static bool generateFirstLast(Node const& n, size_t idx, size_t size, std::ostream& out) {
+static bool generateFirstLast(Node const& n, size_t idx, size_t size, std::ostream& out)
+{
     ANKERL_NANOBENCH_LOG("n.type=" << static_cast<int>(n.type));
     bool const matchFirst = n == "-first";
     bool const matchLast = n == "-last";
@@ -1565,7 +1649,8 @@ static bool generateFirstLast(Node const& n, size_t idx, size_t size, std::ostre
     return true;
 }
 
-static bool matchCmdArgs(std::string const& str, std::vector<std::string>& matchResult) {
+static bool matchCmdArgs(std::string const& str, std::vector<std::string>& matchResult)
+{
     matchResult.clear();
     auto idxOpen = str.find('(');
     auto idxClose = str.find(')', idxOpen);
@@ -1593,7 +1678,8 @@ static bool matchCmdArgs(std::string const& str, std::vector<std::string>& match
     return true;
 }
 
-static bool generateConfigTag(Node const& n, Config const& config, std::ostream& out) {
+static bool generateConfigTag(Node const& n, Config const& config, std::ostream& out)
+{
     using detail::d;
 
     if (n == "title") {
@@ -1656,7 +1742,8 @@ static bool generateConfigTag(Node const& n, Config const& config, std::ostream&
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-static std::ostream& generateResultTag(Node const& n, Result const& r, std::ostream& out) {
+static std::ostream& generateResultTag(Node const& n, Result const& r, std::ostream& out)
+{
     if (generateConfigTag(n, r.config(), out)) {
         return out;
     }
@@ -1715,7 +1802,8 @@ static std::ostream& generateResultTag(Node const& n, Result const& r, std::ostr
     throw std::runtime_error("command '" + std::string(n.begin, n.end) + "' not understood");
 }
 
-static void generateResultMeasurement(std::vector<Node> const& nodes, size_t idx, Result const& r, std::ostream& out) {
+static void generateResultMeasurement(std::vector<Node> const& nodes, size_t idx, Result const& r, std::ostream& out)
+{
     for (auto const& n : nodes) {
         if (!generateFirstLast(n, idx, r.size(), out)) {
             ANKERL_NANOBENCH_LOG("n.type=" << static_cast<int>(n.type));
@@ -1744,7 +1832,8 @@ static void generateResultMeasurement(std::vector<Node> const& nodes, size_t idx
     }
 }
 
-static void generateResult(std::vector<Node> const& nodes, size_t idx, std::vector<Result> const& results, std::ostream& out) {
+static void generateResult(std::vector<Node> const& nodes, size_t idx, std::vector<Result> const& results, std::ostream& out)
+{
     auto const& r = results[idx];
     for (auto const& n : nodes) {
         if (!generateFirstLast(n, idx, results.size(), out)) {
@@ -1801,7 +1890,8 @@ namespace fmt {
 
 // adds thousands separator to numbers
 ANKERL_NANOBENCH(IGNORE_PADDED_PUSH)
-class NumSep : public std::numpunct<char> {
+class NumSep : public std::numpunct<char>
+{
 public:
     explicit NumSep(char sep);
     char do_thousands_sep() const override;
@@ -1814,7 +1904,8 @@ ANKERL_NANOBENCH(IGNORE_PADDED_POP)
 
 // RAII to save & restore a stream's state
 ANKERL_NANOBENCH(IGNORE_PADDED_PUSH)
-class StreamStateRestorer {
+class StreamStateRestorer
+{
 public:
     explicit StreamStateRestorer(std::ostream& s);
     ~StreamStateRestorer();
@@ -1839,11 +1930,13 @@ private:
 ANKERL_NANOBENCH(IGNORE_PADDED_POP)
 
 // Number formatter
-class Number {
+class Number
+{
 public:
     Number(int width, int precision, double value);
     Number(int width, int precision, int64_t value);
-    ANKERL_NANOBENCH(NODISCARD) std::string to_s() const;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string to_s() const;
 
 private:
     friend std::ostream& operator<<(std::ostream& os, Number const& n);
@@ -1859,13 +1952,18 @@ std::string to_s(uint64_t n);
 
 std::ostream& operator<<(std::ostream& os, Number const& n);
 
-class MarkDownColumn {
+class MarkDownColumn
+{
 public:
     MarkDownColumn(int w, int prec, std::string tit, std::string suff, double val) noexcept;
-    ANKERL_NANOBENCH(NODISCARD) std::string title() const;
-    ANKERL_NANOBENCH(NODISCARD) std::string separator() const;
-    ANKERL_NANOBENCH(NODISCARD) std::string invalid() const;
-    ANKERL_NANOBENCH(NODISCARD) std::string value() const;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string title() const;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string separator() const;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string invalid() const;
+    ANKERL_NANOBENCH(NODISCARD)
+    std::string value() const;
 
 private:
     int mWidth;
@@ -1876,7 +1974,8 @@ private:
 };
 
 // Formats any text as markdown code, escaping backticks.
-class MarkDownCode {
+class MarkDownCode
+{
 public:
     explicit MarkDownCode(std::string const& what);
 
@@ -1900,7 +1999,8 @@ namespace ankerl {
 namespace nanobench {
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-void render(char const* mustacheTemplate, std::vector<Result> const& results, std::ostream& out) {
+void render(char const* mustacheTemplate, std::vector<Result> const& results, std::ostream& out)
+{
     detail::fmt::StreamStateRestorer const restorer(out);
 
     out.precision(std::numeric_limits<double>::digits10);
@@ -1953,29 +2053,33 @@ void render(char const* mustacheTemplate, std::vector<Result> const& results, st
     }
 }
 
-void render(std::string const& mustacheTemplate, std::vector<Result> const& results, std::ostream& out) {
+void render(std::string const& mustacheTemplate, std::vector<Result> const& results, std::ostream& out)
+{
     render(mustacheTemplate.c_str(), results, out);
 }
 
-void render(char const* mustacheTemplate, const Bench& bench, std::ostream& out) {
+void render(char const* mustacheTemplate, const Bench& bench, std::ostream& out)
+{
     render(mustacheTemplate, bench.results(), out);
 }
 
-void render(std::string const& mustacheTemplate, const Bench& bench, std::ostream& out) {
+void render(std::string const& mustacheTemplate, const Bench& bench, std::ostream& out)
+{
     render(mustacheTemplate.c_str(), bench.results(), out);
 }
 
 namespace detail {
 
-PerformanceCounters& performanceCounters() {
-#    if defined(__clang__)
-#        pragma clang diagnostic push
-#        pragma clang diagnostic ignored "-Wexit-time-destructors"
-#    endif
+PerformanceCounters& performanceCounters()
+{
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#endif
     static PerformanceCounters pc;
-#    if defined(__clang__)
-#        pragma clang diagnostic pop
-#    endif
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
     return pc;
 }
 
@@ -1983,14 +2087,15 @@ PerformanceCounters& performanceCounters() {
 // see https://github.com/google/benchmark/blob/v1.7.1/include/benchmark/benchmark.h#L514
 // see https://github.com/facebook/folly/blob/v2023.01.30.00/folly/lang/Hint-inl.h#L54-L58
 // see https://learn.microsoft.com/en-us/cpp/preprocessor/optimize
-#    if defined(_MSC_VER)
-#        pragma optimize("", off)
+#if defined(_MSC_VER)
+#pragma optimize("", off)
 void doNotOptimizeAwaySink(void const*) {}
-#        pragma optimize("", on)
-#    endif
+#pragma optimize("", on)
+#endif
 
 template <typename T>
-T parseFile(std::string const& filename, bool* fail) {
+T parseFile(std::string const& filename, bool* fail)
+{
     std::ifstream fin(filename); // NOLINT(misc-const-correctness)
     T num{};
     fin >> num;
@@ -2000,41 +2105,45 @@ T parseFile(std::string const& filename, bool* fail) {
     return num;
 }
 
-char const* getEnv(char const* name) {
-#    if defined(_MSC_VER)
-#        pragma warning(push)
-#        pragma warning(disable : 4996) // getenv': This function or variable may be unsafe.
-#    endif
+char const* getEnv(char const* name)
+{
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4996) // getenv': This function or variable may be unsafe.
+#endif
     return std::getenv(name); // NOLINT(concurrency-mt-unsafe)
-#    if defined(_MSC_VER)
-#        pragma warning(pop)
-#    endif
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 }
 
-bool isEndlessRunning(std::string const& name) {
+bool isEndlessRunning(std::string const& name)
+{
     auto const* const endless = getEnv("NANOBENCH_ENDLESS");
     return nullptr != endless && endless == name;
 }
 
 // True when environment variable NANOBENCH_SUPPRESS_WARNINGS is either not set at all, or set to "0"
-bool isWarningsEnabled() {
+bool isWarningsEnabled()
+{
     auto const* const suppression = getEnv("NANOBENCH_SUPPRESS_WARNINGS");
     return nullptr == suppression || suppression == std::string("0");
 }
 
-void gatherStabilityInformation(std::vector<std::string>& warnings, std::vector<std::string>& recommendations) {
+void gatherStabilityInformation(std::vector<std::string>& warnings, std::vector<std::string>& recommendations)
+{
     warnings.clear();
     recommendations.clear();
 
-#    if defined(DEBUG)
+#if defined(DEBUG)
     warnings.emplace_back("DEBUG defined");
     bool const recommendCheckFlags = true;
-#    else
+#else
     bool const recommendCheckFlags = false;
-#    endif
+#endif
 
     bool recommendPyPerf = false;
-#    if defined(__linux__)
+#if defined(__linux__)
     auto nprocs = sysconf(_SC_NPROCESSORS_CONF);
     if (nprocs <= 0) {
         warnings.emplace_back("couldn't figure out number of processors - no governor, turbo check possible");
@@ -2069,7 +2178,7 @@ void gatherStabilityInformation(std::vector<std::string>& warnings, std::vector<
             recommendPyPerf = true;
         }
     }
-#    endif
+#endif
 
     if (recommendCheckFlags) {
         recommendations.emplace_back("Make sure you compile for Release");
@@ -2079,7 +2188,8 @@ void gatherStabilityInformation(std::vector<std::string>& warnings, std::vector<
     }
 }
 
-void printStabilityInformationOnce(std::ostream* outStream) {
+void printStabilityInformationOnce(std::ostream* outStream)
+{
     static bool shouldPrint = true;
     if (shouldPrint && (nullptr != outStream) && isWarningsEnabled()) {
         auto& os = *outStream;
@@ -2096,7 +2206,8 @@ void printStabilityInformationOnce(std::ostream* outStream) {
             os << "* " << w << std::endl;
         }
 
-        os << std::endl << "Recommendations" << std::endl;
+        os << std::endl
+           << "Recommendations" << std::endl;
         for (auto const& r : recommendations) {
             os << "* " << r << std::endl;
         }
@@ -2104,18 +2215,21 @@ void printStabilityInformationOnce(std::ostream* outStream) {
 }
 
 // remembers the last table settings used. When it changes, a new table header is automatically written for the new entry.
-uint64_t& singletonHeaderHash() noexcept {
+uint64_t& singletonHeaderHash() noexcept
+{
     static uint64_t sHeaderHash{};
     return sHeaderHash;
 }
 
 ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
-inline uint64_t hash_combine(uint64_t seed, uint64_t val) {
+inline uint64_t hash_combine(uint64_t seed, uint64_t val)
+{
     return seed ^ (val + UINT64_C(0x9e3779b9) + (seed << 6U) + (seed >> 2U));
 }
 
 // determines resolution of the given clock. This is done by measuring multiple times and returning the minimum time difference.
-Clock::duration calcClockResolution(size_t numEvaluations) noexcept {
+Clock::duration calcClockResolution(size_t numEvaluations) noexcept
+{
     auto bestDuration = Clock::duration::max();
     Clock::time_point tBegin;
     Clock::time_point tEnd;
@@ -2130,18 +2244,22 @@ Clock::duration calcClockResolution(size_t numEvaluations) noexcept {
 }
 
 // Calculates clock resolution once, and remembers the result
-Clock::duration clockResolution() noexcept {
+Clock::duration clockResolution() noexcept
+{
     static Clock::duration const sResolution = calcClockResolution(20);
     return sResolution;
 }
 
 ANKERL_NANOBENCH(IGNORE_PADDED_PUSH)
 struct IterationLogic::Impl {
-    enum class State { warmup, upscaling_runtime, measuring, endless };
+    enum class State { warmup,
+                       upscaling_runtime,
+                       measuring,
+                       endless };
 
     explicit Impl(Bench const& bench)
-        : mBench(bench)
-        , mResult(bench.config()) {
+        : mBench(bench), mResult(bench.config())
+    {
         printStabilityInformationOnce(mBench.output());
 
         // determine target runtime per epoch
@@ -2171,7 +2289,9 @@ struct IterationLogic::Impl {
     }
 
     // directly calculates new iters based on elapsed&iters, and adds a 10% noise. Makes sure we don't underflow.
-    ANKERL_NANOBENCH(NODISCARD) uint64_t calcBestNumIters(std::chrono::nanoseconds elapsed, uint64_t iters) noexcept {
+    ANKERL_NANOBENCH(NODISCARD)
+    uint64_t calcBestNumIters(std::chrono::nanoseconds elapsed, uint64_t iters) noexcept
+    {
         auto doubleElapsed = d(elapsed);
         auto doubleTargetRuntimePerEpoch = d(mTargetRuntimePerEpoch);
         auto doubleNewIters = doubleTargetRuntimePerEpoch / doubleElapsed * d(iters);
@@ -2187,7 +2307,9 @@ struct IterationLogic::Impl {
         return static_cast<uint64_t>(doubleNewIters + 0.5);
     }
 
-    ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined") void upscale(std::chrono::nanoseconds elapsed) {
+    ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
+    void upscale(std::chrono::nanoseconds elapsed)
+    {
         if (elapsed * 10 < mTargetRuntimePerEpoch) {
             // we are far below the target runtime. Multiply iterations by 10 (with overflow check)
             if (mNumIters * 10 < mNumIters) {
@@ -2202,10 +2324,11 @@ struct IterationLogic::Impl {
         }
     }
 
-    void add(std::chrono::nanoseconds elapsed, PerformanceCounters const& pc) noexcept {
-#    if defined(ANKERL_NANOBENCH_LOG_ENABLED)
+    void add(std::chrono::nanoseconds elapsed, PerformanceCounters const& pc) noexcept
+    {
+#if defined(ANKERL_NANOBENCH_LOG_ENABLED)
         auto oldIters = mNumIters;
-#    endif
+#endif
 
         switch (mState) {
         case State::warmup:
@@ -2264,7 +2387,8 @@ struct IterationLogic::Impl {
     }
 
     // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-    void showResult(std::string const& errorMessage) const {
+    void showResult(std::string const& errorMessage) const
+    {
         ANKERL_NANOBENCH_LOG(errorMessage);
 
         if (mBench.output() != nullptr) {
@@ -2376,7 +2500,9 @@ struct IterationLogic::Impl {
         }
     }
 
-    ANKERL_NANOBENCH(NODISCARD) bool isCloseEnoughForMeasurements(std::chrono::nanoseconds elapsed) const noexcept {
+    ANKERL_NANOBENCH(NODISCARD)
+    bool isCloseEnoughForMeasurements(std::chrono::nanoseconds elapsed) const noexcept
+    {
         return elapsed * 3 >= mTargetRuntimePerEpoch * 2;
     }
 
@@ -2394,33 +2520,36 @@ ANKERL_NANOBENCH(IGNORE_PADDED_POP)
 IterationLogic::IterationLogic(Bench const& bench)
     : mPimpl(new Impl(bench)) {}
 
-IterationLogic::~IterationLogic() {
+IterationLogic::~IterationLogic()
+{
     delete mPimpl;
 }
 
-uint64_t IterationLogic::numIters() const noexcept {
+uint64_t IterationLogic::numIters() const noexcept
+{
     ANKERL_NANOBENCH_LOG(mPimpl->mBench.name() << ": mNumIters=" << mPimpl->mNumIters);
     return mPimpl->mNumIters;
 }
 
-void IterationLogic::add(std::chrono::nanoseconds elapsed, PerformanceCounters const& pc) noexcept {
+void IterationLogic::add(std::chrono::nanoseconds elapsed, PerformanceCounters const& pc) noexcept
+{
     mPimpl->add(elapsed, pc);
 }
 
-void IterationLogic::moveResultTo(std::vector<Result>& results) noexcept {
+void IterationLogic::moveResultTo(std::vector<Result>& results) noexcept
+{
     results.emplace_back(std::move(mPimpl->mResult));
 }
 
-#    if ANKERL_NANOBENCH(PERF_COUNTERS)
+#if ANKERL_NANOBENCH(PERF_COUNTERS)
 
 ANKERL_NANOBENCH(IGNORE_PADDED_PUSH)
-class LinuxPerformanceCounters {
+class LinuxPerformanceCounters
+{
 public:
     struct Target {
         Target(uint64_t* targetValue_, bool correctMeasuringOverhead_, bool correctLoopOverhead_)
-            : targetValue(targetValue_)
-            , correctMeasuringOverhead(correctMeasuringOverhead_)
-            , correctLoopOverhead(correctLoopOverhead_) {}
+            : targetValue(targetValue_), correctMeasuringOverhead(correctMeasuringOverhead_), correctLoopOverhead(correctLoopOverhead_) {}
 
         uint64_t* targetValue{};         // NOLINT(misc-non-private-member-variables-in-classes)
         bool correctMeasuringOverhead{}; // NOLINT(misc-non-private-member-variables-in-classes)
@@ -2442,13 +2571,16 @@ public:
     bool monitor(perf_sw_ids swId, Target target);
     bool monitor(perf_hw_id hwId, Target target);
 
-    ANKERL_NANOBENCH(NODISCARD) bool hasError() const noexcept {
+    ANKERL_NANOBENCH(NODISCARD)
+    bool hasError() const noexcept
+    {
         return mHasError;
     }
 
     // Just reading data is faster than enable & disabling.
     // we subtract data ourselves.
-    inline void beginMeasure() {
+    inline void beginMeasure()
+    {
         if (mHasError) {
             return;
         }
@@ -2463,7 +2595,8 @@ public:
         mHasError = -1 == ioctl(mFd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
     }
 
-    inline void endMeasure() {
+    inline void endMeasure()
+    {
         if (mHasError) {
             return;
         }
@@ -2483,12 +2616,14 @@ public:
 
     // rounded integer division
     template <typename T>
-    static inline T divRounded(T a, T divisor) {
+    static inline T divRounded(T a, T divisor)
+    {
         return (a + divisor / 2) / divisor;
     }
 
     ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
-    static inline uint32_t mix(uint32_t x) noexcept {
+    static inline uint32_t mix(uint32_t x) noexcept
+    {
         x ^= x << 13U;
         x ^= x >> 17U;
         x ^= x << 5U;
@@ -2497,7 +2632,8 @@ public:
 
     template <typename Op>
     ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
-    void calibrate(Op&& op) {
+    void calibrate(Op&& op)
+    {
         // clear current calibration data,
         for (auto& v : mCalibratedOverhead) {
             v = UINT64_C(0);
@@ -2582,23 +2718,27 @@ private:
 };
 ANKERL_NANOBENCH(IGNORE_PADDED_POP)
 
-LinuxPerformanceCounters::~LinuxPerformanceCounters() {
+LinuxPerformanceCounters::~LinuxPerformanceCounters()
+{
     if (-1 != mFd) {
         close(mFd);
     }
 }
 
-bool LinuxPerformanceCounters::monitor(perf_sw_ids swId, LinuxPerformanceCounters::Target target) {
+bool LinuxPerformanceCounters::monitor(perf_sw_ids swId, LinuxPerformanceCounters::Target target)
+{
     return monitor(PERF_TYPE_SOFTWARE, swId, target);
 }
 
-bool LinuxPerformanceCounters::monitor(perf_hw_id hwId, LinuxPerformanceCounters::Target target) {
+bool LinuxPerformanceCounters::monitor(perf_hw_id hwId, LinuxPerformanceCounters::Target target)
+{
     return monitor(PERF_TYPE_HARDWARE, hwId, target);
 }
 
 // overflow is ok, it's checked
 ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
-void LinuxPerformanceCounters::updateResults(uint64_t numIters) {
+void LinuxPerformanceCounters::updateResults(uint64_t numIters)
+{
     // clear old data
     for (auto& id_value : mIdToTarget) {
         *id_value.second.targetValue = UINT64_C(0);
@@ -2617,7 +2757,6 @@ void LinuxPerformanceCounters::updateResults(uint64_t numIters) {
 
         auto it = mIdToTarget.find(id);
         if (it != mIdToTarget.end()) {
-
             auto& tgt = it->second;
             *tgt.targetValue = mCounters[idx];
             if (tgt.correctMeasuringOverhead) {
@@ -2639,7 +2778,8 @@ void LinuxPerformanceCounters::updateResults(uint64_t numIters) {
     }
 }
 
-bool LinuxPerformanceCounters::monitor(uint32_t type, uint64_t eventid, Target target) {
+bool LinuxPerformanceCounters::monitor(uint32_t type, uint64_t eventid, Target target)
+{
     *target.targetValue = (std::numeric_limits<uint64_t>::max)();
     if (mHasError) {
         return false;
@@ -2657,13 +2797,13 @@ bool LinuxPerformanceCounters::monitor(uint32_t type, uint64_t eventid, Target t
     // NOLINTNEXTLINE(hicpp-signed-bitwise)
     pea.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID | PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING;
 
-    const int pid = 0;                    // the current process
-    const int cpu = -1;                   // all CPUs
-#        if defined(PERF_FLAG_FD_CLOEXEC) // since Linux 3.14
+    const int pid = 0;            // the current process
+    const int cpu = -1;           // all CPUs
+#if defined(PERF_FLAG_FD_CLOEXEC) // since Linux 3.14
     const unsigned long flags = PERF_FLAG_FD_CLOEXEC;
-#        else
+#else
     const unsigned long flags = 0;
-#        endif
+#endif
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
     auto fd = static_cast<int>(syscall(__NR_perf_event_open, &pea, pid, cpu, mFd, flags));
@@ -2694,10 +2834,8 @@ bool LinuxPerformanceCounters::monitor(uint32_t type, uint64_t eventid, Target t
 }
 
 PerformanceCounters::PerformanceCounters()
-    : mPc(new LinuxPerformanceCounters())
-    , mVal()
-    , mHas() {
-
+    : mPc(new LinuxPerformanceCounters()), mVal(), mHas()
+{
     // HW events
     mHas.cpuCycles = mPc->monitor(PERF_COUNT_HW_REF_CPU_CYCLES, LinuxPerformanceCounters::Target(&mVal.cpuCycles, true, false));
     if (!mHas.cpuCycles) {
@@ -2729,24 +2867,28 @@ PerformanceCounters::PerformanceCounters()
     }
 }
 
-PerformanceCounters::~PerformanceCounters() {
+PerformanceCounters::~PerformanceCounters()
+{
     // no need to check for nullptr, delete nullptr has no effect
     delete mPc;
 }
 
-void PerformanceCounters::beginMeasure() {
+void PerformanceCounters::beginMeasure()
+{
     mPc->beginMeasure();
 }
 
-void PerformanceCounters::endMeasure() {
+void PerformanceCounters::endMeasure()
+{
     mPc->endMeasure();
 }
 
-void PerformanceCounters::updateResults(uint64_t numIters) {
+void PerformanceCounters::updateResults(uint64_t numIters)
+{
     mPc->updateResults(numIters);
 }
 
-#    else
+#else
 
 PerformanceCounters::PerformanceCounters() = default;
 PerformanceCounters::~PerformanceCounters() = default;
@@ -2754,12 +2896,16 @@ void PerformanceCounters::beginMeasure() {}
 void PerformanceCounters::endMeasure() {}
 void PerformanceCounters::updateResults(uint64_t) {}
 
-#    endif
+#endif
 
-ANKERL_NANOBENCH(NODISCARD) PerfCountSet<uint64_t> const& PerformanceCounters::val() const noexcept {
+ANKERL_NANOBENCH(NODISCARD)
+PerfCountSet<uint64_t> const& PerformanceCounters::val() const noexcept
+{
     return mVal;
 }
-ANKERL_NANOBENCH(NODISCARD) PerfCountSet<bool> const& PerformanceCounters::has() const noexcept {
+ANKERL_NANOBENCH(NODISCARD)
+PerfCountSet<bool> const& PerformanceCounters::has() const noexcept
+{
     return mHas;
 }
 
@@ -2770,29 +2916,28 @@ namespace fmt {
 NumSep::NumSep(char sep)
     : mSep(sep) {}
 
-char NumSep::do_thousands_sep() const {
+char NumSep::do_thousands_sep() const
+{
     return mSep;
 }
 
-std::string NumSep::do_grouping() const {
+std::string NumSep::do_grouping() const
+{
     return "\003";
 }
 
 // RAII to save & restore a stream's state
 StreamStateRestorer::StreamStateRestorer(std::ostream& s)
-    : mStream(s)
-    , mLocale(s.getloc())
-    , mPrecision(s.precision())
-    , mWidth(s.width())
-    , mFill(s.fill())
-    , mFmtFlags(s.flags()) {}
+    : mStream(s), mLocale(s.getloc()), mPrecision(s.precision()), mWidth(s.width()), mFill(s.fill()), mFmtFlags(s.flags()) {}
 
-StreamStateRestorer::~StreamStateRestorer() {
+StreamStateRestorer::~StreamStateRestorer()
+{
     restore();
 }
 
 // sets back all stream info that we remembered at construction
-void StreamStateRestorer::restore() {
+void StreamStateRestorer::restore()
+{
     mStream.imbue(mLocale);
     mStream.precision(mPrecision);
     mStream.width(mWidth);
@@ -2801,29 +2946,28 @@ void StreamStateRestorer::restore() {
 }
 
 Number::Number(int width, int precision, int64_t value)
-    : mWidth(width)
-    , mPrecision(precision)
-    , mValue(d(value)) {}
+    : mWidth(width), mPrecision(precision), mValue(d(value)) {}
 
 Number::Number(int width, int precision, double value)
-    : mWidth(width)
-    , mPrecision(precision)
-    , mValue(value) {}
+    : mWidth(width), mPrecision(precision), mValue(value) {}
 
-std::ostream& Number::write(std::ostream& os) const {
+std::ostream& Number::write(std::ostream& os) const
+{
     StreamStateRestorer const restorer(os);
     os.imbue(std::locale(os.getloc(), new NumSep(',')));
     os << std::setw(mWidth) << std::setprecision(mPrecision) << std::fixed << mValue;
     return os;
 }
 
-std::string Number::to_s() const {
+std::string Number::to_s() const
+{
     std::stringstream ss;
     write(ss);
     return ss.str();
 }
 
-std::string to_s(uint64_t n) {
+std::string to_s(uint64_t n)
+{
     std::string str;
     do {
         str += static_cast<char>('0' + static_cast<char>(n % 10));
@@ -2833,38 +2977,39 @@ std::string to_s(uint64_t n) {
     return str;
 }
 
-std::ostream& operator<<(std::ostream& os, Number const& n) {
+std::ostream& operator<<(std::ostream& os, Number const& n)
+{
     return n.write(os);
 }
 
 MarkDownColumn::MarkDownColumn(int w, int prec, std::string tit, std::string suff, double val) noexcept
-    : mWidth(w)
-    , mPrecision(prec)
-    , mTitle(std::move(tit))
-    , mSuffix(std::move(suff))
-    , mValue(val) {}
+    : mWidth(w), mPrecision(prec), mTitle(std::move(tit)), mSuffix(std::move(suff)), mValue(val) {}
 
-std::string MarkDownColumn::title() const {
+std::string MarkDownColumn::title() const
+{
     std::stringstream ss;
     ss << '|' << std::setw(mWidth - 2) << std::right << mTitle << ' ';
     return ss.str();
 }
 
-std::string MarkDownColumn::separator() const {
+std::string MarkDownColumn::separator() const
+{
     std::string sep(static_cast<size_t>(mWidth), '-');
     sep.front() = '|';
     sep.back() = ':';
     return sep;
 }
 
-std::string MarkDownColumn::invalid() const {
+std::string MarkDownColumn::invalid() const
+{
     std::string sep(static_cast<size_t>(mWidth), ' ');
     sep.front() = '|';
     sep[sep.size() - 2] = '-';
     return sep;
 }
 
-std::string MarkDownColumn::value() const {
+std::string MarkDownColumn::value() const
+{
     std::stringstream ss;
     auto width = mWidth - 2 - static_cast<int>(mSuffix.size());
     ss << '|' << Number(width, mPrecision, mValue) << mSuffix << ' ';
@@ -2872,7 +3017,8 @@ std::string MarkDownColumn::value() const {
 }
 
 // Formats any text as markdown code, escaping backticks.
-MarkDownCode::MarkDownCode(std::string const& what) {
+MarkDownCode::MarkDownCode(std::string const& what)
+{
     mWhat.reserve(what.size() + 2);
     mWhat.push_back('`');
     for (char const c : what) {
@@ -2884,11 +3030,13 @@ MarkDownCode::MarkDownCode(std::string const& what) {
     mWhat.push_back('`');
 }
 
-std::ostream& MarkDownCode::write(std::ostream& os) const {
+std::ostream& MarkDownCode::write(std::ostream& os) const
+{
     return os << mWhat;
 }
 
-std::ostream& operator<<(std::ostream& os, MarkDownCode const& mdCode) {
+std::ostream& operator<<(std::ostream& os, MarkDownCode const& mdCode)
+{
     return mdCode.write(os);
 }
 } // namespace fmt
@@ -2911,17 +3059,18 @@ Result::Result(Result&&) noexcept = default;
 
 namespace detail {
 template <typename T>
-inline constexpr typename std::underlying_type<T>::type u(T val) noexcept {
+inline constexpr typename std::underlying_type<T>::type u(T val) noexcept
+{
     return static_cast<typename std::underlying_type<T>::type>(val);
 }
 } // namespace detail
 
 // Result returned after a benchmark has finished. Can be used as a baseline for relative().
 Result::Result(Config benchmarkConfig)
-    : mConfig(std::move(benchmarkConfig))
-    , mNameToMeasurements{detail::u(Result::Measure::_size)} {}
+    : mConfig(std::move(benchmarkConfig)), mNameToMeasurements{detail::u(Result::Measure::_size)} {}
 
-void Result::add(Clock::duration totalElapsed, uint64_t iters, detail::PerformanceCounters const& pc) {
+void Result::add(Clock::duration totalElapsed, uint64_t iters, detail::PerformanceCounters const& pc)
+{
     using detail::d;
     using detail::u;
 
@@ -2967,11 +3116,13 @@ void Result::add(Clock::duration totalElapsed, uint64_t iters, detail::Performan
     }
 }
 
-Config const& Result::config() const noexcept {
+Config const& Result::config() const noexcept
+{
     return mConfig;
 }
 
-inline double calcMedian(std::vector<double>& data) {
+inline double calcMedian(std::vector<double>& data)
+{
     if (data.empty()) {
         return 0.0;
     }
@@ -2984,13 +3135,15 @@ inline double calcMedian(std::vector<double>& data) {
     return (data[midIdx - 1U] + data[midIdx]) / 2U;
 }
 
-double Result::median(Measure m) const {
+double Result::median(Measure m) const
+{
     // create a copy so we can sort
     auto data = mNameToMeasurements[detail::u(m)];
     return calcMedian(data);
 }
 
-double Result::average(Measure m) const {
+double Result::average(Measure m) const
+{
     using detail::d;
     auto const& data = mNameToMeasurements[detail::u(m)];
     if (data.empty()) {
@@ -3001,7 +3154,8 @@ double Result::average(Measure m) const {
     return sum(m) / d(data.size());
 }
 
-double Result::medianAbsolutePercentError(Measure m) const {
+double Result::medianAbsolutePercentError(Measure m) const
+{
     // create copy
     auto data = mNameToMeasurements[detail::u(m)];
 
@@ -3019,12 +3173,14 @@ double Result::medianAbsolutePercentError(Measure m) const {
     return calcMedian(data);
 }
 
-double Result::sum(Measure m) const noexcept {
+double Result::sum(Measure m) const noexcept
+{
     auto const& data = mNameToMeasurements[detail::u(m)];
     return std::accumulate(data.begin(), data.end(), 0.0);
 }
 
-double Result::sumProduct(Measure m1, Measure m2) const noexcept {
+double Result::sumProduct(Measure m1, Measure m2) const noexcept
+{
     auto const& data1 = mNameToMeasurements[detail::u(m1)];
     auto const& data2 = mNameToMeasurements[detail::u(m2)];
 
@@ -3039,25 +3195,30 @@ double Result::sumProduct(Measure m1, Measure m2) const noexcept {
     return result;
 }
 
-bool Result::has(Measure m) const noexcept {
+bool Result::has(Measure m) const noexcept
+{
     return !mNameToMeasurements[detail::u(m)].empty();
 }
 
-double Result::get(size_t idx, Measure m) const {
+double Result::get(size_t idx, Measure m) const
+{
     auto const& data = mNameToMeasurements[detail::u(m)];
     return data.at(idx);
 }
 
-bool Result::empty() const noexcept {
+bool Result::empty() const noexcept
+{
     return 0U == size();
 }
 
-size_t Result::size() const noexcept {
+size_t Result::size() const noexcept
+{
     auto const& data = mNameToMeasurements[detail::u(Measure::elapsed)];
     return data.size();
 }
 
-double Result::minimum(Measure m) const noexcept {
+double Result::minimum(Measure m) const noexcept
+{
     auto const& data = mNameToMeasurements[detail::u(m)];
     if (data.empty()) {
         return 0.0;
@@ -3067,7 +3228,8 @@ double Result::minimum(Measure m) const noexcept {
     return *std::min_element(data.begin(), data.end());
 }
 
-double Result::maximum(Measure m) const noexcept {
+double Result::maximum(Measure m) const noexcept
+{
     auto const& data = mNameToMeasurements[detail::u(m)];
     if (data.empty()) {
         return 0.0;
@@ -3077,15 +3239,18 @@ double Result::maximum(Measure m) const noexcept {
     return *std::max_element(data.begin(), data.end());
 }
 
-std::string const& Result::context(char const* variableName) const {
+std::string const& Result::context(char const* variableName) const
+{
     return mConfig.mContext.at(variableName);
 }
 
-std::string const& Result::context(std::string const& variableName) const {
+std::string const& Result::context(std::string const& variableName) const
+{
     return mConfig.mContext.at(variableName);
 }
 
-Result::Measure Result::fromString(std::string const& str) {
+Result::Measure Result::fromString(std::string const& str)
+{
     if (str == "elapsed") {
         return Measure::elapsed;
     }
@@ -3115,7 +3280,8 @@ Result::Measure Result::fromString(std::string const& str) {
 }
 
 // Configuration of a microbenchmark.
-Bench::Bench() {
+Bench::Bench()
+{
     mConfig.mOut = &std::cout;
 }
 
@@ -3125,36 +3291,43 @@ Bench::Bench(Bench const&) = default;
 Bench& Bench::operator=(Bench const&) = default;
 Bench::~Bench() noexcept = default;
 
-double Bench::batch() const noexcept {
+double Bench::batch() const noexcept
+{
     return mConfig.mBatch;
 }
 
-double Bench::complexityN() const noexcept {
+double Bench::complexityN() const noexcept
+{
     return mConfig.mComplexityN;
 }
 
 // Set a baseline to compare it to. 100% it is exactly as fast as the baseline, >100% means it is faster than the baseline, <100%
 // means it is slower than the baseline.
-Bench& Bench::relative(bool isRelativeEnabled) noexcept {
+Bench& Bench::relative(bool isRelativeEnabled) noexcept
+{
     mConfig.mIsRelative = isRelativeEnabled;
     return *this;
 }
-bool Bench::relative() const noexcept {
+bool Bench::relative() const noexcept
+{
     return mConfig.mIsRelative;
 }
 
-Bench& Bench::performanceCounters(bool showPerformanceCounters) noexcept {
+Bench& Bench::performanceCounters(bool showPerformanceCounters) noexcept
+{
     mConfig.mShowPerformanceCounters = showPerformanceCounters;
     return *this;
 }
-bool Bench::performanceCounters() const noexcept {
+bool Bench::performanceCounters() const noexcept
+{
     return mConfig.mShowPerformanceCounters;
 }
 
 // Operation unit. Defaults to "op", could be e.g. "byte" for string processing.
 // If u differs from currently set unit, the stored results will be cleared.
 // Use singular (byte, not bytes).
-Bench& Bench::unit(char const* u) {
+Bench& Bench::unit(char const* u)
+{
     if (u != mConfig.mUnit) {
         mResults.clear();
     }
@@ -3162,37 +3335,44 @@ Bench& Bench::unit(char const* u) {
     return *this;
 }
 
-Bench& Bench::unit(std::string const& u) {
+Bench& Bench::unit(std::string const& u)
+{
     return unit(u.c_str());
 }
 
-std::string const& Bench::unit() const noexcept {
+std::string const& Bench::unit() const noexcept
+{
     return mConfig.mUnit;
 }
 
-Bench& Bench::timeUnit(std::chrono::duration<double> const& tu, std::string const& tuName) {
+Bench& Bench::timeUnit(std::chrono::duration<double> const& tu, std::string const& tuName)
+{
     mConfig.mTimeUnit = tu;
     mConfig.mTimeUnitName = tuName;
     return *this;
 }
 
-std::string const& Bench::timeUnitName() const noexcept {
+std::string const& Bench::timeUnitName() const noexcept
+{
     return mConfig.mTimeUnitName;
 }
 
-std::chrono::duration<double> const& Bench::timeUnit() const noexcept {
+std::chrono::duration<double> const& Bench::timeUnit() const noexcept
+{
     return mConfig.mTimeUnit;
 }
 
 // If benchmarkTitle differs from currently set title, the stored results will be cleared.
-Bench& Bench::title(const char* benchmarkTitle) {
+Bench& Bench::title(const char* benchmarkTitle)
+{
     if (benchmarkTitle != mConfig.mBenchmarkTitle) {
         mResults.clear();
     }
     mConfig.mBenchmarkTitle = benchmarkTitle;
     return *this;
 }
-Bench& Bench::title(std::string const& benchmarkTitle) {
+Bench& Bench::title(std::string const& benchmarkTitle)
+{
     if (benchmarkTitle != mConfig.mBenchmarkTitle) {
         mResults.clear();
     }
@@ -3200,131 +3380,161 @@ Bench& Bench::title(std::string const& benchmarkTitle) {
     return *this;
 }
 
-std::string const& Bench::title() const noexcept {
+std::string const& Bench::title() const noexcept
+{
     return mConfig.mBenchmarkTitle;
 }
 
-Bench& Bench::name(const char* benchmarkName) {
+Bench& Bench::name(const char* benchmarkName)
+{
     mConfig.mBenchmarkName = benchmarkName;
     return *this;
 }
 
-Bench& Bench::name(std::string const& benchmarkName) {
+Bench& Bench::name(std::string const& benchmarkName)
+{
     mConfig.mBenchmarkName = benchmarkName;
     return *this;
 }
 
-std::string const& Bench::name() const noexcept {
+std::string const& Bench::name() const noexcept
+{
     return mConfig.mBenchmarkName;
 }
 
-Bench& Bench::context(char const* variableName, char const* variableValue) {
+Bench& Bench::context(char const* variableName, char const* variableValue)
+{
     mConfig.mContext[variableName] = variableValue;
     return *this;
 }
 
-Bench& Bench::context(std::string const& variableName, std::string const& variableValue) {
+Bench& Bench::context(std::string const& variableName, std::string const& variableValue)
+{
     mConfig.mContext[variableName] = variableValue;
     return *this;
 }
 
-Bench& Bench::clearContext() {
+Bench& Bench::clearContext()
+{
     mConfig.mContext.clear();
     return *this;
 }
 
 // Number of epochs to evaluate. The reported result will be the median of evaluation of each epoch.
-Bench& Bench::epochs(size_t numEpochs) noexcept {
+Bench& Bench::epochs(size_t numEpochs) noexcept
+{
     mConfig.mNumEpochs = numEpochs;
     return *this;
 }
-size_t Bench::epochs() const noexcept {
+size_t Bench::epochs() const noexcept
+{
     return mConfig.mNumEpochs;
 }
 
 // Desired evaluation time is a multiple of clock resolution. Default is to be 1000 times above this measurement precision.
-Bench& Bench::clockResolutionMultiple(size_t multiple) noexcept {
+Bench& Bench::clockResolutionMultiple(size_t multiple) noexcept
+{
     mConfig.mClockResolutionMultiple = multiple;
     return *this;
 }
-size_t Bench::clockResolutionMultiple() const noexcept {
+size_t Bench::clockResolutionMultiple() const noexcept
+{
     return mConfig.mClockResolutionMultiple;
 }
 
 // Sets the maximum time each epoch should take. Default is 100ms.
-Bench& Bench::maxEpochTime(std::chrono::nanoseconds t) noexcept {
+Bench& Bench::maxEpochTime(std::chrono::nanoseconds t) noexcept
+{
     mConfig.mMaxEpochTime = t;
     return *this;
 }
-std::chrono::nanoseconds Bench::maxEpochTime() const noexcept {
+std::chrono::nanoseconds Bench::maxEpochTime() const noexcept
+{
     return mConfig.mMaxEpochTime;
 }
 
 // Sets the maximum time each epoch should take. Default is 100ms.
-Bench& Bench::minEpochTime(std::chrono::nanoseconds t) noexcept {
+Bench& Bench::minEpochTime(std::chrono::nanoseconds t) noexcept
+{
     mConfig.mMinEpochTime = t;
     return *this;
 }
-std::chrono::nanoseconds Bench::minEpochTime() const noexcept {
+std::chrono::nanoseconds Bench::minEpochTime() const noexcept
+{
     return mConfig.mMinEpochTime;
 }
 
-Bench& Bench::minEpochIterations(uint64_t numIters) noexcept {
+Bench& Bench::minEpochIterations(uint64_t numIters) noexcept
+{
     mConfig.mMinEpochIterations = (numIters == 0) ? 1 : numIters;
     return *this;
 }
-uint64_t Bench::minEpochIterations() const noexcept {
+uint64_t Bench::minEpochIterations() const noexcept
+{
     return mConfig.mMinEpochIterations;
 }
 
-Bench& Bench::epochIterations(uint64_t numIters) noexcept {
+Bench& Bench::epochIterations(uint64_t numIters) noexcept
+{
     mConfig.mEpochIterations = numIters;
     return *this;
 }
-uint64_t Bench::epochIterations() const noexcept {
+uint64_t Bench::epochIterations() const noexcept
+{
     return mConfig.mEpochIterations;
 }
 
-Bench& Bench::warmup(uint64_t numWarmupIters) noexcept {
+Bench& Bench::warmup(uint64_t numWarmupIters) noexcept
+{
     mConfig.mWarmup = numWarmupIters;
     return *this;
 }
-uint64_t Bench::warmup() const noexcept {
+uint64_t Bench::warmup() const noexcept
+{
     return mConfig.mWarmup;
 }
 
-Bench& Bench::config(Config const& benchmarkConfig) {
+Bench& Bench::config(Config const& benchmarkConfig)
+{
     mConfig = benchmarkConfig;
     return *this;
 }
-Config const& Bench::config() const noexcept {
+Config const& Bench::config() const noexcept
+{
     return mConfig;
 }
 
-Bench& Bench::output(std::ostream* outstream) noexcept {
+Bench& Bench::output(std::ostream* outstream) noexcept
+{
     mConfig.mOut = outstream;
     return *this;
 }
 
-ANKERL_NANOBENCH(NODISCARD) std::ostream* Bench::output() const noexcept {
+ANKERL_NANOBENCH(NODISCARD)
+std::ostream* Bench::output() const noexcept
+{
     return mConfig.mOut;
 }
 
-std::vector<Result> const& Bench::results() const noexcept {
+std::vector<Result> const& Bench::results() const noexcept
+{
     return mResults;
 }
 
-Bench& Bench::render(char const* templateContent, std::ostream& os) {
+Bench& Bench::render(char const* templateContent, std::ostream& os)
+{
     ::ankerl::nanobench::render(templateContent, *this, os);
     return *this;
 }
 
-Bench& Bench::render(std::string const& templateContent, std::ostream& os) {
+Bench& Bench::render(std::string const& templateContent, std::ostream& os)
+{
     ::ankerl::nanobench::render(templateContent, *this, os);
     return *this;
 }
 
-std::vector<BigO> Bench::complexityBigO() const {
+std::vector<BigO> Bench::complexityBigO() const
+{
     std::vector<BigO> bigOs;
     auto rangeMeasure = BigO::collectRangeMeasure(mResults);
     bigOs.emplace_back("O(1)", rangeMeasure, [](double) {
@@ -3350,8 +3560,8 @@ std::vector<BigO> Bench::complexityBigO() const {
 }
 
 Rng::Rng()
-    : mX(0)
-    , mY(0) {
+    : mX(0), mY(0)
+{
     std::random_device rd;
     std::uniform_int_distribution<uint64_t> dist;
     do {
@@ -3361,7 +3571,8 @@ Rng::Rng()
 }
 
 ANKERL_NANOBENCH_NO_SANITIZE("integer", "undefined")
-uint64_t splitMix64(uint64_t& state) noexcept {
+uint64_t splitMix64(uint64_t& state) noexcept
+{
     uint64_t z = (state += UINT64_C(0x9e3779b97f4a7c15));
     z = (z ^ (z >> 30U)) * UINT64_C(0xbf58476d1ce4e5b9);
     z = (z ^ (z >> 27U)) * UINT64_C(0x94d049bb133111eb);
@@ -3370,8 +3581,8 @@ uint64_t splitMix64(uint64_t& state) noexcept {
 
 // Seeded as described in romu paper (update april 2020)
 Rng::Rng(uint64_t seed) noexcept
-    : mX(splitMix64(seed))
-    , mY(splitMix64(seed)) {
+    : mX(splitMix64(seed)), mY(splitMix64(seed))
+{
     for (size_t i = 0; i < 10; ++i) {
         operator()();
     }
@@ -3379,16 +3590,16 @@ Rng::Rng(uint64_t seed) noexcept
 
 // only internally used to copy the RNG.
 Rng::Rng(uint64_t x, uint64_t y) noexcept
-    : mX(x)
-    , mY(y) {}
+    : mX(x), mY(y) {}
 
-Rng Rng::copy() const noexcept {
+Rng Rng::copy() const noexcept
+{
     return Rng{mX, mY};
 }
 
 Rng::Rng(std::vector<uint64_t> const& data)
-    : mX(0)
-    , mY(0) {
+    : mX(0), mY(0)
+{
     if (data.size() != 2) {
         throw std::runtime_error("ankerl::nanobench::Rng::Rng: needed exactly 2 entries in data, but got " +
                                  detail::fmt::to_s(data.size()));
@@ -3397,14 +3608,16 @@ Rng::Rng(std::vector<uint64_t> const& data)
     mY = data[1];
 }
 
-std::vector<uint64_t> Rng::state() const {
+std::vector<uint64_t> Rng::state() const
+{
     std::vector<uint64_t> data(2);
     data[0] = mX;
     data[1] = mY;
     return data;
 }
 
-BigO::RangeMeasure BigO::collectRangeMeasure(std::vector<Result> const& results) {
+BigO::RangeMeasure BigO::collectRangeMeasure(std::vector<Result> const& results)
+{
     BigO::RangeMeasure rangeMeasure;
     for (auto const& result : results) {
         if (result.config().mComplexityN > 0.0) {
@@ -3415,8 +3628,8 @@ BigO::RangeMeasure BigO::collectRangeMeasure(std::vector<Result> const& results)
 }
 
 BigO::BigO(std::string bigOName, RangeMeasure const& rangeMeasure)
-    : mName(std::move(bigOName)) {
-
+    : mName(std::move(bigOName))
+{
     // estimate the constant factor
     double sumRangeMeasure = 0.0;
     double sumRangeRange = 0.0;
@@ -3445,29 +3658,37 @@ BigO::BigO(std::string bigOName, RangeMeasure const& rangeMeasure)
 BigO::BigO(const char* bigOName, RangeMeasure const& rangeMeasure)
     : BigO(std::string(bigOName), rangeMeasure) {}
 
-std::string const& BigO::name() const noexcept {
+std::string const& BigO::name() const noexcept
+{
     return mName;
 }
 
-double BigO::constant() const noexcept {
+double BigO::constant() const noexcept
+{
     return mConstant;
 }
 
-double BigO::normalizedRootMeanSquare() const noexcept {
+double BigO::normalizedRootMeanSquare() const noexcept
+{
     return mNormalizedRootMeanSquare;
 }
 
-bool BigO::operator<(BigO const& other) const noexcept {
+bool BigO::operator<(BigO const& other) const noexcept
+{
     return std::tie(mNormalizedRootMeanSquare, mName) < std::tie(other.mNormalizedRootMeanSquare, other.mName);
 }
 
-std::ostream& operator<<(std::ostream& os, BigO const& bigO) {
+std::ostream& operator<<(std::ostream& os, BigO const& bigO)
+{
     return os << bigO.constant() << " * " << bigO.name() << ", rms=" << bigO.normalizedRootMeanSquare();
 }
 
-std::ostream& operator<<(std::ostream& os, std::vector<ankerl::nanobench::BigO> const& bigOs) {
+std::ostream& operator<<(std::ostream& os, std::vector<ankerl::nanobench::BigO> const& bigOs)
+{
     detail::fmt::StreamStateRestorer const restorer(os);
-    os << std::endl << "|   coefficient |   err% | complexity" << std::endl << "|--------------:|-------:|------------" << std::endl;
+    os << std::endl
+       << "|   coefficient |   err% | complexity" << std::endl
+       << "|--------------:|-------:|------------" << std::endl;
     for (auto const& bigO : bigOs) {
         os << "|" << std::setw(14) << std::setprecision(7) << std::scientific << bigO.constant() << " ";
         os << "|" << detail::fmt::Number(6, 1, bigO.normalizedRootMeanSquare() * 100.0) << "% ";

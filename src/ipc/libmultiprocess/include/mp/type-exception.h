@@ -10,10 +10,10 @@
 namespace mp {
 template <typename Output>
 void CustomBuildField(TypeList<std::exception>,
-    Priority<1>,
-    InvokeContext& invoke_context,
-    const std::exception& value,
-    Output&& output)
+                      Priority<1>,
+                      InvokeContext& invoke_context,
+                      const std::exception& value,
+                      Output&& output)
 {
     BuildField(TypeList<std::string>(), invoke_context, output, std::string(value.what()));
 }

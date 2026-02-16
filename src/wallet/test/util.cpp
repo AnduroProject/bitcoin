@@ -31,7 +31,7 @@ std::unique_ptr<CWallet> CreateSyncedWallet(interfaces::Chain& chain, CChain& cc
 
         FlatSigningProvider provider;
         std::string error;
-        auto descs = Parse("combo(" + EncodeSecret(key) + ")", provider, error, /* require_checksum=*/ false);
+        auto descs = Parse("combo(" + EncodeSecret(key) + ")", provider, error, /* require_checksum=*/false);
         assert(descs.size() == 1);
         auto& desc = descs.at(0);
         WalletDescriptor w_desc(std::move(desc), 0, 0, 1, 1);
@@ -209,7 +209,7 @@ wallet::DescriptorScriptPubKeyMan* CreateDescriptor(CWallet& keystore, const std
     WalletDescriptor w_desc(std::move(desc), timestamp, range_start, range_end, next_index);
 
     LOCK(keystore.cs_wallet);
-    auto spkm = Assert(keystore.AddWalletDescriptor(w_desc, keys,/*label=*/"", /*internal=*/false));
+    auto spkm = Assert(keystore.AddWalletDescriptor(w_desc, keys, /*label=*/"", /*internal=*/false));
     return &spkm.value().get();
 };
 } // namespace wallet

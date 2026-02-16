@@ -12,9 +12,8 @@
 
 #include <QPushButton>
 
-CreateWalletDialog::CreateWalletDialog(QWidget* parent) :
-    QDialog(parent, GUIUtil::dialog_flags),
-    ui(new Ui::CreateWalletDialog)
+CreateWalletDialog::CreateWalletDialog(QWidget* parent) : QDialog(parent, GUIUtil::dialog_flags),
+                                                          ui(new Ui::CreateWalletDialog)
 {
     ui->setupUi(this);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText(tr("Create"));
@@ -41,7 +40,6 @@ CreateWalletDialog::CreateWalletDialog(QWidget* parent) :
         if (!ui->external_signer_checkbox->isEnabled()) {
             ui->external_signer_checkbox->setChecked(false);
         }
-
     });
 
     connect(ui->external_signer_checkbox, &QCheckBox::toggled, [this](bool checked) {
@@ -84,12 +82,11 @@ CreateWalletDialog::CreateWalletDialog(QWidget* parent) :
     });
 
 #ifndef ENABLE_EXTERNAL_SIGNER
-        //: "External signing" means using devices such as hardware wallets.
-        ui->external_signer_checkbox->setToolTip(tr("Compiled without external signing support (required for external signing)"));
-        ui->external_signer_checkbox->setEnabled(false);
-        ui->external_signer_checkbox->setChecked(false);
+    //: "External signing" means using devices such as hardware wallets.
+    ui->external_signer_checkbox->setToolTip(tr("Compiled without external signing support (required for external signing)"));
+    ui->external_signer_checkbox->setEnabled(false);
+    ui->external_signer_checkbox->setChecked(false);
 #endif
-
 }
 
 CreateWalletDialog::~CreateWalletDialog()

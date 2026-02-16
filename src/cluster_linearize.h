@@ -24,12 +24,11 @@ using DepGraphIndex = uint32_t;
 
 /** Data structure that holds a transaction graph's preprocessed data (fee, size, ancestors,
  *  descendants). */
-template<typename SetType>
+template <typename SetType>
 class DepGraph
 {
     /** Information about a single transaction. */
-    struct Entry
-    {
+    struct Entry {
         /** Fee and size of transaction itself. */
         FeeFrac feerate;
         /** All ancestors of the transaction (including itself). */
@@ -103,7 +102,8 @@ public:
         for (DepGraphIndex i : depgraph.Positions()) {
             // Fill in dependencies by mapping direct parents.
             SetType parents;
-            for (auto j : depgraph.GetReducedParents(i)) parents.Set(mapping[j]);
+            for (auto j : depgraph.GetReducedParents(i))
+                parents.Set(mapping[j]);
             AddDependencies(parents, mapping[i]);
         }
         // Verify that the provided pos_range was correct (no unused positions at the end).
@@ -246,7 +246,8 @@ public:
     FeeFrac FeeRate(const SetType& elems) const noexcept
     {
         FeeFrac ret;
-        for (auto pos : elems) ret += entries[pos].feerate;
+        for (auto pos : elems)
+            ret += entries[pos].feerate;
         return ret;
     }
 
@@ -313,7 +314,8 @@ public:
     void AppendTopo(std::vector<DepGraphIndex>& list, const SetType& select) const noexcept
     {
         DepGraphIndex old_len = list.size();
-        for (auto i : select) list.push_back(i);
+        for (auto i : select)
+            list.push_back(i);
         std::sort(list.begin() + old_len, list.end(), [&](DepGraphIndex a, DepGraphIndex b) noexcept {
             const auto a_anc_count = entries[a].ancestors.Count();
             const auto b_anc_count = entries[b].ancestors.Count();
@@ -335,9 +337,8 @@ public:
 };
 
 /** A set of transactions together with their aggregate feerate. */
-template<typename SetType>
-struct SetInfo
-{
+template <typename SetType>
+struct SetInfo {
     /** The transactions in the set. */
     SetType transactions;
     /** Their combined fee and size. */
@@ -350,12 +351,10 @@ struct SetInfo
     SetInfo(const SetType& txn, const FeeFrac& fr) noexcept : transactions(txn), feerate(fr) {}
 
     /** Construct a SetInfo for a given transaction in a depgraph. */
-    explicit SetInfo(const DepGraph<SetType>& depgraph, DepGraphIndex pos) noexcept :
-        transactions(SetType::Singleton(pos)), feerate(depgraph.FeeRate(pos)) {}
+    explicit SetInfo(const DepGraph<SetType>& depgraph, DepGraphIndex pos) noexcept : transactions(SetType::Singleton(pos)), feerate(depgraph.FeeRate(pos)) {}
 
     /** Construct a SetInfo for a set of transactions in a depgraph. */
-    explicit SetInfo(const DepGraph<SetType>& depgraph, const SetType& txn) noexcept :
-        transactions(txn), feerate(depgraph.FeeRate(txn)) {}
+    explicit SetInfo(const DepGraph<SetType>& depgraph, const SetType& txn) noexcept : transactions(txn), feerate(depgraph.FeeRate(txn)) {}
 
     /** Add a transaction to this SetInfo (which must not yet be in it). */
     void Set(const DepGraph<SetType>& depgraph, DepGraphIndex pos) noexcept
@@ -393,7 +392,7 @@ struct SetInfo
 };
 
 /** Compute the feerates of the chunks of linearization. */
-template<typename SetType>
+template <typename SetType>
 std::vector<FeeFrac> ChunkLinearization(const DepGraph<SetType>& depgraph, std::span<const DepGraphIndex> linearization) noexcept
 {
     std::vector<FeeFrac> ret;
@@ -412,7 +411,7 @@ std::vector<FeeFrac> ChunkLinearization(const DepGraph<SetType>& depgraph, std::
 }
 
 /** Data structure encapsulating the chunking of a linearization, permitting removal of subsets. */
-template<typename SetType>
+template <typename SetType>
 class LinearizationChunking
 {
     /** The depgraph this linearization is for. */
@@ -460,11 +459,11 @@ class LinearizationChunking
 
 public:
     /** Initialize a LinearizationSubset object for a given length of linearization. */
-    explicit LinearizationChunking(const DepGraph<SetType>& depgraph LIFETIMEBOUND, std::span<const DepGraphIndex> lin LIFETIMEBOUND) noexcept :
-        m_depgraph(depgraph), m_linearization(lin)
+    explicit LinearizationChunking(const DepGraph<SetType>& depgraph LIFETIMEBOUND, std::span<const DepGraphIndex> lin LIFETIMEBOUND) noexcept : m_depgraph(depgraph), m_linearization(lin)
     {
         // Mark everything in lin as todo still.
-        for (auto i : m_linearization) m_todo.Set(i);
+        for (auto i : m_linearization)
+            m_todo.Set(i);
         // Compute the initial chunking.
         m_chunks.reserve(depgraph.TxCount());
         BuildChunks();
@@ -548,7 +547,7 @@ public:
  * SetInfo with the highest-feerate ancestor set that remains (an ancestor set is a single
  * transaction together with all its remaining ancestors).
  */
-template<typename SetType>
+template <typename SetType>
 class AncestorCandidateFinder
 {
     /** Internal dependency graph. */
@@ -563,10 +562,9 @@ public:
      *
      * Complexity: O(N^2) where N=depgraph.TxCount().
      */
-    AncestorCandidateFinder(const DepGraph<SetType>& depgraph LIFETIMEBOUND) noexcept :
-        m_depgraph(depgraph),
-        m_todo{depgraph.Positions()},
-        m_ancestor_set_feerates(depgraph.PositionRange())
+    AncestorCandidateFinder(const DepGraph<SetType>& depgraph LIFETIMEBOUND) noexcept : m_depgraph(depgraph),
+                                                                                        m_todo{depgraph.Positions()},
+                                                                                        m_ancestor_set_feerates(depgraph.PositionRange())
     {
         // Precompute ancestor-set feerates.
         for (DepGraphIndex i : m_depgraph.Positions()) {
@@ -650,7 +648,7 @@ public:
  * over the set of topologically-valid subsets of that remainder, with a limit on how many
  * combinations are tried.
  */
-template<typename SetType>
+template <typename SetType>
 class SearchCandidateFinder
 {
     /** Internal RNG. */
@@ -669,7 +667,8 @@ class SearchCandidateFinder
     SetType SortedToOriginal(const SetType& arg) const noexcept
     {
         SetType ret;
-        for (auto pos : arg) ret.Set(m_sorted_to_original[pos]);
+        for (auto pos : arg)
+            ret.Set(m_sorted_to_original[pos]);
         return ret;
     }
 
@@ -677,7 +676,8 @@ class SearchCandidateFinder
     SetType OriginalToSorted(const SetType& arg) const noexcept
     {
         SetType ret;
-        for (auto pos : arg) ret.Set(m_original_to_sorted[pos]);
+        for (auto pos : arg)
+            ret.Set(m_original_to_sorted[pos]);
         return ret;
     }
 
@@ -689,10 +689,9 @@ public:
      *
      * Complexity: O(N^2) where N=depgraph.Count().
      */
-    SearchCandidateFinder(const DepGraph<SetType>& depgraph, uint64_t rng_seed) noexcept :
-        m_rng(rng_seed),
-        m_sorted_to_original(depgraph.TxCount()),
-        m_original_to_sorted(depgraph.PositionRange())
+    SearchCandidateFinder(const DepGraph<SetType>& depgraph, uint64_t rng_seed) noexcept : m_rng(rng_seed),
+                                                                                           m_sorted_to_original(depgraph.TxCount()),
+                                                                                           m_original_to_sorted(depgraph.PositionRange())
     {
         // Determine reordering mapping, by sorting by decreasing feerate. Unused positions are
         // not included, as they will never be looked up anyway.
@@ -745,8 +744,7 @@ public:
         best.transactions = OriginalToSorted(best.transactions);
 
         /** Type for work queue items. */
-        struct WorkItem
-        {
+        struct WorkItem {
             /** Set of transactions definitely included (and its feerate). This must be a subset
              *  of m_todo, and be topologically valid (includes all in-m_todo ancestors of
              *  itself). */
@@ -763,8 +761,7 @@ public:
             FeeFrac pot_feerate;
 
             /** Construct a new work item. */
-            WorkItem(SetInfo<SetType>&& i, SetType&& u, FeeFrac&& p_f) noexcept :
-                inc(std::move(i)), und(std::move(u)), pot_feerate(std::move(p_f))
+            WorkItem(SetInfo<SetType>&& i, SetType&& u, FeeFrac&& p_f) noexcept : inc(std::move(i)), und(std::move(u)), pot_feerate(std::move(p_f))
             {
                 Assume(pot_feerate.IsEmpty() == inc.feerate.IsEmpty());
             }
@@ -826,7 +823,7 @@ public:
                 // higher than best. While undecided transactions of lower feerate may improve pot,
                 // the resulting pot feerate cannot possibly exceed best's (and this item will be
                 // skipped in split_fn anyway).
-                for (auto pos : imp & und) {
+                for (auto pos : imp& und) {
                     // Determine if adding transaction pos to pot (ignoring topology) would improve
                     // it. If not, we're done updating pot. This relies on the fact that
                     // m_sorted_depgraph, and thus the transactions iterated over, are in decreasing
@@ -1039,7 +1036,7 @@ public:
  *
  * Complexity: possibly O(N * min(max_iterations + N, sqrt(2^N))) where N=depgraph.TxCount().
  */
-template<typename SetType>
+template <typename SetType>
 std::tuple<std::vector<DepGraphIndex>, bool, uint64_t> Linearize(const DepGraph<SetType>& depgraph, uint64_t max_iterations, uint64_t rng_seed, std::span<const DepGraphIndex> old_linearization = {}) noexcept
 {
     Assume(old_linearization.empty() || old_linearization.size() == depgraph.TxCount());
@@ -1133,7 +1130,7 @@ std::tuple<std::vector<DepGraphIndex>, bool, uint64_t> Linearize(const DepGraph<
  *   will not worsen linearizations through a "drop conflicts, append new transactions,
  *   postlinearize" process.
  */
-template<typename SetType>
+template <typename SetType>
 void PostLinearize(const DepGraph<SetType>& depgraph, std::span<DepGraphIndex> linearization)
 {
     // This algorithm performs a number of passes (currently 2); the even ones operate from back to
@@ -1178,8 +1175,7 @@ void PostLinearize(const DepGraph<SetType>& depgraph, std::span<DepGraphIndex> l
 
 
     /** Data structure per transaction entry. */
-    struct TxEntry
-    {
+    struct TxEntry {
         /** The index of the previous transaction in this group; NO_PREV_TX if this is the first
          *  entry of a group. */
         DepGraphIndex prev_tx;
@@ -1241,7 +1237,7 @@ void PostLinearize(const DepGraph<SetType>& depgraph, std::span<DepGraphIndex> l
             // parent/child and high/low feerate are swapped.
             DepGraphIndex cur_group = idx + 1;
             entries[cur_group].group = SetType::Singleton(idx);
-            entries[cur_group].deps = rev ? depgraph.Descendants(idx): depgraph.Ancestors(idx);
+            entries[cur_group].deps = rev ? depgraph.Descendants(idx) : depgraph.Ancestors(idx);
             entries[cur_group].feerate = depgraph.FeeRate(idx);
             if (rev) entries[cur_group].feerate.fee = -entries[cur_group].feerate.fee;
             entries[cur_group].prev_tx = NO_PREV_TX; // No previous transaction in group.
@@ -1322,7 +1318,7 @@ void PostLinearize(const DepGraph<SetType>& depgraph, std::span<DepGraphIndex> l
  *
  * Complexity: O(N^2) where N=depgraph.TxCount(); O(N) if both inputs are identical.
  */
-template<typename SetType>
+template <typename SetType>
 std::vector<DepGraphIndex> MergeLinearizations(const DepGraph<SetType>& depgraph, std::span<const DepGraphIndex> lin1, std::span<const DepGraphIndex> lin2)
 {
     Assume(lin1.size() == depgraph.TxCount());
@@ -1361,7 +1357,7 @@ std::vector<DepGraphIndex> MergeLinearizations(const DepGraph<SetType>& depgraph
 }
 
 /** Make linearization topological, retaining its ordering where possible. */
-template<typename SetType>
+template <typename SetType>
 void FixLinearization(const DepGraph<SetType>& depgraph, std::span<DepGraphIndex> linearization) noexcept
 {
     // This algorithm can be summarized as moving every element in the linearization backwards

@@ -17,7 +17,8 @@ void TfmFormatZeroes(const std::string& fmt)
 {
     std::apply([&](auto... args) {
         (void)tfm::format(tfm::RuntimeFormat{fmt}, args...);
-    }, std::array<int, NumArgs>{});
+    },
+               std::array<int, NumArgs>{});
 }
 
 // Helper to allow compile-time sanity checks while providing the number of
@@ -130,20 +131,20 @@ BOOST_AUTO_TEST_CASE(ConstevalFormatString_NumSpec)
     // Non-parity between tinyformat and ConstevalFormatString.
     // tinyformat throws but ConstevalFormatString does not.
     BOOST_CHECK_EXCEPTION(tfm::format(ConstevalFormatString<1>{"%n"}, 0), tfm::format_error,
-        HasReason{"tinyformat: %n conversion spec not supported"});
+                          HasReason{"tinyformat: %n conversion spec not supported"});
     BOOST_CHECK_EXCEPTION(tfm::format(ConstevalFormatString<2>{"%*s"}, "hi", "hi"), tfm::format_error,
-        HasReason{"tinyformat: Cannot convert from argument type to integer for use as variable width or precision"});
+                          HasReason{"tinyformat: Cannot convert from argument type to integer for use as variable width or precision"});
     BOOST_CHECK_EXCEPTION(tfm::format(ConstevalFormatString<2>{"%.*s"}, "hi", "hi"), tfm::format_error,
-        HasReason{"tinyformat: Cannot convert from argument type to integer for use as variable width or precision"});
+                          HasReason{"tinyformat: Cannot convert from argument type to integer for use as variable width or precision"});
 
     // Ensure that tinyformat throws if format string contains wrong number
     // of specifiers. PassFmt relies on this to verify tinyformat successfully
     // formats the strings, and will need to be updated if tinyformat is changed
     // not to throw on failure.
     BOOST_CHECK_EXCEPTION(TfmFormatZeroes<2>("%s"), tfm::format_error,
-        HasReason{"tinyformat: Not enough conversion specifiers in format string"});
+                          HasReason{"tinyformat: Not enough conversion specifiers in format string"});
     BOOST_CHECK_EXCEPTION(TfmFormatZeroes<1>("%s %s"), tfm::format_error,
-        HasReason{"tinyformat: Too many conversion specifiers in format string"});
+                          HasReason{"tinyformat: Too many conversion specifiers in format string"});
 }
 
 BOOST_AUTO_TEST_SUITE_END()

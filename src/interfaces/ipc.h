@@ -72,7 +72,7 @@ public:
 
     //! Add cleanup callback to remote interface that will run when the
     //! interface is deleted.
-    template<typename Interface>
+    template <typename Interface>
     void addCleanup(Interface& iface, std::function<void()> cleanup)
     {
         addCleanup(typeid(Interface), &iface, std::move(cleanup));

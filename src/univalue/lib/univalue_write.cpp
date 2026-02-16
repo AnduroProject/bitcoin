@@ -16,7 +16,7 @@ static std::string json_escape(const std::string& inS)
 
     for (unsigned int i = 0; i < inS.size(); i++) {
         unsigned char ch = static_cast<unsigned char>(inS[i]);
-        const char *escStr = escapes[ch];
+        const char* escStr = escapes[ch];
 
         if (escStr)
             outS += escStr;
@@ -114,4 +114,3 @@ void UniValue::writeObject(unsigned int prettyIndent, unsigned int indentLevel, 
         indentStr(prettyIndent, indentLevel - 1, s);
     s += "}";
 }
-

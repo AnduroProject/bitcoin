@@ -19,6 +19,7 @@ static constexpr bool DEFAULT_PERSIST_MEMPOOL{true};
 
 bool ShouldPersistMempool(const ArgsManager& argsman);
 fs::path MempoolPath(const ArgsManager& argsman);
+fs::path PreConfMempoolPath(const ArgsManager& argsman);
 
 } // namespace node
 

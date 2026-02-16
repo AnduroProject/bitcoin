@@ -34,20 +34,20 @@
 class VectorWriter
 {
 public:
-/*
- * @param[in]  vchDataIn  Referenced byte vector to overwrite/append
- * @param[in]  nPosIn Starting position. Vector index where writes should start. The vector will initially
- *                    grow as necessary to max(nPosIn, vec.size()). So to append, use vec.size().
-*/
+    /*
+     * @param[in]  vchDataIn  Referenced byte vector to overwrite/append
+     * @param[in]  nPosIn Starting position. Vector index where writes should start. The vector will initially
+     *                    grow as necessary to max(nPosIn, vec.size()). So to append, use vec.size().
+     */
     VectorWriter(std::vector<unsigned char>& vchDataIn, size_t nPosIn) : vchData{vchDataIn}, nPos{nPosIn}
     {
-        if(nPos > vchData.size())
+        if (nPos > vchData.size())
             vchData.resize(nPos);
     }
-/*
- * (other params same as above)
- * @param[in]  args  A list of items to serialize starting at nPosIn.
-*/
+    /*
+     * (other params same as above)
+     * @param[in]  args  A list of items to serialize starting at nPosIn.
+     */
     template <typename... Args>
     VectorWriter(std::vector<unsigned char>& vchDataIn, size_t nPosIn, Args&&... args) : VectorWriter{vchDataIn, nPosIn}
     {
@@ -91,7 +91,7 @@ public:
     explicit SpanReader(std::span<const unsigned char> data) : m_data{std::as_bytes(data)} {}
     explicit SpanReader(std::span<const std::byte> data) : m_data{data} {}
 
-    template<typename T>
+    template <typename T>
     SpanReader& operator>>(T&& obj)
     {
         ::Unserialize(*this, obj);
@@ -134,14 +134,14 @@ protected:
     vector_type::size_type m_read_pos{0};
 
 public:
-    typedef vector_type::allocator_type   allocator_type;
-    typedef vector_type::size_type        size_type;
-    typedef vector_type::difference_type  difference_type;
-    typedef vector_type::reference        reference;
-    typedef vector_type::const_reference  const_reference;
-    typedef vector_type::value_type       value_type;
-    typedef vector_type::iterator         iterator;
-    typedef vector_type::const_iterator   const_iterator;
+    typedef vector_type::allocator_type allocator_type;
+    typedef vector_type::size_type size_type;
+    typedef vector_type::difference_type difference_type;
+    typedef vector_type::reference reference;
+    typedef vector_type::const_reference const_reference;
+    typedef vector_type::value_type value_type;
+    typedef vector_type::iterator iterator;
+    typedef vector_type::const_iterator const_iterator;
     typedef vector_type::reverse_iterator reverse_iterator;
 
     explicit DataStream() = default;
@@ -157,19 +157,23 @@ public:
     //
     // Vector subset
     //
-    const_iterator begin() const                     { return vch.begin() + m_read_pos; }
-    iterator begin()                                 { return vch.begin() + m_read_pos; }
-    const_iterator end() const                       { return vch.end(); }
-    iterator end()                                   { return vch.end(); }
-    size_type size() const                           { return vch.size() - m_read_pos; }
-    bool empty() const                               { return vch.size() == m_read_pos; }
+    const_iterator begin() const { return vch.begin() + m_read_pos; }
+    iterator begin() { return vch.begin() + m_read_pos; }
+    const_iterator end() const { return vch.end(); }
+    iterator end() { return vch.end(); }
+    size_type size() const { return vch.size() - m_read_pos; }
+    bool empty() const { return vch.size() == m_read_pos; }
     void resize(size_type n, value_type c = value_type{}) { vch.resize(n + m_read_pos, c); }
-    void reserve(size_type n)                        { vch.reserve(n + m_read_pos); }
-    const_reference operator[](size_type pos) const  { return vch[pos + m_read_pos]; }
-    reference operator[](size_type pos)              { return vch[pos + m_read_pos]; }
-    void clear()                                     { vch.clear(); m_read_pos = 0; }
-    value_type* data()                               { return vch.data() + m_read_pos; }
-    const value_type* data() const                   { return vch.data() + m_read_pos; }
+    void reserve(size_type n) { vch.reserve(n + m_read_pos); }
+    const_reference operator[](size_type pos) const { return vch[pos + m_read_pos]; }
+    reference operator[](size_type pos) { return vch[pos + m_read_pos]; }
+    void clear()
+    {
+        vch.clear();
+        m_read_pos = 0;
+    }
+    value_type* data() { return vch.data() + m_read_pos; }
+    const value_type* data() const { return vch.data() + m_read_pos; }
 
     inline void Compact()
     {
@@ -195,8 +199,8 @@ public:
     //
     // Stream subset
     //
-    bool eof() const             { return size() == 0; }
-    int in_avail() const         { return size(); }
+    bool eof() const { return size() == 0; }
+    int in_avail() const { return size(); }
 
     void read(std::span<value_type> dst)
     {
@@ -237,7 +241,7 @@ public:
         vch.insert(vch.end(), src.begin(), src.end());
     }
 
-    template<typename T>
+    template <typename T>
     DataStream& operator<<(const T& obj)
     {
         ::Serialize(*this, obj);
@@ -276,7 +280,8 @@ public:
     /** Read the specified number of bits from the stream. The data is returned
      * in the nbits least significant bits of a 64-bit uint.
      */
-    uint64_t Read(int nbits) {
+    uint64_t Read(int nbits)
+    {
         if (nbits < 0 || nbits > 64) {
             throw std::out_of_range("nbits must be between 0 and 64");
         }
@@ -324,7 +329,8 @@ public:
     /** Write the nbits least significant bits of a 64-bit int to the output
      * stream. Data is buffered until it completes an octet.
      */
-    void Write(uint64_t data, int nbits) {
+    void Write(uint64_t data, int nbits)
+    {
         if (nbits < 0 || nbits > 64) {
             throw std::out_of_range("nbits must be between 0 and 64");
         }
@@ -344,7 +350,8 @@ public:
     /** Flush any unwritten bits to the output stream, padding with 0's to the
      * next byte boundary.
      */
-    void Flush() {
+    void Flush()
+    {
         if (m_offset == 0) {
             return;
         }
@@ -478,14 +485,15 @@ class BufferedFile
 {
 private:
     AutoFile& m_src;
-    uint64_t nSrcPos{0};  //!< how many bytes have been read from source
+    uint64_t nSrcPos{0};    //!< how many bytes have been read from source
     uint64_t m_read_pos{0}; //!< how many bytes have been read from this
-    uint64_t nReadLimit;  //!< up to which position we're allowed to read
-    uint64_t nRewind;     //!< how many bytes we guarantee to rewind
+    uint64_t nReadLimit;    //!< up to which position we're allowed to read
+    uint64_t nRewind;       //!< how many bytes we guarantee to rewind
     DataBuffer vchBuf;
 
     //! read data from the source to fill the buffer
-    bool Fill() {
+    bool Fill()
+    {
         unsigned int pos = nSrcPos % vchBuf.size();
         unsigned int readNow = vchBuf.size() - pos;
         unsigned int nAvail = vchBuf.size() - (nSrcPos - m_read_pos) - nRewind;
@@ -532,7 +540,8 @@ public:
     }
 
     //! check whether we're at the end of the source file
-    bool eof() const {
+    bool eof() const
+    {
         return m_read_pos == nSrcPos && m_src.feof();
     }
 
@@ -551,16 +560,19 @@ public:
     void SkipTo(const uint64_t file_pos)
     {
         assert(file_pos >= m_read_pos);
-        while (m_read_pos < file_pos) AdvanceStream(file_pos - m_read_pos);
+        while (m_read_pos < file_pos)
+            AdvanceStream(file_pos - m_read_pos);
     }
 
     //! return the current reading position
-    uint64_t GetPos() const {
+    uint64_t GetPos() const
+    {
         return m_read_pos;
     }
 
     //! rewind to a given reading position
-    bool SetPos(uint64_t nPos) {
+    bool SetPos(uint64_t nPos)
+    {
         size_t bufsize = vchBuf.size();
         if (nPos + bufsize < nSrcPos) {
             // rewinding too far, rewind as far as possible
@@ -578,15 +590,17 @@ public:
 
     //! prevent reading beyond a certain position
     //! no argument removes the limit
-    bool SetLimit(uint64_t nPos = std::numeric_limits<uint64_t>::max()) {
+    bool SetLimit(uint64_t nPos = std::numeric_limits<uint64_t>::max())
+    {
         if (nPos < m_read_pos)
             return false;
         nReadLimit = nPos;
         return true;
     }
 
-    template<typename T>
-    BufferedFile& operator>>(T&& obj) {
+    template <typename T>
+    BufferedFile& operator>>(T&& obj)
+    {
         ::Unserialize(*this, obj);
         return (*this);
     }
@@ -631,7 +645,9 @@ public:
     //! Requires stream ownership to prevent leaving the stream at an unexpected position after buffered reads.
     explicit BufferedReader(S&& stream LIFETIMEBOUND, size_t size = 1 << 16)
         requires std::is_rvalue_reference_v<S&&>
-        : m_src{stream}, m_buf(size), m_buf_pos{size} {}
+        : m_src{stream}, m_buf(size), m_buf_pos{size}
+    {
+    }
 
     void read(std::span<std::byte> dst)
     {

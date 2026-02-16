@@ -6,8 +6,8 @@
 #include <common/messages.h>
 
 #include <common/types.h>
-#include <policy/fees.h>
 #include <node/types.h>
+#include <policy/fees.h>
 #include <tinyformat.h>
 #include <util/strencodings.h>
 #include <util/string.h>
@@ -56,19 +56,21 @@ const std::vector<std::pair<std::string, FeeEstimateMode>>& FeeModeMap()
 std::string FeeModeInfo(const std::pair<std::string, FeeEstimateMode>& mode, std::string& default_info)
 {
     switch (mode.second) {
-        case FeeEstimateMode::UNSET:
-            return strprintf("%s means no mode set (%s). \n", mode.first, default_info);
-        case FeeEstimateMode::ECONOMICAL:
-            return strprintf("%s estimates use a shorter time horizon, making them more\n"
-                   "responsive to short-term drops in the prevailing fee market. This mode\n"
-                   "potentially returns a lower fee rate estimate.\n", mode.first);
-        case FeeEstimateMode::CONSERVATIVE:
-            return strprintf("%s estimates use a longer time horizon, making them\n"
-                   "less responsive to short-term drops in the prevailing fee market. This mode\n"
-                   "potentially returns a higher fee rate estimate.\n", mode.first);
-        default:
-            // Other modes apart from the ones handled are fee rate units; they should not be clarified.
-            assert(false);
+    case FeeEstimateMode::UNSET:
+        return strprintf("%s means no mode set (%s). \n", mode.first, default_info);
+    case FeeEstimateMode::ECONOMICAL:
+        return strprintf("%s estimates use a shorter time horizon, making them more\n"
+                         "responsive to short-term drops in the prevailing fee market. This mode\n"
+                         "potentially returns a lower fee rate estimate.\n",
+                         mode.first);
+    case FeeEstimateMode::CONSERVATIVE:
+        return strprintf("%s estimates use a longer time horizon, making them\n"
+                         "less responsive to short-term drops in the prevailing fee market. This mode\n"
+                         "potentially returns a higher fee rate estimate.\n",
+                         mode.first);
+    default:
+        // Other modes apart from the ones handled are fee rate units; they should not be clarified.
+        assert(false);
     }
 }
 
@@ -106,20 +108,20 @@ bool FeeModeFromString(const std::string& mode_string, FeeEstimateMode& fee_esti
 bilingual_str PSBTErrorString(PSBTError err)
 {
     switch (err) {
-        case PSBTError::MISSING_INPUTS:
-            return Untranslated("Inputs missing or spent");
-        case PSBTError::SIGHASH_MISMATCH:
-            return Untranslated("Specified sighash value does not match value stored in PSBT");
-        case PSBTError::EXTERNAL_SIGNER_NOT_FOUND:
-            return Untranslated("External signer not found");
-        case PSBTError::EXTERNAL_SIGNER_FAILED:
-            return Untranslated("External signer failed to sign");
-        case PSBTError::UNSUPPORTED:
-            return Untranslated("Signer does not support PSBT");
-        case PSBTError::INCOMPLETE:
-            return Untranslated("Input needs additional signatures or other data");
-        case PSBTError::OK:
-            return Untranslated("No errors");
+    case PSBTError::MISSING_INPUTS:
+        return Untranslated("Inputs missing or spent");
+    case PSBTError::SIGHASH_MISMATCH:
+        return Untranslated("Specified sighash value does not match value stored in PSBT");
+    case PSBTError::EXTERNAL_SIGNER_NOT_FOUND:
+        return Untranslated("External signer not found");
+    case PSBTError::EXTERNAL_SIGNER_FAILED:
+        return Untranslated("External signer failed to sign");
+    case PSBTError::UNSUPPORTED:
+        return Untranslated("Signer does not support PSBT");
+    case PSBTError::INCOMPLETE:
+        return Untranslated("Input needs additional signatures or other data");
+    case PSBTError::OK:
+        return Untranslated("No errors");
         // no default case, so the compiler can warn about missing cases
     }
     assert(false);
@@ -128,22 +130,22 @@ bilingual_str PSBTErrorString(PSBTError err)
 bilingual_str TransactionErrorString(const TransactionError err)
 {
     switch (err) {
-        case TransactionError::OK:
-            return Untranslated("No error");
-        case TransactionError::MISSING_INPUTS:
-            return Untranslated("Inputs missing or spent");
-        case TransactionError::ALREADY_IN_UTXO_SET:
-            return Untranslated("Transaction outputs already in utxo set");
-        case TransactionError::MEMPOOL_REJECTED:
-            return Untranslated("Transaction rejected by mempool");
-        case TransactionError::MEMPOOL_ERROR:
-            return Untranslated("Mempool internal error");
-        case TransactionError::MAX_FEE_EXCEEDED:
-            return Untranslated("Fee exceeds maximum configured by user (e.g. -maxtxfee, maxfeerate)");
-        case TransactionError::MAX_BURN_EXCEEDED:
-            return Untranslated("Unspendable output exceeds maximum configured by user (maxburnamount)");
-        case TransactionError::INVALID_PACKAGE:
-            return Untranslated("Transaction rejected due to invalid package");
+    case TransactionError::OK:
+        return Untranslated("No error");
+    case TransactionError::MISSING_INPUTS:
+        return Untranslated("Inputs missing or spent");
+    case TransactionError::ALREADY_IN_UTXO_SET:
+        return Untranslated("Transaction outputs already in utxo set");
+    case TransactionError::MEMPOOL_REJECTED:
+        return Untranslated("Transaction rejected by mempool");
+    case TransactionError::MEMPOOL_ERROR:
+        return Untranslated("Mempool internal error");
+    case TransactionError::MAX_FEE_EXCEEDED:
+        return Untranslated("Fee exceeds maximum configured by user (e.g. -maxtxfee, maxfeerate)");
+    case TransactionError::MAX_BURN_EXCEEDED:
+        return Untranslated("Unspendable output exceeds maximum configured by user (maxburnamount)");
+    case TransactionError::INVALID_PACKAGE:
+        return Untranslated("Transaction rejected due to invalid package");
         // no default case, so the compiler can warn about missing cases
     }
     assert(false);

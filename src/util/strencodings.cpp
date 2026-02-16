@@ -20,11 +20,11 @@
 static const std::string CHARS_ALPHA_NUM = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 static const std::string SAFE_CHARS[] =
-{
-    CHARS_ALPHA_NUM + " .,;-_/:?@()", // SAFE_CHARS_DEFAULT
-    CHARS_ALPHA_NUM + " .,;-_?@", // SAFE_CHARS_UA_COMMENT
-    CHARS_ALPHA_NUM + ".-_", // SAFE_CHARS_FILENAME
-    CHARS_ALPHA_NUM + "!*'();:@&=+$,/?#[]-_.~%", // SAFE_CHARS_URI
+    {
+        CHARS_ALPHA_NUM + " .,;-_/:?@()",            // SAFE_CHARS_DEFAULT
+        CHARS_ALPHA_NUM + " .,;-_?@",                // SAFE_CHARS_UA_COMMENT
+        CHARS_ALPHA_NUM + ".-_",                     // SAFE_CHARS_FILENAME
+        CHARS_ALPHA_NUM + "!*'();:@&=+$,/?#[]-_.~%", // SAFE_CHARS_URI
 };
 
 std::string SanitizeString(std::string_view str, int rule)
@@ -43,7 +43,7 @@ bool IsHex(std::string_view str)
     for (char c : str) {
         if (HexDigit(c) < 0) return false;
     }
-    return (str.size() > 0) && (str.size()%2 == 0);
+    return (str.size() > 0) && (str.size() % 2 == 0);
 }
 
 template <typename Byte>
@@ -97,12 +97,13 @@ bool SplitHostPort(std::string_view in, uint16_t& portOut, std::string& hostOut)
 
 std::string EncodeBase64(std::span<const unsigned char> input)
 {
-    static const char *pbase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    static const char* pbase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     std::string str;
     str.reserve(((input.size() + 2) / 3) * 4);
     ConvertBits<8, 6, true>([&](int v) { str += pbase64[v]; }, input.begin(), input.end());
-    while (str.size() % 4) str += '=';
+    while (str.size() % 4)
+        str += '=';
     return str;
 }
 
@@ -112,7 +113,7 @@ std::optional<std::vector<unsigned char>> DecodeBase64(std::string_view str)
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1,
-        -1, -1, -1, -1, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+        -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
         15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28,
         29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
         49, 50, 51, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -121,8 +122,7 @@ std::optional<std::vector<unsigned char>> DecodeBase64(std::string_view str)
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
-    };
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
     if (str.size() % 4 != 0) return {};
     /* One or two = characters at the end are permitted. */
@@ -134,8 +134,7 @@ std::optional<std::vector<unsigned char>> DecodeBase64(std::string_view str)
     bool valid = ConvertBits<6, 8, false>(
         [&](unsigned char c) { ret.push_back(c); },
         str.begin(), str.end(),
-        [](char c) { return decode64_table[uint8_t(c)]; }
-    );
+        [](char c) { return decode64_table[uint8_t(c)]; });
     if (!valid) return {};
 
     return ret;
@@ -143,7 +142,7 @@ std::optional<std::vector<unsigned char>> DecodeBase64(std::string_view str)
 
 std::string EncodeBase32(std::span<const unsigned char> input, bool pad)
 {
-    static const char *pbase32 = "abcdefghijklmnopqrstuvwxyz234567";
+    static const char* pbase32 = "abcdefghijklmnopqrstuvwxyz234567";
 
     std::string str;
     str.reserve(((input.size() + 4) / 5) * 8);
@@ -167,17 +166,16 @@ std::optional<std::vector<unsigned char>> DecodeBase32(std::string_view str)
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
-        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1,  0,  1,  2,
-         3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+        -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
         23, 24, 25, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
-    };
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
     if (str.size() % 8 != 0) return {};
     /* 1, 3, 4, or 6 padding '=' suffix characters are permitted. */
@@ -191,8 +189,7 @@ std::optional<std::vector<unsigned char>> DecodeBase32(std::string_view str)
     bool valid = ConvertBits<5, 8, false>(
         [&](unsigned char c) { ret.push_back(c); },
         str.begin(), str.end(),
-        [](char c) { return decode32_table[uint8_t(c)]; }
-    );
+        [](char c) { return decode32_table[uint8_t(c)]; });
 
     if (!valid) return {};
 
@@ -205,8 +202,7 @@ std::string FormatParagraph(std::string_view in, size_t width, size_t indent)
     std::stringstream out;
     size_t ptr = 0;
     size_t indented = 0;
-    while (ptr < in.size())
-    {
+    while (ptr < in.size()) {
         size_t lineend = in.find_first_of('\n', ptr);
         if (lineend == std::string::npos) {
             lineend = in.size();
@@ -252,12 +248,12 @@ std::string FormatParagraph(std::string_view in, size_t width, size_t indent)
 static const int64_t UPPER_BOUND = 1000000000000000000LL - 1LL;
 
 /** Helper function for ParseFixedPoint */
-static inline bool ProcessMantissaDigit(char ch, int64_t &mantissa, int &mantissa_tzeros)
+static inline bool ProcessMantissaDigit(char ch, int64_t& mantissa, int& mantissa_tzeros)
 {
-    if(ch == '0')
+    if (ch == '0')
         ++mantissa_tzeros;
     else {
-        for (int i=0; i<=mantissa_tzeros; ++i) {
+        for (int i = 0; i <= mantissa_tzeros; ++i) {
             if (mantissa > (UPPER_BOUND / 10LL))
                 return false; /* overflow */
             mantissa *= 10;
@@ -268,7 +264,7 @@ static inline bool ProcessMantissaDigit(char ch, int64_t &mantissa, int &mantiss
     return true;
 }
 
-bool ParseFixedPoint(std::string_view val, int decimals, int64_t *amount_out)
+bool ParseFixedPoint(std::string_view val, int decimals, int64_t* amount_out)
 {
     int64_t mantissa = 0;
     int64_t exponent = 0;
@@ -283,8 +279,7 @@ bool ParseFixedPoint(std::string_view val, int decimals, int64_t *amount_out)
         mantissa_sign = true;
         ++ptr;
     }
-    if (ptr < end)
-    {
+    if (ptr < end) {
         if (val[ptr] == '0') {
             /* pass single 0 */
             ++ptr;
@@ -294,23 +289,23 @@ bool ParseFixedPoint(std::string_view val, int decimals, int64_t *amount_out)
                     return false; /* overflow */
                 ++ptr;
             }
-        } else return false; /* missing expected digit */
-    } else return false; /* empty string or loose '-' */
-    if (ptr < end && val[ptr] == '.')
-    {
+        } else
+            return false; /* missing expected digit */
+    } else
+        return false; /* empty string or loose '-' */
+    if (ptr < end && val[ptr] == '.') {
         ++ptr;
-        if (ptr < end && IsDigit(val[ptr]))
-        {
+        if (ptr < end && IsDigit(val[ptr])) {
             while (ptr < end && IsDigit(val[ptr])) {
                 if (!ProcessMantissaDigit(val[ptr], mantissa, mantissa_tzeros))
                     return false; /* overflow */
                 ++ptr;
                 ++point_ofs;
             }
-        } else return false; /* missing expected digit */
+        } else
+            return false; /* missing expected digit */
     }
-    if (ptr < end && (val[ptr] == 'e' || val[ptr] == 'E'))
-    {
+    if (ptr < end && (val[ptr] == 'e' || val[ptr] == 'E')) {
         ++ptr;
         if (ptr < end && val[ptr] == '+')
             ++ptr;
@@ -325,7 +320,8 @@ bool ParseFixedPoint(std::string_view val, int decimals, int64_t *amount_out)
                 exponent = exponent * 10 + val[ptr] - '0';
                 ++ptr;
             }
-        } else return false; /* missing expected digit */
+        } else
+            return false; /* missing expected digit */
     }
     if (ptr != end)
         return false; /* trailing garbage */
@@ -346,7 +342,7 @@ bool ParseFixedPoint(std::string_view val, int decimals, int64_t *amount_out)
     if (exponent >= 18)
         return false; /* cannot represent values larger than or equal to 10^(18-decimals) */
 
-    for (int i=0; i < exponent; ++i) {
+    for (int i = 0; i < exponent; ++i) {
         if (mantissa > (UPPER_BOUND / 10LL) || mantissa < -(UPPER_BOUND / 10LL))
             return false; /* overflow */
         mantissa *= 10;
@@ -364,7 +360,8 @@ std::string ToLower(std::string_view str)
 {
     std::string r;
     r.reserve(str.size());
-    for (auto ch : str) r += ToLower(ch);
+    for (auto ch : str)
+        r += ToLower(ch);
     return r;
 }
 
@@ -372,7 +369,8 @@ std::string ToUpper(std::string_view str)
 {
     std::string r;
     r.reserve(str.size());
-    for (auto ch : str) r += ToUpper(ch);
+    for (auto ch : str)
+        r += ToUpper(ch);
     return r;
 }
 

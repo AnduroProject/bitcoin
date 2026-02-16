@@ -31,7 +31,8 @@ static void CCheckQueueSpeedPrevectorJob(benchmark::Bench& bench)
 
     struct PrevectorJob {
         prevector<CScriptBase::STATIC_SIZE, uint8_t> p;
-        explicit PrevectorJob(FastRandomContext& insecure_rand){
+        explicit PrevectorJob(FastRandomContext& insecure_rand)
+        {
             p.resize(insecure_rand.randrange(CScriptBase::STATIC_SIZE * 2));
         }
         std::optional<int> operator()()

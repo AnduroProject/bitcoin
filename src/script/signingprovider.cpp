@@ -3,15 +3,15 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <script/keyorigin.h>
 #include <script/interpreter.h>
+#include <script/keyorigin.h>
 #include <script/signingprovider.h>
 
 #include <logging.h>
 
 const SigningProvider& DUMMY_SIGNING_PROVIDER = SigningProvider();
 
-template<typename M, typename K, typename V>
+template <typename M, typename K, typename V>
 bool LookupHelper(const M& map, const K& key, V& value)
 {
     auto it = map.find(key);
@@ -67,7 +67,7 @@ bool FlatSigningProvider::GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info)
     if (ret) info = std::move(out.second);
     return ret;
 }
-bool FlatSigningProvider::HaveKey(const CKeyID &keyid) const
+bool FlatSigningProvider::HaveKey(const CKeyID& keyid) const
 {
     CKey key;
     return LookupHelper(keys, keyid, key);
@@ -128,7 +128,7 @@ void FillableSigningProvider::ImplicitlyLearnRelatedKeyScripts(const CPubKey& pu
     }
 }
 
-bool FillableSigningProvider::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
+bool FillableSigningProvider::GetPubKey(const CKeyID& address, CPubKey& vchPubKeyOut) const
 {
     CKey key;
     if (!GetKey(address, key)) {
@@ -138,7 +138,7 @@ bool FillableSigningProvider::GetPubKey(const CKeyID &address, CPubKey &vchPubKe
     return true;
 }
 
-bool FillableSigningProvider::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)
+bool FillableSigningProvider::AddKeyPubKey(const CKey& key, const CPubKey& pubkey)
 {
     LOCK(cs_KeyStore);
     mapKeys[pubkey.GetID()] = key;
@@ -146,7 +146,7 @@ bool FillableSigningProvider::AddKeyPubKey(const CKey& key, const CPubKey &pubke
     return true;
 }
 
-bool FillableSigningProvider::HaveKey(const CKeyID &address) const
+bool FillableSigningProvider::HaveKey(const CKeyID& address) const
 {
     LOCK(cs_KeyStore);
     return mapKeys.count(address) > 0;
@@ -162,7 +162,7 @@ std::set<CKeyID> FillableSigningProvider::GetKeys() const
     return set_address;
 }
 
-bool FillableSigningProvider::GetKey(const CKeyID &address, CKey &keyOut) const
+bool FillableSigningProvider::GetKey(const CKeyID& address, CKey& keyOut) const
 {
     LOCK(cs_KeyStore);
     KeyMap::const_iterator mi = mapKeys.find(address);
@@ -201,12 +201,11 @@ std::set<CScriptID> FillableSigningProvider::GetCScripts() const
     return set_script;
 }
 
-bool FillableSigningProvider::GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const
+bool FillableSigningProvider::GetCScript(const CScriptID& hash, CScript& redeemScriptOut) const
 {
     LOCK(cs_KeyStore);
     ScriptMap::const_iterator mi = mapScripts.find(hash);
-    if (mi != mapScripts.end())
-    {
+    if (mi != mapScripts.end()) {
         redeemScriptOut = (*mi).second;
         return true;
     }
@@ -236,10 +235,7 @@ CKeyID GetKeyForDestination(const SigningProvider& store, const CTxDestination& 
     if (auto output_key = std::get_if<WitnessV1Taproot>(&dest)) {
         TaprootSpendData spenddata;
         CPubKey pub;
-        if (store.GetTaprootSpendData(*output_key, spenddata)
-            && !spenddata.internal_key.IsNull()
-            && spenddata.merkle_root.IsNull()
-            && store.GetPubKeyByXOnly(spenddata.internal_key, pub)) {
+        if (store.GetTaprootSpendData(*output_key, spenddata) && !spenddata.internal_key.IsNull() && spenddata.merkle_root.IsNull() && store.GetPubKeyByXOnly(spenddata.internal_key, pub)) {
             return pub.GetID();
         }
     }
@@ -253,7 +249,7 @@ void MultiSigningProvider::AddProvider(std::unique_ptr<SigningProvider> provider
 
 bool MultiSigningProvider::GetCScript(const CScriptID& scriptid, CScript& script) const
 {
-    for (const auto& provider: m_providers) {
+    for (const auto& provider : m_providers) {
         if (provider->GetCScript(scriptid, script)) return true;
     }
     return false;
@@ -261,7 +257,7 @@ bool MultiSigningProvider::GetCScript(const CScriptID& scriptid, CScript& script
 
 bool MultiSigningProvider::GetPubKey(const CKeyID& keyid, CPubKey& pubkey) const
 {
-    for (const auto& provider: m_providers) {
+    for (const auto& provider : m_providers) {
         if (provider->GetPubKey(keyid, pubkey)) return true;
     }
     return false;
@@ -270,7 +266,7 @@ bool MultiSigningProvider::GetPubKey(const CKeyID& keyid, CPubKey& pubkey) const
 
 bool MultiSigningProvider::GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const
 {
-    for (const auto& provider: m_providers) {
+    for (const auto& provider : m_providers) {
         if (provider->GetKeyOrigin(keyid, info)) return true;
     }
     return false;
@@ -278,7 +274,7 @@ bool MultiSigningProvider::GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info
 
 bool MultiSigningProvider::GetKey(const CKeyID& keyid, CKey& key) const
 {
-    for (const auto& provider: m_providers) {
+    for (const auto& provider : m_providers) {
         if (provider->GetKey(keyid, key)) return true;
     }
     return false;
@@ -286,7 +282,7 @@ bool MultiSigningProvider::GetKey(const CKeyID& keyid, CKey& key) const
 
 bool MultiSigningProvider::GetTaprootSpendData(const XOnlyPubKey& output_key, TaprootSpendData& spenddata) const
 {
-    for (const auto& provider: m_providers) {
+    for (const auto& provider : m_providers) {
         if (provider->GetTaprootSpendData(output_key, spenddata)) return true;
     }
     return false;
@@ -294,7 +290,7 @@ bool MultiSigningProvider::GetTaprootSpendData(const XOnlyPubKey& output_key, Ta
 
 bool MultiSigningProvider::GetTaprootBuilder(const XOnlyPubKey& output_key, TaprootBuilder& builder) const
 {
-    for (const auto& provider: m_providers) {
+    for (const auto& provider : m_providers) {
         if (provider->GetTaprootBuilder(output_key, builder)) return true;
     }
     return false;
@@ -504,9 +500,9 @@ std::optional<std::vector<std::tuple<int, std::vector<unsigned char>, int>>> Inf
                     // Descend into the existing left or right branch.
                     bool desc = false;
                     for (int i = 0; i < 2; ++i) {
-                        if (node->sub[i]->hash == hash || (node->sub[i]->hash.IsNull() && node->sub[1-i]->hash != hash)) {
+                        if (node->sub[i]->hash == hash || (node->sub[i]->hash.IsNull() && node->sub[1 - i]->hash != hash)) {
                             node->sub[i]->hash = hash;
-                            node = &*node->sub[1-i];
+                            node = &*node->sub[1 - i];
                             desc = true;
                             break;
                         }

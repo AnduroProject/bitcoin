@@ -10,8 +10,8 @@
 #include <uint256.h>
 #include <util/transaction_identifier.h>
 
-#include <QWidget>
 #include <QKeyEvent>
+#include <QWidget>
 
 class PlatformStyle;
 class TransactionDescDialog;
@@ -36,14 +36,13 @@ class TransactionView : public QWidget
     Q_OBJECT
 
 public:
-    explicit TransactionView(const PlatformStyle *platformStyle, QWidget *parent = nullptr);
+    explicit TransactionView(const PlatformStyle* platformStyle, QWidget* parent = nullptr);
     ~TransactionView();
 
-    void setModel(WalletModel *model);
+    void setModel(WalletModel* model);
 
     // Date ranges for filter
-    enum DateEnum
-    {
+    enum DateEnum {
         All,
         Today,
         ThisWeek,
@@ -65,35 +64,35 @@ protected:
     void changeEvent(QEvent* e) override;
 
 private:
-    WalletModel *model{nullptr};
-    TransactionFilterProxy *transactionProxyModel{nullptr};
-    QTableView *transactionView{nullptr};
+    WalletModel* model{nullptr};
+    TransactionFilterProxy* transactionProxyModel{nullptr};
+    QTableView* transactionView{nullptr};
 
-    QComboBox *dateWidget;
-    QComboBox *typeWidget;
-    QLineEdit *search_widget;
-    QLineEdit *amountWidget;
+    QComboBox* dateWidget;
+    QComboBox* typeWidget;
+    QLineEdit* search_widget;
+    QLineEdit* amountWidget;
 
-    QMenu *contextMenu;
+    QMenu* contextMenu;
 
-    QFrame *dateRangeWidget;
-    QDateTimeEdit *dateFrom;
-    QDateTimeEdit *dateTo;
-    QAction *abandonAction{nullptr};
-    QAction *bumpFeeAction{nullptr};
-    QAction *copyAddressAction{nullptr};
-    QAction *copyLabelAction{nullptr};
+    QFrame* dateRangeWidget;
+    QDateTimeEdit* dateFrom;
+    QDateTimeEdit* dateTo;
+    QAction* abandonAction{nullptr};
+    QAction* bumpFeeAction{nullptr};
+    QAction* copyAddressAction{nullptr};
+    QAction* copyLabelAction{nullptr};
 
-    QWidget *createDateRangeWidget();
+    QWidget* createDateRangeWidget();
 
-    bool eventFilter(QObject *obj, QEvent *event) override;
+    bool eventFilter(QObject* obj, QEvent* event) override;
 
     const PlatformStyle* m_platform_style;
 
     QList<TransactionDescDialog*> m_opened_dialogs;
 
 private Q_SLOTS:
-    void contextualMenu(const QPoint &);
+    void contextualMenu(const QPoint&);
     void dateRangeChanged();
     void showDetails();
     void copyAddress();
@@ -111,7 +110,7 @@ Q_SIGNALS:
     void doubleClicked(const QModelIndex&);
 
     /**  Fired when a message should be reported to the user */
-    void message(const QString &title, const QString &message, unsigned int style);
+    void message(const QString& title, const QString& message, unsigned int style);
 
     void bumpedFee(const Txid& txid);
 

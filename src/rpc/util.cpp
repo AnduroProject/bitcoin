@@ -57,9 +57,9 @@ std::string GetAllOutputTypes()
 }
 
 void RPCTypeCheckObj(const UniValue& o,
-    const std::map<std::string, UniValueType>& typesExpected,
-    bool fAllowNull,
-    bool fStrict)
+                     const std::map<std::string, UniValueType>& typesExpected,
+                     bool fAllowNull,
+                     bool fStrict)
 {
     for (const auto& t : typesExpected) {
         const UniValue& v = o.find_value(t.first);
@@ -67,15 +67,12 @@ void RPCTypeCheckObj(const UniValue& o,
             throw JSONRPCError(RPC_TYPE_ERROR, strprintf("Missing %s", t.first));
 
         if (!(t.second.typeAny || v.type() == t.second.type || (fAllowNull && v.isNull())))
-            throw JSONRPCError(RPC_TYPE_ERROR, strprintf("JSON value of type %s for field %s is not of expected type %s", uvTypeName(v.type()),  t.first, uvTypeName(t.second.type)));
+            throw JSONRPCError(RPC_TYPE_ERROR, strprintf("JSON value of type %s for field %s is not of expected type %s", uvTypeName(v.type()), t.first, uvTypeName(t.second.type)));
     }
 
-    if (fStrict)
-    {
-        for (const std::string& k : o.getKeys())
-        {
-            if (typesExpected.count(k) == 0)
-            {
+    if (fStrict) {
+        for (const std::string& k : o.getKeys()) {
+            if (typesExpected.count(k) == 0) {
                 std::string err = strprintf("Unexpected key %s", k);
                 throw JSONRPCError(RPC_TYPE_ERROR, err);
             }
@@ -155,7 +152,7 @@ std::string ShellQuote(const std::string& s)
 {
     std::string result;
     result.reserve(s.size() * 2);
-    for (const char ch: s) {
+    for (const char ch : s) {
         if (ch == '\'') {
             result += "'\''";
         } else {
@@ -172,7 +169,7 @@ std::string ShellQuote(const std::string& s)
  */
 std::string ShellQuoteIfNeeded(const std::string& s)
 {
-    for (const char ch: s) {
+    for (const char ch : s) {
         if (ch == ' ' || ch == '\'' || ch == '"') {
             return ShellQuote(s);
         }
@@ -181,7 +178,7 @@ std::string ShellQuoteIfNeeded(const std::string& s)
     return s;
 }
 
-}
+} // namespace
 
 std::string HelpExampleCli(const std::string& methodname, const std::string& args)
 {
@@ -191,10 +188,8 @@ std::string HelpExampleCli(const std::string& methodname, const std::string& arg
 std::string HelpExampleCliNamed(const std::string& methodname, const RPCArgList& args)
 {
     std::string result = "> bitcoin-cli -named " + methodname;
-    for (const auto& argpair: args) {
-        const auto& value = argpair.second.isStr()
-                ? argpair.second.get_str()
-                : argpair.second.write();
+    for (const auto& argpair : args) {
+        const auto& value = argpair.second.isStr() ? argpair.second.get_str() : argpair.second.write();
         result += " " + argpair.first + "=" + ShellQuoteIfNeeded(value);
     }
     result += "\n";
@@ -204,18 +199,20 @@ std::string HelpExampleCliNamed(const std::string& methodname, const RPCArgList&
 std::string HelpExampleRpc(const std::string& methodname, const std::string& args)
 {
     return "> curl --user myusername --data-binary '{\"jsonrpc\": \"2.0\", \"id\": \"curltest\", "
-        "\"method\": \"" + methodname + "\", \"params\": [" + args + "]}' -H 'content-type: application/json' http://127.0.0.1:8332/\n";
+           "\"method\": \"" +
+           methodname + "\", \"params\": [" + args + "]}' -H 'content-type: application/json' http://127.0.0.1:8332/\n";
 }
 
 std::string HelpExampleRpcNamed(const std::string& methodname, const RPCArgList& args)
 {
     UniValue params(UniValue::VOBJ);
-    for (const auto& param: args) {
+    for (const auto& param : args) {
         params.pushKV(param.first, param.second);
     }
 
     return "> curl --user myusername --data-binary '{\"jsonrpc\": \"2.0\", \"id\": \"curltest\", "
-           "\"method\": \"" + methodname + "\", \"params\": " + params.write() + "}' -H 'content-type: application/json' http://127.0.0.1:8332/\n";
+           "\"method\": \"" +
+           methodname + "\", \"params\": " + params.write() + "}' -H 'content-type: application/json' http://127.0.0.1:8332/\n";
 }
 
 // Converts a hex string to a public key if possible
@@ -356,7 +353,7 @@ UniValue DescribeAddress(const CTxDestination& dest)
  * Returns a sighash value corresponding to the passed in argument.
  *
  * @pre The sighash argument should be string or null.
-*/
+ */
 std::optional<int> ParseSighashString(const UniValue& sighash)
 {
     if (sighash.isNull()) {
@@ -382,11 +379,11 @@ unsigned int ParseConfirmTarget(const UniValue& value, unsigned int max_target)
 RPCErrorCode RPCErrorFromPSBTError(PSBTError err)
 {
     switch (err) {
-        case PSBTError::UNSUPPORTED:
-            return RPC_INVALID_PARAMETER;
-        case PSBTError::SIGHASH_MISMATCH:
-            return RPC_DESERIALIZATION_ERROR;
-        default: break;
+    case PSBTError::UNSUPPORTED:
+        return RPC_INVALID_PARAMETER;
+    case PSBTError::SIGHASH_MISMATCH:
+        return RPC_DESERIALIZATION_ERROR;
+    default: break;
     }
     return RPC_TRANSACTION_ERROR;
 }
@@ -394,11 +391,11 @@ RPCErrorCode RPCErrorFromPSBTError(PSBTError err)
 RPCErrorCode RPCErrorFromTransactionError(TransactionError terr)
 {
     switch (terr) {
-        case TransactionError::MEMPOOL_REJECTED:
-            return RPC_TRANSACTION_REJECTED;
-        case TransactionError::ALREADY_IN_UTXO_SET:
-            return RPC_VERIFY_ALREADY_IN_UTXO_SET;
-        default: break;
+    case TransactionError::MEMPOOL_REJECTED:
+        return RPC_TRANSACTION_REJECTED;
+    case TransactionError::ALREADY_IN_UTXO_SET:
+        return RPC_VERIFY_ALREADY_IN_UTXO_SET;
+    default: break;
     }
     return RPC_TRANSACTION_ERROR;
 }
@@ -450,7 +447,7 @@ struct Sections {
     {
         const auto indent = std::string(current_indent, ' ');
         const auto indent_next = std::string(current_indent + 2, ' ');
-        const bool push_name{outer_type == OuterType::OBJ}; // Dictionary keys must have a name
+        const bool push_name{outer_type == OuterType::OBJ};         // Dictionary keys must have a name
         const bool is_top_level_arg{outer_type == OuterType::NONE}; // True on the first recursion
 
         switch (arg.m_type) {
@@ -529,7 +526,7 @@ struct Sections {
             while (true) {
                 right += s.m_right.substr(begin, new_line_pos - begin);
                 if (new_line_pos == std::string::npos) {
-                    break; //No new line
+                    break; // No new line
                 }
                 right += "\n" + std::string(pad, ' ');
                 begin = s.m_right.find_first_not_of(' ', new_line_pos + 1);
@@ -559,7 +556,9 @@ RPCHelpMan::RPCHelpMan(std::string name, std::string description, std::vector<RP
     // Map of parameter names and types just used to check whether the names are
     // unique. Parameter names always need to be unique, with the exception that
     // there can be pairs of POSITIONAL and NAMED parameters with the same name.
-    enum ParamType { POSITIONAL = 1, NAMED = 2, NAMED_ONLY = 4 };
+    enum ParamType { POSITIONAL = 1,
+                     NAMED = 2,
+                     NAMED_ONLY = 4 };
     std::map<std::string, int> param_names;
 
     for (const auto& arg : m_args) {
@@ -674,9 +673,9 @@ UniValue RPCHelpMan::HandleRequest(const JSONRPCRequest& request) const
         }
         if (!mismatch.isNull()) {
             std::string explain{
-                mismatch.empty() ? "no possible results defined" :
+                mismatch.empty()     ? "no possible results defined" :
                 mismatch.size() == 1 ? mismatch[0].write(4) :
-                mismatch.write(4)};
+                                       mismatch.write(4)};
             throw std::runtime_error{
                 strprintf("Internal bug detected: RPC call \"%s\" returned incorrect type:\n%s\n%s %s\nPlease report this issue here: %s\n",
                           m_name, explain,
@@ -763,10 +762,9 @@ std::vector<std::pair<std::string, bool>> RPCHelpMan::GetArgNames() const
 size_t RPCHelpMan::GetParamIndex(std::string_view key) const
 {
     auto it{std::find_if(
-        m_args.begin(), m_args.end(), [&key](const auto& arg) { return arg.GetName() == key;}
-    )};
+        m_args.begin(), m_args.end(), [&key](const auto& arg) { return arg.GetName() == key; })};
 
-    CHECK_NONFATAL(it != m_args.end());  // TODO: ideally this is checked at compile time
+    CHECK_NONFATAL(it != m_args.end()); // TODO: ideally this is checked at compile time
     return std::distance(m_args.begin(), it);
 }
 
@@ -793,7 +791,7 @@ std::string RPCHelpMan::ToString() const
     if (was_optional) ret += " )";
 
     // Description
-    CHECK_NONFATAL(!m_description.starts_with('\n'));  // Historically \n was required, but reject it for new code.
+    CHECK_NONFATAL(!m_description.starts_with('\n')); // Historically \n was required, but reject it for new code.
     ret += "\n\n" + TrimString(m_description) + "\n";
 
     // Arguments
@@ -1255,8 +1253,7 @@ std::string RPCArg::ToString(const bool oneline) const
         if (m_opts.oneline_description[0] == '\"' && m_type != Type::STR_HEX && m_type != Type::STR && gArgs.GetBoolArg("-rpcdoccheck", DEFAULT_RPC_DOC_CHECK)) {
             throw std::runtime_error{
                 STR_INTERNAL_BUG(strprintf("non-string RPC arg \"%s\" quotes oneline_description:\n%s",
-                    m_names, m_opts.oneline_description)
-                )};
+                                           m_names, m_opts.oneline_description))};
         }
         return m_opts.oneline_description;
     }
@@ -1390,15 +1387,15 @@ void PushWarnings(const std::vector<bilingual_str>& warnings, UniValue& obj)
     obj.pushKV("warnings", BilingualStringsToUniValue(warnings));
 }
 
-std::vector<RPCResult> ScriptPubKeyDoc() {
-    return
-         {
-             {RPCResult::Type::STR, "asm", "Disassembly of the output script"},
-             {RPCResult::Type::STR, "desc", "Inferred descriptor for the output"},
-             {RPCResult::Type::STR_HEX, "hex", "The raw output script bytes, hex-encoded"},
-             {RPCResult::Type::STR, "address", /*optional=*/true, "The Bitcoin address (only if a well-defined address exists)"},
-             {RPCResult::Type::STR, "type", "The type (one of: " + GetAllOutputTypes() + ")"},
-         };
+std::vector<RPCResult> ScriptPubKeyDoc()
+{
+    return {
+        {RPCResult::Type::STR, "asm", "Disassembly of the output script"},
+        {RPCResult::Type::STR, "desc", "Inferred descriptor for the output"},
+        {RPCResult::Type::STR_HEX, "hex", "The raw output script bytes, hex-encoded"},
+        {RPCResult::Type::STR, "address", /*optional=*/true, "The Bitcoin address (only if a well-defined address exists)"},
+        {RPCResult::Type::STR, "type", "The type (one of: " + GetAllOutputTypes() + ")"},
+    };
 }
 
 uint256 GetTarget(const CBlockIndex& blockindex, const uint256 pow_limit)

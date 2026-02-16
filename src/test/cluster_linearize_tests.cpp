@@ -22,7 +22,7 @@ namespace {
  *  a hole. */
 constexpr std::pair<FeeFrac, TestBitSet> HOLE{FeeFrac{0, 0x3FFFFF}, {}};
 
-template<typename SetType>
+template <typename SetType>
 void TestDepGraphSerialization(const std::vector<std::pair<FeeFrac, SetType>>& cluster, const std::string& hexenc)
 {
     // Construct DepGraph from cluster argument.
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(depgraph_ser_tests)
         "00"   /* C->B dependency (no skips) */
         "00"   /* C->A dependency (no skips) */
         "00"   /* C insertion position (no skips): A,B,C */
-        "00"   /* end of graph */);
+        "00" /* end of graph */);
 
     // Transactions: A(-57,113), B(57,114), C(-58,115), D(58,116). Deps: B->A, C->A, D->C, in order
     // [B,A,C,D]. This exercises non-topological ordering (internally serialized as A,B,C,D).

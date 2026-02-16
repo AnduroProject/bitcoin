@@ -32,11 +32,11 @@ static CBlockIndex* CreateBlockIndexWithNbits(uint32_t nbits)
     return block_index;
 }
 
-static void RejectDifficultyMismatch(double difficulty, double expected_difficulty) {
-     BOOST_CHECK_MESSAGE(
+static void RejectDifficultyMismatch(double difficulty, double expected_difficulty)
+{
+    BOOST_CHECK_MESSAGE(
         DoubleEquals(difficulty, expected_difficulty, 0.00001),
-        "Difficulty was " + ToString(difficulty)
-            + " but was expected to be " + ToString(expected_difficulty));
+        "Difficulty was " + ToString(difficulty) + " but was expected to be " + ToString(expected_difficulty));
 }
 
 /* Given a BlockIndex with the provided nbits,
@@ -45,7 +45,7 @@ static void RejectDifficultyMismatch(double difficulty, double expected_difficul
 static void TestDifficulty(uint32_t nbits, double expected_difficulty)
 {
     CBlockIndex* block_index = CreateBlockIndexWithNbits(nbits);
-    double difficulty = GetDifficulty(*block_index);
+    double difficulty = GetDifficulty(nbits);
     delete block_index;
 
     RejectDifficultyMismatch(difficulty, expected_difficulty);
@@ -106,8 +106,8 @@ BOOST_FIXTURE_TEST_CASE(get_prune_height, TestChain100Setup)
 
     // Start pruning
     CheckGetPruneHeight(blockman, chain, 1);
-    CheckGetPruneHeight(blockman, chain, 99);
-    CheckGetPruneHeight(blockman, chain, 100);
+    CheckGetPruneHeight(blockman, chain, 5);
+    CheckGetPruneHeight(blockman, chain, 10);
 }
 
 BOOST_AUTO_TEST_CASE(num_chain_tx_max)
@@ -124,7 +124,7 @@ BOOST_FIXTURE_TEST_CASE(invalidate_block, TestChain100Setup)
     // Check BlockStatus when doing InvalidateBlock()
     BlockValidationState state;
     auto* orig_tip = active.Tip();
-    int height_to_invalidate = orig_tip->nHeight - 10;
+    int height_to_invalidate = orig_tip->nHeight - 1;
     auto* tip_to_invalidate = active[height_to_invalidate];
     m_node.chainman->ActiveChainstate().InvalidateBlock(state, tip_to_invalidate);
 

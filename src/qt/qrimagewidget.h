@@ -28,7 +28,7 @@ class QRImageWidget : public QLabel
     Q_OBJECT
 
 public:
-    explicit QRImageWidget(QWidget *parent = nullptr);
+    explicit QRImageWidget(QWidget* parent = nullptr);
     bool setQR(const QString& data, const QString& text = "");
     QImage exportImage();
 
@@ -37,8 +37,8 @@ public Q_SLOTS:
     void copyImage();
 
 protected:
-    virtual void mousePressEvent(QMouseEvent *event) override;
-    virtual void contextMenuEvent(QContextMenuEvent *event) override;
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
     QMenu* contextMenu{nullptr};

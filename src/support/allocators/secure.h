@@ -6,8 +6,8 @@
 #ifndef BITCOIN_SUPPORT_ALLOCATORS_SECURE_H
 #define BITCOIN_SUPPORT_ALLOCATORS_SECURE_H
 
-#include <support/lockedpool.h>
 #include <support/cleanse.h>
+#include <support/lockedpool.h>
 
 #include <memory>
 #include <string>
@@ -22,7 +22,9 @@ struct secure_allocator {
 
     secure_allocator() = default;
     template <typename U>
-    secure_allocator(const secure_allocator<U>&) noexcept {}
+    secure_allocator(const secure_allocator<U>&) noexcept
+    {
+    }
 
     T* allocate(std::size_t n)
     {
@@ -55,19 +57,20 @@ struct secure_allocator {
 
 // This is exactly like std::string, but with a custom allocator.
 // TODO: Consider finding a way to make incoming RPC request.params[i] mlock()ed as well
-typedef std::basic_string<char, std::char_traits<char>, secure_allocator<char> > SecureString;
+typedef std::basic_string<char, std::char_traits<char>, secure_allocator<char>> SecureString;
 
-template<typename T>
+template <typename T>
 struct SecureUniqueDeleter {
-    void operator()(T* t) noexcept {
+    void operator()(T* t) noexcept
+    {
         secure_allocator<T>().deallocate(t, 1);
     }
 };
 
-template<typename T>
+template <typename T>
 using secure_unique_ptr = std::unique_ptr<T, SecureUniqueDeleter<T>>;
 
-template<typename T, typename... Args>
+template <typename T, typename... Args>
 secure_unique_ptr<T> make_secure_unique(Args&&... as)
 {
     T* p = secure_allocator<T>().allocate(1);

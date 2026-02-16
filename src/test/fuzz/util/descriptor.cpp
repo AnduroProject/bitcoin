@@ -7,7 +7,8 @@
 #include <ranges>
 #include <stack>
 
-void MockedDescriptorConverter::Init() {
+void MockedDescriptorConverter::Init()
+{
     // The data to use as a private key or a seed for an xprv.
     std::array<std::byte, 32> key_data{std::byte{1}};
     // Generate keys of all kinds and store them in the keys array.
@@ -41,14 +42,16 @@ void MockedDescriptorConverter::Init() {
     }
 }
 
-std::optional<uint8_t> MockedDescriptorConverter::IdxFromHex(std::string_view hex_characters) const {
+std::optional<uint8_t> MockedDescriptorConverter::IdxFromHex(std::string_view hex_characters) const
+{
     if (hex_characters.size() != 2) return {};
     auto idx = ParseHex(hex_characters);
     if (idx.size() != 1) return {};
     return idx[0];
 }
 
-std::optional<std::string> MockedDescriptorConverter::GetDescriptor(std::string_view mocked_desc) const {
+std::optional<std::string> MockedDescriptorConverter::GetDescriptor(std::string_view mocked_desc) const
+{
     // The smallest fragment would be "pk(%00)"
     if (mocked_desc.size() < 7) return {};
 
@@ -77,7 +80,7 @@ std::optional<std::string> MockedDescriptorConverter::GetDescriptor(std::string_
 bool HasDeepDerivPath(const FuzzBufferType& buff, const int max_depth)
 {
     auto depth{0};
-    for (const auto& ch: buff) {
+    for (const auto& ch : buff) {
         if (ch == ',') {
             // A comma is always present between two key expressions, so we use that as a delimiter.
             depth = 0;
@@ -92,7 +95,7 @@ bool HasTooManySubFrag(const FuzzBufferType& buff, const int max_subs, const siz
 {
     // We use a stack because there may be many nested sub-frags.
     std::stack<int> counts;
-    for (const auto& ch: buff) {
+    for (const auto& ch : buff) {
         // The fuzzer may generate an input with a ton of parentheses. Rule out pathological cases.
         if (counts.size() > max_nested_subs) return true;
 
@@ -123,7 +126,7 @@ bool HasTooManyWrappers(const FuzzBufferType& buff, const int max_wrappers)
     // wrappers we iterate in reverse and use the colon to detect the end of a wrapper expression and count how many
     // characters there are since the beginning of the expression. We stop counting when we encounter a character
     // indicating the beginning of a new expression.
-    for (const auto ch: buff | std::views::reverse) {
+    for (const auto ch : buff | std::views::reverse) {
         // A colon, start counting.
         if (ch == ':') {
             // The colon itself is not a wrapper so we start at 0.

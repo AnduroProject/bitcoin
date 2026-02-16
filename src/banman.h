@@ -86,7 +86,7 @@ public:
 
 private:
     void LoadBanlist() EXCLUSIVE_LOCKS_REQUIRED(!m_banned_mutex);
-    //!clean unused entries (if bantime has expired)
+    //! clean unused entries (if bantime has expired)
     void SweepBanned() EXCLUSIVE_LOCKS_REQUIRED(m_banned_mutex);
 
     Mutex m_banned_mutex;
@@ -95,7 +95,7 @@ private:
     CClientUIInterface* m_client_interface = nullptr;
     CBanDB m_ban_db;
     const int64_t m_default_ban_time;
-    CRollingBloomFilter m_discouraged GUARDED_BY(m_banned_mutex) {50000, 0.000001};
+    CRollingBloomFilter m_discouraged GUARDED_BY(m_banned_mutex){50000, 0.000001};
 };
 
 #endif // BITCOIN_BANMAN_H

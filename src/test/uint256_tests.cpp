@@ -22,65 +22,68 @@ const unsigned char R1Array[] =
     "\x9c\x52\x4a\xdb\xcf\x56\x11\x12\x2b\x29\x12\x5e\x5d\x35\xd2\xd2"
     "\x22\x81\xaa\xb5\x33\xf0\x08\x32\xd5\x56\xb1\xf9\xea\xe5\x1d\x7d";
 const char R1ArrayHex[] = "7D1DE5EAF9B156D53208F033B5AA8122D2d2355d5e12292b121156cfdb4a529c";
-const uint256 R1L = uint256(std::vector<unsigned char>(R1Array,R1Array+32));
-const uint160 R1S = uint160(std::vector<unsigned char>(R1Array,R1Array+20));
+const uint256 R1L = uint256(std::vector<unsigned char>(R1Array, R1Array + 32));
+const uint160 R1S = uint160(std::vector<unsigned char>(R1Array, R1Array + 20));
 
 const unsigned char R2Array[] =
     "\x70\x32\x1d\x7c\x47\xa5\x6b\x40\x26\x7e\x0a\xc3\xa6\x9c\xb6\xbf"
     "\x13\x30\x47\xa3\x19\x2d\xda\x71\x49\x13\x72\xf0\xb4\xca\x81\xd7";
-const uint256 R2L = uint256(std::vector<unsigned char>(R2Array,R2Array+32));
-const uint160 R2S = uint160(std::vector<unsigned char>(R2Array,R2Array+20));
+const uint256 R2L = uint256(std::vector<unsigned char>(R2Array, R2Array + 32));
+const uint160 R2S = uint160(std::vector<unsigned char>(R2Array, R2Array + 20));
 
 const unsigned char ZeroArray[] =
     "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-const uint256 ZeroL = uint256(std::vector<unsigned char>(ZeroArray,ZeroArray+32));
-const uint160 ZeroS = uint160(std::vector<unsigned char>(ZeroArray,ZeroArray+20));
+const uint256 ZeroL = uint256(std::vector<unsigned char>(ZeroArray, ZeroArray + 32));
+const uint160 ZeroS = uint160(std::vector<unsigned char>(ZeroArray, ZeroArray + 20));
 
 const unsigned char OneArray[] =
     "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-const uint256 OneL = uint256(std::vector<unsigned char>(OneArray,OneArray+32));
-const uint160 OneS = uint160(std::vector<unsigned char>(OneArray,OneArray+20));
+const uint256 OneL = uint256(std::vector<unsigned char>(OneArray, OneArray + 32));
+const uint160 OneS = uint160(std::vector<unsigned char>(OneArray, OneArray + 20));
 
 const unsigned char MaxArray[] =
     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
     "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
-const uint256 MaxL = uint256(std::vector<unsigned char>(MaxArray,MaxArray+32));
-const uint160 MaxS = uint160(std::vector<unsigned char>(MaxArray,MaxArray+20));
+const uint256 MaxL = uint256(std::vector<unsigned char>(MaxArray, MaxArray + 32));
+const uint160 MaxS = uint160(std::vector<unsigned char>(MaxArray, MaxArray + 20));
 
 static std::string ArrayToString(const unsigned char A[], unsigned int width)
 {
     std::stringstream Stream;
     Stream << std::hex;
-    for (unsigned int i = 0; i < width; ++i)
-    {
-        Stream<<std::setw(2)<<std::setfill('0')<<(unsigned int)A[width-i-1];
+    for (unsigned int i = 0; i < width; ++i) {
+        Stream << std::setw(2) << std::setfill('0') << (unsigned int)A[width - i - 1];
     }
     return Stream.str();
 }
 
-BOOST_AUTO_TEST_CASE( basics ) // constructors, equality, inequality
+BOOST_AUTO_TEST_CASE(basics) // constructors, equality, inequality
 {
     // constructor uint256(vector<char>):
-    BOOST_CHECK_EQUAL(R1L.ToString(), ArrayToString(R1Array,32));
-    BOOST_CHECK_EQUAL(R1S.ToString(), ArrayToString(R1Array,20));
-    BOOST_CHECK_EQUAL(R2L.ToString(), ArrayToString(R2Array,32));
-    BOOST_CHECK_EQUAL(R2S.ToString(), ArrayToString(R2Array,20));
-    BOOST_CHECK_EQUAL(ZeroL.ToString(), ArrayToString(ZeroArray,32));
-    BOOST_CHECK_EQUAL(ZeroS.ToString(), ArrayToString(ZeroArray,20));
-    BOOST_CHECK_EQUAL(OneL.ToString(), ArrayToString(OneArray,32));
-    BOOST_CHECK_EQUAL(OneS.ToString(), ArrayToString(OneArray,20));
-    BOOST_CHECK_EQUAL(MaxL.ToString(), ArrayToString(MaxArray,32));
-    BOOST_CHECK_EQUAL(MaxS.ToString(), ArrayToString(MaxArray,20));
-    BOOST_CHECK_NE(OneL.ToString(), ArrayToString(ZeroArray,32));
-    BOOST_CHECK_NE(OneS.ToString(), ArrayToString(ZeroArray,20));
+    BOOST_CHECK_EQUAL(R1L.ToString(), ArrayToString(R1Array, 32));
+    BOOST_CHECK_EQUAL(R1S.ToString(), ArrayToString(R1Array, 20));
+    BOOST_CHECK_EQUAL(R2L.ToString(), ArrayToString(R2Array, 32));
+    BOOST_CHECK_EQUAL(R2S.ToString(), ArrayToString(R2Array, 20));
+    BOOST_CHECK_EQUAL(ZeroL.ToString(), ArrayToString(ZeroArray, 32));
+    BOOST_CHECK_EQUAL(ZeroS.ToString(), ArrayToString(ZeroArray, 20));
+    BOOST_CHECK_EQUAL(OneL.ToString(), ArrayToString(OneArray, 32));
+    BOOST_CHECK_EQUAL(OneS.ToString(), ArrayToString(OneArray, 20));
+    BOOST_CHECK_EQUAL(MaxL.ToString(), ArrayToString(MaxArray, 32));
+    BOOST_CHECK_EQUAL(MaxS.ToString(), ArrayToString(MaxArray, 20));
+    BOOST_CHECK_NE(OneL.ToString(), ArrayToString(ZeroArray, 32));
+    BOOST_CHECK_NE(OneS.ToString(), ArrayToString(ZeroArray, 20));
 
     // == and !=
-    BOOST_CHECK_NE(R1L, R2L); BOOST_CHECK_NE(R1S, R2S);
-    BOOST_CHECK_NE(ZeroL, OneL); BOOST_CHECK_NE(ZeroS, OneS);
-    BOOST_CHECK_NE(OneL, ZeroL); BOOST_CHECK_NE(OneS, ZeroS);
-    BOOST_CHECK_NE(MaxL, ZeroL); BOOST_CHECK_NE(MaxS, ZeroS);
+    BOOST_CHECK_NE(R1L, R2L);
+    BOOST_CHECK_NE(R1S, R2S);
+    BOOST_CHECK_NE(ZeroL, OneL);
+    BOOST_CHECK_NE(ZeroS, OneS);
+    BOOST_CHECK_NE(OneL, ZeroL);
+    BOOST_CHECK_NE(OneS, ZeroS);
+    BOOST_CHECK_NE(MaxL, ZeroL);
+    BOOST_CHECK_NE(MaxS, ZeroS);
 
     // String Constructor and Copy Constructor
     BOOST_CHECK_EQUAL(uint256::FromHex(R1L.ToString()).value(), R1L);
@@ -105,12 +108,12 @@ BOOST_AUTO_TEST_CASE( basics ) // constructors, equality, inequality
     BOOST_CHECK_EQUAL(uint160(OneS), OneS);
 }
 
-BOOST_AUTO_TEST_CASE( comparison ) // <= >= < >
+BOOST_AUTO_TEST_CASE(comparison) // <= >= < >
 {
     uint256 LastL;
     for (int i = 255; i >= 0; --i) {
         uint256 TmpL;
-        *(TmpL.begin() + (i>>3)) |= 1<<(7-(i&7));
+        *(TmpL.begin() + (i >> 3)) |= 1 << (7 - (i & 7));
         BOOST_CHECK_LT(LastL, TmpL);
         LastL = TmpL;
     }
@@ -125,7 +128,7 @@ BOOST_AUTO_TEST_CASE( comparison ) // <= >= < >
     uint160 LastS;
     for (int i = 159; i >= 0; --i) {
         uint160 TmpS;
-        *(TmpS.begin() + (i>>3)) |= 1<<(7-(i&7));
+        *(TmpS.begin() + (i >> 3)) |= 1 << (7 - (i & 7));
         BOOST_CHECK_LT(LastS, TmpS);
         LastS = TmpS;
     }
@@ -141,7 +144,7 @@ BOOST_AUTO_TEST_CASE( comparison ) // <= >= < >
     // Ensure first element comparisons give the same order as above:
     BOOST_CHECK_LT(*R2L.begin(), *R1L.begin());
     // Ensure last element comparisons give a different result (swapped params):
-    BOOST_CHECK_LT(*(R1L.end()-1), *(R2L.end()-1));
+    BOOST_CHECK_LT(*(R1L.end() - 1), *(R2L.end() - 1));
     // Hex strings represent reverse-encoded bytes, with lexicographic ordering:
     BOOST_CHECK_LT(uint256{"1000000000000000000000000000000000000000000000000000000000000000"},
                    uint256{"0000000000000000000000000000000000000000000000000000000000000001"});
@@ -180,17 +183,17 @@ BOOST_AUTO_TEST_CASE(methods) // GetHex FromHex begin() end() size() GetLow64 Ge
 
     DataStream ss{};
     ss << R1L;
-    BOOST_CHECK_EQUAL(ss.str(), std::string(R1Array,R1Array+32));
+    BOOST_CHECK_EQUAL(ss.str(), std::string(R1Array, R1Array + 32));
     ss >> TmpL;
     BOOST_CHECK_EQUAL(R1L, TmpL);
     ss.clear();
     ss << ZeroL;
-    BOOST_CHECK_EQUAL(ss.str(), std::string(ZeroArray,ZeroArray+32));
+    BOOST_CHECK_EQUAL(ss.str(), std::string(ZeroArray, ZeroArray + 32));
     ss >> TmpL;
     BOOST_CHECK_EQUAL(ZeroL, TmpL);
     ss.clear();
     ss << MaxL;
-    BOOST_CHECK_EQUAL(ss.str(), std::string(MaxArray,MaxArray+32));
+    BOOST_CHECK_EQUAL(ss.str(), std::string(MaxArray, MaxArray + 32));
     ss >> TmpL;
     BOOST_CHECK_EQUAL(MaxL, TmpL);
     ss.clear();
@@ -225,17 +228,17 @@ BOOST_AUTO_TEST_CASE(methods) // GetHex FromHex begin() end() size() GetLow64 Ge
     BOOST_CHECK_EQUAL(GetSerializeSize(ZeroS), 20);
 
     ss << R1S;
-    BOOST_CHECK_EQUAL(ss.str(), std::string(R1Array,R1Array+20));
+    BOOST_CHECK_EQUAL(ss.str(), std::string(R1Array, R1Array + 20));
     ss >> TmpS;
     BOOST_CHECK_EQUAL(R1S, TmpS);
     ss.clear();
     ss << ZeroS;
-    BOOST_CHECK_EQUAL(ss.str(), std::string(ZeroArray,ZeroArray+20));
+    BOOST_CHECK_EQUAL(ss.str(), std::string(ZeroArray, ZeroArray + 20));
     ss >> TmpS;
     BOOST_CHECK_EQUAL(ZeroS, TmpS);
     ss.clear();
     ss << MaxS;
-    BOOST_CHECK_EQUAL(ss.str(), std::string(MaxArray,MaxArray+20));
+    BOOST_CHECK_EQUAL(ss.str(), std::string(MaxArray, MaxArray + 20));
     ss >> TmpS;
     BOOST_CHECK_EQUAL(MaxS, TmpS);
     ss.clear();
@@ -323,7 +326,7 @@ BOOST_AUTO_TEST_CASE(from_user_hex)
     BOOST_CHECK(!uint256::FromUserHex(valid_hex_64 + "z"));           // invalid character after max length
 }
 
-BOOST_AUTO_TEST_CASE( check_ONE )
+BOOST_AUTO_TEST_CASE(check_ONE)
 {
     uint256 one = uint256{"0000000000000000000000000000000000000000000000000000000000000001"};
     BOOST_CHECK_EQUAL(one, uint256::ONE);
@@ -332,7 +335,7 @@ BOOST_AUTO_TEST_CASE( check_ONE )
 BOOST_AUTO_TEST_CASE(FromHex_vs_uint256)
 {
     auto runtime_uint{uint256::FromHex("4A5E1E4BAAB89F3A32518A88C31BC87F618f76673e2cc77ab2127b7afdeda33b")};
-    constexpr uint256 consteval_uint{  "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"};
+    constexpr uint256 consteval_uint{"4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"};
     BOOST_CHECK_EQUAL(consteval_uint, runtime_uint);
 }
 

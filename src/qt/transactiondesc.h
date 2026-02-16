@@ -17,11 +17,11 @@ class Node;
 class Wallet;
 struct WalletTx;
 struct WalletTxStatus;
-}
+} // namespace interfaces
 
 /** Provide a human-readable extended HTML description of a transaction.
  */
-class TransactionDesc: public QObject
+class TransactionDesc : public QObject
 {
     Q_OBJECT
 

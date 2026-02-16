@@ -143,7 +143,7 @@ void UniValue::pushKVs(UniValue obj)
         pushKVEnd(std::move(obj.keys.at(i)), std::move(obj.values.at(i)));
 }
 
-void UniValue::getObjMap(std::map<std::string,UniValue>& kv) const
+void UniValue::getObjMap(std::map<std::string, UniValue>& kv) const
 {
     if (typ != VOBJ)
         return;
@@ -165,13 +165,13 @@ bool UniValue::findKey(const std::string& key, size_t& retIdx) const
     return false;
 }
 
-bool UniValue::checkObject(const std::map<std::string,UniValue::VType>& t) const
+bool UniValue::checkObject(const std::map<std::string, UniValue::VType>& t) const
 {
     if (typ != VOBJ) {
         return false;
     }
 
-    for (const auto& object: t) {
+    for (const auto& object : t) {
         size_t idx = 0;
         if (!findKey(object.first, idx)) {
             return false;
@@ -211,11 +211,11 @@ void UniValue::checkType(const VType& expected) const
 {
     if (typ != expected) {
         throw type_error{"JSON value of type " + std::string{uvTypeName(typ)} + " is not of expected type " +
-                                 std::string{uvTypeName(expected)}};
+                         std::string{uvTypeName(expected)}};
     }
 }
 
-const char *uvTypeName(UniValue::VType t)
+const char* uvTypeName(UniValue::VType t)
 {
     switch (t) {
     case UniValue::VNULL: return "null";

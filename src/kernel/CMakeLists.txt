@@ -43,8 +43,11 @@ add_library(bitcoinkernel
   ../policy/settings.cpp
   ../policy/truc_policy.cpp
   ../pow.cpp
+  ../coordinate/signed_block.cpp
   ../primitives/block.cpp
   ../primitives/transaction.cpp
+  ../primitives/bitcoin/block.cpp
+  ../primitives/bitcoin/transaction.cpp
   ../pubkey.cpp
   ../random.cpp
   ../randomenv.cpp

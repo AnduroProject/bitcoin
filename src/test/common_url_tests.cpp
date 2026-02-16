@@ -13,7 +13,8 @@ BOOST_AUTO_TEST_SUITE(common_url_tests)
 // These test vectors were ported from test/regress.c in the libevent library
 // which used to be a dependency of the UrlDecode function.
 
-BOOST_AUTO_TEST_CASE(encode_decode_test) {
+BOOST_AUTO_TEST_CASE(encode_decode_test)
+{
     BOOST_CHECK_EQUAL(UrlDecode("Hello"), "Hello");
     BOOST_CHECK_EQUAL(UrlDecode("99"), "99");
     BOOST_CHECK_EQUAL(UrlDecode(""), "");
@@ -27,7 +28,8 @@ BOOST_AUTO_TEST_CASE(encode_decode_test) {
     BOOST_CHECK_EQUAL(UrlDecode("1%2B2%3D3"), "1+2=3");
 }
 
-BOOST_AUTO_TEST_CASE(decode_malformed_test) {
+BOOST_AUTO_TEST_CASE(decode_malformed_test)
+{
     BOOST_CHECK_EQUAL(UrlDecode("%%xhello th+ere \xff"), "%%xhello th+ere \xff");
 
     BOOST_CHECK_EQUAL(UrlDecode("%"), "%");
@@ -61,11 +63,13 @@ BOOST_AUTO_TEST_CASE(decode_malformed_test) {
     BOOST_CHECK_EQUAL(UrlDecode("%1-"), "%1-");
 }
 
-BOOST_AUTO_TEST_CASE(decode_lowercase_hex_test) {
+BOOST_AUTO_TEST_CASE(decode_lowercase_hex_test)
+{
     BOOST_CHECK_EQUAL(UrlDecode("%f0%a0%b0"), "\xf0\xa0\xb0");
 }
 
-BOOST_AUTO_TEST_CASE(decode_internal_nulls_test) {
+BOOST_AUTO_TEST_CASE(decode_internal_nulls_test)
+{
     std::string result1{"\0\0x\0\0", 5};
     BOOST_CHECK_EQUAL(UrlDecode("%00%00x%00%00"), result1);
     std::string result2{"abc\0\0", 5};

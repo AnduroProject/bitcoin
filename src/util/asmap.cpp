@@ -21,12 +21,12 @@ namespace {
 
 constexpr uint32_t INVALID = 0xFFFFFFFF;
 
-uint32_t DecodeBits(std::vector<bool>::const_iterator& bitpos, const std::vector<bool>::const_iterator& endpos, uint8_t minval, const std::vector<uint8_t> &bit_sizes)
+uint32_t DecodeBits(std::vector<bool>::const_iterator& bitpos, const std::vector<bool>::const_iterator& endpos, uint8_t minval, const std::vector<uint8_t>& bit_sizes)
 {
     uint32_t val = minval;
     bool bit;
     for (std::vector<uint8_t>::const_iterator bit_sizes_it = bit_sizes.begin();
-        bit_sizes_it != bit_sizes.end(); ++bit_sizes_it) {
+         bit_sizes_it != bit_sizes.end(); ++bit_sizes_it) {
         if (bit_sizes_it + 1 != bit_sizes.end()) {
             if (bitpos == endpos) break;
             bit = *bitpos;
@@ -49,8 +49,7 @@ uint32_t DecodeBits(std::vector<bool>::const_iterator& bitpos, const std::vector
     return INVALID; // Reached EOF in exponent
 }
 
-enum class Instruction : uint32_t
-{
+enum class Instruction : uint32_t {
     RETURN = 0,
     JUMP = 1,
     MATCH = 2,
@@ -83,9 +82,9 @@ uint32_t DecodeJump(std::vector<bool>::const_iterator& bitpos, const std::vector
     return DecodeBits(bitpos, endpos, 17, JUMP_BIT_SIZES);
 }
 
-}
+} // namespace
 
-uint32_t Interpret(const std::vector<bool> &asmap, const std::vector<bool> &ip)
+uint32_t Interpret(const std::vector<bool>& asmap, const std::vector<bool>& ip)
 {
     std::vector<bool>::const_iterator pos = asmap.begin();
     const std::vector<bool>::const_iterator endpos = asmap.end();
@@ -101,8 +100,8 @@ uint32_t Interpret(const std::vector<bool> &asmap, const std::vector<bool> &ip)
             return default_asn;
         } else if (opcode == Instruction::JUMP) {
             jump = DecodeJump(pos, endpos);
-            if (jump == INVALID) break; // Jump offset straddles EOF
-            if (bits == 0) break; // No input bits left
+            if (jump == INVALID) break;                        // Jump offset straddles EOF
+            if (bits == 0) break;                              // No input bits left
             if (int64_t{jump} >= int64_t{endpos - pos}) break; // Jumping past EOF
             if (ip[ip.size() - bits]) {
                 pos += jump;
@@ -127,7 +126,7 @@ uint32_t Interpret(const std::vector<bool> &asmap, const std::vector<bool> &ip)
         }
     }
     assert(false); // Reached EOF without RETURN, or aborted (see any of the breaks above) - should have been caught by SanityCheckASMap below
-    return 0; // 0 is not a valid ASN
+    return 0;      // 0 is not a valid ASN
 }
 
 bool SanityCheckASMap(const std::vector<bool>& asmap, int bits)
@@ -158,15 +157,15 @@ bool SanityCheckASMap(const std::vector<bool>& asmap, int bits)
                 // Continue by pretending we jumped to the next instruction
                 offset = pos - begin;
                 if (offset != jumps.back().first) return false; // Unreachable code
-                bits = jumps.back().second; // Restore the number of bits we would have had left after this jump
+                bits = jumps.back().second;                     // Restore the number of bits we would have had left after this jump
                 jumps.pop_back();
                 prevopcode = Instruction::JUMP;
             }
         } else if (opcode == Instruction::JUMP) {
             uint32_t jump = DecodeJump(pos, endpos);
-            if (jump == INVALID) return false; // Jump offset straddles EOF
+            if (jump == INVALID) return false;                       // Jump offset straddles EOF
             if (int64_t{jump} > int64_t{endpos - pos}) return false; // Jump out of range
-            if (bits == 0) return false; // Consuming bits past the end of the input
+            if (bits == 0) return false;                             // Consuming bits past the end of the input
             --bits;
             uint32_t jump_offset = pos - begin + jump;
             if (!jumps.empty() && jump_offset >= jumps.back().first) return false; // Intersecting jumps
@@ -197,7 +196,7 @@ bool SanityCheckASMap(const std::vector<bool>& asmap, int bits)
 std::vector<bool> DecodeAsmap(fs::path path)
 {
     std::vector<bool> bits;
-    FILE *filestr = fsbridge::fopen(path, "rb");
+    FILE* filestr = fsbridge::fopen(path, "rb");
     AutoFile file{filestr};
     if (file.IsNull()) {
         LogPrintf("Failed to open asmap file from disk\n");
@@ -220,4 +219,3 @@ std::vector<bool> DecodeAsmap(fs::path path)
     }
     return bits;
 }
-

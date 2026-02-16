@@ -42,7 +42,7 @@ public:
     /** Set the client model.
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
     */
-    void setClientModel(ClientModel *clientModel);
+    void setClientModel(ClientModel* clientModel);
     WalletModel* getWalletModel() const noexcept { return walletModel; }
 
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
@@ -58,17 +58,17 @@ private:
     //!
     WalletModel* const walletModel;
 
-    OverviewPage *overviewPage;
-    QWidget *transactionsPage;
-    ReceiveCoinsDialog *receiveCoinsPage;
-    SendCoinsDialog *sendCoinsPage;
-    AddressBookPage *usedSendingAddressesPage;
-    AddressBookPage *usedReceivingAddressesPage;
+    OverviewPage* overviewPage;
+    QWidget* transactionsPage;
+    ReceiveCoinsDialog* receiveCoinsPage;
+    SendCoinsDialog* sendCoinsPage;
+    AddressBookPage* usedSendingAddressesPage;
+    AddressBookPage* usedReceivingAddressesPage;
 
-    TransactionView *transactionView;
+    TransactionView* transactionView;
 
     QProgressDialog* progressDialog{nullptr};
-    const PlatformStyle *platformStyle;
+    const PlatformStyle* platformStyle;
 
 public Q_SLOTS:
     /** Switch to overview (home) page */
@@ -105,7 +105,7 @@ public Q_SLOTS:
     void usedReceivingAddresses();
 
     /** Show progress dialog e.g. for rescan */
-    void showProgress(const QString &title, int nProgress);
+    void showProgress(const QString& title, int nProgress);
 
 private Q_SLOTS:
     void disableTransactionView(bool disable);
@@ -115,7 +115,7 @@ Q_SIGNALS:
     void transactionClicked();
     void coinsSent();
     /**  Fired when a message should be reported to the user */
-    void message(const QString &title, const QString &message, unsigned int style);
+    void message(const QString& title, const QString& message, unsigned int style);
     /** Encryption status of wallet changed */
     void encryptionStatusChanged();
     /** Notify that a new transaction appeared */

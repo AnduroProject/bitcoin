@@ -17,10 +17,10 @@
 
 #include <algorithm>
 #include <atomic>
-#include <cstdint>
-#include <cstring>
 #include <chrono>
 #include <climits>
+#include <cstdint>
+#include <cstring>
 #include <thread>
 #include <vector>
 
@@ -68,8 +68,9 @@ namespace {
  * Note that this does not serialize the passed object (like stream.h's << operators do).
  * Its raw memory representation is used directly.
  */
-template<typename T>
-CSHA512& operator<<(CSHA512& hasher, const T& data) {
+template <typename T>
+CSHA512& operator<<(CSHA512& hasher, const T& data)
+{
     static_assert(!std::is_same_v<std::decay_t<T>, char*>, "Calling operator<<(CSHA512, char*) is probably not what you want");
     static_assert(!std::is_same_v<std::decay_t<T>, unsigned char*>, "Calling operator<<(CSHA512, unsigned char*) is probably not what you want");
     static_assert(!std::is_same_v<std::decay_t<T>, const char*>, "Calling operator<<(CSHA512, const char*) is probably not what you want");
@@ -79,7 +80,7 @@ CSHA512& operator<<(CSHA512& hasher, const T& data) {
 }
 
 #ifndef WIN32
-void AddSockaddr(CSHA512& hasher, const struct sockaddr *addr)
+void AddSockaddr(CSHA512& hasher, const struct sockaddr* addr)
 {
     if (addr == nullptr) return;
     switch (addr->sa_family) {
@@ -94,7 +95,7 @@ void AddSockaddr(CSHA512& hasher, const struct sockaddr *addr)
     }
 }
 
-void AddFile(CSHA512& hasher, const char *path)
+void AddFile(CSHA512& hasher, const char* path)
 {
     struct stat sb = {};
     int f = open(path, O_RDONLY);
@@ -114,7 +115,7 @@ void AddFile(CSHA512& hasher, const char *path)
     }
 }
 
-void AddPath(CSHA512& hasher, const char *path)
+void AddPath(CSHA512& hasher, const char* path)
 {
     struct stat sb = {};
     if (stat(path, &sb) == 0) {
@@ -125,7 +126,7 @@ void AddPath(CSHA512& hasher, const char *path)
 #endif
 
 #ifdef HAVE_SYSCTL
-template<int... S>
+template <int... S>
 void AddSysctl(CSHA512& hasher)
 {
     int CTL[sizeof...(S)] = {S...};
@@ -194,18 +195,18 @@ void RandAddDynamicEnv(CSHA512& hasher)
     hasher << ftime;
 #else
     struct timespec ts = {};
-#    ifdef CLOCK_MONOTONIC
+#ifdef CLOCK_MONOTONIC
     clock_gettime(CLOCK_MONOTONIC, &ts);
     hasher << ts;
-#    endif
-#    ifdef CLOCK_REALTIME
+#endif
+#ifdef CLOCK_REALTIME
     clock_gettime(CLOCK_REALTIME, &ts);
     hasher << ts;
-#    endif
-#    ifdef CLOCK_BOOTTIME
+#endif
+#ifdef CLOCK_BOOTTIME
     clock_gettime(CLOCK_BOOTTIME, &ts);
     hasher << ts;
-#    endif
+#endif
     // gettimeofday is available on all UNIX systems, but only has microsecond precision.
     struct timeval tv = {};
     gettimeofday(&tv, nullptr);
@@ -235,27 +236,27 @@ void RandAddDynamicEnv(CSHA512& hasher)
 #endif
 
 #ifdef HAVE_SYSCTL
-#  ifdef CTL_KERN
-#    if defined(KERN_PROC) && defined(KERN_PROC_ALL)
+#ifdef CTL_KERN
+#if defined(KERN_PROC) && defined(KERN_PROC_ALL)
     AddSysctl<CTL_KERN, KERN_PROC, KERN_PROC_ALL>(hasher);
-#    endif
-#  endif
-#  ifdef CTL_HW
-#    ifdef HW_DISKSTATS
+#endif
+#endif
+#ifdef CTL_HW
+#ifdef HW_DISKSTATS
     AddSysctl<CTL_HW, HW_DISKSTATS>(hasher);
-#    endif
-#  endif
-#  ifdef CTL_VM
-#    ifdef VM_LOADAVG
+#endif
+#endif
+#ifdef CTL_VM
+#ifdef VM_LOADAVG
     AddSysctl<CTL_VM, VM_LOADAVG>(hasher);
-#    endif
-#    ifdef VM_TOTAL
+#endif
+#ifdef VM_TOTAL
     AddSysctl<CTL_VM, VM_TOTAL>(hasher);
-#    endif
-#    ifdef VM_METER
+#endif
+#ifdef VM_METER
     AddSysctl<CTL_VM, VM_METER>(hasher);
-#    endif
-#  endif
+#endif
+#endif
 #endif
 
     // Stack and heap location
@@ -288,24 +289,24 @@ void RandAddStaticEnv(CSHA512& hasher)
 
 #if defined(HAVE_STRONG_GETAUXVAL)
     // Information available through getauxval()
-#  ifdef AT_HWCAP
+#ifdef AT_HWCAP
     hasher << getauxval(AT_HWCAP);
-#  endif
-#  ifdef AT_HWCAP2
+#endif
+#ifdef AT_HWCAP2
     hasher << getauxval(AT_HWCAP2);
-#  endif
-#  ifdef AT_RANDOM
+#endif
+#ifdef AT_RANDOM
     const unsigned char* random_aux = (const unsigned char*)getauxval(AT_RANDOM);
     if (random_aux) hasher.Write(random_aux, 16);
-#  endif
-#  ifdef AT_PLATFORM
+#endif
+#ifdef AT_PLATFORM
     const char* platform_str = (const char*)getauxval(AT_PLATFORM);
     if (platform_str) hasher.Write((const unsigned char*)platform_str, strlen(platform_str) + 1);
-#  endif
-#  ifdef AT_EXECFN
+#endif
+#ifdef AT_EXECFN
     const char* exec_str = (const char*)getauxval(AT_EXECFN);
     if (exec_str) hasher.Write((const unsigned char*)exec_str, strlen(exec_str) + 1);
-#  endif
+#endif
 #endif // HAVE_STRONG_GETAUXVAL
 
 #ifdef HAVE_GETCPUID
@@ -332,9 +333,9 @@ void RandAddStaticEnv(CSHA512& hasher)
 
 #ifdef HAVE_IFADDRS
     // Network interfaces
-    struct ifaddrs *ifad = nullptr;
+    struct ifaddrs* ifad = nullptr;
     getifaddrs(&ifad);
-    struct ifaddrs *ifit = ifad;
+    struct ifaddrs* ifit = ifad;
     while (ifit != nullptr) {
         hasher.Write((const unsigned char*)&ifit, sizeof(ifit));
         hasher.Write((const unsigned char*)ifit->ifa_name, strlen(ifit->ifa_name) + 1);
@@ -380,76 +381,76 @@ void RandAddStaticEnv(CSHA512& hasher)
     // For MacOS/BSDs, gather data through sysctl instead of /proc. Not all of these
     // will exist on every system.
 #ifdef HAVE_SYSCTL
-#  ifdef CTL_HW
-#    ifdef HW_MACHINE
+#ifdef CTL_HW
+#ifdef HW_MACHINE
     AddSysctl<CTL_HW, HW_MACHINE>(hasher);
-#    endif
-#    ifdef HW_MODEL
+#endif
+#ifdef HW_MODEL
     AddSysctl<CTL_HW, HW_MODEL>(hasher);
-#    endif
-#    ifdef HW_NCPU
+#endif
+#ifdef HW_NCPU
     AddSysctl<CTL_HW, HW_NCPU>(hasher);
-#    endif
-#    ifdef HW_PHYSMEM
+#endif
+#ifdef HW_PHYSMEM
     AddSysctl<CTL_HW, HW_PHYSMEM>(hasher);
-#    endif
-#    ifdef HW_USERMEM
+#endif
+#ifdef HW_USERMEM
     AddSysctl<CTL_HW, HW_USERMEM>(hasher);
-#    endif
-#    ifdef HW_MACHINE_ARCH
+#endif
+#ifdef HW_MACHINE_ARCH
     AddSysctl<CTL_HW, HW_MACHINE_ARCH>(hasher);
-#    endif
-#    ifdef HW_REALMEM
+#endif
+#ifdef HW_REALMEM
     AddSysctl<CTL_HW, HW_REALMEM>(hasher);
-#    endif
-#    ifdef HW_CPU_FREQ
+#endif
+#ifdef HW_CPU_FREQ
     AddSysctl<CTL_HW, HW_CPU_FREQ>(hasher);
-#    endif
-#    ifdef HW_BUS_FREQ
+#endif
+#ifdef HW_BUS_FREQ
     AddSysctl<CTL_HW, HW_BUS_FREQ>(hasher);
-#    endif
-#    ifdef HW_CACHELINE
+#endif
+#ifdef HW_CACHELINE
     AddSysctl<CTL_HW, HW_CACHELINE>(hasher);
-#    endif
-#  endif
-#  ifdef CTL_KERN
-#    ifdef KERN_BOOTFILE
-     AddSysctl<CTL_KERN, KERN_BOOTFILE>(hasher);
-#    endif
-#    ifdef KERN_BOOTTIME
-     AddSysctl<CTL_KERN, KERN_BOOTTIME>(hasher);
-#    endif
-#    ifdef KERN_CLOCKRATE
-     AddSysctl<CTL_KERN, KERN_CLOCKRATE>(hasher);
-#    endif
-#    ifdef KERN_HOSTID
-     AddSysctl<CTL_KERN, KERN_HOSTID>(hasher);
-#    endif
-#    ifdef KERN_HOSTUUID
-     AddSysctl<CTL_KERN, KERN_HOSTUUID>(hasher);
-#    endif
-#    ifdef KERN_HOSTNAME
-     AddSysctl<CTL_KERN, KERN_HOSTNAME>(hasher);
-#    endif
-#    ifdef KERN_OSRELDATE
-     AddSysctl<CTL_KERN, KERN_OSRELDATE>(hasher);
-#    endif
-#    ifdef KERN_OSRELEASE
-     AddSysctl<CTL_KERN, KERN_OSRELEASE>(hasher);
-#    endif
-#    ifdef KERN_OSREV
-     AddSysctl<CTL_KERN, KERN_OSREV>(hasher);
-#    endif
-#    ifdef KERN_OSTYPE
-     AddSysctl<CTL_KERN, KERN_OSTYPE>(hasher);
-#    endif
-#    ifdef KERN_POSIX1
-     AddSysctl<CTL_KERN, KERN_OSREV>(hasher);
-#    endif
-#    ifdef KERN_VERSION
-     AddSysctl<CTL_KERN, KERN_VERSION>(hasher);
-#    endif
-#  endif
+#endif
+#endif
+#ifdef CTL_KERN
+#ifdef KERN_BOOTFILE
+    AddSysctl<CTL_KERN, KERN_BOOTFILE>(hasher);
+#endif
+#ifdef KERN_BOOTTIME
+    AddSysctl<CTL_KERN, KERN_BOOTTIME>(hasher);
+#endif
+#ifdef KERN_CLOCKRATE
+    AddSysctl<CTL_KERN, KERN_CLOCKRATE>(hasher);
+#endif
+#ifdef KERN_HOSTID
+    AddSysctl<CTL_KERN, KERN_HOSTID>(hasher);
+#endif
+#ifdef KERN_HOSTUUID
+    AddSysctl<CTL_KERN, KERN_HOSTUUID>(hasher);
+#endif
+#ifdef KERN_HOSTNAME
+    AddSysctl<CTL_KERN, KERN_HOSTNAME>(hasher);
+#endif
+#ifdef KERN_OSRELDATE
+    AddSysctl<CTL_KERN, KERN_OSRELDATE>(hasher);
+#endif
+#ifdef KERN_OSRELEASE
+    AddSysctl<CTL_KERN, KERN_OSRELEASE>(hasher);
+#endif
+#ifdef KERN_OSREV
+    AddSysctl<CTL_KERN, KERN_OSREV>(hasher);
+#endif
+#ifdef KERN_OSTYPE
+    AddSysctl<CTL_KERN, KERN_OSTYPE>(hasher);
+#endif
+#ifdef KERN_POSIX1
+    AddSysctl<CTL_KERN, KERN_OSREV>(hasher);
+#endif
+#ifdef KERN_VERSION
+    AddSysctl<CTL_KERN, KERN_VERSION>(hasher);
+#endif
+#endif
 #endif
 
     // Env variables

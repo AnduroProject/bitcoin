@@ -46,7 +46,7 @@ static ChainstateLoadResult CompleteChainstateInitialization(
     }
 
     if (!chainman.BlockIndex().empty() &&
-            !chainman.m_blockman.LookupBlockIndex(chainman.GetConsensus().hashGenesisBlock)) {
+        !chainman.m_blockman.LookupBlockIndex(chainman.GetConsensus().hashGenesisBlock)) {
         // If the loaded chain has a wrong genesis, bail out immediately
         // (we're likely using a testnet datadir, or the other way around).
         return {ChainstateLoadStatus::FAILURE_INCOMPATIBLE_DB, _("Incorrect or no genesis block found. Wrong datadir for network?")};
@@ -113,6 +113,12 @@ static ChainstateLoadResult CompleteChainstateInitialization(
             return {ChainstateLoadStatus::FAILURE, _("Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.")};
         }
 
+        // asset memory allocation
+        chainstate->InitAssetCache();
+
+        // signed block memory allocation
+        chainstate->InitSignedBlockCache();
+
         // The on-disk coinsdb is now in a good state, create the cache
         chainstate->InitCoinsCache(chainman.m_total_coinstip_cache * init_cache_fraction);
         assert(chainstate->CanFlushToDisk());
@@ -124,6 +130,7 @@ static ChainstateLoadResult CompleteChainstateInitialization(
             }
             assert(chainstate->m_chain.Tip() != nullptr);
         }
+        chainstate->isAssetPrune = options.asset_prune;
     }
 
     auto chainstates{chainman.GetAll()};
@@ -166,7 +173,7 @@ ChainstateLoadResult LoadChainstate(ChainstateManager& chainman, const CacheSize
     chainman.m_total_coinsdb_cache = cache_sizes.coins_db;
 
     // Load the fully validated chainstate.
-    chainman.InitializeChainstate(options.mempool);
+    chainman.InitializeChainstate(options.mempool, options.preconfmempool);
 
     // Load a chain created from a UTXO snapshot, if any exist.
     bool has_snapshot = chainman.DetectSnapshotChainstate();
@@ -208,7 +215,7 @@ ChainstateLoadResult LoadChainstate(ChainstateManager& chainman, const CacheSize
         assert(!chainman.IsSnapshotActive());
         assert(!chainman.IsSnapshotValidated());
 
-        chainman.InitializeChainstate(options.mempool);
+        chainman.InitializeChainstate(options.mempool, options.preconfmempool);
 
         // A reload of the block index is required to recompute setBlockIndexCandidates
         // for the fully validated chainstate.
@@ -220,8 +227,8 @@ ChainstateLoadResult LoadChainstate(ChainstateManager& chainman, const CacheSize
         }
     } else {
         return {ChainstateLoadStatus::FAILURE_FATAL, _(
-           "UTXO snapshot failed to validate. "
-           "Restart to resume normal initial block download, or try loading a different snapshot.")};
+                                                         "UTXO snapshot failed to validate. "
+                                                         "Restart to resume normal initial block download, or try loading a different snapshot.")};
     }
 
     return {ChainstateLoadStatus::SUCCESS, {}};
@@ -244,10 +251,7 @@ ChainstateLoadResult VerifyLoadedChainstate(ChainstateManager& chainman, const C
                                                          "Only rebuild the block database if you are sure that your computer's date and time are correct")};
             }
 
-            VerifyDBResult result = CVerifyDB(chainman.GetNotifications()).VerifyDB(
-                *chainstate, chainman.GetConsensus(), chainstate->CoinsDB(),
-                options.check_level,
-                options.check_blocks);
+            VerifyDBResult result = CVerifyDB(chainman.GetNotifications()).VerifyDB(*chainstate, chainman.GetConsensus(), chainstate->CoinsDB(), options.check_level, options.check_blocks);
             switch (result) {
             case VerifyDBResult::SUCCESS:
             case VerifyDBResult::SKIPPED_MISSING_BLOCKS:

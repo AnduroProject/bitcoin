@@ -6,8 +6,8 @@
 
 #include <hash.h>
 #include <key_io.h>
-#include <pubkey.h>
 #include <musig.h>
+#include <pubkey.h>
 #include <script/miniscript.h>
 #include <script/parsing.h>
 #include <script/script.h>
@@ -132,7 +132,7 @@ std::string DescriptorChecksum(const std::span<const char>& span)
     for (auto ch : span) {
         auto pos = INPUT_CHARSET.find(ch);
         if (pos == std::string::npos) return "";
-        c = PolyMod(c, pos & 31); // Emit a symbol for the position inside the group, for every character.
+        c = PolyMod(c, pos & 31);   // Emit a symbol for the position inside the group, for every character.
         cls = cls * 3 + (pos >> 5); // Accumulate the group numbers
         if (++clscount == 3) {
             // Emit an extra symbol representing the group numbers, for every 3 characters.
@@ -142,11 +142,13 @@ std::string DescriptorChecksum(const std::span<const char>& span)
         }
     }
     if (clscount > 0) c = PolyMod(c, cls);
-    for (int j = 0; j < 8; ++j) c = PolyMod(c, 0); // Shift further to determine the checksum.
-    c ^= 1; // Prevent appending zeroes from not affecting the checksum.
+    for (int j = 0; j < 8; ++j)
+        c = PolyMod(c, 0); // Shift further to determine the checksum.
+    c ^= 1;                // Prevent appending zeroes from not affecting the checksum.
 
     std::string ret(8, ' ');
-    for (int j = 0; j < 8; ++j) ret[j] = CHECKSUM_CHARSET[(c >> (5 * (7 - j))) & 31];
+    for (int j = 0; j < 8; ++j)
+        ret[j] = CHECKSUM_CHARSET[(c >> (5 * (7 - j))) & 31];
     return ret;
 }
 
@@ -159,8 +161,7 @@ std::string AddChecksum(const std::string& str) { return str + "#" + DescriptorC
 typedef std::vector<uint32_t> KeyPath;
 
 /** Interface for public key objects in descriptors. */
-struct PubkeyProvider
-{
+struct PubkeyProvider {
 protected:
     //! Index of this key expression in the descriptor
     //! E.g. If this PubkeyProvider is key1 in multi(2, key1, key2, key3), then m_expr_index = 0
@@ -174,7 +175,8 @@ public:
     /** Compare two public keys represented by this provider.
      * Used by the Miniscript descriptors to check for duplicate keys in the script.
      */
-    bool operator<(PubkeyProvider& other) const {
+    bool operator<(PubkeyProvider& other) const
+    {
         FlatSigningProvider dummy;
 
         std::optional<CPubKey> a = GetPubKey(0, dummy, dummy);
@@ -202,7 +204,7 @@ public:
     };
 
     /** Get the descriptor string form. */
-    virtual std::string ToString(StringType type=StringType::PUBLIC) const = 0;
+    virtual std::string ToString(StringType type = StringType::PUBLIC) const = 0;
 
     /** Get the descriptor string form including private data (if available in arg). */
     virtual bool ToPrivateString(const SigningProvider& arg, std::string& out) const = 0;
@@ -233,7 +235,7 @@ class OriginPubkeyProvider final : public PubkeyProvider
     std::unique_ptr<PubkeyProvider> m_provider;
     bool m_apostrophe;
 
-    std::string OriginString(StringType type, bool normalized=false) const
+    std::string OriginString(StringType type, bool normalized = false) const
     {
         // If StringType==COMPAT, always use the apostrophe to stay compatible with previous versions
         bool use_apostrophe = (!normalized && m_apostrophe) || type == StringType::COMPAT;
@@ -485,7 +487,7 @@ public:
         }
         return ret;
     }
-    std::string ToString(StringType type=StringType::PUBLIC) const override
+    std::string ToString(StringType type = StringType::PUBLIC) const override
     {
         return ToString(type, /*normalized=*/false);
     }
@@ -602,13 +604,12 @@ public:
         uint32_t exp_index,
         std::vector<std::unique_ptr<PubkeyProvider>> providers,
         KeyPath path,
-        DeriveType derive
-    )
+        DeriveType derive)
         : PubkeyProvider(exp_index),
-        m_participants(std::move(providers)),
-        m_path(std::move(path)),
-        m_derive(derive),
-        m_ranged_participants(std::any_of(m_participants.begin(), m_participants.end(), [](const auto& pubkey) { return pubkey->IsRange(); }))
+          m_participants(std::move(providers)),
+          m_path(std::move(path)),
+          m_derive(derive),
+          m_ranged_participants(std::any_of(m_participants.begin(), m_participants.end(), [](const auto& pubkey) { return pubkey->IsRange(); }))
     {
         if (!Assume(!(m_ranged_participants && IsRangedDerivation()))) {
             throw std::runtime_error("musig(): Cannot have both ranged participants and ranged derivation");
@@ -691,7 +692,7 @@ public:
     // musig() expressions can only be used in tr() contexts which have 32 byte xonly pubkeys
     size_t GetSize() const override { return 32; }
 
-    std::string ToString(StringType type=StringType::PUBLIC) const override
+    std::string ToString(StringType type = StringType::PUBLIC) const override
     {
         std::string out = "musig(";
         for (size_t i = 0; i < m_participants.size(); ++i) {
@@ -824,8 +825,7 @@ public:
     DescriptorImpl(std::vector<std::unique_ptr<PubkeyProvider>> pubkeys, std::unique_ptr<DescriptorImpl> script, const std::string& name) : m_pubkey_args(std::move(pubkeys)), m_name(name), m_subdescriptor_args(Vector(std::move(script))) {}
     DescriptorImpl(std::vector<std::unique_ptr<PubkeyProvider>> pubkeys, std::vector<std::unique_ptr<DescriptorImpl>> scripts, const std::string& name) : m_pubkey_args(std::move(pubkeys)), m_name(name), m_subdescriptor_args(std::move(scripts)) {}
 
-    enum class StringType
-    {
+    enum class StringType {
         PUBLIC,
         PRIVATE,
         NORMALIZED,
@@ -876,18 +876,18 @@ public:
             if (pos++) ret += ",";
             std::string tmp;
             switch (type) {
-                case StringType::NORMALIZED:
-                    if (!pubkey->ToNormalizedString(*arg, tmp, cache)) return false;
-                    break;
-                case StringType::PRIVATE:
-                    if (!pubkey->ToPrivateString(*arg, tmp)) return false;
-                    break;
-                case StringType::PUBLIC:
-                    tmp = pubkey->ToString();
-                    break;
-                case StringType::COMPAT:
-                    tmp = pubkey->ToString(PubkeyProvider::StringType::COMPAT);
-                    break;
+            case StringType::NORMALIZED:
+                if (!pubkey->ToNormalizedString(*arg, tmp, cache)) return false;
+                break;
+            case StringType::PRIVATE:
+                if (!pubkey->ToPrivateString(*arg, tmp)) return false;
+                break;
+            case StringType::PUBLIC:
+                tmp = pubkey->ToString();
+                break;
+            case StringType::COMPAT:
+                tmp = pubkey->ToString(PubkeyProvider::StringType::COMPAT);
+                break;
             }
             ret += tmp;
         }
@@ -1002,9 +1002,11 @@ public:
 class AddressDescriptor final : public DescriptorImpl
 {
     const CTxDestination m_destination;
+
 protected:
     std::string ToStringExtra() const override { return EncodeDestination(m_destination); }
     std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, std::span<const CScript>, FlatSigningProvider&) const override { return Vector(GetScriptForDestination(m_destination)); }
+
 public:
     AddressDescriptor(CTxDestination destination) : DescriptorImpl({}, "addr"), m_destination(std::move(destination)) {}
     bool IsSolvable() const final { return false; }
@@ -1027,9 +1029,11 @@ public:
 class RawDescriptor final : public DescriptorImpl
 {
     const CScript m_script;
+
 protected:
     std::string ToStringExtra() const override { return HexStr(m_script); }
     std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, std::span<const CScript>, FlatSigningProvider&) const override { return Vector(m_script); }
+
 public:
     RawDescriptor(CScript script) : DescriptorImpl({}, "raw"), m_script(std::move(script)) {}
     bool IsSolvable() const final { return false; }
@@ -1056,6 +1060,7 @@ class PKDescriptor final : public DescriptorImpl
 {
 private:
     const bool m_xonly;
+
 protected:
     std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, std::span<const CScript>, FlatSigningProvider&) const override
     {
@@ -1066,20 +1071,24 @@ protected:
             return Vector(GetScriptForRawPubKey(keys[0]));
         }
     }
+
 public:
     PKDescriptor(std::unique_ptr<PubkeyProvider> prov, bool xonly = false) : DescriptorImpl(Vector(std::move(prov)), "pk"), m_xonly(xonly) {}
     bool IsSingleType() const final { return true; }
 
-    std::optional<int64_t> ScriptSize() const override {
+    std::optional<int64_t> ScriptSize() const override
+    {
         return 1 + (m_xonly ? 32 : m_pubkey_args[0]->GetSize()) + 1;
     }
 
-    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override
+    {
         const auto ecdsa_sig_size = use_max_sig ? 72 : 71;
         return 1 + (m_xonly ? 65 : ecdsa_sig_size);
     }
 
-    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override
+    {
         return *MaxSatSize(use_max_sig) * WITNESS_SCALE_FACTOR;
     }
 
@@ -1100,6 +1109,7 @@ protected:
         CKeyID id = keys[0].GetID();
         return Vector(GetScriptForDestination(PKHash(id)));
     }
+
 public:
     PKHDescriptor(std::unique_ptr<PubkeyProvider> prov) : DescriptorImpl(Vector(std::move(prov)), "pkh") {}
     std::optional<OutputType> GetOutputType() const override { return OutputType::LEGACY; }
@@ -1107,12 +1117,14 @@ public:
 
     std::optional<int64_t> ScriptSize() const override { return 1 + 1 + 1 + 20 + 1 + 1; }
 
-    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override
+    {
         const auto sig_size = use_max_sig ? 72 : 71;
         return 1 + sig_size + 1 + m_pubkey_args[0]->GetSize();
     }
 
-    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override
+    {
         return *MaxSatSize(use_max_sig) * WITNESS_SCALE_FACTOR;
     }
 
@@ -1133,6 +1145,7 @@ protected:
         CKeyID id = keys[0].GetID();
         return Vector(GetScriptForDestination(WitnessV0KeyHash(id)));
     }
+
 public:
     WPKHDescriptor(std::unique_ptr<PubkeyProvider> prov) : DescriptorImpl(Vector(std::move(prov)), "wpkh") {}
     std::optional<OutputType> GetOutputType() const override { return OutputType::BECH32; }
@@ -1140,12 +1153,14 @@ public:
 
     std::optional<int64_t> ScriptSize() const override { return 1 + 1 + 20; }
 
-    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override
+    {
         const auto sig_size = use_max_sig ? 72 : 71;
         return (1 + sig_size + 1 + 33);
     }
 
-    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override
+    {
         return MaxSatSize(use_max_sig);
     }
 
@@ -1165,7 +1180,7 @@ protected:
     {
         std::vector<CScript> ret;
         CKeyID id = keys[0].GetID();
-        ret.emplace_back(GetScriptForRawPubKey(keys[0])); // P2PK
+        ret.emplace_back(GetScriptForRawPubKey(keys[0]));      // P2PK
         ret.emplace_back(GetScriptForDestination(PKHash(id))); // P2PKH
         if (keys[0].IsCompressed()) {
             CScript p2wpkh = GetScriptForDestination(WitnessV0KeyHash(id));
@@ -1175,6 +1190,7 @@ protected:
         }
         return ret;
     }
+
 public:
     ComboDescriptor(std::unique_ptr<PubkeyProvider> prov) : DescriptorImpl(Vector(std::move(prov)), "combo") {}
     bool IsSingleType() const final { return false; }
@@ -1189,9 +1205,11 @@ class MultisigDescriptor final : public DescriptorImpl
 {
     const int m_threshold;
     const bool m_sorted;
+
 protected:
     std::string ToStringExtra() const override { return strprintf("%i", m_threshold); }
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, std::span<const CScript>, FlatSigningProvider&) const override {
+    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, std::span<const CScript>, FlatSigningProvider&) const override
+    {
         if (m_sorted) {
             std::vector<CPubKey> sorted_keys(keys);
             std::sort(sorted_keys.begin(), sorted_keys.end());
@@ -1199,23 +1217,27 @@ protected:
         }
         return Vector(GetScriptForMultisig(m_threshold, keys));
     }
+
 public:
     MultisigDescriptor(int threshold, std::vector<std::unique_ptr<PubkeyProvider>> providers, bool sorted = false) : DescriptorImpl(std::move(providers), sorted ? "sortedmulti" : "multi"), m_threshold(threshold), m_sorted(sorted) {}
     bool IsSingleType() const final { return true; }
 
-    std::optional<int64_t> ScriptSize() const override {
+    std::optional<int64_t> ScriptSize() const override
+    {
         const auto n_keys = m_pubkey_args.size();
-        auto op = [](int64_t acc, const std::unique_ptr<PubkeyProvider>& pk) { return acc + 1 + pk->GetSize();};
+        auto op = [](int64_t acc, const std::unique_ptr<PubkeyProvider>& pk) { return acc + 1 + pk->GetSize(); };
         const auto pubkeys_size{std::accumulate(m_pubkey_args.begin(), m_pubkey_args.end(), int64_t{0}, op)};
         return 1 + BuildScript(n_keys).size() + BuildScript(m_threshold).size() + pubkeys_size;
     }
 
-    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override
+    {
         const auto sig_size = use_max_sig ? 72 : 71;
         return (1 + (1 + sig_size) * m_threshold);
     }
 
-    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override
+    {
         return *MaxSatSize(use_max_sig) * WITNESS_SCALE_FACTOR;
     }
 
@@ -1235,13 +1257,16 @@ class MultiADescriptor final : public DescriptorImpl
 {
     const int m_threshold;
     const bool m_sorted;
+
 protected:
     std::string ToStringExtra() const override { return strprintf("%i", m_threshold); }
-    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, std::span<const CScript>, FlatSigningProvider&) const override {
+    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, std::span<const CScript>, FlatSigningProvider&) const override
+    {
         CScript ret;
         std::vector<XOnlyPubKey> xkeys;
         xkeys.reserve(keys.size());
-        for (const auto& key : keys) xkeys.emplace_back(key);
+        for (const auto& key : keys)
+            xkeys.emplace_back(key);
         if (m_sorted) std::sort(xkeys.begin(), xkeys.end());
         ret << ToByteVector(xkeys[0]) << OP_CHECKSIG;
         for (size_t i = 1; i < keys.size(); ++i) {
@@ -1250,16 +1275,19 @@ protected:
         ret << m_threshold << OP_NUMEQUAL;
         return Vector(std::move(ret));
     }
+
 public:
     MultiADescriptor(int threshold, std::vector<std::unique_ptr<PubkeyProvider>> providers, bool sorted = false) : DescriptorImpl(std::move(providers), sorted ? "sortedmulti_a" : "multi_a"), m_threshold(threshold), m_sorted(sorted) {}
     bool IsSingleType() const final { return true; }
 
-    std::optional<int64_t> ScriptSize() const override {
+    std::optional<int64_t> ScriptSize() const override
+    {
         const auto n_keys = m_pubkey_args.size();
         return (1 + 32 + 1) * n_keys + BuildScript(m_threshold).size() + 1;
     }
 
-    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override
+    {
         return (1 + 65) * m_threshold + (m_pubkey_args.size() - m_threshold);
     }
 
@@ -1302,7 +1330,8 @@ public:
 
     std::optional<int64_t> ScriptSize() const override { return 1 + 1 + 20 + 1; }
 
-    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override
+    {
         if (const auto sat_size = m_subdescriptor_args[0]->MaxSatSize(use_max_sig)) {
             if (const auto subscript_size = m_subdescriptor_args[0]->ScriptSize()) {
                 // The subscript is never witness data.
@@ -1315,7 +1344,8 @@ public:
         return {};
     }
 
-    std::optional<int64_t> MaxSatisfactionElems() const override {
+    std::optional<int64_t> MaxSatisfactionElems() const override
+    {
         if (const auto sub_elems = m_subdescriptor_args[0]->MaxSatisfactionElems()) return 1 + *sub_elems;
         return {};
     }
@@ -1336,6 +1366,7 @@ protected:
         if (ret.size()) out.scripts.emplace(CScriptID(scripts[0]), scripts[0]);
         return ret;
     }
+
 public:
     WSHDescriptor(std::unique_ptr<DescriptorImpl> desc) : DescriptorImpl({}, std::move(desc), "wsh") {}
     std::optional<OutputType> GetOutputType() const override { return OutputType::BECH32; }
@@ -1343,7 +1374,8 @@ public:
 
     std::optional<int64_t> ScriptSize() const override { return 1 + 1 + 32; }
 
-    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override
+    {
         if (const auto sat_size = m_subdescriptor_args[0]->MaxSatSize(use_max_sig)) {
             if (const auto subscript_size = m_subdescriptor_args[0]->ScriptSize()) {
                 return GetSizeOfCompactSize(*subscript_size) + *subscript_size + *sat_size;
@@ -1352,11 +1384,13 @@ public:
         return {};
     }
 
-    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override {
+    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override
+    {
         return MaxSatSize(use_max_sig);
     }
 
-    std::optional<int64_t> MaxSatisfactionElems() const override {
+    std::optional<int64_t> MaxSatisfactionElems() const override
+    {
         if (const auto sub_elems = m_subdescriptor_args[0]->MaxSatisfactionElems()) return 1 + *sub_elems;
         return {};
     }
@@ -1371,6 +1405,7 @@ public:
 class TRDescriptor final : public DescriptorImpl
 {
     std::vector<int> m_depths;
+
 protected:
     std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, std::span<const CScript> scripts, FlatSigningProvider& out) const override
     {
@@ -1409,9 +1444,9 @@ protected:
         }
         return true;
     }
+
 public:
-    TRDescriptor(std::unique_ptr<PubkeyProvider> internal_key, std::vector<std::unique_ptr<DescriptorImpl>> descs, std::vector<int> depths) :
-        DescriptorImpl(Vector(std::move(internal_key)), std::move(descs), "tr"), m_depths(std::move(depths))
+    TRDescriptor(std::unique_ptr<PubkeyProvider> internal_key, std::vector<std::unique_ptr<DescriptorImpl>> descs, std::vector<int> depths) : DescriptorImpl(Vector(std::move(internal_key)), std::move(descs), "tr"), m_depths(std::move(depths))
     {
         assert(m_subdescriptor_args.size() == m_depths.size());
     }
@@ -1420,12 +1455,14 @@ public:
 
     std::optional<int64_t> ScriptSize() const override { return 1 + 1 + 32; }
 
-    std::optional<int64_t> MaxSatisfactionWeight(bool) const override {
+    std::optional<int64_t> MaxSatisfactionWeight(bool) const override
+    {
         // FIXME: We assume keypath spend, which can lead to very large underestimations.
         return 1 + 65;
     }
 
-    std::optional<int64_t> MaxSatisfactionElems() const override {
+    std::optional<int64_t> MaxSatisfactionElems() const override
+    {
         // FIXME: See above, we assume keypath spend.
         return 1;
     }
@@ -1447,7 +1484,8 @@ public:
 /**
  * The context for converting a Miniscript descriptor into a Script.
  */
-class ScriptMaker {
+class ScriptMaker
+{
     //! Keys contained in the Miniscript (the evaluation of DescriptorImpl::m_pubkey_args).
     const std::vector<CPubKey>& m_keys;
     //! The script context we're operating within (Tapscript or P2WSH).
@@ -1456,7 +1494,8 @@ class ScriptMaker {
     //! Get the ripemd160(sha256()) hash of this key.
     //! Any key that is valid in a descriptor serializes as 32 bytes within a Tapscript context. So we
     //! must not hash the sign-bit byte in this case.
-    uint160 GetHash160(uint32_t key) const {
+    uint160 GetHash160(uint32_t key) const
+    {
         if (miniscript::IsTapscript(m_script_ctx)) {
             return Hash160(XOnlyPubKey{m_keys[key]});
         }
@@ -1466,7 +1505,8 @@ class ScriptMaker {
 public:
     ScriptMaker(const std::vector<CPubKey>& keys LIFETIMEBOUND, const miniscript::MiniscriptContext script_ctx) : m_keys(keys), m_script_ctx{script_ctx} {}
 
-    std::vector<unsigned char> ToPKBytes(uint32_t key) const {
+    std::vector<unsigned char> ToPKBytes(uint32_t key) const
+    {
         // In Tapscript keys always serialize as x-only, whether an x-only key was used in the descriptor or not.
         if (!miniscript::IsTapscript(m_script_ctx)) {
             return {m_keys[key].begin(), m_keys[key].end()};
@@ -1475,7 +1515,8 @@ public:
         return {xonly_pubkey.begin(), xonly_pubkey.end()};
     }
 
-    std::vector<unsigned char> ToPKHBytes(uint32_t key) const {
+    std::vector<unsigned char> ToPKHBytes(uint32_t key) const
+    {
         auto id = GetHash160(key);
         return {id.begin(), id.end()};
     }
@@ -1484,7 +1525,8 @@ public:
 /**
  * The context for converting a Miniscript descriptor to its textual form.
  */
-class StringMaker {
+class StringMaker
+{
     //! To convert private keys for private descriptors.
     const SigningProvider* m_arg;
     //! Keys contained in the Miniscript (a reference to DescriptorImpl::m_pubkey_args).
@@ -1547,12 +1589,14 @@ public:
 
     std::optional<int64_t> ScriptSize() const override { return m_node->ScriptSize(); }
 
-    std::optional<int64_t> MaxSatSize(bool) const override {
+    std::optional<int64_t> MaxSatSize(bool) const override
+    {
         // For Miniscript we always assume high-R ECDSA signatures.
         return m_node->GetWitnessSize();
     }
 
-    std::optional<int64_t> MaxSatisfactionElems() const override {
+    std::optional<int64_t> MaxSatisfactionElems() const override
+    {
         return m_node->GetStackSize();
     }
 
@@ -1579,6 +1623,7 @@ protected:
         WitnessV1Taproot output{xpk};
         return Vector(GetScriptForDestination(output));
     }
+
 public:
     RawTRDescriptor(std::unique_ptr<PubkeyProvider> output_key) : DescriptorImpl(Vector(std::move(output_key)), "rawtr") {}
     std::optional<OutputType> GetOutputType() const override { return OutputType::BECH32M; }
@@ -1586,12 +1631,14 @@ public:
 
     std::optional<int64_t> ScriptSize() const override { return 1 + 1 + 32; }
 
-    std::optional<int64_t> MaxSatisfactionWeight(bool) const override {
+    std::optional<int64_t> MaxSatisfactionWeight(bool) const override
+    {
         // We can't know whether there is a script path, so assume key path spend.
         return 1 + 65;
     }
 
-    std::optional<int64_t> MaxSatisfactionElems() const override {
+    std::optional<int64_t> MaxSatisfactionElems() const override
+    {
         // See above, we assume keypath spend.
         return 1;
     }
@@ -1607,12 +1654,12 @@ public:
 ////////////////////////////////////////////////////////////////////////////
 
 enum class ParseScriptContext {
-    TOP,     //!< Top-level context (script goes directly in scriptPubKey)
-    P2SH,    //!< Inside sh() (script becomes P2SH redeemScript)
-    P2WPKH,  //!< Inside wpkh() (no script, pubkey only)
-    P2WSH,   //!< Inside wsh() (script becomes v0 witness script)
-    P2TR,    //!< Inside tr() (either internal key, or BIP342 script leaf)
-    MUSIG,   //!< Inside musig() (implies P2TR, cannot have nested musig())
+    TOP,    //!< Top-level context (script goes directly in scriptPubKey)
+    P2SH,   //!< Inside sh() (script becomes P2SH redeemScript)
+    P2WPKH, //!< Inside wpkh() (no script, pubkey only)
+    P2WSH,  //!< Inside wsh() (script becomes v0 witness script)
+    P2TR,   //!< Inside tr() (either internal key, or BIP342 script leaf)
+    MUSIG,  //!< Inside musig() (implies P2TR, cannot have nested musig())
 };
 
 std::optional<uint32_t> ParseKeyPathNum(std::span<const char> elem, bool& apostrophe, std::string& error, bool& has_hardened)
@@ -1674,7 +1721,7 @@ std::optional<uint32_t> ParseKeyPathNum(std::span<const char> elem, bool& apostr
             }
 
             // Parse each possible value
-            std::vector<std::span<const char>> nums = Split(std::span(elem.begin()+1, elem.end()-1), ";");
+            std::vector<std::span<const char>> nums = Split(std::span(elem.begin() + 1, elem.end() - 1), ";");
             if (nums.size() < 2) {
                 error = "Multipath key path specifiers must have at least two items";
                 return false;
@@ -1859,7 +1906,7 @@ std::vector<std::unique_ptr<PubkeyProvider>> ParsePubkey(uint32_t& key_exp_index
             }
 
             any_ranged = any_ranged || pk.at(0)->IsRange();
-            all_bip32 = all_bip32 &&  pk.at(0)->IsBIP32();
+            all_bip32 = all_bip32 && pk.at(0)->IsBIP32();
 
             max_multipath_len = std::max(max_multipath_len, pk.size());
 
@@ -2053,19 +2100,22 @@ struct KeyParser {
               miniscript::MiniscriptContext ctx, uint32_t offset = 0)
         : m_out(out), m_in(in), m_script_ctx(ctx), m_offset(offset) {}
 
-    bool KeyCompare(const Key& a, const Key& b) const {
+    bool KeyCompare(const Key& a, const Key& b) const
+    {
         return *m_keys.at(a).at(0) < *m_keys.at(b).at(0);
     }
 
-    ParseScriptContext ParseContext() const {
+    ParseScriptContext ParseContext() const
+    {
         switch (m_script_ctx) {
-            case miniscript::MiniscriptContext::P2WSH: return ParseScriptContext::P2WSH;
-            case miniscript::MiniscriptContext::TAPSCRIPT: return ParseScriptContext::P2TR;
+        case miniscript::MiniscriptContext::P2WSH: return ParseScriptContext::P2WSH;
+        case miniscript::MiniscriptContext::TAPSCRIPT: return ParseScriptContext::P2TR;
         }
         assert(false);
     }
 
-    template<typename I> std::optional<Key> FromString(I begin, I end) const
+    template <typename I>
+    std::optional<Key> FromString(I begin, I end) const
     {
         assert(m_out);
         Key key = m_keys.size();
@@ -2081,7 +2131,8 @@ struct KeyParser {
         return m_keys.at(key).at(0)->ToString();
     }
 
-    template<typename I> std::optional<Key> FromPKBytes(I begin, I end) const
+    template <typename I>
+    std::optional<Key> FromPKBytes(I begin, I end) const
     {
         assert(m_in);
         Key key = m_keys.size();
@@ -2104,7 +2155,8 @@ struct KeyParser {
         return {};
     }
 
-    template<typename I> std::optional<Key> FromPKHBytes(I begin, I end) const
+    template <typename I>
+    std::optional<Key> FromPKHBytes(I begin, I end) const
     {
         assert(end - begin == 20);
         assert(m_in);
@@ -2123,7 +2175,8 @@ struct KeyParser {
         return {};
     }
 
-    miniscript::MiniscriptContext MsContext() const {
+    miniscript::MiniscriptContext MsContext() const
+    {
         return m_script_ctx;
     }
 };
@@ -2331,7 +2384,7 @@ std::vector<std::unique_ptr<DescriptorImpl>> ParseScript(uint32_t& key_exp_index
         size_t max_providers_len = internal_keys.size();
         ++key_exp_index;
         std::vector<std::vector<std::unique_ptr<DescriptorImpl>>> subscripts; //!< list of multipath expanded script subexpressions
-        std::vector<int> depths; //!< depth in the tree of each subexpression (same length subscripts)
+        std::vector<int> depths;                                              //!< depth in the tree of each subexpression (same length subscripts)
         if (expr.size()) {
             if (!Const(",", expr)) {
                 error = strprintf("tr: expected ',', got '%c'", expr[0]);
@@ -2458,7 +2511,7 @@ std::vector<std::unique_ptr<DescriptorImpl>> ParseScript(uint32_t& key_exp_index
     // Process miniscript expressions.
     {
         const auto script_ctx{ctx == ParseScriptContext::P2WSH ? miniscript::MiniscriptContext::P2WSH : miniscript::MiniscriptContext::TAPSCRIPT};
-        KeyParser parser(/*out = */&out, /* in = */nullptr, /* ctx = */script_ctx, key_exp_index);
+        KeyParser parser(/*out = */ &out, /* in = */ nullptr, /* ctx = */ script_ctx, key_exp_index);
         auto node = miniscript::FromString(std::string(expr.begin(), expr.end()), parser);
         if (parser.m_key_parsing_error != "") {
             error = std::move(parser.m_key_parsing_error);
@@ -2501,9 +2554,10 @@ std::vector<std::unique_ptr<DescriptorImpl>> ParseScript(uint32_t& key_exp_index
             // Make sure all vecs are of the same length, or exactly length 1
             // For length 1 vectors, clone subdescs until vector is the same length
             size_t num_multipath = std::max_element(parser.m_keys.begin(), parser.m_keys.end(),
-                    [](const std::vector<std::unique_ptr<PubkeyProvider>>& a, const std::vector<std::unique_ptr<PubkeyProvider>>& b) {
-                        return a.size() < b.size();
-                    })->size();
+                                                    [](const std::vector<std::unique_ptr<PubkeyProvider>>& a, const std::vector<std::unique_ptr<PubkeyProvider>>& b) {
+                                                        return a.size() < b.size();
+                                                    })
+                                       ->size();
 
             for (auto& vec : parser.m_keys) {
                 if (vec.size() == 1) {
@@ -2641,7 +2695,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
                 // If that works, try to infer subdescriptors for all leaves.
                 bool ok = true;
                 std::vector<std::unique_ptr<DescriptorImpl>> subscripts; //!< list of script subexpressions
-                std::vector<int> depths; //!< depth in the tree of each subexpression (same length subscripts)
+                std::vector<int> depths;                                 //!< depth in the tree of each subexpression (same length subscripts)
                 for (const auto& [depth, script, leaf_ver] : *tree) {
                     std::unique_ptr<DescriptorImpl> subdesc;
                     if (leaf_ver == TAPROOT_LEAF_TAPSCRIPT) {
@@ -2672,7 +2726,7 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
 
     if (ctx == ParseScriptContext::P2WSH || ctx == ParseScriptContext::P2TR) {
         const auto script_ctx{ctx == ParseScriptContext::P2WSH ? miniscript::MiniscriptContext::P2WSH : miniscript::MiniscriptContext::TAPSCRIPT};
-        KeyParser parser(/* out = */nullptr, /* in = */&provider, /* ctx = */script_ctx);
+        KeyParser parser(/* out = */ nullptr, /* in = */ &provider, /* ctx = */ script_ctx);
         auto node = miniscript::FromScript(script, parser);
         if (node && node->IsSane()) {
             std::vector<std::unique_ptr<PubkeyProvider>> keys;
@@ -2709,7 +2763,7 @@ bool CheckChecksum(std::span<const char>& sp, bool require_checksum, std::string
         error = "Multiple '#' symbols";
         return false;
     }
-    if (check_split.size() == 1 && require_checksum){
+    if (check_split.size() == 1 && require_checksum) {
         error = "Missing checksum";
         return false;
     }

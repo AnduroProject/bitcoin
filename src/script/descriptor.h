@@ -16,7 +16,8 @@
 using ExtPubKeyMap = std::unordered_map<uint32_t, CExtPubKey>;
 
 /** Cache for single descriptor's derived extended pubkeys */
-class DescriptorCache {
+class DescriptorCache
+{
 private:
     /** Map key expression index -> map of (key derivation index -> xpub) */
     std::unordered_map<uint32_t, ExtPubKeyMap> m_derived_xpubs;
@@ -106,7 +107,7 @@ struct Descriptor {
     virtual bool IsSolvable() const = 0;
 
     /** Convert the descriptor back to a string, undoing parsing. */
-    virtual std::string ToString(bool compat_format=false) const = 0;
+    virtual std::string ToString(bool compat_format = false) const = 0;
 
     /** Whether this descriptor will return one scriptPubKey or multiple (aka is or is not combo) */
     virtual bool IsSingleType() const = 0;
@@ -202,8 +203,8 @@ std::string GetDescriptorChecksum(const std::string& descriptor);
 std::unique_ptr<Descriptor> InferDescriptor(const CScript& script, const SigningProvider& provider);
 
 /** Unique identifier that may not change over time, unless explicitly marked as not backwards compatible.
-*   This is not part of BIP 380, not guaranteed to be interoperable and should not be exposed to the user.
-*/
+ *   This is not part of BIP 380, not guaranteed to be interoperable and should not be exposed to the user.
+ */
 uint256 DescriptorID(const Descriptor& desc);
 
 #endif // BITCOIN_SCRIPT_DESCRIPTOR_H

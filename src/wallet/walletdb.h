@@ -37,8 +37,7 @@ struct WalletContext;
 /** Error statuses for the wallet database.
  * Values are in order of severity. When multiple errors occur, the most severe (highest value) will be returned.
  */
-enum class DBErrors : int
-{
+enum class DBErrors : int {
     LOAD_OK = 0,
     NEED_RESCAN = 1,
     NEED_REWRITE = 2,
@@ -93,13 +92,13 @@ class CHDChain
 public:
     uint32_t nExternalChainCounter;
     uint32_t nInternalChainCounter;
-    CKeyID seed_id; //!< seed hash160
+    CKeyID seed_id;                   //!< seed hash160
     int64_t m_next_external_index{0}; // Next index in the keypool to be used. Memory only.
     int64_t m_next_internal_index{0}; // Next index in the keypool to be used. Memory only.
 
-    static const int VERSION_HD_BASE        = 1;
+    static const int VERSION_HD_BASE = 1;
     static const int VERSION_HD_CHAIN_SPLIT = 2;
-    static const int CURRENT_VERSION        = VERSION_HD_CHAIN_SPLIT;
+    static const int CURRENT_VERSION = VERSION_HD_CHAIN_SPLIT;
     int nVersion;
 
     CHDChain() { SetNull(); }
@@ -129,15 +128,15 @@ public:
 class CKeyMetadata
 {
 public:
-    static const int VERSION_BASIC=1;
-    static const int VERSION_WITH_HDDATA=10;
+    static const int VERSION_BASIC = 1;
+    static const int VERSION_WITH_HDDATA = 10;
     static const int VERSION_WITH_KEY_ORIGIN = 12;
-    static const int CURRENT_VERSION=VERSION_WITH_KEY_ORIGIN;
+    static const int CURRENT_VERSION = VERSION_WITH_KEY_ORIGIN;
     int nVersion;
-    int64_t nCreateTime; // 0 means unknown
-    std::string hdKeypath; //optional HD/bip32 keypath. Still used to determine whether a key is a seed. Also kept for backwards compatibility
-    CKeyID hd_seed_id; //id of the HD seed used to derive this key
-    KeyOriginInfo key_origin; // Key origin info with path and fingerprint
+    int64_t nCreateTime;         // 0 means unknown
+    std::string hdKeypath;       // optional HD/bip32 keypath. Still used to determine whether a key is a seed. Also kept for backwards compatibility
+    CKeyID hd_seed_id;           // id of the HD seed used to derive this key
+    KeyOriginInfo key_origin;    // Key origin info with path and fingerprint
     bool has_key_origin = false; //!< Whether the key_origin is useful
 
     CKeyMetadata()
@@ -156,8 +155,7 @@ public:
         if (obj.nVersion >= VERSION_WITH_HDDATA) {
             READWRITE(obj.hdKeypath, obj.hd_seed_id);
         }
-        if (obj.nVersion >= VERSION_WITH_KEY_ORIGIN)
-        {
+        if (obj.nVersion >= VERSION_WITH_KEY_ORIGIN) {
             READWRITE(obj.key_origin);
             READWRITE(obj.has_key_origin);
         }
@@ -174,8 +172,7 @@ public:
     }
 };
 
-struct DbTxnListener
-{
+struct DbTxnListener {
     std::function<void()> on_commit, on_abort;
 };
 
@@ -208,8 +205,7 @@ private:
     }
 
 public:
-    explicit WalletBatch(WalletDatabase &database) :
-        m_batch(database.MakeBatch())
+    explicit WalletBatch(WalletDatabase& database) : m_batch(database.MakeBatch())
     {
     }
     WalletBatch(const WalletBatch&) = delete;
@@ -225,13 +221,13 @@ public:
     bool EraseTx(Txid hash);
 
     bool WriteKeyMetadata(const CKeyMetadata& meta, const CPubKey& pubkey, const bool overwrite);
-    bool WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata &keyMeta);
-    bool WriteCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, const CKeyMetadata &keyMeta);
+    bool WriteKey(const CPubKey& vchPubKey, const CPrivKey& vchPrivKey, const CKeyMetadata& keyMeta);
+    bool WriteCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, const CKeyMetadata& keyMeta);
     bool WriteMasterKey(unsigned int nID, const CMasterKey& kMasterKey);
     bool EraseMasterKey(unsigned int id);
 
-    bool WriteWatchOnly(const CScript &script, const CKeyMetadata &keymeta);
-    bool EraseWatchOnly(const CScript &script);
+    bool WriteWatchOnly(const CScript& script, const CKeyMetadata& keymeta);
+    bool EraseWatchOnly(const CScript& script);
 
     bool WriteBestBlock(const CBlockLocator& locator);
     bool ReadBestBlock(CBlockLocator& locator);

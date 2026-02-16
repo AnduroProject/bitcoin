@@ -33,7 +33,7 @@ UniValue ValueFromAmount(const CAmount amount)
         remainder = -remainder;
     }
     return UniValue(UniValue::VNUM,
-            strprintf("%s%d.%08d", amount < 0 ? "-" : "", quotient, remainder));
+                    strprintf("%s%d.%08d", amount < 0 ? "-" : "", quotient, remainder));
 }
 
 std::string FormatScript(const CScript& script)
@@ -60,7 +60,7 @@ std::string FormatScript(const CScript& script)
             }
             if (vch.size() > 0) {
                 ret += strprintf("0x%x 0x%x ", HexStr(std::vector<uint8_t>(it2, it - vch.size())),
-                                               HexStr(std::vector<uint8_t>(it - vch.size(), it)));
+                                 HexStr(std::vector<uint8_t>(it - vch.size(), it)));
             } else {
                 ret += strprintf("0x%x ", HexStr(std::vector<uint8_t>(it2, it)));
             }
@@ -74,11 +74,11 @@ std::string FormatScript(const CScript& script)
 
 const std::map<unsigned char, std::string> mapSigHashTypes = {
     {static_cast<unsigned char>(SIGHASH_ALL), std::string("ALL")},
-    {static_cast<unsigned char>(SIGHASH_ALL|SIGHASH_ANYONECANPAY), std::string("ALL|ANYONECANPAY")},
+    {static_cast<unsigned char>(SIGHASH_ALL | SIGHASH_ANYONECANPAY), std::string("ALL|ANYONECANPAY")},
     {static_cast<unsigned char>(SIGHASH_NONE), std::string("NONE")},
-    {static_cast<unsigned char>(SIGHASH_NONE|SIGHASH_ANYONECANPAY), std::string("NONE|ANYONECANPAY")},
+    {static_cast<unsigned char>(SIGHASH_NONE | SIGHASH_ANYONECANPAY), std::string("NONE|ANYONECANPAY")},
     {static_cast<unsigned char>(SIGHASH_SINGLE), std::string("SINGLE")},
-    {static_cast<unsigned char>(SIGHASH_SINGLE|SIGHASH_ANYONECANPAY), std::string("SINGLE|ANYONECANPAY")},
+    {static_cast<unsigned char>(SIGHASH_SINGLE | SIGHASH_ANYONECANPAY), std::string("SINGLE|ANYONECANPAY")},
 };
 
 std::string SighashToStr(unsigned char sighash_type)
@@ -180,6 +180,15 @@ void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry
     entry.pushKV("weight", GetTransactionWeight(tx));
     entry.pushKV("locktime", (int64_t)tx.nLockTime);
 
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        entry.pushKV("precision", tx.precision);
+        entry.pushKV("assettype", tx.assetType);
+        entry.pushKV("ticker", tx.ticker);
+        entry.pushKV("headline", tx.headline);
+        entry.pushKV("payload", tx.payload.ToString());
+        entry.pushKV("payloaddata", tx.payloadData);
+    }
+
     UniValue vin{UniValue::VARR};
     vin.reserve(tx.vin.size());
 
@@ -196,6 +205,7 @@ void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry
             in.pushKV("coinbase", HexStr(txin.scriptSig));
         } else {
             in.pushKV("txid", txin.prevout.hash.GetHex());
+            in.pushKV("assetid", HexStr(txin.prevout.assetId));
             in.pushKV("vout", (int64_t)txin.prevout.n);
             UniValue o(UniValue::VOBJ);
             o.pushKV("asm", ScriptToAsmStr(txin.scriptSig, true));
@@ -213,8 +223,9 @@ void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry
         if (have_undo) {
             const Coin& prev_coin = txundo->vprevout[i];
             const CTxOut& prev_txout = prev_coin.out;
-
-            amt_total_in += prev_txout.nValue;
+            if (!(tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && prev_coin.IsBitAssetController())) {
+                amt_total_in += prev_txout.nValue;
+            }
 
             if (verbosity == TxVerbosity::SHOW_DETAILS_AND_PREVOUT) {
                 UniValue o_script_pub_key(UniValue::VOBJ);
@@ -249,7 +260,17 @@ void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry
         vout.push_back(std::move(out));
 
         if (have_undo) {
-            amt_total_out += txout.nValue;
+            if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+                if (i > 1) {
+                    amt_total_out += txout.nValue;
+                }
+            } else if (tx.version == TRANSACTION_PRECONF_VERSION) {
+                if (i > 0) {
+                    amt_total_out += txout.nValue;
+                }
+            } else {
+                amt_total_out += txout.nValue;
+            }
         }
     }
     entry.pushKV("vout", std::move(vout));

@@ -87,7 +87,7 @@ using namespace std::chrono_literals;
 
 namespace GUIUtil {
 
-QString dateTimeStr(const QDateTime &date)
+QString dateTimeStr(const QDateTime& date)
 {
     return QLocale::system().toString(date.date(), QLocale::ShortFormat) + QString(" ") + date.toString("hh:mm");
 }
@@ -106,7 +106,7 @@ QFont fixedPitchFont(bool use_embedded_font)
 }
 
 // Return a pre-generated dummy bech32m address (P2TR) with invalid checksum.
-static std::string DummyAddress(const CChainParams &params)
+static std::string DummyAddress(const CChainParams& params)
 {
     std::string addr;
     switch (params.GetChainType()) {
@@ -128,15 +128,14 @@ static std::string DummyAddress(const CChainParams &params)
     return {};
 }
 
-void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent)
+void setupAddressWidget(QValidatedLineEdit* widget, QWidget* parent)
 {
     parent->setFocusProxy(widget);
 
     widget->setFont(fixedPitchFont());
     // We don't want translators to use own addresses in translations
     // and this is the only place, where this address is supplied.
-    widget->setPlaceholderText(QObject::tr("Enter a Bitcoin address (e.g. %1)").arg(
-        QString::fromStdString(DummyAddress(Params()))));
+    widget->setPlaceholderText(QObject::tr("Enter a Bitcoin address (e.g. %1)").arg(QString::fromStdString(DummyAddress(Params()))));
     widget->setValidator(new BitcoinAddressEntryValidator(parent));
     widget->setCheckValidator(new BitcoinAddressCheckValidator(parent));
 }
@@ -146,10 +145,10 @@ void AddButtonShortcut(QAbstractButton* button, const QKeySequence& shortcut)
     QObject::connect(new QShortcut(shortcut, button), &QShortcut::activated, [button]() { button->animateClick(); });
 }
 
-bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
+bool parseBitcoinURI(const QUrl& uri, SendCoinsRecipient* out)
 {
     // return if URI is not valid or is no bitcoin: URI
-    if(!uri.isValid() || uri.scheme() != QString("bitcoin"))
+    if (!uri.isValid() || uri.scheme() != QString("bitcoin"))
         return false;
 
     SendCoinsRecipient rv;
@@ -161,30 +160,23 @@ bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
     rv.amount = 0;
 
     QUrlQuery uriQuery(uri);
-    QList<QPair<QString, QString> > items = uriQuery.queryItems();
-    for (QList<QPair<QString, QString> >::iterator i = items.begin(); i != items.end(); i++)
-    {
+    QList<QPair<QString, QString>> items = uriQuery.queryItems();
+    for (QList<QPair<QString, QString>>::iterator i = items.begin(); i != items.end(); i++) {
         bool fShouldReturnFalse = false;
-        if (i->first.startsWith("req-"))
-        {
+        if (i->first.startsWith("req-")) {
             i->first.remove(0, 4);
             fShouldReturnFalse = true;
         }
 
-        if (i->first == "label")
-        {
+        if (i->first == "label") {
             rv.label = i->second;
             fShouldReturnFalse = false;
         }
-        if (i->first == "message")
-        {
+        if (i->first == "message") {
             rv.message = i->second;
             fShouldReturnFalse = false;
-        }
-        else if (i->first == "amount")
-        {
-            if(!i->second.isEmpty())
-            {
+        } else if (i->first == "amount") {
+            if (!i->second.isEmpty()) {
                 if (!BitcoinUnits::parse(BitcoinUnit::BTC, i->second, &rv.amount)) {
                     return false;
                 }
@@ -195,41 +187,37 @@ bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out)
         if (fShouldReturnFalse)
             return false;
     }
-    if(out)
-    {
+    if (out) {
         *out = rv;
     }
     return true;
 }
 
-bool parseBitcoinURI(QString uri, SendCoinsRecipient *out)
+bool parseBitcoinURI(QString uri, SendCoinsRecipient* out)
 {
     QUrl uriInstance(uri);
     return parseBitcoinURI(uriInstance, out);
 }
 
-QString formatBitcoinURI(const SendCoinsRecipient &info)
+QString formatBitcoinURI(const SendCoinsRecipient& info)
 {
     bool bech_32 = info.address.startsWith(QString::fromStdString(Params().Bech32HRP() + "1"));
 
     QString ret = QString("bitcoin:%1").arg(bech_32 ? info.address.toUpper() : info.address);
     int paramCount = 0;
 
-    if (info.amount)
-    {
+    if (info.amount) {
         ret += QString("?amount=%1").arg(BitcoinUnits::format(BitcoinUnit::BTC, info.amount, false, BitcoinUnits::SeparatorStyle::NEVER));
         paramCount++;
     }
 
-    if (!info.label.isEmpty())
-    {
+    if (!info.label.isEmpty()) {
         QString lbl(QUrl::toPercentEncoding(info.label));
         ret += QString("%1label=%2").arg(paramCount == 0 ? "?" : "&").arg(lbl);
         paramCount++;
     }
 
-    if (!info.message.isEmpty())
-    {
+    if (!info.message.isEmpty()) {
         QString msg(QUrl::toPercentEncoding(info.message));
         ret += QString("%1message=%2").arg(paramCount == 0 ? "?" : "&").arg(msg);
         paramCount++;
@@ -249,8 +237,7 @@ bool isDust(interfaces::Node& node, const QString& address, const CAmount& amoun
 QString HtmlEscape(const QString& str, bool fMultiLine)
 {
     QString escaped = str.toHtmlEscaped();
-    if(fMultiLine)
-    {
+    if (fMultiLine) {
         escaped = escaped.replace("\n", "<br>\n");
     }
     return escaped;
@@ -261,27 +248,26 @@ QString HtmlEscape(const std::string& str, bool fMultiLine)
     return HtmlEscape(QString::fromStdString(str), fMultiLine);
 }
 
-void copyEntryData(const QAbstractItemView *view, int column, int role)
+void copyEntryData(const QAbstractItemView* view, int column, int role)
 {
-    if(!view || !view->selectionModel())
+    if (!view || !view->selectionModel())
         return;
     QModelIndexList selection = view->selectionModel()->selectedRows(column);
 
-    if(!selection.isEmpty())
-    {
+    if (!selection.isEmpty()) {
         // Copy first item
         setClipboard(selection.at(0).data(role).toString());
     }
 }
 
-QList<QModelIndex> getEntryData(const QAbstractItemView *view, int column)
+QList<QModelIndex> getEntryData(const QAbstractItemView* view, int column)
 {
-    if(!view || !view->selectionModel())
+    if (!view || !view->selectionModel())
         return QList<QModelIndex>();
     return view->selectionModel()->selectedRows(column);
 }
 
-bool hasEntryData(const QAbstractItemView *view, int column, int role)
+bool hasEntryData(const QAbstractItemView* view, int column, int role)
 {
     QModelIndexList selection = getEntryData(view, column);
     if (selection.isEmpty()) return false;
@@ -310,18 +296,16 @@ QString ExtractFirstSuffixFromFilter(const QString& filter)
     return suffix;
 }
 
-QString getSaveFileName(QWidget *parent, const QString &caption, const QString &dir,
-    const QString &filter,
-    QString *selectedSuffixOut)
+QString getSaveFileName(QWidget* parent, const QString& caption, const QString& dir,
+                        const QString& filter,
+                        QString* selectedSuffixOut)
 {
     QString selectedFilter;
     QString myDir;
-    if(dir.isEmpty()) // Default to user documents location
+    if (dir.isEmpty()) // Default to user documents location
     {
         myDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    }
-    else
-    {
+    } else {
         myDir = dir;
     }
     /* Directly convert path to native OS path separators */
@@ -331,44 +315,38 @@ QString getSaveFileName(QWidget *parent, const QString &caption, const QString &
 
     /* Add suffix if needed */
     QFileInfo info(result);
-    if(!result.isEmpty())
-    {
-        if(info.suffix().isEmpty() && !selectedSuffix.isEmpty())
-        {
+    if (!result.isEmpty()) {
+        if (info.suffix().isEmpty() && !selectedSuffix.isEmpty()) {
             /* No suffix specified, add selected suffix */
-            if(!result.endsWith("."))
+            if (!result.endsWith("."))
                 result.append(".");
             result.append(selectedSuffix);
         }
     }
 
     /* Return selected suffix if asked to */
-    if(selectedSuffixOut)
-    {
+    if (selectedSuffixOut) {
         *selectedSuffixOut = selectedSuffix;
     }
     return result;
 }
 
-QString getOpenFileName(QWidget *parent, const QString &caption, const QString &dir,
-    const QString &filter,
-    QString *selectedSuffixOut)
+QString getOpenFileName(QWidget* parent, const QString& caption, const QString& dir,
+                        const QString& filter,
+                        QString* selectedSuffixOut)
 {
     QString selectedFilter;
     QString myDir;
-    if(dir.isEmpty()) // Default to user documents location
+    if (dir.isEmpty()) // Default to user documents location
     {
         myDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    }
-    else
-    {
+    } else {
         myDir = dir;
     }
     /* Directly convert path to native OS path separators */
     QString result = QDir::toNativeSeparators(QFileDialog::getOpenFileName(parent, caption, myDir, filter, &selectedFilter));
 
-    if(selectedSuffixOut)
-    {
+    if (selectedSuffixOut) {
         *selectedSuffixOut = ExtractFirstSuffixFromFilter(selectedFilter);
         ;
     }
@@ -377,30 +355,23 @@ QString getOpenFileName(QWidget *parent, const QString &caption, const QString &
 
 Qt::ConnectionType blockingGUIThreadConnection()
 {
-    if(QThread::currentThread() != qApp->thread())
-    {
+    if (QThread::currentThread() != qApp->thread()) {
         return Qt::BlockingQueuedConnection;
-    }
-    else
-    {
+    } else {
         return Qt::DirectConnection;
     }
 }
 
-bool checkPoint(const QPoint &p, const QWidget *w)
+bool checkPoint(const QPoint& p, const QWidget* w)
 {
-    QWidget *atW = QApplication::widgetAt(w->mapToGlobal(p));
+    QWidget* atW = QApplication::widgetAt(w->mapToGlobal(p));
     if (!atW) return false;
     return atW->window() == w;
 }
 
-bool isObscured(QWidget *w)
+bool isObscured(QWidget* w)
 {
-    return !(checkPoint(QPoint(0, 0), w)
-        && checkPoint(QPoint(w->width() - 1, 0), w)
-        && checkPoint(QPoint(0, w->height() - 1), w)
-        && checkPoint(QPoint(w->width() - 1, w->height() - 1), w)
-        && checkPoint(QPoint(w->width() / 2, w->height() / 2), w));
+    return !(checkPoint(QPoint(0, 0), w) && checkPoint(QPoint(w->width() - 1, 0), w) && checkPoint(QPoint(0, w->height() - 1), w) && checkPoint(QPoint(w->width() - 1, w->height() - 1), w) && checkPoint(QPoint(w->width() / 2, w->height() / 2), w));
 }
 
 void bringToFront(QWidget* w)
@@ -408,7 +379,7 @@ void bringToFront(QWidget* w)
     if (w) {
         if (QGuiApplication::platformName() == "wayland") {
             auto flags = w->windowFlags();
-            w->setWindowFlags(flags|Qt::WindowStaysOnTopHint);
+            w->setWindowFlags(flags | Qt::WindowStaysOnTopHint);
             w->show();
             w->setWindowFlags(flags);
             w->show();
@@ -466,21 +437,17 @@ bool openBitcoinConf()
     return res;
 }
 
-ToolTipToRichTextFilter::ToolTipToRichTextFilter(int _size_threshold, QObject *parent) :
-    QObject(parent),
-    size_threshold(_size_threshold)
+ToolTipToRichTextFilter::ToolTipToRichTextFilter(int _size_threshold, QObject* parent) : QObject(parent),
+                                                                                         size_threshold(_size_threshold)
 {
-
 }
 
-bool ToolTipToRichTextFilter::eventFilter(QObject *obj, QEvent *evt)
+bool ToolTipToRichTextFilter::eventFilter(QObject* obj, QEvent* evt)
 {
-    if(evt->type() == QEvent::ToolTipChange)
-    {
-        QWidget *widget = static_cast<QWidget*>(obj);
+    if (evt->type() == QEvent::ToolTipChange) {
+        QWidget* widget = static_cast<QWidget*>(obj);
         QString tooltip = widget->toolTip();
-        if(tooltip.size() > size_threshold && !tooltip.startsWith("<qt") && !Qt::mightBeRichText(tooltip))
-        {
+        if (tooltip.size() > size_threshold && !tooltip.startsWith("<qt") && !Qt::mightBeRichText(tooltip)) {
             // Envelop with <qt></qt> to make sure Qt detects this as rich text
             // Escape the current message as HTML and replace \n by <br>
             tooltip = "<qt>" + HtmlEscape(tooltip, true) + "</qt>";
@@ -535,18 +502,16 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     // If the shortcut exists already, remove it for updating
     fs::remove(StartupShortcutPath());
 
-    if (fAutoStart)
-    {
+    if (fAutoStart) {
         CoInitialize(nullptr);
 
         // Get a pointer to the IShellLink interface.
         IShellLinkW* psl = nullptr;
         HRESULT hres = CoCreateInstance(CLSID_ShellLink, nullptr,
-            CLSCTX_INPROC_SERVER, IID_IShellLinkW,
-            reinterpret_cast<void**>(&psl));
+                                        CLSCTX_INPROC_SERVER, IID_IShellLinkW,
+                                        reinterpret_cast<void**>(&psl));
 
-        if (SUCCEEDED(hres))
-        {
+        if (SUCCEEDED(hres)) {
             // Get the current executable path
             WCHAR pszExePath[MAX_PATH];
             GetModuleFileNameW(nullptr, pszExePath, ARRAYSIZE(pszExePath));
@@ -567,8 +532,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
             // saving the shortcut in persistent storage.
             IPersistFile* ppf = nullptr;
             hres = psl->QueryInterface(IID_IPersistFile, reinterpret_cast<void**>(&ppf));
-            if (SUCCEEDED(hres))
-            {
+            if (SUCCEEDED(hres)) {
                 // Save the link by calling IPersistFile::Save.
                 hres = ppf->Save(StartupShortcutPath().wstring().c_str(), TRUE);
                 ppf->Release();
@@ -612,8 +576,7 @@ bool GetStartOnSystemStartup()
         return false;
     // Scan through file for "Hidden=true":
     std::string line;
-    while (!optionFile.eof())
-    {
+    while (!optionFile.eof()) {
         getline(optionFile, line);
         if (line.find("Hidden") != std::string::npos &&
             line.find("true") != std::string::npos)
@@ -628,9 +591,8 @@ bool SetStartOnSystemStartup(bool fAutoStart)
 {
     if (!fAutoStart)
         fs::remove(GetAutostartFilePath());
-    else
-    {
-        char pszExePath[MAX_PATH+1];
+    else {
+        char pszExePath[MAX_PATH + 1];
         ssize_t r = readlink("/proc/self/exe", pszExePath, sizeof(pszExePath));
         if (r == -1 || r > MAX_PATH) {
             return false;
@@ -674,12 +636,12 @@ void setClipboard(const QString& str)
     }
 }
 
-fs::path QStringToPath(const QString &path)
+fs::path QStringToPath(const QString& path)
 {
     return fs::u8path(path.toStdString());
 }
 
-QString PathToQString(const fs::path &path)
+QString PathToQString(const fs::path& path)
 {
     return QString::fromStdString(path.utf8string());
 }
@@ -698,7 +660,7 @@ QString NetworkToQString(Network net)
     case NET_I2P: return QObject::tr("I2P", "network name");
     //: Name of CJDNS network in peer info
     case NET_CJDNS: return QObject::tr("CJDNS", "network name");
-    case NET_INTERNAL: return "Internal";  // should never actually happen
+    case NET_INTERNAL: return "Internal"; // should never actually happen
     case NET_MAX: assert(false);
     } // no default case, so the compiler can warn about missing cases
     assert(false);
@@ -712,9 +674,9 @@ QString ConnectionTypeToQString(ConnectionType conn_type, bool prepend_direction
                      /*: An inbound connection from a peer. An inbound connection
                          is a connection initiated by a peer. */
                      QObject::tr("Inbound") :
-                     /*: An outbound connection to a peer. An outbound connection
-                         is a connection initiated by us. */
-                     QObject::tr("Outbound") + " ";
+                         /*: An outbound connection to a peer. An outbound connection
+                             is a connection initiated by us. */
+                         QObject::tr("Outbound") + " ";
     }
     switch (conn_type) {
     case ConnectionType::INBOUND: return prefix;
@@ -775,48 +737,37 @@ QString formatServicesStr(quint64 mask)
 QString formatPingTime(std::chrono::microseconds ping_time)
 {
     return (ping_time == std::chrono::microseconds::max() || ping_time == 0us) ?
-        QObject::tr("N/A") :
-        QObject::tr("%1 ms").arg(QString::number((int)(count_microseconds(ping_time) / 1000), 10));
+               QObject::tr("N/A") :
+               QObject::tr("%1 ms").arg(QString::number((int)(count_microseconds(ping_time) / 1000), 10));
 }
 
 QString formatTimeOffset(int64_t time_offset)
 {
-  return QObject::tr("%1 s").arg(QString::number((int)time_offset, 10));
+    return QObject::tr("%1 s").arg(QString::number((int)time_offset, 10));
 }
 
 QString formatNiceTimeOffset(qint64 secs)
 {
     // Represent time from last generated block in human readable text
     QString timeBehindText;
-    const int HOUR_IN_SECONDS = 60*60;
-    const int DAY_IN_SECONDS = 24*60*60;
-    const int WEEK_IN_SECONDS = 7*24*60*60;
+    const int HOUR_IN_SECONDS = 60 * 60;
+    const int DAY_IN_SECONDS = 24 * 60 * 60;
+    const int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
     const int YEAR_IN_SECONDS = 31556952; // Average length of year in Gregorian calendar
-    if(secs < 60)
-    {
-        timeBehindText = QObject::tr("%n second(s)","",secs);
-    }
-    else if(secs < 2*HOUR_IN_SECONDS)
-    {
-        timeBehindText = QObject::tr("%n minute(s)","",secs/60);
-    }
-    else if(secs < 2*DAY_IN_SECONDS)
-    {
-        timeBehindText = QObject::tr("%n hour(s)","",secs/HOUR_IN_SECONDS);
-    }
-    else if(secs < 2*WEEK_IN_SECONDS)
-    {
-        timeBehindText = QObject::tr("%n day(s)","",secs/DAY_IN_SECONDS);
-    }
-    else if(secs < YEAR_IN_SECONDS)
-    {
-        timeBehindText = QObject::tr("%n week(s)","",secs/WEEK_IN_SECONDS);
-    }
-    else
-    {
+    if (secs < 60) {
+        timeBehindText = QObject::tr("%n second(s)", "", secs);
+    } else if (secs < 2 * HOUR_IN_SECONDS) {
+        timeBehindText = QObject::tr("%n minute(s)", "", secs / 60);
+    } else if (secs < 2 * DAY_IN_SECONDS) {
+        timeBehindText = QObject::tr("%n hour(s)", "", secs / HOUR_IN_SECONDS);
+    } else if (secs < 2 * WEEK_IN_SECONDS) {
+        timeBehindText = QObject::tr("%n day(s)", "", secs / DAY_IN_SECONDS);
+    } else if (secs < YEAR_IN_SECONDS) {
+        timeBehindText = QObject::tr("%n week(s)", "", secs / WEEK_IN_SECONDS);
+    } else {
         qint64 years = secs / YEAR_IN_SECONDS;
         qint64 remainder = secs % YEAR_IN_SECONDS;
-        timeBehindText = QObject::tr("%1 and %2").arg(QObject::tr("%n year(s)", "", years)).arg(QObject::tr("%n week(s)","", remainder/WEEK_IN_SECONDS));
+        timeBehindText = QObject::tr("%1 and %2").arg(QObject::tr("%n year(s)", "", years)).arg(QObject::tr("%n week(s)", "", remainder / WEEK_IN_SECONDS));
     }
     return timeBehindText;
 }
@@ -833,8 +784,9 @@ QString formatBytes(uint64_t bytes)
     return QObject::tr("%1 GB").arg(bytes / 1'000'000'000);
 }
 
-qreal calculateIdealFontSize(int width, const QString& text, QFont font, qreal minPointSize, qreal font_size) {
-    while(font_size >= minPointSize) {
+qreal calculateIdealFontSize(int width, const QString& text, QFont font, qreal minPointSize, qreal font_size)
+{
+    while (font_size >= minPointSize) {
         font.setPointSizeF(font_size);
         QFontMetrics fm(font);
         if (TextWidth(fm, text) < width) {
@@ -878,17 +830,17 @@ ClickableLabel::ClickableLabel(const PlatformStyle* platform_style, QWidget* par
 {
 }
 
-void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
+void ClickableLabel::mouseReleaseEvent(QMouseEvent* event)
 {
     Q_EMIT clicked(event->pos());
 }
 
-void ClickableProgressBar::mouseReleaseEvent(QMouseEvent *event)
+void ClickableProgressBar::mouseReleaseEvent(QMouseEvent* event)
 {
     Q_EMIT clicked(event->pos());
 }
 
-bool ItemDelegate::eventFilter(QObject *object, QEvent *event)
+bool ItemDelegate::eventFilter(QObject* object, QEvent* event)
 {
     if (event->type() == QEvent::KeyPress) {
         if (static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {

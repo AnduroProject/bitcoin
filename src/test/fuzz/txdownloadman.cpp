@@ -16,10 +16,10 @@
 #include <test/util/script.h>
 #include <test/util/setup_common.h>
 #include <test/util/txmempool.h>
+#include <txmempool.h>
 #include <util/hasher.h>
 #include <util/rbf.h>
 #include <util/time.h>
-#include <txmempool.h>
 #include <validation.h>
 #include <validationinterface.h>
 
@@ -65,14 +65,16 @@ static CTransactionRef MakeTransactionSpending(const std::vector<COutPoint>& out
     if (add_witness) {
         tx.vin[0].scriptWitness.stack.push_back({1});
     }
-    for (size_t o = 0; o < num_outputs; ++o) tx.vout.emplace_back(CENT, P2WSH_OP_TRUE);
+    for (size_t o = 0; o < num_outputs; ++o)
+        tx.vout.emplace_back(CENT, P2WSH_OP_TRUE);
     return MakeTransactionRef(tx);
 }
 static std::vector<COutPoint> PickCoins(FuzzedDataProvider& fuzzed_data_provider)
 {
     std::vector<COutPoint> ret;
     ret.push_back(fuzzed_data_provider.PickValueInArray(COINS));
-    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10) {
+    LIMITED_WHILE(fuzzed_data_provider.ConsumeBool(), 10)
+    {
         ret.push_back(fuzzed_data_provider.PickValueInArray(COINS));
     }
     return ret;
@@ -102,16 +104,16 @@ void initialize()
         auto tx_parent_2{MakeTransactionSpending({COINS[outpoints_index++]}, /*num_outputs=*/1, /*add_witness=*/false)};
         TRANSACTIONS.emplace_back(tx_parent_2);
         TRANSACTIONS.emplace_back(MakeTransactionSpending({COutPoint{tx_parent_1->GetHash(), 0}, COutPoint{tx_parent_2->GetHash(), 0}},
-                                                            /*num_outputs=*/1, /*add_witness=*/true));
+                                                          /*num_outputs=*/1, /*add_witness=*/true));
     }
     // 1 parent 2 children
     {
         auto tx_parent{MakeTransactionSpending({COINS[outpoints_index++]}, /*num_outputs=*/2, /*add_witness=*/true)};
         TRANSACTIONS.emplace_back(tx_parent);
         TRANSACTIONS.emplace_back(MakeTransactionSpending({COutPoint{tx_parent->GetHash(), 0}},
-                                                            /*num_outputs=*/1, /*add_witness=*/true));
+                                                          /*num_outputs=*/1, /*add_witness=*/true));
         TRANSACTIONS.emplace_back(MakeTransactionSpending({COutPoint{tx_parent->GetHash(), 1}},
-                                                            /*num_outputs=*/1, /*add_witness=*/true));
+                                                          /*num_outputs=*/1, /*add_witness=*/true));
     }
     // chain of 5 segwit
     {
@@ -173,8 +175,9 @@ FUZZ_TARGET(txdownloadman, .init = initialize)
     // Initialize txdownloadman
     bilingual_str error;
     CTxMemPool pool{MemPoolOptionsForTest(g_setup->m_node), error};
+    CTxMemPool preconfpool{MemPoolOptionsForTest(g_setup->m_node), error};
     FastRandomContext det_rand{true};
-    node::TxDownloadManager txdownloadman{node::TxDownloadOptions{pool, det_rand, true}};
+    node::TxDownloadManager txdownloadman{node::TxDownloadOptions{pool, preconfpool, det_rand, true}};
 
     std::chrono::microseconds time{244466666};
 
@@ -184,10 +187,10 @@ FUZZ_TARGET(txdownloadman, .init = initialize)
 
         // Transaction can be one of the premade ones or a randomly generated one
         auto rand_tx = fuzzed_data_provider.ConsumeBool() ?
-            MakeTransactionSpending(PickCoins(fuzzed_data_provider),
-                                    /*num_outputs=*/fuzzed_data_provider.ConsumeIntegralInRange(1, 500),
-                                    /*add_witness=*/fuzzed_data_provider.ConsumeBool()) :
-            TRANSACTIONS.at(fuzzed_data_provider.ConsumeIntegralInRange<unsigned>(0, TRANSACTIONS.size() - 1));
+                           MakeTransactionSpending(PickCoins(fuzzed_data_provider),
+                                                   /*num_outputs=*/fuzzed_data_provider.ConsumeIntegralInRange(1, 500),
+                                                   /*add_witness=*/fuzzed_data_provider.ConsumeBool()) :
+                           TRANSACTIONS.at(fuzzed_data_provider.ConsumeIntegralInRange<unsigned>(0, TRANSACTIONS.size() - 1));
 
         CallOneOf(
             fuzzed_data_provider,
@@ -195,8 +198,7 @@ FUZZ_TARGET(txdownloadman, .init = initialize)
                 node::TxDownloadConnectionInfo info{
                     .m_preferred = fuzzed_data_provider.ConsumeBool(),
                     .m_relay_permissions = fuzzed_data_provider.ConsumeBool(),
-                    .m_wtxid_relay = fuzzed_data_provider.ConsumeBool()
-                };
+                    .m_wtxid_relay = fuzzed_data_provider.ConsumeBool()};
                 txdownloadman.ConnectedPeer(rand_peer, info);
             },
             [&] {
@@ -227,8 +229,8 @@ FUZZ_TARGET(txdownloadman, .init = initialize)
             },
             [&] {
                 auto gtxid = fuzzed_data_provider.ConsumeBool() ?
-                             GenTxid{rand_tx->GetHash()} :
-                             GenTxid{rand_tx->GetWitnessHash()};
+                                 GenTxid{rand_tx->GetHash()} :
+                                 GenTxid{rand_tx->GetWitnessHash()};
                 txdownloadman.AddTxAnnouncement(rand_peer, gtxid, time);
             },
             [&] {
@@ -298,8 +300,9 @@ FUZZ_TARGET(txdownloadman_impl, .init = initialize)
     // Initialize a TxDownloadManagerImpl
     bilingual_str error;
     CTxMemPool pool{MemPoolOptionsForTest(g_setup->m_node), error};
+    CTxMemPool preconfpool{MemPoolOptionsForTest(g_setup->m_node), error};
     FastRandomContext det_rand{true};
-    node::TxDownloadManagerImpl txdownload_impl{node::TxDownloadOptions{pool, det_rand, true}};
+    node::TxDownloadManagerImpl txdownload_impl{node::TxDownloadOptions{pool, preconfpool, det_rand, true}};
 
     std::chrono::microseconds time{244466666};
 
@@ -309,10 +312,10 @@ FUZZ_TARGET(txdownloadman_impl, .init = initialize)
 
         // Transaction can be one of the premade ones or a randomly generated one
         auto rand_tx = fuzzed_data_provider.ConsumeBool() ?
-            MakeTransactionSpending(PickCoins(fuzzed_data_provider),
-                                    /*num_outputs=*/fuzzed_data_provider.ConsumeIntegralInRange(1, 500),
-                                    /*add_witness=*/fuzzed_data_provider.ConsumeBool()) :
-            TRANSACTIONS.at(fuzzed_data_provider.ConsumeIntegralInRange<unsigned>(0, TRANSACTIONS.size() - 1));
+                           MakeTransactionSpending(PickCoins(fuzzed_data_provider),
+                                                   /*num_outputs=*/fuzzed_data_provider.ConsumeIntegralInRange(1, 500),
+                                                   /*add_witness=*/fuzzed_data_provider.ConsumeBool()) :
+                           TRANSACTIONS.at(fuzzed_data_provider.ConsumeIntegralInRange<unsigned>(0, TRANSACTIONS.size() - 1));
 
         CallOneOf(
             fuzzed_data_provider,
@@ -320,8 +323,7 @@ FUZZ_TARGET(txdownloadman_impl, .init = initialize)
                 node::TxDownloadConnectionInfo info{
                     .m_preferred = fuzzed_data_provider.ConsumeBool(),
                     .m_relay_permissions = HasRelayPermissions(rand_peer),
-                    .m_wtxid_relay = fuzzed_data_provider.ConsumeBool()
-                };
+                    .m_wtxid_relay = fuzzed_data_provider.ConsumeBool()};
                 txdownload_impl.ConnectedPeer(rand_peer, info);
             },
             [&] {
@@ -366,8 +368,8 @@ FUZZ_TARGET(txdownloadman_impl, .init = initialize)
             },
             [&] {
                 auto gtxid = fuzzed_data_provider.ConsumeBool() ?
-                             GenTxid{rand_tx->GetHash()} :
-                             GenTxid{rand_tx->GetWitnessHash()};
+                                 GenTxid{rand_tx->GetHash()} :
+                                 GenTxid{rand_tx->GetWitnessHash()};
                 txdownload_impl.AddTxAnnouncement(rand_peer, gtxid, time);
             },
             [&] {

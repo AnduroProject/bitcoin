@@ -87,7 +87,8 @@ void PSBTOperationsDialog::signTransaction()
 
     if (err) {
         showStatus(tr("Failed to sign transaction: %1")
-            .arg(QString::fromStdString(PSBTErrorString(*err).translated)), StatusLevel::ERR);
+                       .arg(QString::fromStdString(PSBTErrorString(*err).translated)),
+                   StatusLevel::ERR);
         return;
     }
 
@@ -99,10 +100,10 @@ void PSBTOperationsDialog::signTransaction()
         showStatus(tr("Could not sign any more inputs."), StatusLevel::WARN);
     } else if (!complete) {
         showStatus(tr("Signed %1 inputs, but more signatures are still required.").arg(n_signed),
-            StatusLevel::INFO);
+                   StatusLevel::INFO);
     } else {
         showStatus(tr("Signed transaction successfully. Transaction is ready to broadcast."),
-            StatusLevel::INFO);
+                   StatusLevel::INFO);
         m_ui->broadcastTransactionButton->setEnabled(true);
     }
 }
@@ -124,21 +125,25 @@ void PSBTOperationsDialog::broadcastTransaction()
 
     if (error == TransactionError::OK) {
         showStatus(tr("Transaction broadcast successfully! Transaction ID: %1")
-            .arg(QString::fromStdString(tx->GetHash().GetHex())), StatusLevel::INFO);
+                       .arg(QString::fromStdString(tx->GetHash().GetHex())),
+                   StatusLevel::INFO);
     } else {
         showStatus(tr("Transaction broadcast failed: %1")
-            .arg(QString::fromStdString(TransactionErrorString(error).translated)), StatusLevel::ERR);
+                       .arg(QString::fromStdString(TransactionErrorString(error).translated)),
+                   StatusLevel::ERR);
     }
 }
 
-void PSBTOperationsDialog::copyToClipboard() {
+void PSBTOperationsDialog::copyToClipboard()
+{
     DataStream ssTx{};
     ssTx << m_transaction_data;
     GUIUtil::setClipboard(EncodeBase64(ssTx.str()).c_str());
     showStatus(tr("PSBT copied to clipboard."), StatusLevel::INFO);
 }
 
-void PSBTOperationsDialog::saveTransaction() {
+void PSBTOperationsDialog::saveTransaction()
+{
     DataStream ssTx{};
     ssTx << m_transaction_data;
 
@@ -158,9 +163,9 @@ void PSBTOperationsDialog::saveTransaction() {
     }
     filename_suggestion.append(".psbt");
     QString filename = GUIUtil::getSaveFileName(this,
-        tr("Save Transaction Data"), filename_suggestion,
-        //: Expanded name of the binary PSBT file format. See: BIP 174.
-        tr("Partially Signed Transaction (Binary)") + QLatin1String(" (*.psbt)"), &selected_filter);
+                                                tr("Save Transaction Data"), filename_suggestion,
+                                                //: Expanded name of the binary PSBT file format. See: BIP 174.
+                                                tr("Partially Signed Transaction (Binary)") + QLatin1String(" (*.psbt)"), &selected_filter);
     if (filename.isEmpty()) {
         return;
     }
@@ -170,12 +175,13 @@ void PSBTOperationsDialog::saveTransaction() {
     showStatus(tr("PSBT saved to disk."), StatusLevel::INFO);
 }
 
-void PSBTOperationsDialog::updateTransactionDisplay() {
+void PSBTOperationsDialog::updateTransactionDisplay()
+{
     m_ui->transactionDescription->setText(renderTransaction(m_transaction_data));
     showTransactionStatus(m_transaction_data);
 }
 
-QString PSBTOperationsDialog::renderTransaction(const PartiallySignedTransaction &psbtx)
+QString PSBTOperationsDialog::renderTransaction(const PartiallySignedTransaction& psbtx)
 {
     QString tx_description;
     QLatin1String bullet_point(" * ");
@@ -184,9 +190,7 @@ QString PSBTOperationsDialog::renderTransaction(const PartiallySignedTransaction
         CTxDestination address;
         ExtractDestination(out.scriptPubKey, address);
         totalAmount += out.nValue;
-        tx_description.append(bullet_point).append(tr("Sends %1 to %2")
-            .arg(BitcoinUnits::formatWithUnit(BitcoinUnit::BTC, out.nValue))
-            .arg(QString::fromStdString(EncodeDestination(address))));
+        tx_description.append(bullet_point).append(tr("Sends %1 to %2").arg(BitcoinUnits::formatWithUnit(BitcoinUnit::BTC, out.nValue)).arg(QString::fromStdString(EncodeDestination(address))));
         // Check if the address is one of ours
         if (m_wallet_model != nullptr && m_wallet_model->wallet().txoutIsMine(out)) tx_description.append(" (" + tr("own address") + ")");
         tx_description.append("<br>");
@@ -204,16 +208,14 @@ QString PSBTOperationsDialog::renderTransaction(const PartiallySignedTransaction
         // add total amount in all subdivision units
         tx_description.append("<hr />");
         QStringList alternativeUnits;
-        for (const BitcoinUnits::Unit u : BitcoinUnits::availableUnits())
-        {
-            if(u != m_client_model->getOptionsModel()->getDisplayUnit()) {
+        for (const BitcoinUnits::Unit u : BitcoinUnits::availableUnits()) {
+            if (u != m_client_model->getOptionsModel()->getDisplayUnit()) {
                 alternativeUnits.append(BitcoinUnits::formatHtmlWithUnit(u, totalAmount));
             }
         }
-        tx_description.append(QString("<b>%1</b>: <b>%2</b>").arg(tr("Total Amount"))
-            .arg(BitcoinUnits::formatHtmlWithUnit(m_client_model->getOptionsModel()->getDisplayUnit(), totalAmount)));
+        tx_description.append(QString("<b>%1</b>: <b>%2</b>").arg(tr("Total Amount")).arg(BitcoinUnits::formatHtmlWithUnit(m_client_model->getOptionsModel()->getDisplayUnit(), totalAmount)));
         tx_description.append(QString("<br /><span style='font-size:10pt; font-weight:normal;'>(=%1)</span>")
-            .arg(alternativeUnits.join(" " + tr("or") + " ")));
+                                  .arg(alternativeUnits.join(" " + tr("or") + " ")));
     }
 
     size_t num_unsigned = CountPSBTUnsignedInputs(psbtx);
@@ -225,26 +227,28 @@ QString PSBTOperationsDialog::renderTransaction(const PartiallySignedTransaction
     return tx_description;
 }
 
-void PSBTOperationsDialog::showStatus(const QString &msg, StatusLevel level) {
+void PSBTOperationsDialog::showStatus(const QString& msg, StatusLevel level)
+{
     m_ui->statusBar->setText(msg);
     switch (level) {
-        case StatusLevel::INFO: {
-            m_ui->statusBar->setStyleSheet("QLabel { background-color : lightgreen }");
-            break;
-        }
-        case StatusLevel::WARN: {
-            m_ui->statusBar->setStyleSheet("QLabel { background-color : orange }");
-            break;
-        }
-        case StatusLevel::ERR: {
-            m_ui->statusBar->setStyleSheet("QLabel { background-color : red }");
-            break;
-        }
+    case StatusLevel::INFO: {
+        m_ui->statusBar->setStyleSheet("QLabel { background-color : lightgreen }");
+        break;
+    }
+    case StatusLevel::WARN: {
+        m_ui->statusBar->setStyleSheet("QLabel { background-color : orange }");
+        break;
+    }
+    case StatusLevel::ERR: {
+        m_ui->statusBar->setStyleSheet("QLabel { background-color : red }");
+        break;
+    }
     }
     m_ui->statusBar->show();
 }
 
-size_t PSBTOperationsDialog::couldSignInputs(const PartiallySignedTransaction &psbtx) {
+size_t PSBTOperationsDialog::couldSignInputs(const PartiallySignedTransaction& psbtx)
+{
     if (!m_wallet_model) {
         return 0;
     }
@@ -259,39 +263,40 @@ size_t PSBTOperationsDialog::couldSignInputs(const PartiallySignedTransaction &p
     return n_signed;
 }
 
-void PSBTOperationsDialog::showTransactionStatus(const PartiallySignedTransaction &psbtx) {
+void PSBTOperationsDialog::showTransactionStatus(const PartiallySignedTransaction& psbtx)
+{
     PSBTAnalysis analysis = AnalyzePSBT(psbtx);
     size_t n_could_sign = couldSignInputs(psbtx);
 
     switch (analysis.next) {
-        case PSBTRole::UPDATER: {
-            showStatus(tr("Transaction is missing some information about inputs."), StatusLevel::WARN);
-            break;
+    case PSBTRole::UPDATER: {
+        showStatus(tr("Transaction is missing some information about inputs."), StatusLevel::WARN);
+        break;
+    }
+    case PSBTRole::SIGNER: {
+        QString need_sig_text = tr("Transaction still needs signature(s).");
+        StatusLevel level = StatusLevel::INFO;
+        if (!m_wallet_model) {
+            need_sig_text += " " + tr("(But no wallet is loaded.)");
+            level = StatusLevel::WARN;
+        } else if (m_wallet_model->wallet().privateKeysDisabled()) {
+            need_sig_text += " " + tr("(But this wallet cannot sign transactions.)");
+            level = StatusLevel::WARN;
+        } else if (n_could_sign < 1) {
+            need_sig_text += " " + tr("(But this wallet does not have the right keys.)"); // XXX wording
+            level = StatusLevel::WARN;
         }
-        case PSBTRole::SIGNER: {
-            QString need_sig_text = tr("Transaction still needs signature(s).");
-            StatusLevel level = StatusLevel::INFO;
-            if (!m_wallet_model) {
-                need_sig_text += " " + tr("(But no wallet is loaded.)");
-                level = StatusLevel::WARN;
-            } else if (m_wallet_model->wallet().privateKeysDisabled()) {
-                need_sig_text += " " + tr("(But this wallet cannot sign transactions.)");
-                level = StatusLevel::WARN;
-            } else if (n_could_sign < 1) {
-                need_sig_text += " " + tr("(But this wallet does not have the right keys.)"); // XXX wording
-                level = StatusLevel::WARN;
-            }
-            showStatus(need_sig_text, level);
-            break;
-        }
-        case PSBTRole::FINALIZER:
-        case PSBTRole::EXTRACTOR: {
-            showStatus(tr("Transaction is fully signed and ready for broadcast."), StatusLevel::INFO);
-            break;
-        }
-        default: {
-            showStatus(tr("Transaction status is unknown."), StatusLevel::ERR);
-            break;
-        }
+        showStatus(need_sig_text, level);
+        break;
+    }
+    case PSBTRole::FINALIZER:
+    case PSBTRole::EXTRACTOR: {
+        showStatus(tr("Transaction is fully signed and ready for broadcast."), StatusLevel::INFO);
+        break;
+    }
+    default: {
+        showStatus(tr("Transaction status is unknown."), StatusLevel::ERR);
+        break;
+    }
     }
 }

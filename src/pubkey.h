@@ -36,9 +36,9 @@ public:
     /**
      * secp256k1:
      */
-    static constexpr unsigned int SIZE                   = 65;
-    static constexpr unsigned int COMPRESSED_SIZE        = 33;
-    static constexpr unsigned int SIGNATURE_SIZE         = 72;
+    static constexpr unsigned int SIZE = 65;
+    static constexpr unsigned int COMPRESSED_SIZE = 33;
+    static constexpr unsigned int SIGNATURE_SIZE = 72;
     static constexpr unsigned int COMPACT_SIGNATURE_SIZE = 65;
     /**
      * see www.keylength.com
@@ -49,7 +49,6 @@ public:
         "COMPRESSED_SIZE is larger than SIZE");
 
 private:
-
     /**
      * Just store the serialized data.
      * Its length can very cheaply be computed from the first byte.
@@ -73,9 +72,9 @@ private:
     }
 
 public:
-
-    bool static ValidSize(const std::vector<unsigned char> &vch) {
-      return vch.size() > 0 && GetLen(vch[0]) == vch.size();
+    bool static ValidSize(const std::vector<unsigned char>& vch)
+    {
+        return vch.size() > 0 && GetLen(vch[0]) == vch.size();
     }
 
     //! Construct an invalid public key.
@@ -224,7 +223,7 @@ public:
     bool Decompress();
 
     //! Derive BIP32 child pubkey.
-    [[nodiscard]] bool Derive(CPubKey& pubkeyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode& cc) const;
+    [[nodiscard]] bool Derive(CPubKey& pubkeyChild, ChainCode& ccChild, unsigned int nChild, const ChainCode& cc) const;
 };
 
 class XOnlyPubKey
@@ -310,8 +309,7 @@ public:
 };
 
 /** An ElligatorSwift-encoded public key. */
-struct EllSwiftPubKey
-{
+struct EllSwiftPubKey {
 private:
     static constexpr size_t SIZE = 64;
     std::array<std::byte, SIZE> m_pubkey;
@@ -351,21 +349,21 @@ struct CExtPubKey {
     ChainCode chaincode;
     CPubKey pubkey;
 
-    friend bool operator==(const CExtPubKey &a, const CExtPubKey &b)
+    friend bool operator==(const CExtPubKey& a, const CExtPubKey& b)
     {
         return a.nDepth == b.nDepth &&
-            memcmp(a.vchFingerprint, b.vchFingerprint, sizeof(vchFingerprint)) == 0 &&
-            a.nChild == b.nChild &&
-            a.chaincode == b.chaincode &&
-            a.pubkey == b.pubkey;
+               memcmp(a.vchFingerprint, b.vchFingerprint, sizeof(vchFingerprint)) == 0 &&
+               a.nChild == b.nChild &&
+               a.chaincode == b.chaincode &&
+               a.pubkey == b.pubkey;
     }
 
-    friend bool operator!=(const CExtPubKey &a, const CExtPubKey &b)
+    friend bool operator!=(const CExtPubKey& a, const CExtPubKey& b)
     {
         return !(a == b);
     }
 
-    friend bool operator<(const CExtPubKey &a, const CExtPubKey &b)
+    friend bool operator<(const CExtPubKey& a, const CExtPubKey& b)
     {
         if (a.pubkey < b.pubkey) {
             return true;

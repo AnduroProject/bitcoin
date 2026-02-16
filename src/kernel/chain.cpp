@@ -27,12 +27,13 @@ interfaces::BlockInfo MakeBlockInfo(const CBlockIndex* index, const CBlock* data
 }
 } // namespace kernel
 
-std::ostream& operator<<(std::ostream& os, const ChainstateRole& role) {
-    switch(role) {
-        case ChainstateRole::NORMAL: os << "normal"; break;
-        case ChainstateRole::ASSUMEDVALID: os << "assumedvalid"; break;
-        case ChainstateRole::BACKGROUND: os << "background"; break;
-        default: os.setstate(std::ios_base::failbit);
+std::ostream& operator<<(std::ostream& os, const ChainstateRole& role)
+{
+    switch (role) {
+    case ChainstateRole::NORMAL: os << "normal"; break;
+    case ChainstateRole::ASSUMEDVALID: os << "assumedvalid"; break;
+    case ChainstateRole::BACKGROUND: os << "background"; break;
+    default: os.setstate(std::ios_base::failbit);
     }
     return os;
 }

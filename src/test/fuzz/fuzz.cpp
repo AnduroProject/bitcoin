@@ -48,7 +48,8 @@ const std::function<void(const std::string&)> G_TEST_LOG_FUN{};
  */
 static std::vector<const char*> g_args;
 
-static void SetArgs(int argc, char** argv) {
+static void SetArgs(int argc, char** argv)
+{
     for (int i = 1; i < argc; ++i) {
         // Only take into account arguments that start with `--`. The others are for the fuzz engine:
         // `fuzz -runs=1 fuzz_corpora/address_deserialize_v2 --checkaddrman=5`
@@ -88,7 +89,7 @@ static void test_one_input(FuzzBufferType buffer)
     (*Assert(g_test_one_input))(buffer);
 }
 
-const std::function<std::string()> G_TEST_GET_FULL_NAME{[]{
+const std::function<std::string()> G_TEST_GET_FULL_NAME{[] {
     return std::string{g_fuzz_target};
 }};
 

@@ -21,7 +21,7 @@ std::vector<size_t> FindInPackageParents(const Package& package, const CTransact
     std::vector<size_t> in_package_parents;
 
     std::set<Txid> possible_parents;
-    for (auto &input : ptx->vin) {
+    for (auto& input : ptx->vin) {
         possible_parents.insert(input.prevout.hash);
     }
 
@@ -49,15 +49,15 @@ struct ParentInfo {
     bool m_has_mempool_descendant;
 
     ParentInfo() = delete;
-    ParentInfo(const Txid& txid, const Wtxid& wtxid, decltype(CTransaction::version) version, bool has_mempool_descendant) :
-        m_txid{txid}, m_wtxid{wtxid}, m_version{version},
-        m_has_mempool_descendant{has_mempool_descendant}
-    {}
+    ParentInfo(const Txid& txid, const Wtxid& wtxid, decltype(CTransaction::version) version, bool has_mempool_descendant) : m_txid{txid}, m_wtxid{wtxid}, m_version{version},
+                                                                                                                             m_has_mempool_descendant{has_mempool_descendant}
+    {
+    }
 };
 
 std::optional<std::string> PackageTRUCChecks(const CTransactionRef& ptx, int64_t vsize,
-                                           const Package& package,
-                                           const CTxMemPool::setEntries& mempool_ancestors)
+                                             const Package& package,
+                                             const CTxMemPool::setEntries& mempool_ancestors)
 {
     // This function is specialized for these limits, and must be reimplemented if they ever change.
     static_assert(TRUC_ANCESTOR_LIMIT == 2);
@@ -136,7 +136,7 @@ std::optional<std::string> PackageTRUCChecks(const CTransactionRef& ptx, int64_t
 
             if (parent_info.m_has_mempool_descendant) {
                 return strprintf("tx %s (wtxid=%s) would exceed descendant count limit",
-                                parent_info.m_txid.ToString(), parent_info.m_wtxid.ToString());
+                                 parent_info.m_txid.ToString(), parent_info.m_wtxid.ToString());
             }
         }
     } else {
@@ -148,7 +148,7 @@ std::optional<std::string> PackageTRUCChecks(const CTransactionRef& ptx, int64_t
                                  it->GetSharedTx()->GetHash().ToString(), it->GetSharedTx()->GetWitnessHash().ToString());
             }
         }
-        for (const auto& index: in_package_parents) {
+        for (const auto& index : in_package_parents) {
             if (package.at(index)->version == TRUC_VERSION) {
                 return strprintf("non-version=3 tx %s (wtxid=%s) cannot spend from version=3 tx %s (wtxid=%s)",
                                  ptx->GetHash().ToString(),
@@ -162,22 +162,22 @@ std::optional<std::string> PackageTRUCChecks(const CTransactionRef& ptx, int64_t
 }
 
 std::optional<std::pair<std::string, CTransactionRef>> SingleTRUCChecks(const CTransactionRef& ptx,
-                                          const CTxMemPool::setEntries& mempool_ancestors,
-                                          const std::set<Txid>& direct_conflicts,
-                                          int64_t vsize)
+                                                                        const CTxMemPool::setEntries& mempool_ancestors,
+                                                                        const std::set<Txid>& direct_conflicts,
+                                                                        int64_t vsize)
 {
     // Check TRUC and non-TRUC inheritance.
     for (const auto& entry : mempool_ancestors) {
         if (ptx->version != TRUC_VERSION && entry->GetTx().version == TRUC_VERSION) {
             return std::make_pair(strprintf("non-version=3 tx %s (wtxid=%s) cannot spend from version=3 tx %s (wtxid=%s)",
-                             ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString(),
-                             entry->GetSharedTx()->GetHash().ToString(), entry->GetSharedTx()->GetWitnessHash().ToString()),
-                nullptr);
+                                            ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString(),
+                                            entry->GetSharedTx()->GetHash().ToString(), entry->GetSharedTx()->GetWitnessHash().ToString()),
+                                  nullptr);
         } else if (ptx->version == TRUC_VERSION && entry->GetTx().version != TRUC_VERSION) {
             return std::make_pair(strprintf("version=3 tx %s (wtxid=%s) cannot spend from non-version=3 tx %s (wtxid=%s)",
-                             ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString(),
-                             entry->GetSharedTx()->GetHash().ToString(), entry->GetSharedTx()->GetWitnessHash().ToString()),
-                nullptr);
+                                            ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString(),
+                                            entry->GetSharedTx()->GetHash().ToString(), entry->GetSharedTx()->GetWitnessHash().ToString()),
+                                  nullptr);
         }
     }
 
@@ -190,15 +190,15 @@ std::optional<std::pair<std::string, CTransactionRef>> SingleTRUCChecks(const CT
 
     if (vsize > TRUC_MAX_VSIZE) {
         return std::make_pair(strprintf("version=3 tx %s (wtxid=%s) is too big: %u > %u virtual bytes",
-                         ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString(), vsize, TRUC_MAX_VSIZE),
-            nullptr);
+                                        ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString(), vsize, TRUC_MAX_VSIZE),
+                              nullptr);
     }
 
     // Check that TRUC_ANCESTOR_LIMIT would not be violated.
     if (mempool_ancestors.size() + 1 > TRUC_ANCESTOR_LIMIT) {
         return std::make_pair(strprintf("tx %s (wtxid=%s) would have too many ancestors",
-                         ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString()),
-            nullptr);
+                                        ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString()),
+                              nullptr);
     }
 
     // Remaining checks only pertain to transactions with unconfirmed ancestors.
@@ -206,8 +206,8 @@ std::optional<std::pair<std::string, CTransactionRef>> SingleTRUCChecks(const CT
         // If this transaction spends TRUC parents, it cannot be too large.
         if (vsize > TRUC_CHILD_MAX_VSIZE) {
             return std::make_pair(strprintf("version=3 child tx %s (wtxid=%s) is too big: %u > %u virtual bytes",
-                             ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString(), vsize, TRUC_CHILD_MAX_VSIZE),
-                nullptr);
+                                            ptx->GetHash().ToString(), ptx->GetWitnessHash().ToString(), vsize, TRUC_CHILD_MAX_VSIZE),
+                                  nullptr);
         }
 
         // Check the descendant counts of in-mempool ancestors.
@@ -220,8 +220,8 @@ std::optional<std::pair<std::string, CTransactionRef>> SingleTRUCChecks(const CT
         // any descendant of the TRUC transaction is a direct child, which makes sense because a
         // TRUC transaction can only have 1 descendant.
         const bool child_will_be_replaced = !children.empty() &&
-            std::any_of(children.cbegin(), children.cend(),
-                [&direct_conflicts](const CTxMemPoolEntry& child){return direct_conflicts.count(child.GetTx().GetHash()) > 0;});
+                                            std::any_of(children.cbegin(), children.cend(),
+                                                        [&direct_conflicts](const CTxMemPoolEntry& child) { return direct_conflicts.count(child.GetTx().GetHash()) > 0; });
         if (parent_entry->GetCountWithDescendants() + 1 > TRUC_DESCENDANT_LIMIT && !child_will_be_replaced) {
             // Allow sibling eviction for TRUC transaction: if another child already exists, even if
             // we don't conflict inputs with it, consider evicting it under RBF rules. We rely on TRUC rules
@@ -229,14 +229,14 @@ std::optional<std::pair<std::string, CTransactionRef>> SingleTRUCChecks(const CT
             // which descendant to evict. Skip if this isn't true, e.g. if the transaction has
             // multiple children or the sibling also has descendants due to a reorg.
             const bool consider_sibling_eviction{parent_entry->GetCountWithDescendants() == 2 &&
-                children.begin()->get().GetCountWithAncestors() == 2};
+                                                 children.begin()->get().GetCountWithAncestors() == 2};
 
             // Return the sibling if its eviction can be considered. Provide the "descendant count
             // limit" string either way, as the caller may decide not to do sibling eviction.
             return std::make_pair(strprintf("tx %u (wtxid=%s) would exceed descendant count limit",
                                             parent_entry->GetSharedTx()->GetHash().ToString(),
                                             parent_entry->GetSharedTx()->GetWitnessHash().ToString()),
-                                  consider_sibling_eviction ?  children.begin()->get().GetSharedTx() : nullptr);
+                                  consider_sibling_eviction ? children.begin()->get().GetSharedTx() : nullptr);
         }
     }
     return std::nullopt;

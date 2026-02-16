@@ -230,9 +230,7 @@ FUZZ_TARGET(versionbits, .init = initialize)
         std::vector<bool> signals;
         const BIP9Stats stats = checker.GetStateStatisticsFor(current_block, &signals);
         const BIP9Stats stats_no_signals = checker.GetStateStatisticsFor(current_block);
-        assert(stats.period == stats_no_signals.period && stats.threshold == stats_no_signals.threshold
-               && stats.elapsed == stats_no_signals.elapsed && stats.count == stats_no_signals.count
-               && stats.possible == stats_no_signals.possible);
+        assert(stats.period == stats_no_signals.period && stats.threshold == stats_no_signals.threshold && stats.elapsed == stats_no_signals.elapsed && stats.count == stats_no_signals.count && stats.possible == stats_no_signals.possible);
 
         assert(stats.period == period);
         assert(stats.threshold == dep.threshold);

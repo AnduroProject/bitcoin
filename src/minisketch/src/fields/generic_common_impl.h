@@ -15,7 +15,8 @@
 namespace {
 
 /** Generic implementation for fields whose elements can be represented by an integer type. */
-template<typename I, int B, uint32_t MOD, typename F, typename T, const F* SQR, const F* QRT> class Field
+template <typename I, int B, uint32_t MOD, typename F, typename T, const F* SQR, const F* QRT>
+class Field
 {
     typedef BitsInt<I, B> O;
     typedef LFSR<O, MOD> L;
@@ -29,6 +30,7 @@ public:
     class Multiplier
     {
         T table;
+
     public:
         explicit Multiplier(const Field&, Elem a) { table.template Build<L::Call>(a); }
         constexpr inline Elem operator()(Elem a) const { return table.template Map<O>(a); }
@@ -46,14 +48,15 @@ public:
     Elem Inv(Elem a) const { return InvExtGCD<I, O, B, MOD>(a); }
 
     /** Generate a random field element. */
-    Elem FromSeed(uint64_t seed) const {
+    Elem FromSeed(uint64_t seed) const
+    {
         uint64_t k0 = 0x496e744669656c64ull; // "IntField"
         uint64_t k1 = seed;
         uint64_t count = ((uint64_t)B) << 32;
         Elem ret;
         do {
             ret = O::Mask(I(SipHash(k0, k1, count++)));
-        } while(ret == 0);
+        } while (ret == 0);
         return ret;
     }
 
@@ -65,6 +68,6 @@ public:
     constexpr uint64_t ToUint64(Elem val) const { return uint64_t(val); }
 };
 
-}
+} // namespace
 
 #endif

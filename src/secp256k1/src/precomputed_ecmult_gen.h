@@ -11,8 +11,8 @@
 extern "C" {
 #endif
 
-#include "group.h"
 #include "ecmult_gen.h"
+#include "group.h"
 #include "util_local_visibility.h"
 
 #ifdef EXHAUSTIVE_TEST_ORDER

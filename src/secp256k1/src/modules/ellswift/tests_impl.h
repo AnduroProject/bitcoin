@@ -168,7 +168,8 @@ static const struct ellswift_xdh_test ellswift_xdh_tests_bip324[] = {
  * exchanged public keys do not affect the shared secret. However, it's used here
  * in tests to be able to verify the X coordinate through other means.
  */
-static int ellswift_xdh_hash_x32(unsigned char *output, const unsigned char *x32, const unsigned char *ell_a64, const unsigned char *ell_b64, void *data) {
+static int ellswift_xdh_hash_x32(unsigned char* output, const unsigned char* x32, const unsigned char* ell_a64, const unsigned char* ell_b64, void* data)
+{
     (void)ell_a64;
     (void)ell_b64;
     (void)data;
@@ -176,11 +177,12 @@ static int ellswift_xdh_hash_x32(unsigned char *output, const unsigned char *x32
     return 1;
 }
 
-void run_ellswift_tests(void) {
+void run_ellswift_tests(void)
+{
     int i = 0;
     /* Test vectors. */
     for (i = 0; (unsigned)i < sizeof(ellswift_xswiftec_inv_tests) / sizeof(ellswift_xswiftec_inv_tests[0]); ++i) {
-        const struct ellswift_xswiftec_inv_test *testcase = &ellswift_xswiftec_inv_tests[i];
+        const struct ellswift_xswiftec_inv_test* testcase = &ellswift_xswiftec_inv_tests[i];
         int c;
         for (c = 0; c < 8; ++c) {
             secp256k1_fe t;
@@ -195,7 +197,7 @@ void run_ellswift_tests(void) {
         }
     }
     for (i = 0; (unsigned)i < sizeof(ellswift_decode_tests) / sizeof(ellswift_decode_tests[0]); ++i) {
-        const struct ellswift_decode_test *testcase = &ellswift_decode_tests[i];
+        const struct ellswift_decode_test* testcase = &ellswift_decode_tests[i];
         secp256k1_pubkey pubkey;
         secp256k1_ge ge;
         int ret;
@@ -207,12 +209,12 @@ void run_ellswift_tests(void) {
         CHECK(secp256k1_fe_is_odd(&ge.y) == testcase->odd_y);
     }
     for (i = 0; (unsigned)i < sizeof(ellswift_xdh_tests_bip324) / sizeof(ellswift_xdh_tests_bip324[0]); ++i) {
-        const struct ellswift_xdh_test *test = &ellswift_xdh_tests_bip324[i];
+        const struct ellswift_xdh_test* test = &ellswift_xdh_tests_bip324[i];
         unsigned char shared_secret[32];
         int ret;
         int party = !test->initiating;
         const unsigned char* ell_a64 = party ? test->ellswift_theirs : test->ellswift_ours;
-        const unsigned char* ell_b64 = party ? test->ellswift_ours   : test->ellswift_theirs;
+        const unsigned char* ell_b64 = party ? test->ellswift_ours : test->ellswift_theirs;
         ret = secp256k1_ellswift_xdh(CTX, shared_secret,
                                      ell_a64, ell_b64,
                                      test->priv_ours,

@@ -33,7 +33,7 @@ public:
     explicit WalletFrame(const PlatformStyle* platformStyle, QWidget* parent);
     ~WalletFrame();
 
-    void setClientModel(ClientModel *clientModel);
+    void setClientModel(ClientModel* clientModel);
 
     bool addView(WalletView* walletView);
     void setCurrentWallet(WalletModel* wallet_model);
@@ -52,13 +52,13 @@ Q_SIGNALS:
     void currentWalletSet();
 
 private:
-    QStackedWidget *walletStack;
-    ClientModel *clientModel;
+    QStackedWidget* walletStack;
+    ClientModel* clientModel;
     QMap<WalletModel*, WalletView*> mapWalletViews;
 
     bool bOutOfSync;
 
-    const PlatformStyle *platformStyle;
+    const PlatformStyle* platformStyle;
 
     const QSize m_size_hint;
 

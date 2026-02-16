@@ -48,20 +48,56 @@ class Wallet;
 class FoundBlock
 {
 public:
-    FoundBlock& hash(uint256& hash) { m_hash = &hash; return *this; }
-    FoundBlock& height(int& height) { m_height = &height; return *this; }
-    FoundBlock& time(int64_t& time) { m_time = &time; return *this; }
-    FoundBlock& maxTime(int64_t& max_time) { m_max_time = &max_time; return *this; }
-    FoundBlock& mtpTime(int64_t& mtp_time) { m_mtp_time = &mtp_time; return *this; }
+    FoundBlock& hash(uint256& hash)
+    {
+        m_hash = &hash;
+        return *this;
+    }
+    FoundBlock& height(int& height)
+    {
+        m_height = &height;
+        return *this;
+    }
+    FoundBlock& time(int64_t& time)
+    {
+        m_time = &time;
+        return *this;
+    }
+    FoundBlock& maxTime(int64_t& max_time)
+    {
+        m_max_time = &max_time;
+        return *this;
+    }
+    FoundBlock& mtpTime(int64_t& mtp_time)
+    {
+        m_mtp_time = &mtp_time;
+        return *this;
+    }
     //! Return whether block is in the active (most-work) chain.
-    FoundBlock& inActiveChain(bool& in_active_chain) { m_in_active_chain = &in_active_chain; return *this; }
+    FoundBlock& inActiveChain(bool& in_active_chain)
+    {
+        m_in_active_chain = &in_active_chain;
+        return *this;
+    }
     //! Return locator if block is in the active chain.
-    FoundBlock& locator(CBlockLocator& locator) { m_locator = &locator; return *this; }
+    FoundBlock& locator(CBlockLocator& locator)
+    {
+        m_locator = &locator;
+        return *this;
+    }
     //! Return next block in the active chain if current block is in the active chain.
-    FoundBlock& nextBlock(const FoundBlock& next_block) { m_next_block = &next_block; return *this; }
+    FoundBlock& nextBlock(const FoundBlock& next_block)
+    {
+        m_next_block = &next_block;
+        return *this;
+    }
     //! Read block data from disk. If the block exists but doesn't have data
     //! (for example due to pruning), the CBlock variable will be set to null.
-    FoundBlock& data(CBlock& data) { m_data = &data; return *this; }
+    FoundBlock& data(CBlock& data)
+    {
+        m_data = &data;
+        return *this;
+    }
 
     uint256* m_hash = nullptr;
     int* m_height = nullptr;
@@ -164,31 +200,31 @@ public:
 
     //! Return whether node has the block and optionally return block metadata
     //! or contents.
-    virtual bool findBlock(const uint256& hash, const FoundBlock& block={}) = 0;
+    virtual bool findBlock(const uint256& hash, const FoundBlock& block = {}) = 0;
 
     //! Find first block in the chain with timestamp >= the given time
     //! and height >= than the given height, return false if there is no block
     //! with a high enough timestamp and height. Optionally return block
     //! information.
-    virtual bool findFirstBlockWithTimeAndHeight(int64_t min_time, int min_height, const FoundBlock& block={}) = 0;
+    virtual bool findFirstBlockWithTimeAndHeight(int64_t min_time, int min_height, const FoundBlock& block = {}) = 0;
 
     //! Find ancestor of block at specified height and optionally return
     //! ancestor information.
-    virtual bool findAncestorByHeight(const uint256& block_hash, int ancestor_height, const FoundBlock& ancestor_out={}) = 0;
+    virtual bool findAncestorByHeight(const uint256& block_hash, int ancestor_height, const FoundBlock& ancestor_out = {}) = 0;
 
     //! Return whether block descends from a specified ancestor, and
     //! optionally return ancestor information.
     virtual bool findAncestorByHash(const uint256& block_hash,
-        const uint256& ancestor_hash,
-        const FoundBlock& ancestor_out={}) = 0;
+                                    const uint256& ancestor_hash,
+                                    const FoundBlock& ancestor_out = {}) = 0;
 
     //! Find most recent common ancestor between two blocks and optionally
     //! return block information.
     virtual bool findCommonAncestor(const uint256& block_hash1,
-        const uint256& block_hash2,
-        const FoundBlock& ancestor_out={},
-        const FoundBlock& block1_out={},
-        const FoundBlock& block2_out={}) = 0;
+                                    const uint256& block_hash2,
+                                    const FoundBlock& ancestor_out = {},
+                                    const FoundBlock& block1_out = {},
+                                    const FoundBlock& block2_out = {}) = 0;
 
     //! Look up unspent output information. Returns coins in the mempool and in
     //! the current chain UTXO set. Iterates through all the keys in the map and
@@ -217,9 +253,9 @@ public:
     //! amount specified by max_tx_fee, and broadcast to all peers if relay is set to true.
     //! Return false if the transaction could not be added due to the fee or for another reason.
     virtual bool broadcastTransaction(const CTransactionRef& tx,
-        const CAmount& max_tx_fee,
-        bool relay,
-        std::string& err_string) = 0;
+                                      const CAmount& max_tx_fee,
+                                      bool relay,
+                                      std::string& err_string) = 0;
 
     //! Calculate mempool ancestor and descendant counts for the given transaction.
     virtual void getTransactionAncestry(const uint256& txid, size_t& ancestors, size_t& descendants, size_t* ancestorsize = nullptr, CAmount* ancestorfees = nullptr) = 0;
@@ -328,8 +364,7 @@ public:
     };
 
     //! Options specifying which chain notifications are required.
-    struct NotifyOptions
-    {
+    struct NotifyOptions {
         //! Include undo data with block connected notifications.
         bool connect_undo_data = false;
         //! Include block data with block disconnected notifications.

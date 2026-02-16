@@ -59,14 +59,14 @@ struct DBHeightKey {
 
     explicit DBHeightKey(int height_in) : height(height_in) {}
 
-    template<typename Stream>
+    template <typename Stream>
     void Serialize(Stream& s) const
     {
         ser_writedata8(s, DB_BLOCK_HEIGHT);
         ser_writedata32be(s, height);
     }
 
-    template<typename Stream>
+    template <typename Stream>
     void Unserialize(Stream& s)
     {
         const uint8_t prefix{ser_readdata8(s)};
@@ -82,7 +82,8 @@ struct DBHashKey {
 
     explicit DBHashKey(const uint256& hash_in) : hash(hash_in) {}
 
-    SERIALIZE_METHODS(DBHashKey, obj) {
+    SERIALIZE_METHODS(DBHashKey, obj)
+    {
         uint8_t prefix{DB_BLOCK_HASH};
         READWRITE(prefix);
         if (prefix != DB_BLOCK_HASH) {
@@ -99,8 +100,7 @@ static std::map<BlockFilterType, BlockFilterIndex> g_filter_indexes;
 
 BlockFilterIndex::BlockFilterIndex(std::unique_ptr<interfaces::Chain> chain, BlockFilterType filter_type,
                                    size_t n_cache_size, bool f_memory, bool f_wipe)
-    : BaseIndex(std::move(chain), BlockFilterTypeName(filter_type) + " block filter index")
-    , m_filter_type(filter_type)
+    : BaseIndex(std::move(chain), BlockFilterTypeName(filter_type) + " block filter index"), m_filter_type(filter_type)
 {
     const std::string& filter_name = BlockFilterTypeName(filter_type);
     if (filter_name.empty()) throw std::invalid_argument("unknown filter_type");
@@ -127,7 +127,7 @@ bool BlockFilterIndex::CustomInit(const std::optional<interfaces::BlockRef>& blo
         // further corruption.
         if (m_db->Exists(DB_FILTER_POS)) {
             LogError("Cannot read current %s state; index may be corrupted",
-                      GetName());
+                     GetName());
             return false;
         }
 
@@ -189,8 +189,7 @@ bool BlockFilterIndex::ReadFilterFromDisk(const FlatFilePos& pos, const uint256&
             return false;
         }
         filter = BlockFilter(GetFilterType(), block_hash, std::move(encoded_filter), /*skip_decode_check=*/true);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         LogError("Failed to deserialize block filter from disk: %s", e.what());
         return false;
     }
@@ -307,7 +306,7 @@ bool BlockFilterIndex::Write(const BlockFilter& filter, uint32_t block_height, c
 
     if (!db_it.GetKey(key) || key.height != height) {
         LogError("unexpected key in %s: expected (%c, %d)",
-                  index_name, DB_BLOCK_HEIGHT, height);
+                 index_name, DB_BLOCK_HEIGHT, height);
         return false;
     }
 
@@ -505,9 +504,10 @@ BlockFilterIndex* GetBlockFilterIndex(BlockFilterType filter_type)
     return it != g_filter_indexes.end() ? &it->second : nullptr;
 }
 
-void ForEachBlockFilterIndex(std::function<void (BlockFilterIndex&)> fn)
+void ForEachBlockFilterIndex(std::function<void(BlockFilterIndex&)> fn)
 {
-    for (auto& entry : g_filter_indexes) fn(entry.second);
+    for (auto& entry : g_filter_indexes)
+        fn(entry.second);
 }
 
 bool InitBlockFilterIndex(std::function<std::unique_ptr<interfaces::Chain>()> make_chain, BlockFilterType filter_type,

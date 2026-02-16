@@ -182,6 +182,7 @@ public:
     protected:
         /** Make constructor non-public (use TxGraph::GetBlockBuilder()). */
         BlockBuilder() noexcept = default;
+
     public:
         /** Support safe inheritance. */
         virtual ~BlockBuilder() = default;
@@ -229,6 +230,7 @@ public:
         TxGraph* m_graph = nullptr;
         /** Index into the Graph's m_entries. Only used if m_graph != nullptr. */
         GraphIndex m_index = GraphIndex(-1);
+
     public:
         /** Construct an empty Ref. Non-empty Refs can only be created using
          *  TxGraph::AddTransaction. */

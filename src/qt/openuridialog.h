@@ -10,7 +10,7 @@
 class PlatformStyle;
 
 namespace Ui {
-    class OpenURIDialog;
+class OpenURIDialog;
 }
 
 class OpenURIDialog : public QDialog

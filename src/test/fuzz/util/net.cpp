@@ -42,9 +42,7 @@ CNetAddr ConsumeNetAddr(FuzzedDataProvider& fuzzed_data_provider, FastRandomCont
         NetAux{.net = Network::NET_INTERNAL, .bip155 = CNetAddr::BIP155Network{0}, .len = 0},
     };
 
-    const size_t nets_index{rand == nullptr
-        ? fuzzed_data_provider.ConsumeIntegralInRange<size_t>(0, nets.size() - 1)
-        : static_cast<size_t>(rand->randrange(nets.size()))};
+    const size_t nets_index{rand == nullptr ? fuzzed_data_provider.ConsumeIntegralInRange<size_t>(0, nets.size() - 1) : static_cast<size_t>(rand->randrange(nets.size()))};
 
     const auto& aux = nets[nets_index];
 
@@ -72,7 +70,7 @@ CNetAddr ConsumeNetAddr(FuzzedDataProvider& fuzzed_data_provider, FastRandomCont
         addr_bytes = rand->randbytes(aux.len);
     }
     if (aux.net == NET_IPV6 && addr_bytes[0] == CJDNS_PREFIX) { // Avoid generating IPv6 addresses that look like CJDNS.
-        addr_bytes[0] = 0x55; // Just an arbitrary number, anything != CJDNS_PREFIX would do.
+        addr_bytes[0] = 0x55;                                   // Just an arbitrary number, anything != CJDNS_PREFIX would do.
     }
     if (aux.net == NET_CJDNS) { // Avoid generating CJDNS addresses that don't start with CJDNS_PREFIX because those are !IsValid().
         addr_bytes[0] = CJDNS_PREFIX;

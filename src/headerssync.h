@@ -26,6 +26,8 @@ struct CompressedHeader {
     uint32_t nBits{0};
     uint32_t nNonce{0};
 
+    std::shared_ptr<CAuxPow> auxpow;
+
     CompressedHeader()
     {
         hashMerkleRoot.SetNull();
@@ -38,9 +40,11 @@ struct CompressedHeader {
         nTime = header.nTime;
         nBits = header.nBits;
         nNonce = header.nNonce;
+        auxpow = header.auxpow;
     }
 
-    CBlockHeader GetFullHeader(const uint256& hash_prev_block) {
+    CBlockHeader GetFullHeader(const uint256& hash_prev_block)
+    {
         CBlockHeader ret;
         ret.nVersion = nVersion;
         ret.hashPrevBlock = hash_prev_block;
@@ -48,6 +52,7 @@ struct CompressedHeader {
         ret.nTime = nTime;
         ret.nBits = nBits;
         ret.nNonce = nNonce;
+        ret.auxpow = auxpow;
         return ret;
     };
 };
@@ -98,7 +103,8 @@ struct CompressedHeader {
  * sync (temporary, per-peer storage).
  */
 
-class HeadersSyncState {
+class HeadersSyncState
+{
 public:
     ~HeadersSyncState() = default;
 
@@ -136,7 +142,7 @@ public:
      * minimum_required_work: amount of chain work required to accept the chain
      */
     HeadersSyncState(NodeId id, const Consensus::Params& consensus_params,
-            const CBlockIndex* chain_start, const arith_uint256& minimum_required_work);
+                     const CBlockIndex* chain_start, const arith_uint256& minimum_required_work);
 
     /** Result data structure for ProcessNextHeaders. */
     struct ProcessingResult {
@@ -166,7 +172,8 @@ public:
      *                       NextHeadersRequestLocator and send a getheaders message using it.
      */
     ProcessingResult ProcessNextHeaders(const std::vector<CBlockHeader>&
-            received_headers, bool full_headers_message);
+                                            received_headers,
+                                        bool full_headers_message);
 
     /** Issue the next GETHEADERS message to our peer.
      *
@@ -198,7 +205,7 @@ private:
     bool ValidateAndStoreHeadersCommitments(const std::vector<CBlockHeader>& headers);
 
     /** In PRESYNC, process and update state for a single header */
-    bool ValidateAndProcessSingleHeader(const CBlockHeader& current);
+    bool ValidateAndProcessSingleHeader(const CPureBlockHeader& current);
 
     /** In REDOWNLOAD, check a header's commitment (if applicable) and add to
      * buffer for later processing */
@@ -237,7 +244,7 @@ private:
     uint64_t m_max_commitments{0};
 
     /** Store the latest header received while in PRESYNC (initialized to m_chain_start) */
-    CBlockHeader m_last_header_received;
+    CPureBlockHeader m_last_header_received;
 
     /** Height of m_last_header_received */
     int64_t m_current_height{0};

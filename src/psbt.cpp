@@ -327,7 +327,8 @@ bool PSBTInputSignedAndVerified(const PartiallySignedTransaction psbt, unsigned 
     }
 }
 
-size_t CountPSBTUnsignedInputs(const PartiallySignedTransaction& psbt) {
+size_t CountPSBTUnsignedInputs(const PartiallySignedTransaction& psbt)
+{
     size_t count = 0;
     for (const auto& input : psbt.inputs) {
         if (!PSBTInputSigned(input)) {
@@ -375,7 +376,7 @@ PrecomputedTransactionData PrecomputePSBTData(const PartiallySignedTransaction& 
     return txdata;
 }
 
-PSBTError SignPSBTInput(const SigningProvider& provider, PartiallySignedTransaction& psbt, int index, const PrecomputedTransactionData* txdata, std::optional<int> sighash,  SignatureData* out_sigdata, bool finalize)
+PSBTError SignPSBTInput(const SigningProvider& provider, PartiallySignedTransaction& psbt, int index, const PrecomputedTransactionData* txdata, std::optional<int> sighash, SignatureData* out_sigdata, bool finalize)
 {
     PSBTInput& input = psbt.inputs.at(index);
     const CMutableTransaction& tx = *psbt.tx;
@@ -428,7 +429,7 @@ PSBTError SignPSBTInput(const SigningProvider& provider, PartiallySignedTransact
     // DEFAULT is allowed for non-taproot inputs since DEFAULT may be passed for them (e.g. the psbt being signed also has taproot inputs)
     // Note that signing already aliases DEFAULT to ALL for non-taproot inputs.
     if (utxo.scriptPubKey.IsPayToTaproot() ? sighash != SIGHASH_DEFAULT :
-                                            (sighash != SIGHASH_DEFAULT && sighash != SIGHASH_ALL)) {
+                                             (sighash != SIGHASH_DEFAULT && sighash != SIGHASH_ALL)) {
         input.sighash_type = sighash;
     }
 
@@ -569,13 +570,15 @@ bool CombinePSBTs(PartiallySignedTransaction& out, const std::vector<PartiallySi
     return true;
 }
 
-std::string PSBTRoleName(PSBTRole role) {
+std::string PSBTRoleName(PSBTRole role)
+{
     switch (role) {
     case PSBTRole::CREATOR: return "creator";
     case PSBTRole::UPDATER: return "updater";
     case PSBTRole::SIGNER: return "signer";
     case PSBTRole::FINALIZER: return "finalizer";
-    case PSBTRole::EXTRACTOR: return "extractor";
+    case PSBTRole::EXTRACTOR:
+        return "extractor";
         // no default case, so the compiler can warn about missing cases
     }
     assert(false);

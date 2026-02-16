@@ -22,7 +22,7 @@ uint8_t ReadByte(FuzzBufferType& buffer)
 }
 
 /** Perform a simulation fuzz test on BitSet type S. */
-template<typename S>
+template <typename S>
 void TestType(FuzzBufferType buffer)
 {
     /** This fuzz test's design is based on the assumption that the actual bits stored in the
@@ -68,7 +68,8 @@ void TestType(FuzzBufferType buffer)
         assert(sim[idx].count() == real[idx].Count());
     };
 
-    LIMITED_WHILE(buffer.size() > 0, 1000) {
+    LIMITED_WHILE(buffer.size() > 0, 1000)
+    {
         // Read one byte to determine which operation to execute on the BitSets.
         int command = ReadByte(buffer) % 64;
         // Read another byte that determines which bitsets will be involved.
@@ -78,7 +79,7 @@ void TestType(FuzzBufferType buffer)
         unsigned aux = (((args >> 6) & 3) * sim.size()) >> 2;
         // Args are in range for non-empty sim, or sim is completely empty and will be grown
         assert((sim.empty() && dest == 0 && src == 0 && aux == 0) ||
-            (!sim.empty() &&  dest < sim.size() && src < sim.size() && aux < sim.size()));
+               (!sim.empty() && dest < sim.size() && src < sim.size() && aux < sim.size()));
 
         // Pick one operation based on value of command. Not all operations are always applicable.
         // Loop through the applicable ones until command reaches 0 (which avoids the need to
@@ -178,7 +179,8 @@ void TestType(FuzzBufferType buffer)
                 unsigned len = ReadByte(buffer) % S::Size();
                 compare_fn(dest);
                 sim[dest].reset();
-                for (unsigned i = 0; i < len; ++i) sim[dest][i] = true;
+                for (unsigned i = 0; i < len; ++i)
+                    sim[dest][i] = true;
                 real[dest] = S::Fill(len);
                 break;
             } else if (src < sim.size() && command-- == 0) {

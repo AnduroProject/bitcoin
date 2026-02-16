@@ -13,7 +13,7 @@ class QMainWindow;
 QT_END_NAMESPACE
 
 namespace Ui {
-    class HelpMessageDialog;
+class HelpMessageDialog;
 }
 
 /** "Help message" dialog box */
@@ -22,14 +22,14 @@ class HelpMessageDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit HelpMessageDialog(QWidget *parent, bool about);
+    explicit HelpMessageDialog(QWidget* parent, bool about);
     ~HelpMessageDialog();
 
     void printToConsole();
     void showOrPrint();
 
 private:
-    Ui::HelpMessageDialog *ui;
+    Ui::HelpMessageDialog* ui;
     QString text;
 
 private Q_SLOTS:
@@ -43,11 +43,11 @@ class ShutdownWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit ShutdownWindow(QWidget *parent=nullptr, Qt::WindowFlags f=Qt::Widget);
+    explicit ShutdownWindow(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::Widget);
     static QWidget* showShutdownWindow(QMainWindow* window);
 
 protected:
-    void closeEvent(QCloseEvent *event) override;
+    void closeEvent(QCloseEvent* event) override;
 };
 
 #endif // BITCOIN_QT_UTILITYDIALOG_H

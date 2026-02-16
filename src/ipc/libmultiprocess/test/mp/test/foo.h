@@ -7,39 +7,36 @@
 
 #include <map>
 #include <memory>
-#include <string>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace mp {
 namespace test {
 
-struct FooStruct
-{
+struct FooStruct {
     std::string name;
     std::set<int> setint;
     std::vector<bool> vbool;
 };
 
-enum class FooEnum : uint8_t { ONE = 1, TWO = 2, };
+enum class FooEnum : uint8_t { ONE = 1,
+                               TWO = 2,
+};
 
-struct FooCustom
-{
+struct FooCustom {
     std::string v1;
     int v2;
 };
 
-struct FooEmpty
-{
+struct FooEmpty {
 };
 
-struct FooMessage
-{
+struct FooMessage {
     std::string message;
 };
 
-struct FooMutable
-{
+struct FooMutable {
     std::string message;
 };
 
@@ -72,7 +69,11 @@ public:
     int callbackExtended(ExtendedCallback& callback, int arg) { return callback.callExtended(arg); }
     FooCustom passCustom(FooCustom foo) { return foo; }
     FooEmpty passEmpty(FooEmpty foo) { return foo; }
-    FooMessage passMessage(FooMessage foo) { foo.message += " call"; return foo; }
+    FooMessage passMessage(FooMessage foo)
+    {
+        foo.message += " call";
+        return foo;
+    }
     void passMutable(FooMutable& foo) { foo.message += " call"; }
     FooEnum passEnum(FooEnum foo) { return foo; }
     std::shared_ptr<FooCallback> m_callback;

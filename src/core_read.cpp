@@ -70,8 +70,7 @@ CScript ParseScript(const std::string& s)
         if (w.empty()) {
             // Empty string, ignore. (SplitString doesn't combine multiple separators)
         } else if (std::all_of(w.begin(), w.end(), ::IsDigit) ||
-                   (w.front() == '-' && w.size() > 1 && std::all_of(w.begin() + 1, w.end(), ::IsDigit)))
-        {
+                   (w.front() == '-' && w.size() > 1 && std::all_of(w.begin() + 1, w.end(), ::IsDigit))) {
             // Number
             const auto num{ToIntegral<int64_t>(w)};
 
@@ -226,8 +225,7 @@ bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk)
     DataStream ssBlock(blockData);
     try {
         ssBlock >> TX_WITH_WITNESS(block);
-    }
-    catch (const std::exception&) {
+    } catch (const std::exception&) {
         return false;
     }
 
@@ -239,11 +237,11 @@ util::Result<int> SighashFromStr(const std::string& sighash)
     static const std::map<std::string, int> map_sighash_values = {
         {std::string("DEFAULT"), int(SIGHASH_DEFAULT)},
         {std::string("ALL"), int(SIGHASH_ALL)},
-        {std::string("ALL|ANYONECANPAY"), int(SIGHASH_ALL|SIGHASH_ANYONECANPAY)},
+        {std::string("ALL|ANYONECANPAY"), int(SIGHASH_ALL | SIGHASH_ANYONECANPAY)},
         {std::string("NONE"), int(SIGHASH_NONE)},
-        {std::string("NONE|ANYONECANPAY"), int(SIGHASH_NONE|SIGHASH_ANYONECANPAY)},
+        {std::string("NONE|ANYONECANPAY"), int(SIGHASH_NONE | SIGHASH_ANYONECANPAY)},
         {std::string("SINGLE"), int(SIGHASH_SINGLE)},
-        {std::string("SINGLE|ANYONECANPAY"), int(SIGHASH_SINGLE|SIGHASH_ANYONECANPAY)},
+        {std::string("SINGLE|ANYONECANPAY"), int(SIGHASH_SINGLE | SIGHASH_ANYONECANPAY)},
     };
     const auto& it = map_sighash_values.find(sighash);
     if (it != map_sighash_values.end()) {

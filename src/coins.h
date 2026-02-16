@@ -41,48 +41,112 @@ public:
     //! at which height this containing transaction was included in the active block chain
     uint32_t nHeight : 31;
 
-    //! construct a Coin from a CTxOut and height/coinbase information.
-    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn) {}
-    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn) : out(outIn), fCoinBase(fCoinBaseIn),nHeight(nHeightIn) {}
+    // TODO instead of tracking this, we could just check if the asset ID
+    // is > 0 (the default bitcoin asset reserves the first ID)
+    //! Is this a BitAsset?
+    bool fBitAsset;
 
-    void Clear() {
+    //! Is this a BitAsset controller?
+    bool fBitAssetControl;
+
+    //! Is this a BitAsset controller?
+    bool isPreconf;
+
+    //! Is this a pegin transaction
+    bool isPegin;
+
+    std::vector<unsigned char> nAssetID;
+
+
+    //! construct a Coin from a CTxOut and height/coinbase information.
+    Coin(CTxOut&& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn = false, bool fBitAssetControlIn = false, bool isPreconfIn = false, bool isPeginIn = false, std::vector<unsigned char> nAssetIDIn = {}) : out(std::move(outIn)), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
+    Coin(const CTxOut& outIn, int nHeightIn, bool fCoinBaseIn, bool fBitAssetIn = false, bool fBitAssetControlIn = false, bool isPreconfIn = false, bool isPeginIn = false, std::vector<unsigned char> nAssetIDIn = {}) : out(outIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), fBitAsset(fBitAssetIn), fBitAssetControl(fBitAssetControlIn), isPreconf(isPreconfIn), isPegin(isPeginIn), nAssetID(nAssetIDIn) {}
+
+    void Clear()
+    {
         out.SetNull();
         fCoinBase = false;
         nHeight = 0;
+        fBitAsset = false;
+        fBitAssetControl = false;
+        isPreconf = false;
+        isPegin = false;
+        nAssetID.clear();
     }
 
     //! empty constructor
-    Coin() : fCoinBase(false), nHeight(0) { }
+    Coin() : fCoinBase(false), nHeight(0), fBitAsset(false), fBitAssetControl(false), isPreconf(false), isPegin(false), nAssetID({}) {}
 
-    bool IsCoinBase() const {
+
+    bool IsCoinBase() const
+    {
         return fCoinBase;
     }
 
-    template<typename Stream>
-    void Serialize(Stream &s) const {
+    bool IsBitAsset() const
+    {
+        return fBitAsset;
+    }
+
+    bool IsBitAssetController() const
+    {
+        return fBitAssetControl;
+    }
+
+    bool isPreconfCoin() const
+    {
+        return isPreconf;
+    }
+
+    bool isPeginCoin() const
+    {
+        return isPegin;
+    }
+
+    std::vector<unsigned char> GetAssetID() const
+    {
+        return nAssetID;
+    }
+
+    template <typename Stream>
+    void Serialize(Stream& s) const
+    {
         assert(!IsSpent());
         uint32_t code = nHeight * uint32_t{2} + fCoinBase;
         ::Serialize(s, VARINT(code));
         ::Serialize(s, Using<TxOutCompression>(out));
+        ::Serialize(s, fBitAsset);
+        ::Serialize(s, fBitAssetControl);
+        ::Serialize(s, isPreconf);
+        ::Serialize(s, isPegin);
+        ::Serialize(s, nAssetID);
     }
 
-    template<typename Stream>
-    void Unserialize(Stream &s) {
+    template <typename Stream>
+    void Unserialize(Stream& s)
+    {
         uint32_t code = 0;
         ::Unserialize(s, VARINT(code));
         nHeight = code >> 1;
         fCoinBase = code & 1;
         ::Unserialize(s, Using<TxOutCompression>(out));
+        ::Unserialize(s, fBitAsset);
+        ::Unserialize(s, fBitAssetControl);
+        ::Unserialize(s, isPreconf);
+        ::Unserialize(s, isPegin);
+        ::Unserialize(s, nAssetID);
     }
 
     /** Either this coin never existed (see e.g. coinEmpty in coins.cpp), or it
-      * did exist and has been spent.
-      */
-    bool IsSpent() const {
+     * did exist and has been spent.
+     */
+    bool IsSpent() const
+    {
         return out.IsNull();
     }
 
-    size_t DynamicMemoryUsage() const {
+    size_t DynamicMemoryUsage() const
+    {
         return memusage::DynamicUsage(out.scriptPubKey);
     }
 };
@@ -105,8 +169,7 @@ using CoinsCachePair = std::pair<const COutPoint, CCoinsCacheEntry>;
  * - spent, FRESH, not DIRTY (e.g. a spent coin fetched from the parent cache)
  * - spent, not FRESH, DIRTY (e.g. a coin is spent and spentness needs to be flushed to the parent)
  */
-struct CCoinsCacheEntry
-{
+struct CCoinsCacheEntry {
 private:
     /**
      * These are used to create a doubly linked list of flagged entries.
@@ -234,17 +297,18 @@ using CCoinsMapMemoryResource = CCoinsMap::allocator_type::ResourceType;
 class CCoinsViewCursor
 {
 public:
-    CCoinsViewCursor(const uint256 &hashBlockIn): hashBlock(hashBlockIn) {}
+    CCoinsViewCursor(const uint256& hashBlockIn) : hashBlock(hashBlockIn) {}
     virtual ~CCoinsViewCursor() = default;
 
-    virtual bool GetKey(COutPoint &key) const = 0;
-    virtual bool GetValue(Coin &coin) const = 0;
+    virtual bool GetKey(COutPoint& key) const = 0;
+    virtual bool GetValue(Coin& coin) const = 0;
 
     virtual bool Valid() const = 0;
     virtual void Next() = 0;
 
     //! Get best block at the time this cursor was created
-    const uint256 &GetBestBlock() const { return hashBlock; }
+    const uint256& GetBestBlock() const { return hashBlock; }
+
 private:
     uint256 hashBlock;
 };
@@ -262,8 +326,7 @@ private:
  * perform optimizations such as moving the coin out of the CCoinsCachEntry instead
  * of copying it.
  */
-struct CoinsViewCacheCursor
-{
+struct CoinsViewCacheCursor {
     //! If will_erase is not set, iterating through the cursor will erase spent coins from the map,
     //! and other coins will be unflagged (removing them from the linked list).
     //! If will_erase is set, the underlying map and linked list will not be modified,
@@ -272,9 +335,9 @@ struct CoinsViewCacheCursor
     //! Calling CCoinsMap::clear() afterwards is faster because a CoinsCachePair cannot be coerced back into a
     //! CCoinsMap::iterator to be erased, and must therefore be looked up again by key in the CCoinsMap before being erased.
     CoinsViewCacheCursor(size_t& usage LIFETIMEBOUND,
-                        CoinsCachePair& sentinel LIFETIMEBOUND,
-                        CCoinsMap& map LIFETIMEBOUND,
-                        bool will_erase) noexcept
+                         CoinsCachePair& sentinel LIFETIMEBOUND,
+                         CCoinsMap& map LIFETIMEBOUND,
+                         bool will_erase) noexcept
         : m_usage(usage), m_sentinel(sentinel), m_map(map), m_will_erase(will_erase) {}
 
     inline CoinsCachePair* Begin() const noexcept { return m_sentinel.second.Next(); }
@@ -298,6 +361,7 @@ struct CoinsViewCacheCursor
     }
 
     inline bool WillErase(CoinsCachePair& current) const noexcept { return m_will_erase || current.second.coin.IsSpent(); }
+
 private:
     size_t& m_usage;
     CoinsCachePair& m_sentinel;
@@ -313,7 +377,7 @@ public:
     virtual std::optional<Coin> GetCoin(const COutPoint& outpoint) const;
 
     //! Just check whether a given outpoint is unspent.
-    virtual bool HaveCoin(const COutPoint &outpoint) const;
+    virtual bool HaveCoin(const COutPoint& outpoint) const;
 
     //! Retrieve the block hash whose state this CCoinsView currently represents
     virtual uint256 GetBestBlock() const;
@@ -343,16 +407,16 @@ public:
 class CCoinsViewBacked : public CCoinsView
 {
 protected:
-    CCoinsView *base;
+    CCoinsView* base;
 
 public:
-    CCoinsViewBacked(CCoinsView *viewIn);
+    CCoinsViewBacked(CCoinsView* viewIn);
     std::optional<Coin> GetCoin(const COutPoint& outpoint) const override;
-    bool HaveCoin(const COutPoint &outpoint) const override;
+    bool HaveCoin(const COutPoint& outpoint) const override;
     uint256 GetBestBlock() const override;
     std::vector<uint256> GetHeadBlocks() const override;
-    void SetBackend(CCoinsView &viewIn);
-    bool BatchWrite(CoinsViewCacheCursor& cursor, const uint256 &hashBlock) override;
+    void SetBackend(CCoinsView& viewIn);
+    bool BatchWrite(CoinsViewCacheCursor& cursor, const uint256& hashBlock) override;
     std::unique_ptr<CCoinsViewCursor> Cursor() const override;
     size_t EstimateSize() const override;
 };
@@ -379,20 +443,21 @@ protected:
     mutable size_t cachedCoinsUsage{0};
 
 public:
-    CCoinsViewCache(CCoinsView *baseIn, bool deterministic = false);
+    CCoinsViewCache(CCoinsView* baseIn, bool deterministic = false);
 
     /**
      * By deleting the copy constructor, we prevent accidentally using it when one intends to create a cache on top of a base cache.
      */
-    CCoinsViewCache(const CCoinsViewCache &) = delete;
+    CCoinsViewCache(const CCoinsViewCache&) = delete;
 
     // Standard CCoinsView methods
     std::optional<Coin> GetCoin(const COutPoint& outpoint) const override;
-    bool HaveCoin(const COutPoint &outpoint) const override;
+    bool HaveCoin(const COutPoint& outpoint) const override;
     uint256 GetBestBlock() const override;
-    void SetBestBlock(const uint256 &hashBlock);
-    bool BatchWrite(CoinsViewCacheCursor& cursor, const uint256 &hashBlock) override;
-    std::unique_ptr<CCoinsViewCursor> Cursor() const override {
+    void SetBestBlock(const uint256& hashBlock);
+    bool BatchWrite(CoinsViewCacheCursor& cursor, const uint256& hashBlock) override;
+    std::unique_ptr<CCoinsViewCursor> Cursor() const override
+    {
         throw std::logic_error("CCoinsViewCache cursor iteration not supported.");
     }
 
@@ -401,7 +466,7 @@ public:
      * The semantics are the same as HaveCoin(), but no calls to
      * the backing CCoinsView are made.
      */
-    bool HaveCoinInCache(const COutPoint &outpoint) const;
+    bool HaveCoinInCache(const COutPoint& outpoint) const;
 
     /**
      * Return a reference to Coin in the cache, or coinEmpty if not found. This is
@@ -413,7 +478,7 @@ public:
      * on! To be safe, best to not hold the returned reference through any other
      * calls to this cache.
      */
-    const Coin& AccessCoin(const COutPoint &output) const;
+    const Coin& AccessCoin(const COutPoint& output) const;
 
     /**
      * Add a coin. Set possible_overwrite to true if an unspent version may
@@ -435,7 +500,16 @@ public:
      * If no unspent output exists for the passed outpoint, this call
      * has no effect.
      */
-    bool SpendCoin(const COutPoint &outpoint, Coin* moveto = nullptr);
+    bool SpendCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, bool& isPreconf, std::vector<unsigned char>& nAssetID, Coin* moveto = nullptr);
+
+    /**
+     * get asset coin. Pass moveto in order to get the deleted data.
+     * If no unspent output exists for the passed outpoint, this call
+     * has no effect.
+     */
+    bool getAssetCoin(const COutPoint& outpoint, bool& fBitAsset, bool& fBitAssetControl, std::vector<unsigned char>& nAssetID, Coin* moveto = nullptr);
+
+    bool isPeginSpent(const COutPoint& outpoint) const;
 
     /**
      * Push the modifications applied to this cache to its base and wipe local state.
@@ -458,7 +532,7 @@ public:
      * Removes the UTXO with the given outpoint from the cache, if it is
      * not modified.
      */
-    void Uncache(const COutPoint &outpoint);
+    void Uncache(const COutPoint& outpoint);
 
     //! Calculate the size of the cache (in number of transaction outputs)
     unsigned int GetCacheSize() const;
@@ -484,7 +558,7 @@ private:
      * @note this is marked const, but may actually append to `cacheCoins`, increasing
      * memory usage.
      */
-    CCoinsMap::iterator FetchCoin(const COutPoint &outpoint) const;
+    CCoinsMap::iterator FetchCoin(const COutPoint& outpoint) const;
 };
 
 //! Utility function to add all of a transaction's outputs to a cache.
@@ -493,7 +567,7 @@ private:
 //! an overwrite.
 // TODO: pass in a boolean to limit these possible overwrites to known
 // (pre-BIP34) cases.
-void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight, bool check = false);
+void AddCoins(CCoinsViewCache& cache, const CTransaction& tx, int nHeight = 0, const CAmount preconfRefund = CAmount(0), std::vector<unsigned char> nAssetID = {}, const CAmount amountAssetIn = 0, int nControlN = -1, std::vector<unsigned char> nNewAssetID = {}, bool check = false);
 
 //! Utility function to find any unspent output with a given txid.
 //! This function can be quite expensive because in the event of a transaction
@@ -507,23 +581,23 @@ const Coin& AccessByTxid(const CCoinsViewCache& cache, const Txid& txid);
  * between bitcoind, and bitcoin-qt and non-server tools.
  *
  * Writes do not need similar protection, as failure to write is handled by the caller.
-*/
+ */
 class CCoinsViewErrorCatcher final : public CCoinsViewBacked
 {
 public:
     explicit CCoinsViewErrorCatcher(CCoinsView* view) : CCoinsViewBacked(view) {}
 
-    void AddReadErrCallback(std::function<void()> f) {
+    void AddReadErrCallback(std::function<void()> f)
+    {
         m_err_callbacks.emplace_back(std::move(f));
     }
 
     std::optional<Coin> GetCoin(const COutPoint& outpoint) const override;
-    bool HaveCoin(const COutPoint &outpoint) const override;
+    bool HaveCoin(const COutPoint& outpoint) const override;
 
 private:
     /** A list of callbacks to execute upon leveldb read error. */
     std::vector<std::function<void()>> m_err_callbacks;
-
 };
 
 #endif // BITCOIN_COINS_H

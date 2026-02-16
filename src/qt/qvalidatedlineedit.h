@@ -15,14 +15,14 @@ class QValidatedLineEdit : public QLineEdit
     Q_OBJECT
 
 public:
-    explicit QValidatedLineEdit(QWidget *parent);
+    explicit QValidatedLineEdit(QWidget* parent);
     void clear();
-    void setCheckValidator(const QValidator *v);
+    void setCheckValidator(const QValidator* v);
     bool isValid();
 
 protected:
-    void focusInEvent(QFocusEvent *evt) override;
-    void focusOutEvent(QFocusEvent *evt) override;
+    void focusInEvent(QFocusEvent* evt) override;
+    void focusOutEvent(QFocusEvent* evt) override;
 
 private:
     bool valid{true};
@@ -34,7 +34,7 @@ public Q_SLOTS:
     void setEnabled(bool enabled);
 
 Q_SIGNALS:
-    void validationDidChange(QValidatedLineEdit *validatedLineEdit);
+    void validationDidChange(QValidatedLineEdit* validatedLineEdit);
 
 private Q_SLOTS:
     void markValid();

@@ -4,13 +4,13 @@
 
 #include <arith_uint256.h>
 #include <policy/feerate.h>
-#include <util/feefrac.h>
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
+#include <util/feefrac.h>
 
-#include <compare>
 #include <cmath>
+#include <compare>
 #include <cstdint>
 #include <iostream>
 
@@ -49,8 +49,14 @@ arith_uint256 Abs256(std::pair<int64_t, uint32_t> x)
 std::strong_ordering MulCompare(int64_t a1, int64_t a2, int64_t b1, int64_t b2)
 {
     // Compute and compare signs.
-    int sign_a = (a1 == 0 ? 0 : a1 < 0 ? -1 : 1) * (a2 == 0 ? 0 : a2 < 0 ? -1 : 1);
-    int sign_b = (b1 == 0 ? 0 : b1 < 0 ? -1 : 1) * (b2 == 0 ? 0 : b2 < 0 ? -1 : 1);
+    int sign_a = (a1 == 0 ? 0 : a1 < 0 ? -1 :
+                                         1) *
+                 (a2 == 0 ? 0 : a2 < 0 ? -1 :
+                                         1);
+    int sign_b = (b1 == 0 ? 0 : b1 < 0 ? -1 :
+                                         1) *
+                 (b2 == 0 ? 0 : b2 < 0 ? -1 :
+                                         1);
     if (sign_a != sign_b) return sign_a <=> sign_b;
 
     // Compute absolute values of products.
@@ -127,8 +133,8 @@ FUZZ_TARGET(feefrac_div_fallback)
     auto num_abs = Abs256(num);
     auto den_abs = Abs256(den);
     auto quot_abs = (is_negative == round_down) ?
-        (num_abs + den_abs - 1) / den_abs :
-        num_abs / den_abs;
+                        (num_abs + den_abs - 1) / den_abs :
+                        num_abs / den_abs;
 
     // If the result is not representable by an int64_t, bail out.
     if ((is_negative && quot_abs > MAX_ABS_INT64) || (!is_negative && quot_abs >= MAX_ABS_INT64)) {
@@ -141,8 +147,7 @@ FUZZ_TARGET(feefrac_div_fallback)
     assert(Abs256(res) == quot_abs);
 
     // Compare approximately with floating-point.
-    long double expect = round_down ? std::floor(num_high * 4294967296.0L + num_low) / den
-                                    : std::ceil(num_high * 4294967296.0L + num_low) / den;
+    long double expect = round_down ? std::floor(num_high * 4294967296.0L + num_low) / den : std::ceil(num_high * 4294967296.0L + num_low) / den;
     // Expect to be accurate within 50 bits of precision, +- 1 sat.
     if (expect == 0.0L) {
         assert(res >= -1 && res <= 1);
@@ -178,8 +183,8 @@ FUZZ_TARGET(feefrac_mul_div)
     auto prod_abs = Abs256(mul32) * Abs256(mul64);
     auto div_abs = Abs256(div);
     auto quot_abs = (is_negative == round_down) ?
-        (prod_abs + div_abs - 1) / div_abs :
-        prod_abs / div_abs;
+                        (prod_abs + div_abs - 1) / div_abs :
+                        prod_abs / div_abs;
 
     // If the result is not representable by an int64_t, bail out.
     if ((is_negative && quot_abs > MAX_ABS_INT64) || (!is_negative && quot_abs >= MAX_ABS_INT64)) {
@@ -199,8 +204,7 @@ FUZZ_TARGET(feefrac_mul_div)
     assert(res == res_fallback);
 
     // Compare approximately with floating-point.
-    long double expect = round_down ? std::floor(static_cast<long double>(mul32) * mul64 / div)
-                                    : std::ceil(static_cast<long double>(mul32) * mul64 / div);
+    long double expect = round_down ? std::floor(static_cast<long double>(mul32) * mul64 / div) : std::ceil(static_cast<long double>(mul32) * mul64 / div);
     // Expect to be accurate within 50 bits of precision, +- 1 sat.
     if (expect == 0.0L) {
         assert(res >= -1 && res <= 1);
@@ -215,8 +219,8 @@ FUZZ_TARGET(feefrac_mul_div)
     // Verify the behavior of FeeFrac::Evaluate{Down,Up}.
     if (mul32 >= 0) {
         auto res_fee = round_down ?
-            FeeFrac{mul64, div}.EvaluateFeeDown(mul32) :
-            FeeFrac{mul64, div}.EvaluateFeeUp(mul32);
+                           FeeFrac{mul64, div}.EvaluateFeeDown(mul32) :
+                           FeeFrac{mul64, div}.EvaluateFeeUp(mul32);
         assert(res == res_fee);
 
         // Compare approximately with CFeeRate.

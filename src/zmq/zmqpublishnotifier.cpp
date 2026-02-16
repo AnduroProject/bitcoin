@@ -40,38 +40,35 @@ struct Params;
 
 static std::multimap<std::string, CZMQAbstractPublishNotifier*> mapPublishNotifiers;
 
-static const char *MSG_HASHBLOCK = "hashblock";
-static const char *MSG_HASHTX    = "hashtx";
-static const char *MSG_RAWBLOCK  = "rawblock";
-static const char *MSG_RAWTX     = "rawtx";
-static const char *MSG_SEQUENCE  = "sequence";
+static const char* MSG_HASHBLOCK = "hashblock";
+static const char* MSG_HASHTX = "hashtx";
+static const char* MSG_RAWBLOCK = "rawblock";
+static const char* MSG_RAWTX = "rawtx";
+static const char* MSG_SEQUENCE = "sequence";
 
 // Internal function to send multipart message
-static int zmq_send_multipart(void *sock, const void* data, size_t size, ...)
+static int zmq_send_multipart(void* sock, const void* data, size_t size, ...)
 {
     va_list args;
     va_start(args, size);
 
-    while (1)
-    {
+    while (1) {
         zmq_msg_t msg;
 
         int rc = zmq_msg_init_size(&msg, size);
-        if (rc != 0)
-        {
+        if (rc != 0) {
             zmqError("Unable to initialize ZMQ msg");
             va_end(args);
             return -1;
         }
 
-        void *buf = zmq_msg_data(&msg);
+        void* buf = zmq_msg_data(&msg);
         memcpy(buf, data, size);
 
         data = va_arg(args, const void*);
 
         rc = zmq_msg_send(&msg, sock, data ? ZMQ_SNDMORE : 0);
-        if (rc == -1)
-        {
+        if (rc == -1) {
             zmqError("Unable to send ZMQ msg");
             zmq_msg_close(&msg);
             va_end(args);
@@ -89,7 +86,7 @@ static int zmq_send_multipart(void *sock, const void* data, size_t size, ...)
     return 0;
 }
 
-static bool IsZMQAddressIPV6(const std::string &zmq_address)
+static bool IsZMQAddressIPV6(const std::string& zmq_address)
 {
     const std::string tcp_prefix = "tcp://";
     const size_t tcp_index = zmq_address.rfind(tcp_prefix);
@@ -102,18 +99,16 @@ static bool IsZMQAddressIPV6(const std::string &zmq_address)
     return false;
 }
 
-bool CZMQAbstractPublishNotifier::Initialize(void *pcontext)
+bool CZMQAbstractPublishNotifier::Initialize(void* pcontext)
 {
     assert(!psocket);
 
     // check if address is being used by other publish notifier
     std::multimap<std::string, CZMQAbstractPublishNotifier*>::iterator i = mapPublishNotifiers.find(address);
 
-    if (i==mapPublishNotifiers.end())
-    {
+    if (i == mapPublishNotifiers.end()) {
         psocket = zmq_socket(pcontext, ZMQ_PUB);
-        if (!psocket)
-        {
+        if (!psocket) {
             zmqError("Failed to create socket");
             return false;
         }
@@ -121,14 +116,13 @@ bool CZMQAbstractPublishNotifier::Initialize(void *pcontext)
         LogDebug(BCLog::ZMQ, "Outbound message high water mark for %s at %s is %d\n", type, address, outbound_message_high_water_mark);
 
         int rc = zmq_setsockopt(psocket, ZMQ_SNDHWM, &outbound_message_high_water_mark, sizeof(outbound_message_high_water_mark));
-        if (rc != 0)
-        {
+        if (rc != 0) {
             zmqError("Failed to set outbound message high water mark");
             zmq_close(psocket);
             return false;
         }
 
-        const int so_keepalive_option {1};
+        const int so_keepalive_option{1};
         rc = zmq_setsockopt(psocket, ZMQ_TCP_KEEPALIVE, &so_keepalive_option, sizeof(so_keepalive_option));
         if (rc != 0) {
             zmqError("Failed to set SO_KEEPALIVE");
@@ -137,7 +131,7 @@ bool CZMQAbstractPublishNotifier::Initialize(void *pcontext)
         }
 
         // On some systems (e.g. OpenBSD) the ZMQ_IPV6 must not be enabled, if the address to bind isn't IPv6
-        const int enable_ipv6 { IsZMQAddressIPV6(address) ? 1 : 0};
+        const int enable_ipv6{IsZMQAddressIPV6(address) ? 1 : 0};
         rc = zmq_setsockopt(psocket, ZMQ_IPV6, &enable_ipv6, sizeof(enable_ipv6));
         if (rc != 0) {
             zmqError("Failed to set ZMQ_IPV6");
@@ -146,8 +140,7 @@ bool CZMQAbstractPublishNotifier::Initialize(void *pcontext)
         }
 
         rc = zmq_bind(psocket, address.c_str());
-        if (rc != 0)
-        {
+        if (rc != 0) {
             zmqError("Failed to bind address");
             zmq_close(psocket);
             return false;
@@ -156,9 +149,7 @@ bool CZMQAbstractPublishNotifier::Initialize(void *pcontext)
         // register this notifier for the address, so it can be reused for other publish notifier
         mapPublishNotifiers.insert(std::make_pair(address, this));
         return true;
-    }
-    else
-    {
+    } else {
         LogDebug(BCLog::ZMQ, "Reusing socket for address %s\n", address);
         LogDebug(BCLog::ZMQ, "Outbound message high water mark for %s at %s is %d\n", type, address, outbound_message_high_water_mark);
 
@@ -180,17 +171,14 @@ void CZMQAbstractPublishNotifier::Shutdown()
     typedef std::multimap<std::string, CZMQAbstractPublishNotifier*>::iterator iterator;
     std::pair<iterator, iterator> iterpair = mapPublishNotifiers.equal_range(address);
 
-    for (iterator it = iterpair.first; it != iterpair.second; ++it)
-    {
-        if (it->second==this)
-        {
+    for (iterator it = iterpair.first; it != iterpair.second; ++it) {
+        if (it->second == this) {
             mapPublishNotifiers.erase(it);
             break;
         }
     }
 
-    if (count == 1)
-    {
+    if (count == 1) {
         LogDebug(BCLog::ZMQ, "Close socket at address %s\n", address);
         int linger = 0;
         zmq_setsockopt(psocket, ZMQ_LINGER, &linger, sizeof(linger));
@@ -200,7 +188,7 @@ void CZMQAbstractPublishNotifier::Shutdown()
     psocket = nullptr;
 }
 
-bool CZMQAbstractPublishNotifier::SendZmqMessage(const char *command, const void* data, size_t size)
+bool CZMQAbstractPublishNotifier::SendZmqMessage(const char* command, const void* data, size_t size)
 {
     assert(psocket);
 
@@ -217,7 +205,7 @@ bool CZMQAbstractPublishNotifier::SendZmqMessage(const char *command, const void
     return true;
 }
 
-bool CZMQPublishHashBlockNotifier::NotifyBlock(const CBlockIndex *pindex)
+bool CZMQPublishHashBlockNotifier::NotifyBlock(const CBlockIndex* pindex)
 {
     uint256 hash = pindex->GetBlockHash();
     LogDebug(BCLog::ZMQ, "Publish hashblock %s to %s\n", hash.GetHex(), this->address);
@@ -228,7 +216,7 @@ bool CZMQPublishHashBlockNotifier::NotifyBlock(const CBlockIndex *pindex)
     return SendZmqMessage(MSG_HASHBLOCK, data, 32);
 }
 
-bool CZMQPublishHashTransactionNotifier::NotifyTransaction(const CTransaction &transaction)
+bool CZMQPublishHashTransactionNotifier::NotifyTransaction(const CTransaction& transaction)
 {
     uint256 hash = transaction.GetHash();
     LogDebug(BCLog::ZMQ, "Publish hashtx %s to %s\n", hash.GetHex(), this->address);
@@ -239,7 +227,7 @@ bool CZMQPublishHashTransactionNotifier::NotifyTransaction(const CTransaction &t
     return SendZmqMessage(MSG_HASHTX, data, 32);
 }
 
-bool CZMQPublishRawBlockNotifier::NotifyBlock(const CBlockIndex *pindex)
+bool CZMQPublishRawBlockNotifier::NotifyBlock(const CBlockIndex* pindex)
 {
     LogDebug(BCLog::ZMQ, "Publish rawblock %s to %s\n", pindex->GetBlockHash().GetHex(), this->address);
 
@@ -252,7 +240,7 @@ bool CZMQPublishRawBlockNotifier::NotifyBlock(const CBlockIndex *pindex)
     return SendZmqMessage(MSG_RAWBLOCK, block.data(), block.size());
 }
 
-bool CZMQPublishRawTransactionNotifier::NotifyTransaction(const CTransaction &transaction)
+bool CZMQPublishRawTransactionNotifier::NotifyTransaction(const CTransaction& transaction)
 {
     uint256 hash = transaction.GetHash();
     LogDebug(BCLog::ZMQ, "Publish rawtx %s to %s\n", hash.GetHex(), this->address);
@@ -274,28 +262,28 @@ static bool SendSequenceMsg(CZMQAbstractPublishNotifier& notifier, uint256 hash,
     return notifier.SendZmqMessage(MSG_SEQUENCE, data, sequence ? sizeof(data) : sizeof(hash) + sizeof(label));
 }
 
-bool CZMQPublishSequenceNotifier::NotifyBlockConnect(const CBlockIndex *pindex)
+bool CZMQPublishSequenceNotifier::NotifyBlockConnect(const CBlockIndex* pindex)
 {
     uint256 hash = pindex->GetBlockHash();
     LogDebug(BCLog::ZMQ, "Publish sequence block connect %s to %s\n", hash.GetHex(), this->address);
     return SendSequenceMsg(*this, hash, /* Block (C)onnect */ 'C');
 }
 
-bool CZMQPublishSequenceNotifier::NotifyBlockDisconnect(const CBlockIndex *pindex)
+bool CZMQPublishSequenceNotifier::NotifyBlockDisconnect(const CBlockIndex* pindex)
 {
     uint256 hash = pindex->GetBlockHash();
     LogDebug(BCLog::ZMQ, "Publish sequence block disconnect %s to %s\n", hash.GetHex(), this->address);
     return SendSequenceMsg(*this, hash, /* Block (D)isconnect */ 'D');
 }
 
-bool CZMQPublishSequenceNotifier::NotifyTransactionAcceptance(const CTransaction &transaction, uint64_t mempool_sequence)
+bool CZMQPublishSequenceNotifier::NotifyTransactionAcceptance(const CTransaction& transaction, uint64_t mempool_sequence)
 {
     uint256 hash = transaction.GetHash();
     LogDebug(BCLog::ZMQ, "Publish hashtx mempool acceptance %s to %s\n", hash.GetHex(), this->address);
     return SendSequenceMsg(*this, hash, /* Mempool (A)cceptance */ 'A', mempool_sequence);
 }
 
-bool CZMQPublishSequenceNotifier::NotifyTransactionRemoval(const CTransaction &transaction, uint64_t mempool_sequence)
+bool CZMQPublishSequenceNotifier::NotifyTransactionRemoval(const CTransaction& transaction, uint64_t mempool_sequence)
 {
     uint256 hash = transaction.GetHash();
     LogDebug(BCLog::ZMQ, "Publish hashtx mempool removal %s to %s\n", hash.GetHex(), this->address);

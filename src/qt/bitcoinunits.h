@@ -22,19 +22,19 @@
 #define HTML_HACK_SP "<span style='white-space: nowrap; font-size: 6pt'> </span>"
 
 // Define THIN_SP_* variables to be our preferred type of thin space
-#define THIN_SP_CP   REAL_THIN_SP_CP
+#define THIN_SP_CP REAL_THIN_SP_CP
 #define THIN_SP_UTF8 REAL_THIN_SP_UTF8
 #define THIN_SP_HTML HTML_HACK_SP
 
 /** Bitcoin unit definitions. Encapsulates parsing and formatting
    and serves as list model for drop-down selection boxes.
 */
-class BitcoinUnits: public QAbstractListModel
+class BitcoinUnits : public QAbstractListModel
 {
     Q_OBJECT
 
 public:
-    explicit BitcoinUnits(QObject *parent);
+    explicit BitcoinUnits(QObject* parent);
 
     /** Bitcoin units.
       @note Source: https://en.bitcoin.it/wiki/Units . Please add only sensible ones
@@ -47,8 +47,7 @@ public:
     };
     Q_ENUM(Unit)
 
-    enum class SeparatorStyle
-    {
+    enum class SeparatorStyle {
         NEVER,
         STANDARD,
         ALWAYS
@@ -91,8 +90,8 @@ public:
         /** Unit identifier */
         UnitRole = Qt::UserRole
     };
-    int rowCount(const QModelIndex &parent) const override;
-    QVariant data(const QModelIndex &index, int role) const override;
+    int rowCount(const QModelIndex& parent) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
     ///@}
 
     static QString removeSpaces(QString text)

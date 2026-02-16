@@ -36,22 +36,19 @@ static bool fRPCInWarmup GUARDED_BY(g_rpc_warmup_mutex) = true;
 static std::string rpcWarmupStatus GUARDED_BY(g_rpc_warmup_mutex) = "RPC server started";
 static bool ExecuteCommand(const CRPCCommand& command, const JSONRPCRequest& request, UniValue& result, bool last_handler);
 
-struct RPCCommandExecutionInfo
-{
+struct RPCCommandExecutionInfo {
     std::string method;
     SteadyClock::time_point start;
 };
 
-struct RPCServerInfo
-{
+struct RPCServerInfo {
     Mutex mutex;
     std::list<RPCCommandExecutionInfo> active_commands GUARDED_BY(mutex);
 };
 
 static RPCServerInfo g_rpc_server_info;
 
-struct RPCCommandExecution
-{
+struct RPCCommandExecution {
     std::list<RPCCommandExecutionInfo>::iterator it;
     explicit RPCCommandExecution(const std::string& method)
     {
@@ -70,7 +67,7 @@ std::string CRPCTable::help(const std::string& strCommand, const JSONRPCRequest&
     std::string strRet;
     std::string category;
     std::set<intptr_t> setDone;
-    std::vector<std::pair<std::string, const CRPCCommand*> > vCommands;
+    std::vector<std::pair<std::string, const CRPCCommand*>> vCommands;
     vCommands.reserve(mapCommands.size());
 
     for (const auto& entry : mapCommands)
@@ -86,20 +83,17 @@ std::string CRPCTable::help(const std::string& strCommand, const JSONRPCRequest&
         if ((strCommand != "" || pcmd->category == "hidden") && strMethod != strCommand)
             continue;
         jreq.strMethod = strMethod;
-        try
-        {
+        try {
             UniValue unused_result;
             if (setDone.insert(pcmd->unique_id).second)
                 pcmd->actor(jreq, unused_result, /*last_handler=*/true);
         } catch (const HelpResult& e) {
             std::string strHelp{e.what()};
-            if (strCommand == "")
-            {
+            if (strCommand == "") {
                 if (strHelp.find('\n') != std::string::npos)
                     strHelp = strHelp.substr(0, strHelp.find('\n'));
 
-                if (category != pcmd->category)
-                {
+                if (category != pcmd->category) {
                     if (!category.empty())
                         strRet += "\n";
                     category = pcmd->category;
@@ -111,7 +105,7 @@ std::string CRPCTable::help(const std::string& strCommand, const JSONRPCRequest&
     }
     if (strRet == "")
         strRet = strprintf("help: unknown command: %s\n", strCommand);
-    strRet = strRet.substr(0,strRet.size()-1);
+    strRet = strRet.substr(0, strRet.size() - 1);
     return strRet;
 }
 
@@ -120,27 +114,26 @@ static RPCHelpMan help()
     return RPCHelpMan{
         "help",
         "List all commands, or get help for a specified command.\n",
-                {
-                    {"command", RPCArg::Type::STR, RPCArg::DefaultHint{"all commands"}, "The command to get help on"},
-                },
-                {
-                    RPCResult{RPCResult::Type::STR, "", "The help text"},
-                    RPCResult{RPCResult::Type::ANY, "", ""},
-                },
-                RPCExamples{""},
-        [&](const RPCHelpMan& self, const JSONRPCRequest& jsonRequest) -> UniValue
-{
-    std::string strCommand;
-    if (jsonRequest.params.size() > 0) {
-        strCommand = jsonRequest.params[0].get_str();
-    }
-    if (strCommand == "dump_all_command_conversions") {
-        // Used for testing only, undocumented
-        return tableRPC.dumpArgMap(jsonRequest);
-    }
+        {
+            {"command", RPCArg::Type::STR, RPCArg::DefaultHint{"all commands"}, "The command to get help on"},
+        },
+        {
+            RPCResult{RPCResult::Type::STR, "", "The help text"},
+            RPCResult{RPCResult::Type::ANY, "", ""},
+        },
+        RPCExamples{""},
+        [&](const RPCHelpMan& self, const JSONRPCRequest& jsonRequest) -> UniValue {
+            std::string strCommand;
+            if (jsonRequest.params.size() > 0) {
+                strCommand = jsonRequest.params[0].get_str();
+            }
+            if (strCommand == "dump_all_command_conversions") {
+                // Used for testing only, undocumented
+                return tableRPC.dumpArgMap(jsonRequest);
+            }
 
-    return tableRPC.help(strCommand, jsonRequest);
-},
+            return tableRPC.help(strCommand, jsonRequest);
+        },
     };
 }
 
@@ -149,25 +142,24 @@ static RPCHelpMan stop()
     static const std::string RESULT{CLIENT_NAME " stopping"};
     return RPCHelpMan{
         "stop",
-    // Also accept the hidden 'wait' integer argument (milliseconds)
-    // For instance, 'stop 1000' makes the call wait 1 second before returning
-    // to the client (intended for testing)
+        // Also accept the hidden 'wait' integer argument (milliseconds)
+        // For instance, 'stop 1000' makes the call wait 1 second before returning
+        // to the client (intended for testing)
         "Request a graceful shutdown of " CLIENT_NAME ".",
-                {
-                    {"wait", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "how long to wait in ms", RPCArgOptions{.hidden=true}},
-                },
-                RPCResult{RPCResult::Type::STR, "", "A string with the content '" + RESULT + "'"},
-                RPCExamples{""},
-        [&](const RPCHelpMan& self, const JSONRPCRequest& jsonRequest) -> UniValue
-{
-    // Event loop will exit after current HTTP requests have been handled, so
-    // this reply will get back to the client.
-    CHECK_NONFATAL((CHECK_NONFATAL(EnsureAnyNodeContext(jsonRequest.context).shutdown_request))());
-    if (jsonRequest.params[0].isNum()) {
-        UninterruptibleSleep(std::chrono::milliseconds{jsonRequest.params[0].getInt<int>()});
-    }
-    return RESULT;
-},
+        {
+            {"wait", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "how long to wait in ms", RPCArgOptions{.hidden = true}},
+        },
+        RPCResult{RPCResult::Type::STR, "", "A string with the content '" + RESULT + "'"},
+        RPCExamples{""},
+        [&](const RPCHelpMan& self, const JSONRPCRequest& jsonRequest) -> UniValue {
+            // Event loop will exit after current HTTP requests have been handled, so
+            // this reply will get back to the client.
+            CHECK_NONFATAL((CHECK_NONFATAL(EnsureAnyNodeContext(jsonRequest.context).shutdown_request))());
+            if (jsonRequest.params[0].isNum()) {
+                UninterruptibleSleep(std::chrono::milliseconds{jsonRequest.params[0].getInt<int>()});
+            }
+            return RESULT;
+        },
     };
 }
 
@@ -176,19 +168,14 @@ static RPCHelpMan uptime()
     return RPCHelpMan{
         "uptime",
         "Returns the total uptime of the server.\n",
-                            {},
-                            RPCResult{
-                                RPCResult::Type::NUM, "", "The number of seconds that the server has been running"
-                            },
-                RPCExamples{
-                    HelpExampleCli("uptime", "")
-                + HelpExampleRpc("uptime", "")
-                },
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
-{
-    return GetTime() - GetStartupTime();
-}
-    };
+        {},
+        RPCResult{
+            RPCResult::Type::NUM, "", "The number of seconds that the server has been running"},
+        RPCExamples{
+            HelpExampleCli("uptime", "") + HelpExampleRpc("uptime", "")},
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
+            return GetTime() - GetStartupTime();
+        }};
 }
 
 static RPCHelpMan getrpcinfo()
@@ -196,45 +183,37 @@ static RPCHelpMan getrpcinfo()
     return RPCHelpMan{
         "getrpcinfo",
         "Returns details of the RPC server.\n",
-                {},
-                RPCResult{
-                    RPCResult::Type::OBJ, "", "",
-                    {
-                        {RPCResult::Type::ARR, "active_commands", "All active commands",
-                        {
-                            {RPCResult::Type::OBJ, "", "Information about an active command",
-                            {
-                                 {RPCResult::Type::STR, "method", "The name of the RPC command"},
-                                 {RPCResult::Type::NUM, "duration", "The running time in microseconds"},
-                            }},
-                        }},
-                        {RPCResult::Type::STR, "logpath", "The complete file path to the debug log"},
-                    }
-                },
-                RPCExamples{
-                    HelpExampleCli("getrpcinfo", "")
-                + HelpExampleRpc("getrpcinfo", "")},
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
-{
-    LOCK(g_rpc_server_info.mutex);
-    UniValue active_commands(UniValue::VARR);
-    for (const RPCCommandExecutionInfo& info : g_rpc_server_info.active_commands) {
-        UniValue entry(UniValue::VOBJ);
-        entry.pushKV("method", info.method);
-        entry.pushKV("duration", int64_t{Ticks<std::chrono::microseconds>(SteadyClock::now() - info.start)});
-        active_commands.push_back(std::move(entry));
-    }
+        {},
+        RPCResult{
+            RPCResult::Type::OBJ, "", "", {
+                                              {RPCResult::Type::ARR, "active_commands", "All active commands", {
+                                                                                                                   {RPCResult::Type::OBJ, "", "Information about an active command", {
+                                                                                                                                                                                         {RPCResult::Type::STR, "method", "The name of the RPC command"},
+                                                                                                                                                                                         {RPCResult::Type::NUM, "duration", "The running time in microseconds"},
+                                                                                                                                                                                     }},
+                                                                                                               }},
+                                              {RPCResult::Type::STR, "logpath", "The complete file path to the debug log"},
+                                          }},
+        RPCExamples{HelpExampleCli("getrpcinfo", "") + HelpExampleRpc("getrpcinfo", "")},
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
+            LOCK(g_rpc_server_info.mutex);
+            UniValue active_commands(UniValue::VARR);
+            for (const RPCCommandExecutionInfo& info : g_rpc_server_info.active_commands) {
+                UniValue entry(UniValue::VOBJ);
+                entry.pushKV("method", info.method);
+                entry.pushKV("duration", int64_t{Ticks<std::chrono::microseconds>(SteadyClock::now() - info.start)});
+                active_commands.push_back(std::move(entry));
+            }
 
-    UniValue result(UniValue::VOBJ);
-    result.pushKV("active_commands", std::move(active_commands));
+            UniValue result(UniValue::VOBJ);
+            result.pushKV("active_commands", std::move(active_commands));
 
-    const std::string path = LogInstance().m_file_path.utf8string();
-    UniValue log_path(UniValue::VSTR, path);
-    result.pushKV("logpath", std::move(log_path));
+            const std::string path = LogInstance().m_file_path.utf8string();
+            UniValue log_path(UniValue::VSTR, path);
+            result.pushKV("logpath", std::move(log_path));
 
-    return result;
-}
-    };
+            return result;
+        }};
 }
 
 static const CRPCCommand vRPCCommands[]{
@@ -324,7 +303,7 @@ void SetRPCWarmupFinished()
     fRPCInWarmup = false;
 }
 
-bool RPCIsInWarmup(std::string *outStatus)
+bool RPCIsInWarmup(std::string* outStatus)
 {
     LOCK(g_rpc_warmup_mutex);
     if (outStatus)
@@ -370,7 +349,7 @@ static inline JSONRPCRequest transformNamedArguments(const JSONRPCRequest& in, c
     const std::vector<std::string>& keys = in.params.getKeys();
     const std::vector<UniValue>& values = in.params.getValues();
     std::unordered_map<std::string, const UniValue*> argsIn;
-    for (size_t i=0; i<keys.size(); ++i) {
+    for (size_t i = 0; i < keys.size(); ++i) {
         auto [_, inserted] = argsIn.emplace(keys[i], &values[i]);
         if (!inserted) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Parameter " + keys[i] + " specified multiple times");
@@ -388,10 +367,10 @@ static inline JSONRPCRequest transformNamedArguments(const JSONRPCRequest& in, c
     int initial_hole_size = 0;
     const std::string* initial_param = nullptr;
     UniValue options{UniValue::VOBJ};
-    for (const auto& [argNamePattern, named_only]: argNames) {
+    for (const auto& [argNamePattern, named_only] : argNames) {
         std::vector<std::string> vargNames = SplitString(argNamePattern, '|');
         auto fr = argsIn.end();
-        for (const std::string & argName : vargNames) {
+        for (const std::string& argName : vargNames) {
             fr = argsIn.find(argName);
             if (fr != argsIn.end()) {
                 break;
@@ -475,7 +454,7 @@ static bool ExecuteCommands(const std::vector<const CRPCCommand*>& commands, con
     return false;
 }
 
-UniValue CRPCTable::execute(const JSONRPCRequest &request) const
+UniValue CRPCTable::execute(const JSONRPCRequest& request) const
 {
     // Return immediately if in warmup
     {
@@ -516,7 +495,8 @@ std::vector<std::string> CRPCTable::listCommands() const
 {
     std::vector<std::string> commandList;
     commandList.reserve(mapCommands.size());
-    for (const auto& i : mapCommands) commandList.emplace_back(i.first);
+    for (const auto& i : mapCommands)
+        commandList.emplace_back(i.first);
     return commandList;
 }
 

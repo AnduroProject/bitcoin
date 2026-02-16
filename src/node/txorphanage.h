@@ -35,7 +35,8 @@ static constexpr unsigned int DEFAULT_MAX_ORPHANAGE_LATENCY_SCORE{3000};
  * - Peers' orphans are effectively protected from eviction as long as they don't exceed their limits.
  * Not thread-safe. Requires external synchronization.
  */
-class TxOrphanage {
+class TxOrphanage
+{
 public:
     using Usage = int64_t;
     using Count = unsigned int;
@@ -47,10 +48,10 @@ public:
         std::set<NodeId> announcers;
 
         // Constructor with moved announcers
-        OrphanInfo(CTransactionRef tx, std::set<NodeId>&& announcers) :
-            tx(std::move(tx)),
-            announcers(std::move(announcers))
-        {}
+        OrphanInfo(CTransactionRef tx, std::set<NodeId>&& announcers) : tx(std::move(tx)),
+                                                                        announcers(std::move(announcers))
+        {
+        }
     };
 
     virtual ~TxOrphanage() = default;

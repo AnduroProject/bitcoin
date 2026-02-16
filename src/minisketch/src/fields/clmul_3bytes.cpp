@@ -112,9 +112,10 @@ constexpr StatTable24 SQR8_TABLE_24({0x1, 0xf30ca2, 0x573345, 0xb0a14e, 0xafd77d
 constexpr StatTable24 QRT_TABLE_24({0x104e, 0xaf42a8, 0xaf42aa, 0xb78186, 0xaf42ae, 0x4090, 0xb7818e, 0x4a37c, 0xaf42be, 0x3688c0, 0x40b0, 0x80080e, 0xb781ce, 0xaf2232, 0x4a3fc, 0x856a82, 0xaf43be, 0x29c970, 0x368ac0, 0x968ace, 0x44b0, 0x77d570, 0x80000e, 0});
 typedef Field<uint32_t, 24, 27, StatTable24, &SQR_TABLE_24, &SQR2_TABLE_24, &SQR4_TABLE_24, &SQR8_TABLE_24, &QRT_TABLE_24, &QRT_TABLE_24, IdTrans, &ID_TRANS, &ID_TRANS> Field24;
 #endif
-}
+} // namespace
 
-Sketch* ConstructClMul3Bytes(int bits, int implementation) {
+Sketch* ConstructClMul3Bytes(int bits, int implementation)
+{
     switch (bits) {
 #ifdef ENABLE_FIELD_INT_17
     case 17: return new SketchImpl<Field17>(implementation, 17);
@@ -141,7 +142,8 @@ Sketch* ConstructClMul3Bytes(int bits, int implementation) {
     return nullptr;
 }
 
-Sketch* ConstructClMulTri3Bytes(int bits, int implementation) {
+Sketch* ConstructClMulTri3Bytes(int bits, int implementation)
+{
     switch (bits) {
 #ifdef ENABLE_FIELD_INT_17
     case 17: return new SketchImpl<FieldTri17>(implementation, 17);

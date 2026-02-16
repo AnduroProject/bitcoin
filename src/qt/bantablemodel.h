@@ -16,7 +16,7 @@
 class BanTablePriv;
 
 namespace interfaces {
-    class Node;
+class Node;
 }
 
 struct CCombinedBan {
@@ -27,8 +27,7 @@ struct CCombinedBan {
 class BannedNodeLessThan
 {
 public:
-    BannedNodeLessThan(int nColumn, Qt::SortOrder fOrder) :
-        column(nColumn), order(fOrder) {}
+    BannedNodeLessThan(int nColumn, Qt::SortOrder fOrder) : column(nColumn), order(fOrder) {}
     bool operator()(const CCombinedBan& left, const CCombinedBan& right) const;
 
 private:
@@ -57,12 +56,12 @@ public:
 
     /** @name Methods overridden from QAbstractTableModel
         @{*/
-    int rowCount(const QModelIndex &parent) const override;
-    int columnCount(const QModelIndex &parent) const override;
-    QVariant data(const QModelIndex &index, int role) const override;
+    int rowCount(const QModelIndex& parent) const override;
+    int columnCount(const QModelIndex& parent) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
-    QModelIndex index(int row, int column, const QModelIndex &parent) const override;
-    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    QModelIndex index(int row, int column, const QModelIndex& parent) const override;
+    Qt::ItemFlags flags(const QModelIndex& index) const override;
     void sort(int column, Qt::SortOrder order) override;
     /*@}*/
 

@@ -7,18 +7,19 @@
 #ifndef SECP256K1_BENCH_H
 #define SECP256K1_BENCH_H
 
-#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if (defined(_MSC_VER) && _MSC_VER >= 1900)
-#  include <time.h>
+#include <time.h>
 #else
-#  include <sys/time.h>
+#include <sys/time.h>
 #endif
 
-static int64_t gettime_i64(void) {
+static int64_t gettime_i64(void)
+{
 #if (defined(_MSC_VER) && _MSC_VER >= 1900)
     /* C11 way to get wallclock time */
     struct timespec tv;
@@ -38,7 +39,8 @@ static int64_t gettime_i64(void) {
 #define FP_MULT (1000000LL)
 
 /* Format fixed point number. */
-static void print_number(const int64_t x) {
+static void print_number(const int64_t x)
+{
     int64_t x_abs, y;
     int c, i, rounding, g; /* g = integer part size, c = fractional part size */
     size_t ptr;
@@ -79,7 +81,7 @@ static void print_number(const int64_t x) {
             y /= 10;
         }
     } else if (c == 0) { /* fractional part is 0 */
-        buffer[--ptr] = '0'; 
+        buffer[--ptr] = '0';
     }
     buffer[--ptr] = '.';
     do {
@@ -91,11 +93,12 @@ static void print_number(const int64_t x) {
         buffer[--ptr] = '-';
         g++;
     }
-    printf("%5.*s", g, &buffer[ptr]); /* Prints integer part */
+    printf("%5.*s", g, &buffer[ptr]);         /* Prints integer part */
     printf("%-*s", FP_EXP, &buffer[ptr + g]); /* Prints fractional part */
 }
 
-static void run_benchmark(char *name, void (*benchmark)(void*, int), void (*setup)(void*), void (*teardown)(void*, int), void* data, int count, int iter) {
+static void run_benchmark(char* name, void (*benchmark)(void*, int), void (*setup)(void*), void (*teardown)(void*, int), void* data, int count, int iter)
+{
     int i;
     int64_t min = INT64_MAX;
     int64_t sum = 0;
@@ -129,7 +132,8 @@ static void run_benchmark(char *name, void (*benchmark)(void*, int), void (*setu
     printf("\n");
 }
 
-static int have_flag(int argc, char** argv, char *flag) {
+static int have_flag(int argc, char** argv, char* flag)
+{
     char** argm = argv + argc;
     argv++;
     while (argv != argm) {
@@ -145,7 +149,8 @@ static int have_flag(int argc, char** argv, char *flag) {
    returns:
       - 1 if the user entered an invalid argument
       - 0 if all the user entered arguments are valid */
-static int have_invalid_args(int argc, char** argv, char** valid_args, size_t n) {
+static int have_invalid_args(int argc, char** argv, char** valid_args, size_t n)
+{
     size_t i;
     int found_valid;
     char** argm = argv + argc;
@@ -167,7 +172,8 @@ static int have_invalid_args(int argc, char** argv, char** valid_args, size_t n)
     return 0;
 }
 
-static int get_iters(int default_iters) {
+static int get_iters(int default_iters)
+{
     char* env = getenv("SECP256K1_BENCH_ITERS");
     if (env) {
         return strtol(env, NULL, 0);
@@ -176,7 +182,8 @@ static int get_iters(int default_iters) {
     }
 }
 
-static void print_output_table_header_row(void) {
+static void print_output_table_header_row(void)
+{
     char* bench_str = "Benchmark";     /* left justified */
     char* min_str = "    Min(us)    "; /* center alignment */
     char* avg_str = "    Avg(us)    ";

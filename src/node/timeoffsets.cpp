@@ -40,7 +40,7 @@ std::chrono::seconds TimeOffsets::Median() const
 
     auto sorted_copy = m_offsets;
     std::sort(sorted_copy.begin(), sorted_copy.end());
-    return sorted_copy[sorted_copy.size() / 2];  // approximate median is good enough, keep it simple
+    return sorted_copy[sorted_copy.size() / 2]; // approximate median is good enough, keep it simple
 }
 
 bool TimeOffsets::WarnIfOutOfSync() const
@@ -53,13 +53,13 @@ bool TimeOffsets::WarnIfOutOfSync() const
     }
 
     bilingual_str msg{strprintf(_(
-        "Your computer's date and time appear to be more than %d minutes out of sync with the network, "
-        "this may lead to consensus failure. After you've confirmed your computer's clock, this message "
-        "should no longer appear when you restart your node. Without a restart, it should stop showing "
-        "automatically after you've connected to a sufficient number of new outbound peers, which may "
-        "take some time. You can inspect the `timeoffset` field of the `getpeerinfo` and `getnetworkinfo` "
-        "RPC methods to get more info."
-    ), Ticks<std::chrono::minutes>(WARN_THRESHOLD))};
+                                    "Your computer's date and time appear to be more than %d minutes out of sync with the network, "
+                                    "this may lead to consensus failure. After you've confirmed your computer's clock, this message "
+                                    "should no longer appear when you restart your node. Without a restart, it should stop showing "
+                                    "automatically after you've connected to a sufficient number of new outbound peers, which may "
+                                    "take some time. You can inspect the `timeoffset` field of the `getpeerinfo` and `getnetworkinfo` "
+                                    "RPC methods to get more info."),
+                                Ticks<std::chrono::minutes>(WARN_THRESHOLD))};
     LogWarning("%s\n", msg.original);
     m_warnings.Set(node::Warning::CLOCK_OUT_OF_SYNC, msg);
     return true;

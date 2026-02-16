@@ -5,14 +5,14 @@
 #include <bench/bench.h>
 #include <consensus/amount.h>
 #include <net.h>
+#include <node/txorphanage.h>
 #include <policy/policy.h>
 #include <primitives/transaction.h>
 #include <pubkey.h>
 #include <script/sign.h>
 #include <test/util/setup_common.h>
-#include <node/txorphanage.h>
-#include <util/check.h>
 #include <test/util/transaction_utils.h>
+#include <util/check.h>
 
 #include <cstdint>
 #include <memory>

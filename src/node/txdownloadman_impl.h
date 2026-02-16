@@ -11,13 +11,14 @@
 #include <kernel/chain.h>
 #include <net.h>
 #include <node/txorphanage.h>
-#include <primitives/transaction.h>
 #include <policy/packages.h>
+#include <primitives/transaction.h>
 #include <txrequest.h>
 
 class CTxMemPool;
 namespace node {
-class TxDownloadManagerImpl {
+class TxDownloadManagerImpl
+{
 public:
     TxDownloadOptions m_opts;
 

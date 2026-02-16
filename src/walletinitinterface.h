@@ -11,7 +11,8 @@ namespace node {
 struct NodeContext;
 } // namespace node
 
-class WalletInitInterface {
+class WalletInitInterface
+{
 public:
     /** Is the wallet component enabled */
     virtual bool HasWalletSupport() const = 0;

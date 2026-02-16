@@ -11,7 +11,7 @@
 #include <windows.h>
 #endif
 
-void memory_cleanse(void *ptr, size_t len)
+void memory_cleanse(void* ptr, size_t len)
 {
 #if defined(WIN32)
     /* SecureZeroMemory is guaranteed not to be optimized out. */

@@ -83,7 +83,7 @@ namespace {
  * This class matches SearchCandidateFinder in interface and behavior, though with fewer
  * optimizations.
  */
-template<typename SetType>
+template <typename SetType>
 class SimpleCandidateFinder
 {
     /** Internal dependency graph. */
@@ -93,8 +93,7 @@ class SimpleCandidateFinder
 
 public:
     /** Construct an SimpleCandidateFinder for a given graph. */
-    SimpleCandidateFinder(const DepGraph<SetType>& depgraph LIFETIMEBOUND) noexcept :
-        m_depgraph(depgraph), m_todo{depgraph.Positions()} {}
+    SimpleCandidateFinder(const DepGraph<SetType>& depgraph LIFETIMEBOUND) noexcept : m_depgraph(depgraph), m_todo{depgraph.Positions()} {}
 
     /** Remove a set of transactions from the set of to-be-linearized ones. */
     void MarkDone(SetType select) noexcept { m_todo -= select; }
@@ -155,7 +154,7 @@ public:
  * It is even simpler than SimpleCandidateFinder, and exists just to help test the correctness of
  * SimpleCandidateFinder, which is then used to test the correctness of SearchCandidateFinder.
  */
-template<typename SetType>
+template <typename SetType>
 class ExhaustiveCandidateFinder
 {
     /** Internal dependency graph. */
@@ -165,8 +164,7 @@ class ExhaustiveCandidateFinder
 
 public:
     /** Construct an ExhaustiveCandidateFinder for a given graph. */
-    ExhaustiveCandidateFinder(const DepGraph<SetType>& depgraph LIFETIMEBOUND) noexcept :
-        m_depgraph(depgraph), m_todo{depgraph.Positions()} {}
+    ExhaustiveCandidateFinder(const DepGraph<SetType>& depgraph LIFETIMEBOUND) noexcept : m_depgraph(depgraph), m_todo{depgraph.Positions()} {}
 
     /** Remove a set of transactions from the set of to-be-linearized ones. */
     void MarkDone(SetType select) noexcept { m_todo -= select; }
@@ -207,7 +205,7 @@ public:
  * the ability to pass in an existing linearization, and using just SimpleCandidateFinder rather
  * than AncestorCandidateFinder and SearchCandidateFinder.
  */
-template<typename SetType>
+template <typename SetType>
 std::pair<std::vector<DepGraphIndex>, bool> SimpleLinearize(const DepGraph<SetType>& depgraph, uint64_t max_iterations)
 {
     std::vector<DepGraphIndex> linearization;
@@ -232,7 +230,7 @@ std::pair<std::vector<DepGraphIndex>, bool> SimpleLinearize(const DepGraph<SetTy
  * and always finds the optimal. With an O(n!) complexity, it should only be used for small
  * clusters.
  */
-template<typename SetType>
+template <typename SetType>
 std::vector<DepGraphIndex> ExhaustiveLinearize(const DepGraph<SetType>& depgraph)
 {
     // The best linearization so far, and its chunking.
@@ -241,7 +239,8 @@ std::vector<DepGraphIndex> ExhaustiveLinearize(const DepGraph<SetType>& depgraph
 
     std::vector<DepGraphIndex> perm_linearization;
     // Initialize with the lexicographically-first linearization.
-    for (DepGraphIndex i : depgraph.Positions()) perm_linearization.push_back(i);
+    for (DepGraphIndex i : depgraph.Positions())
+        perm_linearization.push_back(i);
     // Iterate over all valid permutations.
     do {
         /** What prefix of perm_linearization is topological. */
@@ -271,14 +270,14 @@ std::vector<DepGraphIndex> ExhaustiveLinearize(const DepGraph<SetType>& depgraph
             assert(std::is_sorted(first_non_topo + 1, perm_linearization.end()));
             std::reverse(first_non_topo + 1, perm_linearization.end());
         }
-    } while(std::next_permutation(perm_linearization.begin(), perm_linearization.end()));
+    } while (std::next_permutation(perm_linearization.begin(), perm_linearization.end()));
 
     return linearization;
 }
 
 
 /** Stitch connected components together in a DepGraph, guaranteeing its corresponding cluster is connected. */
-template<typename BS>
+template <typename BS>
 void MakeConnected(DepGraph<BS>& depgraph)
 {
     auto todo = depgraph.Positions();
@@ -295,7 +294,7 @@ void MakeConnected(DepGraph<BS>& depgraph)
 }
 
 /** Given a dependency graph, and a todo set, read a topological subset of todo from reader. */
-template<typename SetType>
+template <typename SetType>
 SetType ReadTopologicalSet(const DepGraph<SetType>& depgraph, const SetType& todo, SpanReader& reader, bool non_empty)
 {
     // Read a bitmask from the fuzzing input. Add 1 if non_empty, so the mask is definitely not
@@ -303,7 +302,8 @@ SetType ReadTopologicalSet(const DepGraph<SetType>& depgraph, const SetType& tod
     uint64_t mask{0};
     try {
         reader >> VARINT(mask);
-    } catch(const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
     if (mask != uint64_t(-1)) mask += non_empty;
 
     SetType ret;
@@ -327,7 +327,7 @@ SetType ReadTopologicalSet(const DepGraph<SetType>& depgraph, const SetType& tod
 }
 
 /** Given a dependency graph, construct any valid linearization for it, reading from a SpanReader. */
-template<typename BS>
+template <typename BS>
 std::vector<DepGraphIndex> ReadLinearization(const DepGraph<BS>& depgraph, SpanReader& reader)
 {
     std::vector<DepGraphIndex> linearization;
@@ -347,7 +347,8 @@ std::vector<DepGraphIndex> ReadLinearization(const DepGraph<BS>& depgraph, SpanR
         uint64_t idx{0};
         try {
             reader >> VARINT(idx);
-        } catch (const std::ios_base::failure&) {}
+        } catch (const std::ios_base::failure&) {
+        }
         idx %= potential_next.Count();
         // Find out which transaction that corresponds to.
         for (auto j : potential_next) {
@@ -452,7 +453,8 @@ FUZZ_TARGET(clusterlin_depgraph_sim)
         }
     };
 
-    LIMITED_WHILE(provider.remaining_bytes() > 0, 1000) {
+    LIMITED_WHILE(provider.remaining_bytes() > 0, 1000)
+    {
         uint8_t command = provider.ConsumeIntegral<uint8_t>();
         if (num_tx_sim == 0 || ((command % 3) <= 0 && num_tx_sim < TestBitSet::Size())) {
             // AddTransaction.
@@ -491,7 +493,8 @@ FUZZ_TARGET(clusterlin_depgraph_sim)
             // intermediary transactions may be deleted which impact connectivity).
             anc_update_fn();
             // Compare the state of the transactions being deleted.
-            for (auto i : del) check_fn(i);
+            for (auto i : del)
+                check_fn(i);
             // Apply to DepGraph.
             real.RemoveTransactions(del);
             // Apply to sim.
@@ -513,7 +516,8 @@ FUZZ_TARGET(clusterlin_depgraph_sim)
 
     // Compare the real obtained depgraph against the simulation.
     anc_update_fn();
-    for (DepGraphIndex i = 0; i < sim.size(); ++i) check_fn(i);
+    for (DepGraphIndex i = 0; i < sim.size(); ++i)
+        check_fn(i);
     assert(real.TxCount() == num_tx_sim);
     // Sanity check the result (which includes round-tripping serialization, if applicable).
     SanityCheck(real);
@@ -529,7 +533,8 @@ FUZZ_TARGET(clusterlin_depgraph_serialization)
     DepGraphIndex par_code{0}, chl_code{0};
     try {
         reader >> Using<DepGraphFormatter>(depgraph) >> VARINT(par_code) >> VARINT(chl_code);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
     SanityCheck(depgraph);
 
     // Verify the graph is a DAG.
@@ -574,7 +579,8 @@ FUZZ_TARGET(clusterlin_components)
     std::vector<DepGraphIndex> linearization;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     TestBitSet todo = depgraph.Positions();
     while (todo.Any()) {
@@ -584,15 +590,15 @@ FUZZ_TARGET(clusterlin_components)
             uint64_t picked_num{0};
             try {
                 reader >> VARINT(picked_num);
-            } catch (const std::ios_base::failure&) {}
+            } catch (const std::ios_base::failure&) {
+            }
             if (picked_num < todo.Size() && todo[picked_num]) {
                 picked = picked_num;
             }
         }
 
         // Find a connected component inside todo, including picked if any.
-        auto component = picked ? depgraph.GetConnectedComponent(todo, *picked)
-                                : depgraph.FindConnectedComponent(todo);
+        auto component = picked ? depgraph.GetConnectedComponent(todo, *picked) : depgraph.FindConnectedComponent(todo);
 
         // The component must be a subset of todo and non-empty.
         assert(component.IsSubsetOf(todo));
@@ -638,7 +644,8 @@ FUZZ_TARGET(clusterlin_components)
         uint64_t subset_bits{0};
         try {
             reader >> VARINT(subset_bits);
-        } catch (const std::ios_base::failure&) {}
+        } catch (const std::ios_base::failure&) {
+        }
         TestBitSet subset;
         for (DepGraphIndex i : depgraph.Positions()) {
             if (todo[i]) {
@@ -664,7 +671,8 @@ FUZZ_TARGET(clusterlin_make_connected)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
     MakeConnected(depgraph);
     SanityCheck(depgraph);
     assert(depgraph.IsConnected());
@@ -679,7 +687,8 @@ FUZZ_TARGET(clusterlin_chunking)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     // Read a valid linearization for depgraph.
     auto linearization = ReadLinearization(depgraph, reader);
@@ -721,7 +730,8 @@ FUZZ_TARGET(clusterlin_ancestor_finder)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     AncestorCandidateFinder anc_finder(depgraph);
     auto todo = depgraph.Positions();
@@ -780,7 +790,8 @@ FUZZ_TARGET(clusterlin_simple_finder)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     // Instantiate the SimpleCandidateFinder to be tested, and the ExhaustiveCandidateFinder and
     // AncestorCandidateFinder it is being tested against.
@@ -866,7 +877,8 @@ FUZZ_TARGET(clusterlin_search_finder)
     uint8_t make_connected{1};
     try {
         reader >> Using<DepGraphFormatter>(depgraph) >> rng_seed >> make_connected;
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
     // The most complicated graphs are connected ones (other ones just split up). Optionally force
     // the graph to be connected.
     if (make_connected) MakeConnected(depgraph);
@@ -887,7 +899,8 @@ FUZZ_TARGET(clusterlin_search_finder)
         uint64_t max_iterations = 1;
         try {
             reader >> VARINT(max_iterations);
-        } catch (const std::ios_base::failure&) {}
+        } catch (const std::ios_base::failure&) {
+        }
         max_iterations &= 0xfffff;
 
         // Read an initial subset from the fuzz input (allowed to be empty).
@@ -968,7 +981,8 @@ FUZZ_TARGET(clusterlin_linearization_chunking)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     // Retrieve a topologically-valid subset of depgraph (allowed to be empty, because the argument
     // to LinearizationChunking::Intersect is allowed to be empty).
@@ -1086,7 +1100,8 @@ FUZZ_TARGET(clusterlin_simple_linearize)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> VARINT(iter_count) >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
     iter_count %= MAX_SIMPLE_ITERATIONS;
 
     // Invoke SimpleLinearize().
@@ -1134,7 +1149,8 @@ FUZZ_TARGET(clusterlin_linearize)
     uint8_t make_connected{1};
     try {
         reader >> VARINT(iter_count) >> Using<DepGraphFormatter>(depgraph) >> rng_seed >> make_connected;
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
     // The most complicated graphs are connected ones (other ones just split up). Optionally force
     // the graph to be connected.
     if (make_connected) MakeConnected(depgraph);
@@ -1145,7 +1161,8 @@ FUZZ_TARGET(clusterlin_linearize)
         uint8_t have_old_linearization{0};
         try {
             reader >> have_old_linearization;
-        } catch(const std::ios_base::failure&) {}
+        } catch (const std::ios_base::failure&) {
+        }
         if (have_old_linearization & 1) {
             old_linearization = ReadLinearization(depgraph, reader);
             SanityCheck(depgraph, old_linearization);
@@ -1203,7 +1220,8 @@ FUZZ_TARGET(clusterlin_postlinearize)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     // Retrieve a linearization from the fuzz input.
     std::vector<DepGraphIndex> linearization;
@@ -1249,7 +1267,8 @@ FUZZ_TARGET(clusterlin_postlinearize_tree)
     uint8_t direction{0};
     try {
         reader >> direction >> rng_seed >> Using<DepGraphFormatter>(depgraph_gen);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     // Now construct a new graph, copying the nodes, but leaving only the first parent (even
     // direction) or the first child (odd direction).
@@ -1271,7 +1290,7 @@ FUZZ_TARGET(clusterlin_postlinearize_tree)
             if (children.Any()) {
                 depgraph_tree.AddDependencies(TestBitSet::Singleton(i), children.First());
             }
-         }
+        }
     } else {
         for (DepGraphIndex i = 0; i < depgraph_gen.TxCount(); ++i) {
             auto parents = depgraph_gen.GetReducedParents(i);
@@ -1330,7 +1349,8 @@ FUZZ_TARGET(clusterlin_postlinearize_moved_leaf)
         uint64_t fee_inc_code;
         reader >> Using<DepGraphFormatter>(depgraph) >> VARINT(fee_inc_code);
         fee_inc = fee_inc_code & 0x3ffff;
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
     if (depgraph.TxCount() == 0) return;
 
     // Retrieve two linearizations from the fuzz input.
@@ -1364,7 +1384,8 @@ FUZZ_TARGET(clusterlin_merge)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     // Retrieve two linearizations from the fuzz input.
     auto lin1 = ReadLinearization(depgraph, reader);
@@ -1392,7 +1413,8 @@ FUZZ_TARGET(clusterlin_fix_linearization)
     DepGraph<TestBitSet> depgraph;
     try {
         reader >> Using<DepGraphFormatter>(depgraph);
-    } catch (const std::ios_base::failure&) {}
+    } catch (const std::ios_base::failure&) {
+    }
 
     // Construct an arbitrary linearization (not necessarily topological for depgraph).
     std::vector<DepGraphIndex> linearization;
@@ -1403,7 +1425,8 @@ FUZZ_TARGET(clusterlin_fix_linearization)
         uint64_t val{0};
         try {
             reader >> VARINT(val);
-        } catch (const std::ios_base::failure&) {}
+        } catch (const std::ios_base::failure&) {
+        }
         val %= todo.Count();
         // Find the val'th element in todo, remove it from todo, and append it to linearization.
         for (auto idx : todo) {

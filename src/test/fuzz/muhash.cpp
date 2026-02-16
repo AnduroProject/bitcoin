@@ -5,10 +5,10 @@
 #include <arith_uint256.h>
 #include <crypto/muhash.h>
 #include <span.h>
-#include <uint256.h>
 #include <test/fuzz/FuzzedDataProvider.h>
 #include <test/fuzz/fuzz.h>
 #include <test/fuzz/util.h>
+#include <uint256.h>
 
 #include <algorithm>
 #include <array>
@@ -19,7 +19,8 @@ namespace {
 /** Class to represent 6144-bit numbers using arith_uint256 code.
  *
  * 6144 is sufficient to represent the product of two 3072-bit numbers. */
-class arith_uint6144 : public base_uint<6144> {
+class arith_uint6144 : public base_uint<6144>
+{
 public:
     arith_uint6144(uint64_t x) : base_uint{x} {}
 
@@ -36,7 +37,8 @@ public:
 
     /** Serialize an arithm_uint6144 to any multiply of 4 bytes in LE notation,
      *  on the condition that the represented number fits. */
-    void Serialize(std::span<uint8_t> bytes) {
+    void Serialize(std::span<uint8_t> bytes)
+    {
         assert(bytes.size() % 4 == 0);
         assert(bytes.size() <= 768);
         for (unsigned i = 0; i * 4 < bytes.size(); ++i) {
@@ -50,7 +52,7 @@ public:
 
 /** The MuHash3072 modulus (2**3072 - 1103717) as 768 LE8 bytes. */
 constexpr std::array<const uint8_t, 768> MODULUS_BYTES = {
-    155,  40, 239, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    155, 40, 239, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -85,8 +87,7 @@ constexpr std::array<const uint8_t, 768> MODULUS_BYTES = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 const arith_uint6144 ZERO{0};
 const arith_uint6144 ONE{1};
@@ -198,19 +199,18 @@ FUZZ_TARGET(muhash)
             muhash3.Finalize(out2);
         },
         [&] {
-            // Test that dividing a MuHash by itself brings it back to its initial state
+// Test that dividing a MuHash by itself brings it back to its initial state
 
-            // See note about clang + self-assignment in test/uint256_tests.cpp
-            #if defined(__clang__)
-            #    pragma clang diagnostic push
-            #    pragma clang diagnostic ignored "-Wself-assign-overloaded"
-            #endif
-
+// See note about clang + self-assignment in test/uint256_tests.cpp
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-assign-overloaded"
+#endif
             muhash /= muhash;
 
-            #if defined(__clang__)
-            #    pragma clang diagnostic pop
-            #endif
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
             muhash.Finalize(out);
             out2 = initial_state_hash;

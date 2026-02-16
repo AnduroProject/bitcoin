@@ -19,7 +19,7 @@
  * - If any arguments are rvalue references, they will be moved into the vector
  *   (list initialization always copies).
  */
-template<typename... Args>
+template <typename... Args>
 inline std::vector<std::common_type_t<Args...>> Vector(Args&&... args)
 {
     std::vector<std::common_type_t<Args...>> ret;
@@ -30,7 +30,7 @@ inline std::vector<std::common_type_t<Args...>> Vector(Args&&... args)
 }
 
 /** Concatenate two vectors, moving elements. */
-template<typename V>
+template <typename V>
 inline V Cat(V v1, V&& v2)
 {
     v1.reserve(v1.size() + v2.size());
@@ -41,7 +41,7 @@ inline V Cat(V v1, V&& v2)
 }
 
 /** Concatenate two vectors. */
-template<typename V>
+template <typename V>
 inline V Cat(V v1, const V& v2)
 {
     v1.reserve(v1.size() + v2.size());
@@ -52,7 +52,7 @@ inline V Cat(V v1, const V& v2)
 }
 
 /** Clear a vector (or std::deque) and release its allocated memory. */
-template<typename V>
+template <typename V>
 inline void ClearShrink(V& v) noexcept
 {
     // There are various ways to clear a vector and release its memory:
@@ -69,7 +69,7 @@ inline void ClearShrink(V& v) noexcept
     V{}.swap(v);
 }
 
-template<typename V, typename L>
+template <typename V, typename L>
 inline std::optional<V> FindFirst(const std::vector<V>& vec, const L fnc)
 {
     for (const auto& el : vec) {

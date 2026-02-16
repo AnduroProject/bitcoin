@@ -27,15 +27,15 @@ static std::shared_ptr<CWallet> NewWallet(const node::NodeContext& m_node)
 }
 
 static void addCoin(CoinsResult& coins,
-                     CWallet& wallet,
-                     const CTxDestination& dest,
-                     const CAmount& nValue,
-                     bool is_from_me,
-                     CFeeRate fee_rate = CFeeRate(0),
-                     int depth = 6)
+                    CWallet& wallet,
+                    const CTxDestination& dest,
+                    const CAmount& nValue,
+                    bool is_from_me,
+                    CFeeRate fee_rate = CFeeRate(0),
+                    int depth = 6)
 {
     CMutableTransaction tx;
-    tx.nLockTime = nextLockTime++;        // so all transactions get different hashes
+    tx.nLockTime = nextLockTime++; // so all transactions get different hashes
     tx.vout.resize(1);
     tx.vout[0].nValue = nValue;
     tx.vout[0].scriptPubKey = GetScriptForDestination(dest);
@@ -48,29 +48,29 @@ static void addCoin(CoinsResult& coins,
     const auto& txout = wtx.tx->vout.at(0);
     coins.Add(*Assert(OutputTypeFromDestination(dest)),
               {COutPoint(wtx.GetHash(), 0),
-                   txout,
-                   depth,
-                   CalculateMaximumSignedInputSize(txout, &wallet, /*coin_control=*/nullptr),
-                   /*spendable=*/ true,
-                   /*solvable=*/ true,
-                   /*safe=*/ true,
-                   wtx.GetTxTime(),
-                   is_from_me,
-                   fee_rate});
+               txout,
+               depth,
+               CalculateMaximumSignedInputSize(txout, &wallet, /*coin_control=*/nullptr),
+               /*spendable=*/true,
+               /*solvable=*/true,
+               /*safe=*/true,
+               wtx.GetTxTime(),
+               is_from_me,
+               fee_rate});
 }
 
- CoinSelectionParams makeSelectionParams(FastRandomContext& rand, bool avoid_partial_spends)
+CoinSelectionParams makeSelectionParams(FastRandomContext& rand, bool avoid_partial_spends)
 {
     return CoinSelectionParams{
-            rand,
-            /*change_output_size=*/ 0,
-            /*change_spend_size=*/ 0,
-            /*min_change_target=*/ CENT,
-            /*effective_feerate=*/ CFeeRate(0),
-            /*long_term_feerate=*/ CFeeRate(0),
-            /*discard_feerate=*/ CFeeRate(0),
-            /*tx_noinputs_size=*/ 0,
-            /*avoid_partial=*/ avoid_partial_spends,
+        rand,
+        /*change_output_size=*/0,
+        /*change_spend_size=*/0,
+        /*min_change_target=*/CENT,
+        /*effective_feerate=*/CFeeRate(0),
+        /*long_term_feerate=*/CFeeRate(0),
+        /*discard_feerate=*/CFeeRate(0),
+        /*tx_noinputs_size=*/0,
+        /*avoid_partial=*/avoid_partial_spends,
     };
 }
 
@@ -89,7 +89,7 @@ public:
     {
         OutputGroupTypeMap groups = GroupOutputs(*wallet, coins_pool, makeSelectionParams(rand, avoid_partial_spends), {{filter}})[filter];
         std::vector<OutputGroup>& groups_out = positive_only ? groups.groups_by_type[type].positive_group :
-                                               groups.groups_by_type[type].mixed_group;
+                                                               groups.groups_by_type[type].mixed_group;
         BOOST_CHECK_EQUAL(groups_out.size(), expected_size);
     }
 
@@ -100,7 +100,7 @@ public:
                         bool positive_only)
     {
         // First avoid partial spends
-        GroupVerify(type, filter, /*avoid_partial_spends=*/false, positive_only,  expected_with_partial_spends_size);
+        GroupVerify(type, filter, /*avoid_partial_spends=*/false, positive_only, expected_with_partial_spends_size);
         // Second don't avoid partial spends
         GroupVerify(type, filter, /*avoid_partial_spends=*/true, positive_only, expected_without_partial_spends_size);
     }
@@ -128,9 +128,9 @@ BOOST_AUTO_TEST_CASE(outputs_grouping_tests)
 
     group_verifier.GroupAndVerify(OutputType::BECH32,
                                   BASIC_FILTER,
-                                  /*expected_with_partial_spends_size=*/ GROUP_SIZE,
-                                  /*expected_without_partial_spends_size=*/ 1,
-                                  /*positive_only=*/ true);
+                                  /*expected_with_partial_spends_size=*/GROUP_SIZE,
+                                  /*expected_without_partial_spends_size=*/1,
+                                  /*positive_only=*/true);
 
     // ####################################################################################
     // 3) 10 more UTXO are added with a different script --> must be grouped into a single
@@ -143,10 +143,10 @@ BOOST_AUTO_TEST_CASE(outputs_grouping_tests)
     }
 
     group_verifier.GroupAndVerify(OutputType::BECH32,
-            BASIC_FILTER,
-            /*expected_with_partial_spends_size=*/ GROUP_SIZE * 2,
-            /*expected_without_partial_spends_size=*/ 2,
-            /*positive_only=*/ true);
+                                  BASIC_FILTER,
+                                  /*expected_with_partial_spends_size=*/GROUP_SIZE * 2,
+                                  /*expected_without_partial_spends_size=*/2,
+                                  /*positive_only=*/true);
 
     // ################################################################################
     // 4) Now add a negative output --> which will be skipped if "positive_only" is set
@@ -158,17 +158,17 @@ BOOST_AUTO_TEST_CASE(outputs_grouping_tests)
 
     // First expect no changes with "positive_only" enabled
     group_verifier.GroupAndVerify(OutputType::BECH32,
-            BASIC_FILTER,
-            /*expected_with_partial_spends_size=*/ GROUP_SIZE * 2,
-            /*expected_without_partial_spends_size=*/ 2,
-            /*positive_only=*/ true);
+                                  BASIC_FILTER,
+                                  /*expected_with_partial_spends_size=*/GROUP_SIZE * 2,
+                                  /*expected_without_partial_spends_size=*/2,
+                                  /*positive_only=*/true);
 
     // Then expect changes with "positive_only" disabled
     group_verifier.GroupAndVerify(OutputType::BECH32,
-            BASIC_FILTER,
-            /*expected_with_partial_spends_size=*/ GROUP_SIZE * 2 + 1,
-            /*expected_without_partial_spends_size=*/ 3,
-            /*positive_only=*/ false);
+                                  BASIC_FILTER,
+                                  /*expected_with_partial_spends_size=*/GROUP_SIZE * 2 + 1,
+                                  /*expected_without_partial_spends_size=*/3,
+                                  /*positive_only=*/false);
 
 
     // ##############################################################################
@@ -182,10 +182,10 @@ BOOST_AUTO_TEST_CASE(outputs_grouping_tests)
 
     // Expect no changes from this round and the previous one (point 4)
     group_verifier.GroupAndVerify(OutputType::BECH32,
-            BASIC_FILTER,
-            /*expected_with_partial_spends_size=*/ GROUP_SIZE * 2 + 1,
-            /*expected_without_partial_spends_size=*/ 3,
-            /*positive_only=*/ false);
+                                  BASIC_FILTER,
+                                  /*expected_with_partial_spends_size=*/GROUP_SIZE * 2 + 1,
+                                  /*expected_without_partial_spends_size=*/3,
+                                  /*positive_only=*/false);
 
 
     // ##############################################################################
@@ -199,10 +199,10 @@ BOOST_AUTO_TEST_CASE(outputs_grouping_tests)
 
     // Expect no changes from this round and the previous one (point 5)
     group_verifier.GroupAndVerify(OutputType::BECH32,
-            BASIC_FILTER,
-            /*expected_with_partial_spends_size=*/ GROUP_SIZE * 2 + 1,
-            /*expected_without_partial_spends_size=*/ 3,
-            /*positive_only=*/ false);
+                                  BASIC_FILTER,
+                                  /*expected_with_partial_spends_size=*/GROUP_SIZE * 2 + 1,
+                                  /*expected_without_partial_spends_size=*/3,
+                                  /*positive_only=*/false);
 
     // ###########################################################################################
     // 7) Surpass the OUTPUT_GROUP_MAX_ENTRIES and verify that a second partial group gets created
@@ -217,18 +217,18 @@ BOOST_AUTO_TEST_CASE(outputs_grouping_tests)
     // Exclude partial groups only adds one more group to the previous test case (point 6)
     int PREVIOUS_ROUND_COUNT = GROUP_SIZE * 2 + 1;
     group_verifier.GroupAndVerify(OutputType::BECH32,
-            BASIC_FILTER,
-            /*expected_with_partial_spends_size=*/ PREVIOUS_ROUND_COUNT + NUM_SINGLE_ENTRIES,
-            /*expected_without_partial_spends_size=*/ 4,
-            /*positive_only=*/ false);
+                                  BASIC_FILTER,
+                                  /*expected_with_partial_spends_size=*/PREVIOUS_ROUND_COUNT + NUM_SINGLE_ENTRIES,
+                                  /*expected_without_partial_spends_size=*/4,
+                                  /*positive_only=*/false);
 
     // Include partial groups should add one more group inside the "avoid partial spends" count
-    const CoinEligibilityFilter& avoid_partial_groups_filter{1, 6, 0, 0, /*include_partial=*/ true};
+    const CoinEligibilityFilter& avoid_partial_groups_filter{1, 6, 0, 0, /*include_partial=*/true};
     group_verifier.GroupAndVerify(OutputType::BECH32,
-            avoid_partial_groups_filter,
-            /*expected_with_partial_spends_size=*/ PREVIOUS_ROUND_COUNT + NUM_SINGLE_ENTRIES,
-            /*expected_without_partial_spends_size=*/ 5,
-            /*positive_only=*/ false);
+                                  avoid_partial_groups_filter,
+                                  /*expected_with_partial_spends_size=*/PREVIOUS_ROUND_COUNT + NUM_SINGLE_ENTRIES,
+                                  /*expected_without_partial_spends_size=*/5,
+                                  /*positive_only=*/false);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

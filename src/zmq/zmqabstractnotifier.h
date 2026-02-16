@@ -19,7 +19,7 @@ using CZMQNotifierFactory = std::function<std::unique_ptr<CZMQAbstractNotifier>(
 class CZMQAbstractNotifier
 {
 public:
-    static const int DEFAULT_ZMQ_SNDHWM {1000};
+    static const int DEFAULT_ZMQ_SNDHWM{1000};
 
     CZMQAbstractNotifier() : outbound_message_high_water_mark(DEFAULT_ZMQ_SNDHWM) {}
     virtual ~CZMQAbstractNotifier();
@@ -31,31 +31,32 @@ public:
     }
 
     std::string GetType() const { return type; }
-    void SetType(const std::string &t) { type = t; }
+    void SetType(const std::string& t) { type = t; }
     std::string GetAddress() const { return address; }
-    void SetAddress(const std::string &a) { address = a; }
+    void SetAddress(const std::string& a) { address = a; }
     int GetOutboundMessageHighWaterMark() const { return outbound_message_high_water_mark; }
-    void SetOutboundMessageHighWaterMark(const int sndhwm) {
+    void SetOutboundMessageHighWaterMark(const int sndhwm)
+    {
         if (sndhwm >= 0) {
             outbound_message_high_water_mark = sndhwm;
         }
     }
 
-    virtual bool Initialize(void *pcontext) = 0;
+    virtual bool Initialize(void* pcontext) = 0;
     virtual void Shutdown() = 0;
 
     // Notifies of ConnectTip result, i.e., new active tip only
-    virtual bool NotifyBlock(const CBlockIndex *pindex);
+    virtual bool NotifyBlock(const CBlockIndex* pindex);
     // Notifies of every block connection
-    virtual bool NotifyBlockConnect(const CBlockIndex *pindex);
+    virtual bool NotifyBlockConnect(const CBlockIndex* pindex);
     // Notifies of every block disconnection
-    virtual bool NotifyBlockDisconnect(const CBlockIndex *pindex);
+    virtual bool NotifyBlockDisconnect(const CBlockIndex* pindex);
     // Notifies of every mempool acceptance
-    virtual bool NotifyTransactionAcceptance(const CTransaction &transaction, uint64_t mempool_sequence);
+    virtual bool NotifyTransactionAcceptance(const CTransaction& transaction, uint64_t mempool_sequence);
     // Notifies of every mempool removal, except inclusion in blocks
-    virtual bool NotifyTransactionRemoval(const CTransaction &transaction, uint64_t mempool_sequence);
+    virtual bool NotifyTransactionRemoval(const CTransaction& transaction, uint64_t mempool_sequence);
     // Notifies of transactions added to mempool or appearing in blocks
-    virtual bool NotifyTransaction(const CTransaction &transaction);
+    virtual bool NotifyTransaction(const CTransaction& transaction);
 
 protected:
     void* psocket{nullptr};

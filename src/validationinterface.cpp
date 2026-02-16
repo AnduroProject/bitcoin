@@ -36,7 +36,10 @@ private:
     //! count is equal to the number of current executions of that entry, plus 1
     //! if it's registered. It cannot be 0 because that would imply it is
     //! unregistered and also not being executed (so shouldn't exist).
-    struct ListEntry { std::shared_ptr<CValidationInterface> callbacks; int count = 1; };
+    struct ListEntry {
+        std::shared_ptr<CValidationInterface> callbacks;
+        int count = 1;
+    };
     std::list<ListEntry> m_list GUARDED_BY(m_mutex);
     std::unordered_map<CValidationInterface*, std::list<ListEntry>::iterator> m_map GUARDED_BY(m_mutex);
 
@@ -77,7 +80,8 @@ public:
         m_map.clear();
     }
 
-    template<typename F> void Iterate(F&& f) EXCLUSIVE_LOCKS_REQUIRED(!m_mutex)
+    template <typename F>
+    void Iterate(F&& f) EXCLUSIVE_LOCKS_REQUIRED(!m_mutex)
     {
         WAIT_LOCK(m_mutex, lock);
         for (auto it = m_list.begin(); it != m_list.end();) {
@@ -117,7 +121,7 @@ void ValidationSignals::RegisterValidationInterface(CValidationInterface* callba
 {
     // Create a shared_ptr with a no-op deleter - CValidationInterface lifecycle
     // is managed by the caller.
-    RegisterSharedValidationInterface({callbacks, [](CValidationInterface*){}});
+    RegisterSharedValidationInterface({callbacks, [](CValidationInterface*) {}});
 }
 
 void ValidationSignals::UnregisterSharedValidationInterface(std::shared_ptr<CValidationInterface> callbacks)
@@ -155,20 +159,21 @@ void ValidationSignals::SyncWithValidationInterfaceQueue()
 // evaluating arguments when logging is not enabled.
 //
 // NOTE: The lambda captures all local variables by value.
-#define ENQUEUE_AND_LOG_EVENT(event, fmt, name, ...)           \
-    do {                                                       \
-        auto local_name = (name);                              \
-        LOG_EVENT("Enqueuing " fmt, local_name, __VA_ARGS__);  \
-        m_internals->m_task_runner->insert([=] { \
-            LOG_EVENT(fmt, local_name, __VA_ARGS__);           \
-            event();                                           \
-        });                                                    \
+#define ENQUEUE_AND_LOG_EVENT(event, fmt, name, ...)          \
+    do {                                                      \
+        auto local_name = (name);                             \
+        LOG_EVENT("Enqueuing " fmt, local_name, __VA_ARGS__); \
+        m_internals->m_task_runner->insert([=] {              \
+            LOG_EVENT(fmt, local_name, __VA_ARGS__);          \
+            event();                                          \
+        });                                                   \
     } while (0)
 
 #define LOG_EVENT(fmt, ...) \
     LogDebug(BCLog::VALIDATION, fmt "\n", __VA_ARGS__)
 
-void ValidationSignals::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) {
+void ValidationSignals::UpdatedBlockTip(const CBlockIndex* pindexNew, const CBlockIndex* pindexFork, bool fInitialDownload)
+{
     // Dependencies exist that require UpdatedBlockTip events to be delivered in the order in which
     // the chain actually updates. One way to ensure this is for the caller to invoke this signal
     // in the same critical section where the chain is updated
@@ -198,7 +203,8 @@ void ValidationSignals::TransactionAddedToMempool(const NewMempoolTransactionInf
                           tx.info.m_tx->GetWitnessHash().ToString());
 }
 
-void ValidationSignals::TransactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason, uint64_t mempool_sequence) {
+void ValidationSignals::TransactionRemovedFromMempool(const CTransactionRef& tx, MemPoolRemovalReason reason, uint64_t mempool_sequence)
+{
     auto event = [tx, reason, mempool_sequence, this] {
         m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.TransactionRemovedFromMempool(tx, reason, mempool_sequence); });
     };
@@ -208,13 +214,24 @@ void ValidationSignals::TransactionRemovedFromMempool(const CTransactionRef& tx,
                           RemovalReasonToString(reason));
 }
 
-void ValidationSignals::BlockConnected(ChainstateRole role, const std::shared_ptr<const CBlock> &pblock, const CBlockIndex *pindex) {
+void ValidationSignals::BlockConnected(ChainstateRole role, const std::shared_ptr<const CBlock>& pblock, const CBlockIndex* pindex)
+{
     auto event = [role, pblock, pindex, this] {
         m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.BlockConnected(role, pblock, pindex); });
     };
     ENQUEUE_AND_LOG_EVENT(event, "%s: block hash=%s block height=%d", __func__,
                           pblock->GetHash().ToString(),
                           pindex->nHeight);
+}
+
+void ValidationSignals::SignBlockConnected(const SignedBlock& pblock)
+{
+    auto event = [pblock, this] {
+        m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.SignedBlockConnected(pblock); });
+    };
+    ENQUEUE_AND_LOG_EVENT(event, "%s:  block hash=%s signed block height=%d", __func__,
+                          pblock.GetHash().ToString(),
+                          pblock.nHeight);
 }
 
 void ValidationSignals::MempoolTransactionsRemovedForBlock(const std::vector<RemovedMempoolTransactionInfo>& txs_removed_for_block, unsigned int nBlockHeight)
@@ -237,7 +254,8 @@ void ValidationSignals::BlockDisconnected(const std::shared_ptr<const CBlock>& p
                           pindex->nHeight);
 }
 
-void ValidationSignals::ChainStateFlushed(ChainstateRole role, const CBlockLocator &locator) {
+void ValidationSignals::ChainStateFlushed(ChainstateRole role, const CBlockLocator& locator)
+{
     auto event = [role, locator, this] {
         m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.ChainStateFlushed(role, locator); });
     };
@@ -245,13 +263,15 @@ void ValidationSignals::ChainStateFlushed(ChainstateRole role, const CBlockLocat
                           locator.IsNull() ? "null" : locator.vHave.front().ToString());
 }
 
-void ValidationSignals::BlockChecked(const CBlock& block, const BlockValidationState& state) {
+void ValidationSignals::BlockChecked(const CBlock& block, const BlockValidationState& state)
+{
     LOG_EVENT("%s: block hash=%s state=%s", __func__,
               block.GetHash().ToString(), state.ToString());
     m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.BlockChecked(block, state); });
 }
 
-void ValidationSignals::NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock> &block) {
+void ValidationSignals::NewPoWValidBlock(const CBlockIndex* pindex, const std::shared_ptr<const CBlock>& block)
+{
     LOG_EVENT("%s: block hash=%s", __func__, block->GetHash().ToString());
     m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.NewPoWValidBlock(pindex, block); });
 }

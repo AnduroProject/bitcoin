@@ -45,7 +45,7 @@ static void SignTransactionSingleInput(benchmark::Bench& bench, InputType input_
         CScript prev_spk;
         switch (input_type) {
         case InputType::P2WPKH: prev_spk = GetScriptForDestination(WitnessV0KeyHash(pubkey)); break;
-        case InputType::P2TR:   prev_spk = GetScriptForDestination(WitnessV1Taproot(XOnlyPubKey{pubkey})); break;
+        case InputType::P2TR: prev_spk = GetScriptForDestination(WitnessV1Taproot(XOnlyPubKey{pubkey})); break;
         default: assert(false);
         }
         prev_spks.push_back(prev_spk);
@@ -70,8 +70,8 @@ static void SignTransactionSingleInput(benchmark::Bench& bench, InputType input_
     });
 }
 
-static void SignTransactionECDSA(benchmark::Bench& bench)   { SignTransactionSingleInput(bench, InputType::P2WPKH); }
-static void SignTransactionSchnorr(benchmark::Bench& bench) { SignTransactionSingleInput(bench, InputType::P2TR);   }
+static void SignTransactionECDSA(benchmark::Bench& bench) { SignTransactionSingleInput(bench, InputType::P2WPKH); }
+static void SignTransactionSchnorr(benchmark::Bench& bench) { SignTransactionSingleInput(bench, InputType::P2TR); }
 
 static void SignSchnorrTapTweakBenchmark(benchmark::Bench& bench, bool use_null_merkle_root)
 {

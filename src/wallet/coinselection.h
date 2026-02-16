@@ -200,8 +200,7 @@ struct CoinSelectionParams {
 /** Parameters for filtering which OutputGroups we may use in coin selection.
  * We start by being very selective and requiring multiple confirmations and
  * then get more permissive if we cannot fund the transaction. */
-struct CoinEligibilityFilter
-{
+struct CoinEligibilityFilter {
     /** Minimum number of confirmations for outputs that we sent to ourselves.
      * We may use unconfirmed UTXOs sent from ourselves, e.g. change outputs. */
     const int conf_mine;
@@ -219,15 +218,14 @@ struct CoinEligibilityFilter
     CoinEligibilityFilter(int conf_mine, int conf_theirs, uint64_t max_ancestors, uint64_t max_descendants) : conf_mine(conf_mine), conf_theirs(conf_theirs), max_ancestors(max_ancestors), max_descendants(max_descendants) {}
     CoinEligibilityFilter(int conf_mine, int conf_theirs, uint64_t max_ancestors, uint64_t max_descendants, bool include_partial) : conf_mine(conf_mine), conf_theirs(conf_theirs), max_ancestors(max_ancestors), max_descendants(max_descendants), m_include_partial_groups(include_partial) {}
 
-    bool operator<(const CoinEligibilityFilter& other) const {
-        return std::tie(conf_mine, conf_theirs, max_ancestors, max_descendants, m_include_partial_groups)
-               < std::tie(other.conf_mine, other.conf_theirs, other.max_ancestors, other.max_descendants, other.m_include_partial_groups);
+    bool operator<(const CoinEligibilityFilter& other) const
+    {
+        return std::tie(conf_mine, conf_theirs, max_ancestors, max_descendants, m_include_partial_groups) < std::tie(other.conf_mine, other.conf_theirs, other.max_ancestors, other.max_descendants, other.m_include_partial_groups);
     }
 };
 
 /** A group of UTXOs paid to the same output script. */
-struct OutputGroup
-{
+struct OutputGroup {
     /** The list of UTXOs contained in this output group. */
     std::vector<std::shared_ptr<COutput>> m_outputs;
     /** Whether the UTXOs were sent by the wallet to itself. This is relevant because we may want at
@@ -260,10 +258,10 @@ struct OutputGroup
     int m_weight{0};
 
     OutputGroup() = default;
-    OutputGroup(const CoinSelectionParams& params) :
-        m_long_term_feerate(params.m_long_term_feerate),
-        m_subtract_fee_outputs(params.m_subtract_fee_outputs)
-    {}
+    OutputGroup(const CoinSelectionParams& params) : m_long_term_feerate(params.m_long_term_feerate),
+                                                     m_subtract_fee_outputs(params.m_subtract_fee_outputs)
+    {
+    }
 
     void Insert(const std::shared_ptr<COutput>& output, size_t ancestors, size_t descendants);
     bool EligibleForSpending(const CoinEligibilityFilter& eligibility_filter) const;
@@ -278,8 +276,7 @@ struct Groups {
 };
 
 /** Stores several 'Groups' whose were mapped by output type. */
-struct OutputGroupTypeMap
-{
+struct OutputGroupTypeMap {
     // Maps output type to output groups.
     std::map<OutputType, Groups> groups_by_type;
     // All inserted groups, no type distinction.
@@ -310,8 +307,7 @@ typedef std::map<CoinEligibilityFilter, OutputGroupTypeMap> FilteredOutputGroups
  */
 [[nodiscard]] CAmount GenerateChangeTarget(const CAmount payment_value, const CAmount change_fee, FastRandomContext& rng);
 
-enum class SelectionAlgorithm : uint8_t
-{
+enum class SelectionAlgorithm : uint8_t {
     BNB = 0,
     KNAPSACK = 1,
     SRD = 2,
@@ -321,8 +317,7 @@ enum class SelectionAlgorithm : uint8_t
 
 std::string GetAlgorithmName(const SelectionAlgorithm algo);
 
-struct SelectionResult
-{
+struct SelectionResult {
 private:
     /** Set of inputs selected by the algorithm to use in the transaction */
     std::set<std::shared_ptr<COutput>> m_selected_inputs;
@@ -343,7 +338,7 @@ private:
     /** How much individual inputs overestimated the bump fees for the shared ancestry */
     CAmount bump_fee_group_discount{0};
 
-    template<typename T>
+    template <typename T>
     void InsertInputs(const T& inputs)
     {
         // Store sum of combined input sets to check that the results have no shared UTXOs
@@ -400,7 +395,7 @@ public:
     void SetSelectionsEvaluated(size_t attempts);
 
     /** Get selections_evaluated */
-    size_t GetSelectionsEvaluated() const ;
+    size_t GetSelectionsEvaluated() const;
 
     /**
      * Combines the @param[in] other selection result into 'this' selection result.

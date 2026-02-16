@@ -33,9 +33,9 @@
 #include <node/coin.h>
 #include <node/context.h>
 #include <node/interface_ui.h>
-#include <node/mini_miner.h>
-#include <node/miner.h>
 #include <node/kernel_notifications.h>
+#include <node/miner.h>
+#include <node/mini_miner.h>
 #include <node/transaction.h>
 #include <node/types.h>
 #include <node/warnings.h>
@@ -363,7 +363,7 @@ public:
     }
     TransactionError broadcastTransaction(CTransactionRef tx, CAmount max_tx_fee, std::string& err_string) override
     {
-        return BroadcastTransaction(*m_context, std::move(tx), err_string, max_tx_fee, /*relay=*/ true, /*wait_callback=*/ false);
+        return BroadcastTransaction(*m_context, std::move(tx), err_string, max_tx_fee, /*relay=*/true, /*wait_callback=*/false);
     }
     WalletLoader& walletLoader() override
     {
@@ -438,7 +438,9 @@ bool FillBlock(const CBlockIndex* index, const FoundBlock& block, UniqueLock<Rec
     if (block.m_max_time) *block.m_max_time = index->GetBlockTimeMax();
     if (block.m_mtp_time) *block.m_mtp_time = index->GetMedianTimePast();
     if (block.m_in_active_chain) *block.m_in_active_chain = active[index->nHeight] == index;
-    if (block.m_locator) { *block.m_locator = GetLocator(index); }
+    if (block.m_locator) {
+        *block.m_locator = GetLocator(index);
+    }
     if (block.m_next_block) FillBlock(active[index->nHeight] == index ? active[index->nHeight + 1] : nullptr, *block.m_next_block, lock, active, blockman);
     if (block.m_data) {
         REVERSE_LOCK(lock, cs_main);
@@ -474,7 +476,8 @@ public:
     {
         m_notifications->updatedBlockTip();
     }
-    void ChainStateFlushed(ChainstateRole role, const CBlockLocator& locator) override {
+    void ChainStateFlushed(ChainstateRole role, const CBlockLocator& locator) override
+    {
         m_notifications->chainStateFlushed(role, locator);
     }
     std::shared_ptr<Chain::Notifications> m_notifications;
@@ -682,9 +685,9 @@ public:
         return entry->GetCountWithDescendants() > 1;
     }
     bool broadcastTransaction(const CTransactionRef& tx,
-        const CAmount& max_tx_fee,
-        bool relay,
-        std::string& err_string) override
+                              const CAmount& max_tx_fee,
+                              bool relay,
+                              std::string& err_string) override
     {
         const TransactionError err = BroadcastTransaction(m_node, tx, err_string, max_tx_fee, relay, /*wait_callback=*/false);
         // Chain clients only care about failures to accept the tx to the mempool. Disregard non-mempool related failures.

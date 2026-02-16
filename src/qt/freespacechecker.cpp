@@ -23,8 +23,7 @@ void FreespaceChecker::check()
     /* Find first parent that exists, so that fs::space does not fail */
     fs::path parentDir = dataDir;
     fs::path parentDirOld = fs::path();
-    while(parentDir.has_parent_path() && !fs::exists(parentDir))
-    {
+    while (parentDir.has_parent_path() && !fs::exists(parentDir)) {
         parentDir = parentDir.parent_path();
 
         /* Check if we make any progress, break if not to prevent an infinite loop here */
@@ -36,10 +35,8 @@ void FreespaceChecker::check()
 
     try {
         freeBytesAvailable = fs::space(parentDir).available;
-        if(fs::exists(dataDir))
-        {
-            if(fs::is_directory(dataDir))
-            {
+        if (fs::exists(dataDir)) {
+            if (fs::is_directory(dataDir)) {
                 QString separator = "<code>" + QDir::toNativeSeparators("/") + tr("name") + "</code>";
                 replyStatus = ST_OK;
                 replyMessage = tr("Directory already exists. Add %1 if you intend to create a new directory here.").arg(separator);
@@ -48,8 +45,7 @@ void FreespaceChecker::check()
                 replyMessage = tr("Path already exists, and is not a directory.");
             }
         }
-    } catch (const fs::filesystem_error&)
-    {
+    } catch (const fs::filesystem_error&) {
         /* Parent directory does not exist or is not accessible */
         replyStatus = ST_ERROR;
         replyMessage = tr("Cannot create data directory here.");

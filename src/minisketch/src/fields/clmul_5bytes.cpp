@@ -120,9 +120,10 @@ constexpr StatTable40 SQR16_TABLE_40({0x1, 0xe88450a7de, 0x3a0a56c3e8, 0x1684757
 constexpr StatTable40 QRT_TABLE_40({0x624b3cecc, 0xbc5c3f4c6, 0xbc5c3f4c4, 0xde1603e2c, 0xbc5c3f4c0, 0xaabec06cea, 0xde1603e24, 0x6cd9f724c2, 0xbc5c3f4d0, 0xcde1743818, 0xaabec06cca, 0xa138c314ca, 0xde1603e64, 0xaafc00f01a, 0x6cd9f72442, 0xcdca11bb4, 0xbc5c3f5d0, 0xa00002001a, 0xcde1743a18, 0xdf1407b90, 0xaabec068ca, 0xc043b482c8, 0xa138c31cca, 0xcb86977e3c, 0xde1602e64, 0x604596a326, 0xaafc00d01a, 0xcc1c165d0, 0x6cd9f76442, 0x673c94da26, 0xcdca19bb4, 0x67c0940a26, 0xbc5c2f5d0, 0xa4dca19bae, 0xa00000001a, 0x1bc5c2f5d0, 0xcde1703a18, 0, 0xdf1487b90, 0x8df1487b8a});
 typedef Field<uint64_t, 40, 57, StatTable40, &SQR_TABLE_40, &SQR2_TABLE_40, &SQR4_TABLE_40, &SQR8_TABLE_40, &SQR16_TABLE_40, &QRT_TABLE_40, IdTrans, &ID_TRANS, &ID_TRANS> Field40;
 #endif
-}
+} // namespace
 
-Sketch* ConstructClMul5Bytes(int bits, int implementation) {
+Sketch* ConstructClMul5Bytes(int bits, int implementation)
+{
     switch (bits) {
 #ifdef ENABLE_FIELD_INT_33
     case 33: return new SketchImpl<Field33>(implementation, 33);
@@ -152,7 +153,8 @@ Sketch* ConstructClMul5Bytes(int bits, int implementation) {
     return nullptr;
 }
 
-Sketch* ConstructClMulTri5Bytes(int bits, int implementation) {
+Sketch* ConstructClMulTri5Bytes(int bits, int implementation)
+{
     switch (bits) {
 #ifdef ENABLE_FIELD_INT_33
     case 33: return new SketchImpl<FieldTri33>(implementation, 33);

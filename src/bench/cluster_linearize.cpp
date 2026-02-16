@@ -22,7 +22,7 @@ namespace {
  *  the number of ancestor set feerate updates. The best ancestor set is always the topmost
  *  remaining transaction, whose removal requires updating all remaining transactions' ancestor
  *  set feerates. */
-template<typename SetType>
+template <typename SetType>
 DepGraph<SetType> MakeLinearGraph(DepGraphIndex ntx)
 {
     DepGraph<SetType> depgraph;
@@ -37,7 +37,7 @@ DepGraph<SetType> MakeLinearGraph(DepGraphIndex ntx)
  *  increasing feerates). These graphs are pessimal for the LIMO step in Linearize, because
  *  rechunking is needed after every candidate (the last transaction gets picked every time).
  */
-template<typename SetType>
+template <typename SetType>
 DepGraph<SetType> MakeWideGraph(DepGraphIndex ntx)
 {
     DepGraph<SetType> depgraph;
@@ -50,7 +50,7 @@ DepGraph<SetType> MakeWideGraph(DepGraphIndex ntx)
 
 // Construct a difficult graph. These need at least sqrt(2^(n-1)) iterations in the implemented
 // algorithm (purely empirically determined).
-template<typename SetType>
+template <typename SetType>
 DepGraph<SetType> MakeHardGraph(DepGraphIndex ntx)
 {
     DepGraph<SetType> depgraph;
@@ -120,7 +120,7 @@ DepGraph<SetType> MakeHardGraph(DepGraphIndex ntx)
  * by running with a low and a high count, subtracting the results, and divided by the number
  * iterations difference.
  */
-template<typename SetType>
+template <typename SetType>
 void BenchLinearizeWorstCase(DepGraphIndex ntx, benchmark::Bench& bench, uint64_t iter_limit)
 {
     const auto depgraph = MakeHardGraph<SetType>(ntx);
@@ -146,13 +146,14 @@ void BenchLinearizeWorstCase(DepGraphIndex ntx, benchmark::Bench& bench, uint64_
  * This benchmark exercises a worst case for AncestorCandidateFinder, but for which improvement is
  * cheap.
  */
-template<typename SetType>
+template <typename SetType>
 void BenchLinearizeNoItersWorstCaseAnc(DepGraphIndex ntx, benchmark::Bench& bench)
 {
     const auto depgraph = MakeLinearGraph<SetType>(ntx);
     uint64_t rng_seed = 0;
     std::vector<DepGraphIndex> old_lin(ntx);
-    for (DepGraphIndex i = 0; i < ntx; ++i) old_lin[i] = i;
+    for (DepGraphIndex i = 0; i < ntx; ++i)
+        old_lin[i] = i;
     bench.run([&] {
         Linearize(depgraph, /*max_iterations=*/0, rng_seed++, old_lin);
     });
@@ -166,30 +167,32 @@ void BenchLinearizeNoItersWorstCaseAnc(DepGraphIndex ntx, benchmark::Bench& benc
  * This benchmark exercises a worst case for improving an existing linearization, but for which
  * AncestorCandidateFinder is cheap.
  */
-template<typename SetType>
+template <typename SetType>
 void BenchLinearizeNoItersWorstCaseLIMO(DepGraphIndex ntx, benchmark::Bench& bench)
 {
     const auto depgraph = MakeWideGraph<SetType>(ntx);
     uint64_t rng_seed = 0;
     std::vector<DepGraphIndex> old_lin(ntx);
-    for (DepGraphIndex i = 0; i < ntx; ++i) old_lin[i] = i;
+    for (DepGraphIndex i = 0; i < ntx; ++i)
+        old_lin[i] = i;
     bench.run([&] {
         Linearize(depgraph, /*max_iterations=*/0, rng_seed++, old_lin);
     });
 }
 
-template<typename SetType>
+template <typename SetType>
 void BenchPostLinearizeWorstCase(DepGraphIndex ntx, benchmark::Bench& bench)
 {
     DepGraph<SetType> depgraph = MakeWideGraph<SetType>(ntx);
     std::vector<DepGraphIndex> lin(ntx);
     bench.run([&] {
-        for (DepGraphIndex i = 0; i < ntx; ++i) lin[i] = i;
+        for (DepGraphIndex i = 0; i < ntx; ++i)
+            lin[i] = i;
         PostLinearize(depgraph, lin);
     });
 }
 
-template<typename SetType>
+template <typename SetType>
 void BenchMergeLinearizationsWorstCase(DepGraphIndex ntx, benchmark::Bench& bench)
 {
     DepGraph<SetType> depgraph;
@@ -210,7 +213,7 @@ void BenchMergeLinearizationsWorstCase(DepGraphIndex ntx, benchmark::Bench& benc
     });
 }
 
-template<size_t N>
+template <size_t N>
 void BenchLinearizeOptimally(benchmark::Bench& bench, const std::array<uint8_t, N>& serialized)
 {
     // Determine how many transactions the serialized cluster has.

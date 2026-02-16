@@ -53,16 +53,16 @@ using CliClock = std::chrono::system_clock;
 const TranslateFn G_TRANSLATION_FUN{nullptr};
 
 static const char DEFAULT_RPCCONNECT[] = "127.0.0.1";
-static const int DEFAULT_HTTP_CLIENT_TIMEOUT=900;
+static const int DEFAULT_HTTP_CLIENT_TIMEOUT = 900;
 static constexpr int DEFAULT_WAIT_CLIENT_TIMEOUT = 0;
-static const bool DEFAULT_NAMED=false;
-static const int CONTINUE_EXECUTION=-1;
+static const bool DEFAULT_NAMED = false;
+static const int CONTINUE_EXECUTION = -1;
 static constexpr uint8_t NETINFO_MAX_LEVEL{4};
 static constexpr int8_t UNKNOWN_NETWORK{-1};
 // See GetNetworkName() in netbase.cpp
 static constexpr std::array NETWORKS{"not_publicly_routable", "ipv4", "ipv6", "onion", "i2p", "cjdns", "internal"};
 static constexpr std::array NETWORK_SHORT_NAMES{"npr", "ipv4", "ipv6", "onion", "i2p", "cjdns", "int"};
-static constexpr std::array UNREACHABLE_NETWORK_IDS{/*not_publicly_routable*/0, /*internal*/6};
+static constexpr std::array UNREACHABLE_NETWORK_IDS{/*not_publicly_routable*/ 0, /*internal*/ 6};
 
 /** Default number of blocks to generate for RPC generatetoaddress. */
 static const std::string DEFAULT_NBLOCKS = "1";
@@ -118,7 +118,7 @@ std::optional<std::string> RpcWalletName(const ArgsManager& args)
 }
 
 /** libevent event log callback */
-static void libevent_log_cb(int severity, const char *msg)
+static void libevent_log_cb(int severity, const char* msg)
 {
     // Ignore everything other than errors
     if (severity >= EVENT_LOG_ERR) {
@@ -131,9 +131,9 @@ static void libevent_log_cb(int severity, const char *msg)
 // when to wait if -rpcwait is given.
 //
 struct CConnectionFailed : std::runtime_error {
-    explicit inline CConnectionFailed(const std::string& msg) :
-        std::runtime_error(msg)
-    {}
+    explicit inline CConnectionFailed(const std::string& msg) : std::runtime_error(msg)
+    {
+    }
 };
 
 //
@@ -155,16 +155,16 @@ static int AppInitRPC(int argc, char* argv[])
             strUsage += FormatParagraph(LicenseInfo());
         } else {
             strUsage += "\n"
-                "The bitcoin-cli utility provides a command line interface to interact with a " CLIENT_NAME " RPC server.\n"
-                "\nIt can be used to query network information, manage wallets, create or broadcast transactions, and control the " CLIENT_NAME " server.\n"
-                "\nUse the \"help\" command to list all commands. Use \"help <command>\" to show help for that command.\n"
-                "The -named option allows you to specify parameters using the key=value format, eliminating the need to pass unused positional parameters.\n"
-                "\n"
-                "Usage: bitcoin-cli [options] <command> [params]\n"
-                "or:    bitcoin-cli [options] -named <command> [name=value]...\n"
-                "or:    bitcoin-cli [options] help\n"
-                "or:    bitcoin-cli [options] help <command>\n"
-                "\n";
+                        "The bitcoin-cli utility provides a command line interface to interact with a " CLIENT_NAME " RPC server.\n"
+                        "\nIt can be used to query network information, manage wallets, create or broadcast transactions, and control the " CLIENT_NAME " server.\n"
+                        "\nUse the \"help\" command to list all commands. Use \"help <command>\" to show help for that command.\n"
+                        "The -named option allows you to specify parameters using the key=value format, eliminating the need to pass unused positional parameters.\n"
+                        "\n"
+                        "Usage: bitcoin-cli [options] <command> [params]\n"
+                        "or:    bitcoin-cli [options] -named <command> [name=value]...\n"
+                        "or:    bitcoin-cli [options] help\n"
+                        "or:    bitcoin-cli [options] help <command>\n"
+                        "\n";
             strUsage += "\n" + gArgs.GetHelpMessage();
         }
 
@@ -195,8 +195,7 @@ static int AppInitRPC(int argc, char* argv[])
 
 
 /** Reply structure for request_done to fill in */
-struct HTTPReply
-{
+struct HTTPReply {
     HTTPReply() = default;
 
     int status{0};
@@ -206,7 +205,7 @@ struct HTTPReply
 
 static std::string http_errorstring(int code)
 {
-    switch(code) {
+    switch (code) {
     case EVREQ_HTTP_TIMEOUT:
         return "timeout reached";
     case EVREQ_HTTP_EOF:
@@ -224,9 +223,9 @@ static std::string http_errorstring(int code)
     }
 }
 
-static void http_request_done(struct evhttp_request *req, void *ctx)
+static void http_request_done(struct evhttp_request* req, void* ctx)
 {
-    HTTPReply *reply = static_cast<HTTPReply*>(ctx);
+    HTTPReply* reply = static_cast<HTTPReply*>(ctx);
 
     if (req == nullptr) {
         /* If req is nullptr, it means an error occurred while connecting: the
@@ -238,20 +237,19 @@ static void http_request_done(struct evhttp_request *req, void *ctx)
 
     reply->status = evhttp_request_get_response_code(req);
 
-    struct evbuffer *buf = evhttp_request_get_input_buffer(req);
-    if (buf)
-    {
+    struct evbuffer* buf = evhttp_request_get_input_buffer(req);
+    if (buf) {
         size_t size = evbuffer_get_length(buf);
-        const char *data = (const char*)evbuffer_pullup(buf, size);
+        const char* data = (const char*)evbuffer_pullup(buf, size);
         if (data)
             reply->body = std::string(data, size);
         evbuffer_drain(buf, size);
     }
 }
 
-static void http_error_cb(enum evhttp_request_error err, void *ctx)
+static void http_error_cb(enum evhttp_request_error err, void* ctx)
 {
-    HTTPReply *reply = static_cast<HTTPReply*>(ctx);
+    HTTPReply* reply = static_cast<HTTPReply*>(ctx);
     reply->error = err;
 }
 
@@ -269,7 +267,7 @@ static int8_t NetworkStringToId(const std::string& str)
 struct BaseRequestHandler {
     virtual ~BaseRequestHandler() = default;
     virtual UniValue PrepareRequest(const std::string& method, const std::vector<std::string>& args) = 0;
-    virtual UniValue ProcessReply(const UniValue &batch_in) = 0;
+    virtual UniValue ProcessReply(const UniValue& batch_in) = 0;
 };
 
 /** Process addrinfo requests */
@@ -333,7 +331,7 @@ struct GetinfoRequestHandler : BaseRequestHandler {
     }
 
     /** Collect values from the batch and form a simulated `getinfo` reply. */
-    UniValue ProcessReply(const UniValue &batch_in) override
+    UniValue ProcessReply(const UniValue& batch_in) override
     {
         UniValue result(UniValue::VOBJ);
         const std::vector<UniValue> batch = JSONRPCProcessBatchReply(batch_in);
@@ -374,7 +372,7 @@ struct GetinfoRequestHandler : BaseRequestHandler {
         }
         result.pushKV("relayfee", batch[ID_NETWORKINFO]["result"]["relayfee"]);
         result.pushKV("warnings", batch[ID_NETWORKINFO]["result"]["warnings"]);
-        return JSONRPCReplyObj(std::move(result), NullUniValue,  /*id=*/1, JSONRPCVersion::V2);
+        return JSONRPCReplyObj(std::move(result), NullUniValue, /*id=*/1, JSONRPCVersion::V2);
     }
 };
 
@@ -459,7 +457,8 @@ private:
         std::string str;
         for (size_t i = 0; i < services.size(); ++i) {
             const std::string s{services[i].get_str()};
-            str += s == "NETWORK_LIMITED" ? 'l' : s == "P2P_V2" ? '2' : ToLower(s[0]);
+            str += s == "NETWORK_LIMITED" ? 'l' : s == "P2P_V2" ? '2' :
+                                                                  ToLower(s[0]);
         }
         return str;
     }
@@ -581,11 +580,13 @@ public:
                     PingTimeToString(peer.ping),
                     peer.last_send ? ToString(time_now - peer.last_send) : "",
                     peer.last_recv ? ToString(time_now - peer.last_recv) : "",
-                    peer.last_trxn ? ToString((time_now - peer.last_trxn) / 60) : peer.is_tx_relay ? "" : "*",
+                    peer.last_trxn ? ToString((time_now - peer.last_trxn) / 60) : peer.is_tx_relay ? "" :
+                                                                                                     "*",
                     peer.last_blck ? ToString((time_now - peer.last_blck) / 60) : "",
                     strprintf("%s%s", peer.is_bip152_hb_to ? "." : " ", peer.is_bip152_hb_from ? "*" : " "),
                     m_max_addr_processed_length, // variable spacing
-                    peer.addr_processed ? ToString(peer.addr_processed) : peer.is_addr_relay_enabled ? "" : ".",
+                    peer.addr_processed ? ToString(peer.addr_processed) : peer.is_addr_relay_enabled ? "" :
+                                                                                                       ".",
                     m_max_addr_rate_limited_length, // variable spacing
                     peer.addr_rate_limited ? ToString(peer.addr_rate_limited) : "",
                     m_max_age_length, // variable spacing
@@ -630,7 +631,7 @@ public:
                 result += strprintf("%8i", m_counts.at(i).at(n)); // network peers count
             }
             result += strprintf("   %5i", m_counts.at(i).at(NETWORKS.size())); // total peers count
-            if (i == 1) { // the outbound row has two extra columns for block relay and manual peer counts
+            if (i == 1) {                                                      // the outbound row has two extra columns for block relay and manual peer counts
                 result += strprintf("   %5i", m_block_relay_peers_count);
                 if (m_manual_peers_count) result += strprintf("   %5i", m_manual_peers_count);
             }
@@ -658,14 +659,14 @@ public:
         "-netinfo (level [outonly]) | help\n\n"
         "Returns a network peer connections dashboard with information from the remote server.\n"
         "This human-readable interface will change regularly and is not intended to be a stable API.\n"
-        "Under the hood, -netinfo fetches the data by calling getpeerinfo and getnetworkinfo.\n"
-        + strprintf("An optional argument from 0 to %d can be passed for different peers listings; values above %d up to 255 are parsed as %d.\n", NETINFO_MAX_LEVEL, NETINFO_MAX_LEVEL, NETINFO_MAX_LEVEL) +
+        "Under the hood, -netinfo fetches the data by calling getpeerinfo and getnetworkinfo.\n" +
+        strprintf("An optional argument from 0 to %d can be passed for different peers listings; values above %d up to 255 are parsed as %d.\n", NETINFO_MAX_LEVEL, NETINFO_MAX_LEVEL, NETINFO_MAX_LEVEL) +
         "If that argument is passed, an optional additional \"outonly\" argument may be passed to obtain the listing with outbound peers only.\n"
         "Pass \"help\" or \"h\" to see this detailed help documentation.\n"
         "If more than two arguments are passed, only the first two are read and parsed.\n"
         "Suggestion: use -netinfo with the Linux watch(1) command for a live dashboard; see example below.\n\n"
-        "Arguments:\n"
-        + strprintf("1. level (integer 0-%d, optional)  Specify the info level of the peers dashboard (default 0):\n", NETINFO_MAX_LEVEL) +
+        "Arguments:\n" +
+        strprintf("1. level (integer 0-%d, optional)  Specify the info level of the peers dashboard (default 0):\n", NETINFO_MAX_LEVEL) +
         "                                  0 - Peer counts for each reachable network as well as for block relay peers\n"
         "                                      and manual peers, and the list of local addresses and ports\n"
         "                                  1 - Like 0 but preceded by a peers listing (without address and version columns)\n"
@@ -675,8 +676,8 @@ public:
         "2. outonly (\"outonly\" or \"o\", optional) Return the peers listing with outbound peers only, i.e. to save screen space\n"
         "                                        when a node has many inbound peers. Only valid if a level is passed.\n\n"
         "help (\"help\" or \"h\", optional) Print this help documentation instead of the dashboard.\n\n"
-        "Result:\n\n"
-        + strprintf("* The peers listing in levels 1-%d displays all of the peers sorted by direction and minimum ping time:\n\n", NETINFO_MAX_LEVEL) +
+        "Result:\n\n" +
+        strprintf("* The peers listing in levels 1-%d displays all of the peers sorted by direction and minimum ping time:\n\n", NETINFO_MAX_LEVEL) +
         "  Column   Description\n"
         "  ------   -----------\n"
         "  <->      Direction\n"
@@ -725,12 +726,10 @@ public:
         "> bitcoin-cli -netinfo\n\n"
         "The same, preceded by a peers listing without address and version columns\n"
         "> bitcoin-cli -netinfo 1\n\n"
-        "Full dashboard\n"
-        + strprintf("> bitcoin-cli -netinfo %d\n\n", NETINFO_MAX_LEVEL) +
-        "Full dashboard, but with outbound peers only\n"
-        + strprintf("> bitcoin-cli -netinfo %d outonly\n\n", NETINFO_MAX_LEVEL) +
-        "Full live dashboard, adjust --interval or --no-title as needed (Linux)\n"
-        + strprintf("> watch --interval 1 --no-title bitcoin-cli -netinfo %d\n\n", NETINFO_MAX_LEVEL) +
+        "Full dashboard\n" +
+        strprintf("> bitcoin-cli -netinfo %d\n\n", NETINFO_MAX_LEVEL) +
+        "Full dashboard, but with outbound peers only\n" + strprintf("> bitcoin-cli -netinfo %d outonly\n\n", NETINFO_MAX_LEVEL) +
+        "Full live dashboard, adjust --interval or --no-title as needed (Linux)\n" + strprintf("> watch --interval 1 --no-title bitcoin-cli -netinfo %d\n\n", NETINFO_MAX_LEVEL) +
         "See this help\n"
         "> bitcoin-cli -netinfo help\n"};
 };
@@ -746,13 +745,14 @@ public:
         return JSONRPCRequestObj("generatetoaddress", params, 1);
     }
 
-    UniValue ProcessReply(const UniValue &reply) override
+    UniValue ProcessReply(const UniValue& reply) override
     {
         UniValue result(UniValue::VOBJ);
         result.pushKV("address", address_str);
         result.pushKV("blocks", reply.get_obj()["result"]);
         return JSONRPCReplyObj(std::move(result), NullUniValue, /*id=*/1, JSONRPCVersion::V2);
     }
+
 protected:
     std::string address_str;
 };
@@ -762,7 +762,7 @@ struct DefaultRequestHandler : BaseRequestHandler {
     UniValue PrepareRequest(const std::string& method, const std::vector<std::string>& args) override
     {
         UniValue params;
-        if(gArgs.GetBoolArg("-named", DEFAULT_NAMED)) {
+        if (gArgs.GetBoolArg("-named", DEFAULT_NAMED)) {
             params = RPCConvertNamedValues(method, args);
         } else {
             params = RPCConvertValues(method, args);
@@ -770,7 +770,7 @@ struct DefaultRequestHandler : BaseRequestHandler {
         return JSONRPCRequestObj(method, params, 1);
     }
 
-    UniValue ProcessReply(const UniValue &reply) override
+    UniValue ProcessReply(const UniValue& reply) override
     {
         return reply.get_obj();
     }
@@ -898,9 +898,9 @@ static UniValue CallRPC(BaseRequestHandler* rh, const std::string& strMethod, co
             responseErrorMessage = strprintf(" (error code %d - \"%s\")", response.error, http_errorstring(response.error));
         }
         throw CConnectionFailed(strprintf("Could not connect to the server %s:%d%s\n\n"
-                    "Make sure the bitcoind server is running and that you are connecting to the correct RPC port.\n"
-                    "Use \"bitcoin-cli -help\" for more info.",
-                    host, port, responseErrorMessage));
+                                          "Make sure the bitcoind server is running and that you are connecting to the correct RPC port.\n"
+                                          "Use \"bitcoin-cli -help\" for more info.",
+                                          host, port, responseErrorMessage));
     } else if (response.status == HTTP_UNAUTHORIZED) {
         if (failedToGetAuthCookie) {
             throw std::runtime_error(strprintf(
@@ -1088,9 +1088,9 @@ static void ParseGetInfoResult(UniValue& result)
     std::string ibd_progress_bar;
     // Display the progress bar only if IBD progress is less than 99%
     if (ibd_progress < 0.99) {
-      GetProgressBar(ibd_progress, ibd_progress_bar);
-      // Add padding between progress bar and IBD progress
-      ibd_progress_bar += " ";
+        GetProgressBar(ibd_progress, ibd_progress_bar);
+        // Add padding between progress bar and IBD progress
+        ibd_progress_bar += " ";
     }
 
     result_string += strprintf("Verification progress: %s%.4f%%\n", ibd_progress_bar, ibd_progress * 100);
@@ -1192,7 +1192,7 @@ static void SetGenerateToAddressArgs(const std::string& address, std::vector<std
     args.emplace(args.begin() + 1, address);
 }
 
-static int CommandLineRPC(int argc, char *argv[])
+static int CommandLineRPC(int argc, char* argv[])
 {
     std::string strPrint;
     int nRet = 0;
@@ -1328,8 +1328,7 @@ MAIN_FUNCTION
         int ret = AppInitRPC(argc, argv);
         if (ret != CONTINUE_EXECUTION)
             return ret;
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "AppInitRPC()");
         return EXIT_FAILURE;
     } catch (...) {
@@ -1340,8 +1339,7 @@ MAIN_FUNCTION
     int ret = EXIT_FAILURE;
     try {
         ret = CommandLineRPC(argc, argv);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "CommandLineRPC()");
     } catch (...) {
         PrintExceptionContinue(nullptr, "CommandLineRPC()");

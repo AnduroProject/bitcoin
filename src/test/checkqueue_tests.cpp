@@ -28,9 +28,11 @@
 struct NoLockLoggingTestingSetup : public TestingSetup {
     NoLockLoggingTestingSetup()
 #ifdef DEBUG_LOCKCONTENTION
-        : TestingSetup{ChainType::MAIN, {.extra_args = { "-debugexclude=lock" } }} {}
+        : TestingSetup{ChainType::MAIN, {.extra_args = {"-debugexclude=lock"} }} {}
 #else
-        : TestingSetup{ChainType::MAIN} {}
+        : TestingSetup{ChainType::MAIN}
+    {
+    }
 #endif
 };
 
@@ -57,10 +59,9 @@ struct FakeCheckCheckCompletion {
     }
 };
 
-struct FixedCheck
-{
+struct FixedCheck {
     std::optional<int> m_result;
-    FixedCheck(std::optional<int> result) : m_result(result){};
+    FixedCheck(std::optional<int> result) : m_result(result) {};
     std::optional<int> operator()() const { return m_result; }
 };
 
@@ -68,7 +69,7 @@ struct UniqueCheck {
     static Mutex m;
     static std::unordered_multiset<size_t> results GUARDED_BY(m);
     size_t check_id;
-    UniqueCheck(size_t check_id_in) : check_id(check_id_in){};
+    UniqueCheck(size_t check_id_in) : check_id(check_id_in) {};
     std::optional<int> operator()()
     {
         LOCK(m);
@@ -80,7 +81,7 @@ struct UniqueCheck {
 
 struct MemoryCheck {
     static std::atomic<size_t> fake_allocated_memory;
-    bool b {false};
+    bool b{false};
     std::optional<int> operator()() const
     {
         return std::nullopt;
@@ -119,7 +120,7 @@ struct FrozenCleanupCheck {
             std::unique_lock<std::mutex> l(m);
             nFrozen.store(1, std::memory_order_relaxed);
             cv.notify_one();
-            cv.wait(l, []{ return nFrozen.load(std::memory_order_relaxed) == 0;});
+            cv.wait(l, [] { return nFrozen.load(std::memory_order_relaxed) == 0; });
         }
     }
     FrozenCleanupCheck(FrozenCleanupCheck&& other) noexcept
@@ -208,7 +209,7 @@ BOOST_AUTO_TEST_CASE(test_CheckQueue_Correct_Max)
 BOOST_AUTO_TEST_CASE(test_CheckQueue_Correct_Random)
 {
     std::vector<size_t> range;
-    range.reserve(100000/1000);
+    range.reserve(100000 / 1000);
     for (size_t i = 2; i < 100000; i += std::max((size_t)1, (size_t)m_rng.randrange(std::min((size_t)1000, ((size_t)100000) - i))))
         range.push_back(i);
     Correct_Queue_range(range);
@@ -308,7 +309,7 @@ BOOST_AUTO_TEST_CASE(test_CheckQueue_Memory)
                     total--;
                     // Each iteration leaves data at the front, back, and middle
                     // to catch any sort of deallocation failure
-                    vChecks.emplace_back(total == 0 || total == i || total == i/2);
+                    vChecks.emplace_back(total == 0 || total == i || total == i / 2);
                 }
                 control.Add(std::move(vChecks));
             }
@@ -333,7 +334,7 @@ BOOST_AUTO_TEST_CASE(test_CheckQueue_FrozenCleanup)
     {
         std::unique_lock<std::mutex> l(FrozenCleanupCheck::m);
         // Wait until the queue has finished all jobs and frozen
-        FrozenCleanupCheck::cv.wait(l, [](){return FrozenCleanupCheck::nFrozen == 1;});
+        FrozenCleanupCheck::cv.wait(l, []() { return FrozenCleanupCheck::nFrozen == 1; });
     }
     // Try to get control of the queue a bunch of times
     for (auto x = 0; x < 100 && !fails; ++x) {
@@ -359,19 +360,19 @@ BOOST_AUTO_TEST_CASE(test_CheckQueueControl_Locks)
     {
         std::vector<std::thread> tg;
         tg.reserve(3);
-        std::atomic<int> nThreads {0};
-        std::atomic<int> fails {0};
+        std::atomic<int> nThreads{0};
+        std::atomic<int> fails{0};
         for (size_t i = 0; i < 3; ++i) {
             tg.emplace_back(
-                    [&]{
+                [&] {
                     CCheckQueueControl<FakeCheck> control(*queue);
                     // While sleeping, no other thread should execute to this point
                     auto observed = ++nThreads;
                     UninterruptibleSleep(std::chrono::milliseconds{10});
-                    fails += observed  != nThreads;
-                    });
+                    fails += observed != nThreads;
+                });
         }
-        for (auto& thread: tg) {
+        for (auto& thread : tg) {
             if (thread.joinable()) thread.join();
         }
         BOOST_REQUIRE_EQUAL(fails, 0);
@@ -386,33 +387,33 @@ BOOST_AUTO_TEST_CASE(test_CheckQueueControl_Locks)
         bool done_ack{false};
         {
             std::unique_lock<std::mutex> l(m);
-            tg.emplace_back([&]{
-                    CCheckQueueControl<FakeCheck> control(*queue);
-                    std::unique_lock<std::mutex> ll(m);
-                    has_lock = true;
-                    cv.notify_one();
-                    cv.wait(ll, [&]{return has_tried;});
-                    done = true;
-                    cv.notify_one();
-                    // Wait until the done is acknowledged
-                    //
-                    cv.wait(ll, [&]{return done_ack;});
-                    });
+            tg.emplace_back([&] {
+                CCheckQueueControl<FakeCheck> control(*queue);
+                std::unique_lock<std::mutex> ll(m);
+                has_lock = true;
+                cv.notify_one();
+                cv.wait(ll, [&] { return has_tried; });
+                done = true;
+                cv.notify_one();
+                // Wait until the done is acknowledged
+                //
+                cv.wait(ll, [&] { return done_ack; });
+            });
             // Wait for thread to get the lock
-            cv.wait(l, [&](){return has_lock;});
+            cv.wait(l, [&]() { return has_lock; });
             bool fails = false;
             for (auto x = 0; x < 100 && !fails; ++x) {
                 fails = queue->m_control_mutex.try_lock();
             }
             has_tried = true;
             cv.notify_one();
-            cv.wait(l, [&](){return done;});
+            cv.wait(l, [&]() { return done; });
             // Acknowledge the done
             done_ack = true;
             cv.notify_one();
             BOOST_REQUIRE(!fails);
         }
-        for (auto& thread: tg) {
+        for (auto& thread : tg) {
             if (thread.joinable()) thread.join();
         }
     }

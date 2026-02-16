@@ -91,7 +91,7 @@ public:
 
     static std::unique_ptr<PeerManager> make(CConnman& connman, AddrMan& addrman,
                                              BanMan* banman, ChainstateManager& chainman,
-                                             CTxMemPool& pool, node::Warnings& warnings, Options opts);
+                                             CTxMemPool& pool, CTxMemPool& preconfpool, node::Warnings& warnings, Options opts);
     virtual ~PeerManager() = default;
 
     /**
@@ -159,7 +159,7 @@ public:
      * guaranteed to not change dependent on state - ie they are suitable for
      * use when describing peers which we know to be desirable, but for which
      * we do not have a confirmed set of service flags.
-    */
+     */
     virtual ServiceFlags GetDesirableServiceFlags(ServiceFlags services) const = 0;
 };
 

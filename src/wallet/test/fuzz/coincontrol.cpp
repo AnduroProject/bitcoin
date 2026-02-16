@@ -27,7 +27,7 @@ FUZZ_TARGET(coincontrol, .init = initialize_coincontrol)
     ArgsManager& args = *node.args;
 
     // for GetBoolArg to return true sometimes
-    args.ForceSetArg("-avoidpartialspends", fuzzed_data_provider.ConsumeBool()?"1":"0");
+    args.ForceSetArg("-avoidpartialspends", fuzzed_data_provider.ConsumeBool() ? "1" : "0");
 
     CCoinControl coin_control;
     COutPoint out_point;

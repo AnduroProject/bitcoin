@@ -28,8 +28,7 @@ BIP324Cipher::BIP324Cipher(const CKey& key, std::span<const std::byte> ent32) no
     m_our_pubkey = m_key.EllSwiftCreate(ent32);
 }
 
-BIP324Cipher::BIP324Cipher(const CKey& key, const EllSwiftPubKey& pubkey) noexcept :
-    m_key(key), m_our_pubkey(pubkey) {}
+BIP324Cipher::BIP324Cipher(const CKey& key, const EllSwiftPubKey& pubkey) noexcept : m_key(key), m_our_pubkey(pubkey) {}
 
 void BIP324Cipher::Initialize(const EllSwiftPubKey& their_pubkey, bool initiator, bool self_decrypt) noexcept
 {
@@ -56,9 +55,9 @@ void BIP324Cipher::Initialize(const EllSwiftPubKey& their_pubkey, bool initiator
     // Derive garbage terminators from shared secret.
     hkdf.Expand32("garbage_terminators", UCharCast(hkdf_32_okm.data()));
     std::copy(std::begin(hkdf_32_okm), std::begin(hkdf_32_okm) + GARBAGE_TERMINATOR_LEN,
-        (initiator ? m_send_garbage_terminator : m_recv_garbage_terminator).begin());
+              (initiator ? m_send_garbage_terminator : m_recv_garbage_terminator).begin());
     std::copy(std::end(hkdf_32_okm) - GARBAGE_TERMINATOR_LEN, std::end(hkdf_32_okm),
-        (initiator ? m_recv_garbage_terminator : m_send_garbage_terminator).begin());
+              (initiator ? m_recv_garbage_terminator : m_send_garbage_terminator).begin());
 
     // Derive session id from shared secret.
     hkdf.Expand32("session_id", UCharCast(m_session_id.data()));

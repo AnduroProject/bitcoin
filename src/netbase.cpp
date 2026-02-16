@@ -97,7 +97,8 @@ std::vector<CNetAddr> WrappedGetAddrInfo(const std::string& name, bool allow_loo
 
 DNSLookupFn g_dns_lookup{WrappedGetAddrInfo};
 
-enum Network ParseNetwork(const std::string& net_in) {
+enum Network ParseNetwork(const std::string& net_in)
+{
     std::string net = ToLower(net_in);
     if (net == "ipv4") return NET_IPV4;
     if (net == "ipv6") return NET_IPV6;
@@ -135,7 +136,7 @@ std::vector<std::string> GetNetworkNames(bool append_unroutable)
 {
     std::vector<std::string> names;
     for (int n = 0; n < NET_MAX; ++n) {
-        const enum Network network{static_cast<Network>(n)};
+        const enum Network network { static_cast<Network>(n) };
         if (network == NET_UNROUTABLE || network == NET_INTERNAL) continue;
         names.emplace_back(GetNetworkName(network));
     }
@@ -246,13 +247,13 @@ bool IsUnixSocketPath(const std::string& name)
 }
 
 /** SOCKS version */
-enum SOCKSVersion: uint8_t {
+enum SOCKSVersion : uint8_t {
     SOCKS4 = 0x04,
     SOCKS5 = 0x05
 };
 
 /** Values defined for METHOD in RFC1928 */
-enum SOCKS5Method: uint8_t {
+enum SOCKS5Method : uint8_t {
     NOAUTH = 0x00,        //!< No authentication required
     GSSAPI = 0x01,        //!< GSSAPI
     USER_PASS = 0x02,     //!< Username/password
@@ -260,14 +261,14 @@ enum SOCKS5Method: uint8_t {
 };
 
 /** Values defined for CMD in RFC1928 */
-enum SOCKS5Command: uint8_t {
+enum SOCKS5Command : uint8_t {
     CONNECT = 0x01,
     BIND = 0x02,
     UDP_ASSOCIATE = 0x03
 };
 
 /** Values defined for REP in RFC1928 and https://spec.torproject.org/socks-extensions.html */
-enum SOCKS5Reply: uint8_t {
+enum SOCKS5Reply : uint8_t {
     SUCCEEDED = 0x00,                  //!< RFC1928: Succeeded
     GENFAILURE = 0x01,                 //!< RFC1928: General failure
     NOTALLOWED = 0x02,                 //!< RFC1928: Connection not allowed by ruleset
@@ -288,7 +289,7 @@ enum SOCKS5Reply: uint8_t {
 };
 
 /** Values defined for ATYPE in RFC1928 */
-enum SOCKS5Atyp: uint8_t {
+enum SOCKS5Atyp : uint8_t {
     IPV4 = 0x01,
     DOMAINNAME = 0x03,
     IPV6 = 0x04,
@@ -355,41 +356,41 @@ static IntrRecvError InterruptibleRecv(uint8_t* data, size_t len, std::chrono::m
 /** Convert SOCKS5 reply to an error message */
 static std::string Socks5ErrorString(uint8_t err)
 {
-    switch(err) {
-        case SOCKS5Reply::GENFAILURE:
-            return "general failure";
-        case SOCKS5Reply::NOTALLOWED:
-            return "connection not allowed";
-        case SOCKS5Reply::NETUNREACHABLE:
-            return "network unreachable";
-        case SOCKS5Reply::HOSTUNREACHABLE:
-            return "host unreachable";
-        case SOCKS5Reply::CONNREFUSED:
-            return "connection refused";
-        case SOCKS5Reply::TTLEXPIRED:
-            return "TTL expired";
-        case SOCKS5Reply::CMDUNSUPPORTED:
-            return "protocol error";
-        case SOCKS5Reply::ATYPEUNSUPPORTED:
-            return "address type not supported";
-        case SOCKS5Reply::TOR_HS_DESC_NOT_FOUND:
-            return "onion service descriptor can not be found";
-        case SOCKS5Reply::TOR_HS_DESC_INVALID:
-            return "onion service descriptor is invalid";
-        case SOCKS5Reply::TOR_HS_INTRO_FAILED:
-            return "onion service introduction failed";
-        case SOCKS5Reply::TOR_HS_REND_FAILED:
-            return "onion service rendezvous failed";
-        case SOCKS5Reply::TOR_HS_MISSING_CLIENT_AUTH:
-            return "onion service missing client authorization";
-        case SOCKS5Reply::TOR_HS_WRONG_CLIENT_AUTH:
-            return "onion service wrong client authorization";
-        case SOCKS5Reply::TOR_HS_BAD_ADDRESS:
-            return "onion service invalid address";
-        case SOCKS5Reply::TOR_HS_INTRO_TIMEOUT:
-            return "onion service introduction timed out";
-        default:
-            return strprintf("unknown (0x%02x)", err);
+    switch (err) {
+    case SOCKS5Reply::GENFAILURE:
+        return "general failure";
+    case SOCKS5Reply::NOTALLOWED:
+        return "connection not allowed";
+    case SOCKS5Reply::NETUNREACHABLE:
+        return "network unreachable";
+    case SOCKS5Reply::HOSTUNREACHABLE:
+        return "host unreachable";
+    case SOCKS5Reply::CONNREFUSED:
+        return "connection refused";
+    case SOCKS5Reply::TTLEXPIRED:
+        return "TTL expired";
+    case SOCKS5Reply::CMDUNSUPPORTED:
+        return "protocol error";
+    case SOCKS5Reply::ATYPEUNSUPPORTED:
+        return "address type not supported";
+    case SOCKS5Reply::TOR_HS_DESC_NOT_FOUND:
+        return "onion service descriptor can not be found";
+    case SOCKS5Reply::TOR_HS_DESC_INVALID:
+        return "onion service descriptor is invalid";
+    case SOCKS5Reply::TOR_HS_INTRO_FAILED:
+        return "onion service introduction failed";
+    case SOCKS5Reply::TOR_HS_REND_FAILED:
+        return "onion service rendezvous failed";
+    case SOCKS5Reply::TOR_HS_MISSING_CLIENT_AUTH:
+        return "onion service missing client authorization";
+    case SOCKS5Reply::TOR_HS_WRONG_CLIENT_AUTH:
+        return "onion service wrong client authorization";
+    case SOCKS5Reply::TOR_HS_BAD_ADDRESS:
+        return "onion service invalid address";
+    case SOCKS5Reply::TOR_HS_INTRO_TIMEOUT:
+        return "onion service introduction timed out";
+    default:
+        return strprintf("unknown (0x%02x)", err);
     }
 }
 
@@ -580,7 +581,7 @@ std::unique_ptr<Sock> CreateSockOS(int domain, int type, int protocol)
 
 std::function<std::unique_ptr<Sock>(int, int, int)> CreateSock = CreateSockOS;
 
-template<typename... Args>
+template <typename... Args>
 static void LogConnectFailure(bool manual_connection, util::ConstevalFormatString<sizeof...(Args)> fmt, const Args&... args)
 {
     std::string error_message = tfm::format(fmt, args...);
@@ -597,8 +598,7 @@ static bool ConnectToSocket(const Sock& sock, struct sockaddr* sockaddr, socklen
     if (sock.Connect(sockaddr, len) == SOCKET_ERROR) {
         int nErr = WSAGetLastError();
         // WSAEINVAL is here because some legacy version of winsock uses it
-        if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL)
-        {
+        if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL) {
             // Connection didn't actually fail, but is being established
             // asynchronously. Thus, use async I/O api (select/poll)
             // synchronously to check for successful connection with a timeout.
@@ -691,7 +691,7 @@ std::unique_ptr<Sock> Proxy::Connect() const
     memcpy(addrun.sun_path, path.c_str(), std::min(sizeof(addrun.sun_path) - 1, path.length()));
     socklen_t len = sizeof(addrun);
 
-    if(!ConnectToSocket(*sock, (struct sockaddr*)&addrun, len, path, /*manual_connection=*/true)) {
+    if (!ConnectToSocket(*sock, (struct sockaddr*)&addrun, len, path, /*manual_connection=*/true)) {
         return {};
     }
 
@@ -701,7 +701,8 @@ std::unique_ptr<Sock> Proxy::Connect() const
 #endif
 }
 
-bool SetProxy(enum Network net, const Proxy &addrProxy) {
+bool SetProxy(enum Network net, const Proxy& addrProxy)
+{
     assert(net >= 0 && net < NET_MAX);
     if (!addrProxy.IsValid())
         return false;
@@ -710,7 +711,8 @@ bool SetProxy(enum Network net, const Proxy &addrProxy) {
     return true;
 }
 
-bool GetProxy(enum Network net, Proxy &proxyInfoOut) {
+bool GetProxy(enum Network net, Proxy& proxyInfoOut)
+{
     assert(net >= 0 && net < NET_MAX);
     LOCK(g_proxyinfo_mutex);
     if (!proxyInfo[net].IsValid())
@@ -719,7 +721,8 @@ bool GetProxy(enum Network net, Proxy &proxyInfoOut) {
     return true;
 }
 
-bool SetNameProxy(const Proxy &addrProxy) {
+bool SetNameProxy(const Proxy& addrProxy)
+{
     if (!addrProxy.IsValid())
         return false;
     LOCK(g_proxyinfo_mutex);
@@ -727,20 +730,23 @@ bool SetNameProxy(const Proxy &addrProxy) {
     return true;
 }
 
-bool GetNameProxy(Proxy &nameProxyOut) {
+bool GetNameProxy(Proxy& nameProxyOut)
+{
     LOCK(g_proxyinfo_mutex);
-    if(!nameProxy.IsValid())
+    if (!nameProxy.IsValid())
         return false;
     nameProxyOut = nameProxy;
     return true;
 }
 
-bool HaveNameProxy() {
+bool HaveNameProxy()
+{
     LOCK(g_proxyinfo_mutex);
     return nameProxy.IsValid();
 }
 
-bool IsProxy(const CNetAddr &addr) {
+bool IsProxy(const CNetAddr& addr)
+{
     LOCK(g_proxyinfo_mutex);
     for (int i = 0; i < NET_MAX; i++) {
         if (addr == static_cast<CNetAddr>(proxyInfo[i].proxy))
@@ -757,12 +763,13 @@ bool IsProxy(const CNetAddr &addr) {
 class TorStreamIsolationCredentialsGenerator
 {
 public:
-    TorStreamIsolationCredentialsGenerator():
-        m_prefix(GenerateUniquePrefix()) {
+    TorStreamIsolationCredentialsGenerator() : m_prefix(GenerateUniquePrefix())
+    {
     }
 
     /** Return the next unique proxy credentials. */
-    ProxyCredentials Generate() {
+    ProxyCredentials Generate()
+    {
         ProxyCredentials auth;
         auth.username = auth.password = strprintf("%s%i", m_prefix, m_counter);
         ++m_counter;
@@ -771,6 +778,7 @@ public:
 
     /** Size of session prefix in bytes. */
     static constexpr size_t PREFIX_BYTE_LENGTH = 8;
+
 private:
     const std::string m_prefix;
     std::atomic<uint64_t> m_counter;
@@ -779,7 +787,8 @@ private:
      * This makes sure that different launches of the application (either successively or in parallel)
      * will not share the same circuits, as would be the case with a bare counter.
      */
-    static std::string GenerateUniquePrefix() {
+    static std::string GenerateUniquePrefix()
+    {
         std::array<uint8_t, PREFIX_BYTE_LENGTH> prefix_bytes;
         GetRandBytes(prefix_bytes);
         return HexStr(prefix_bytes) + "-";

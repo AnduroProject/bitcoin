@@ -8,7 +8,7 @@
 
 #include <string_view>
 
-const std::array<VBDeploymentInfo,Consensus::MAX_VERSION_BITS_DEPLOYMENTS> VersionBitsDeploymentInfo{
+const std::array<VBDeploymentInfo, Consensus::MAX_VERSION_BITS_DEPLOYMENTS> VersionBitsDeploymentInfo{
     VBDeploymentInfo{
         .name = "testdummy",
         .gbt_optional_rule = true,

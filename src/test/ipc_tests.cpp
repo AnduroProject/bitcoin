@@ -5,8 +5,8 @@
 #include <ipc/process.h>
 #include <test/ipc_test.h>
 
-#include <test/util/setup_common.h>
 #include <boost/test/unit_test.hpp>
+#include <test/util/setup_common.h>
 
 BOOST_FIXTURE_TEST_SUITE(ipc_tests, BasicTestingSetup)
 BOOST_AUTO_TEST_CASE(ipc_tests)

@@ -81,7 +81,7 @@ constexpr StatTable8 SQR_TABLE_8({0x1, 0x4, 0x10, 0x40, 0x1b, 0x6c, 0xab, 0x9a})
 constexpr StatTable8 QRT_TABLE_8({0xbc, 0x2a, 0x28, 0x86, 0x2c, 0xde, 0x8e, 0});
 typedef Field<uint8_t, 8, 27, StatTable8, DynTable8, &SQR_TABLE_8, &QRT_TABLE_8> Field8;
 #endif
-}
+} // namespace
 
 Sketch* ConstructGeneric1Byte(int bits, int implementation)
 {

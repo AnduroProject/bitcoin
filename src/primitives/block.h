@@ -6,6 +6,9 @@
 #ifndef BITCOIN_PRIMITIVES_BLOCK_H
 #define BITCOIN_PRIMITIVES_BLOCK_H
 
+#include <auxpow.h>
+#include <coordinate/signed_block.h>
+#include <primitives/pureheader.h>
 #include <primitives/transaction.h>
 #include <serialize.h>
 #include <uint256.h>
@@ -18,50 +21,41 @@
  * in the block is a special one that creates a new coin owned by the creator
  * of the block.
  */
-class CBlockHeader
+class CBlockHeader : public CPureBlockHeader
 {
 public:
-    // header
-    int32_t nVersion;
-    uint256 hashPrevBlock;
-    uint256 hashMerkleRoot;
-    uint32_t nTime;
-    uint32_t nBits;
-    uint32_t nNonce;
+    // auxpow (if this is a merge-minded block)
+    std::shared_ptr<CAuxPow> auxpow;
 
     CBlockHeader()
     {
         SetNull();
     }
 
-    SERIALIZE_METHODS(CBlockHeader, obj) { READWRITE(obj.nVersion, obj.hashPrevBlock, obj.hashMerkleRoot, obj.nTime, obj.nBits, obj.nNonce); }
+    SERIALIZE_METHODS(CBlockHeader, obj)
+    {
+        READWRITE(AsBase<CPureBlockHeader>(obj));
+
+        if (obj.IsAuxpow()) {
+            SER_READ(obj, obj.auxpow = std::make_shared<CAuxPow>());
+            assert(obj.auxpow != nullptr);
+            READWRITE(*obj.auxpow);
+        } else {
+            SER_READ(obj, obj.auxpow.reset());
+        }
+    }
 
     void SetNull()
     {
-        nVersion = 0;
-        hashPrevBlock.SetNull();
-        hashMerkleRoot.SetNull();
-        nTime = 0;
-        nBits = 0;
-        nNonce = 0;
+        CPureBlockHeader::SetNull();
+        auxpow.reset();
     }
 
-    bool IsNull() const
-    {
-        return (nBits == 0);
-    }
-
-    uint256 GetHash() const;
-
-    NodeSeconds Time() const
-    {
-        return NodeSeconds{std::chrono::seconds{nTime}};
-    }
-
-    int64_t GetBlockTime() const
-    {
-        return (int64_t)nTime;
-    }
+    /**
+     * Set the block's auxpow (or unset it).  This takes care of updating
+     * the version accordingly.
+     */
+    void SetAuxpow(std::unique_ptr<CAuxPow> apow);
 };
 
 
@@ -70,6 +64,11 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransactionRef> vtx;
+    std::vector<CTransactionRef> pegins;
+    std::vector<SignedBlock> preconfBlock;
+    ReconciliationBlock reconciliationBlock;
+    std::string currentKeys;
+    int32_t currentIndex;
 
     // Memory-only flags for caching expensive checks
     mutable bool fChecked;                            // CheckBlock()
@@ -81,15 +80,24 @@ public:
         SetNull();
     }
 
-    CBlock(const CBlockHeader &header)
+    CBlock(const CBlockHeader& header)
     {
         SetNull();
+        vtx.clear();
+        pegins.clear();
+        preconfBlock.clear();
+        reconciliationBlock.SetNull();
         *(static_cast<CBlockHeader*>(this)) = header;
     }
 
     SERIALIZE_METHODS(CBlock, obj)
     {
         READWRITE(AsBase<CBlockHeader>(obj), obj.vtx);
+        READWRITE(obj.pegins);
+        READWRITE(obj.preconfBlock);
+        READWRITE(obj.reconciliationBlock);
+        READWRITE(obj.currentKeys);
+        READWRITE(obj.currentIndex);
     }
 
     void SetNull()
@@ -99,17 +107,20 @@ public:
         fChecked = false;
         m_checked_witness_commitment = false;
         m_checked_merkle_root = false;
+        currentKeys = "";
+        currentIndex = 0;
     }
 
     CBlockHeader GetBlockHeader() const
     {
         CBlockHeader block;
-        block.nVersion       = nVersion;
-        block.hashPrevBlock  = hashPrevBlock;
+        block.nVersion = nVersion;
+        block.hashPrevBlock = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
-        block.nTime          = nTime;
-        block.nBits          = nBits;
-        block.nNonce         = nNonce;
+        block.nTime = nTime;
+        block.nBits = nBits;
+        block.nNonce = nNonce;
+        block.auxpow = auxpow;
         return block;
     }
 
@@ -120,8 +131,7 @@ public:
  * other node doesn't have the same branch, it can find a recent common trunk.
  * The further back it is, the further before the fork it may be.
  */
-struct CBlockLocator
-{
+struct CBlockLocator {
     /** Historically CBlockLocator's version field has been written to network
      * streams as the negotiated protocol version and to disk streams as the
      * client version, but the value has never been used.

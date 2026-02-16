@@ -5,8 +5,8 @@
 
 #include <arith_uint256.h>
 
-#include <uint256.h>
 #include <crypto/common.h>
+#include <uint256.h>
 
 #include <cassert>
 
@@ -141,7 +141,7 @@ std::string base_uint<BITS>::GetHex() const
 {
     base_blob<BITS> b;
     for (int x = 0; x < this->WIDTH; ++x) {
-        WriteLE32(b.begin() + x*4, this->pn[x]);
+        WriteLE32(b.begin() + x * 4, this->pn[x]);
     }
     return b.GetHex();
 }
@@ -215,18 +215,18 @@ uint32_t arith_uint256::GetCompact(bool fNegative) const
     return nCompact;
 }
 
-uint256 ArithToUint256(const arith_uint256 &a)
+uint256 ArithToUint256(const arith_uint256& a)
 {
     uint256 b;
-    for(int x=0; x<a.WIDTH; ++x)
-        WriteLE32(b.begin() + x*4, a.pn[x]);
+    for (int x = 0; x < a.WIDTH; ++x)
+        WriteLE32(b.begin() + x * 4, a.pn[x]);
     return b;
 }
-arith_uint256 UintToArith256(const uint256 &a)
+arith_uint256 UintToArith256(const uint256& a)
 {
     arith_uint256 b;
-    for(int x=0; x<b.WIDTH; ++x)
-        b.pn[x] = ReadLE32(a.begin() + x*4);
+    for (int x = 0; x < b.WIDTH; ++x)
+        b.pn[x] = ReadLE32(a.begin() + x * 4);
     return b;
 }
 

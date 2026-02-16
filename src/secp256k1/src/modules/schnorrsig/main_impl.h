@@ -13,7 +13,8 @@
 
 /* Initializes SHA256 with fixed midstate. This midstate was computed by applying
  * SHA256 to SHA256("BIP0340/nonce")||SHA256("BIP0340/nonce"). */
-static void secp256k1_nonce_function_bip340_sha256_tagged(secp256k1_sha256 *sha) {
+static void secp256k1_nonce_function_bip340_sha256_tagged(secp256k1_sha256* sha)
+{
     secp256k1_sha256_initialize(sha);
     sha->s[0] = 0x46615b35ul;
     sha->s[1] = 0xf4bfbff7ul;
@@ -29,7 +30,8 @@ static void secp256k1_nonce_function_bip340_sha256_tagged(secp256k1_sha256 *sha)
 
 /* Initializes SHA256 with fixed midstate. This midstate was computed by applying
  * SHA256 to SHA256("BIP0340/aux")||SHA256("BIP0340/aux"). */
-static void secp256k1_nonce_function_bip340_sha256_tagged_aux(secp256k1_sha256 *sha) {
+static void secp256k1_nonce_function_bip340_sha256_tagged_aux(secp256k1_sha256* sha)
+{
     secp256k1_sha256_initialize(sha);
     sha->s[0] = 0x24dd3219ul;
     sha->s[1] = 0x4eba7e70ul;
@@ -49,7 +51,8 @@ static const unsigned char bip340_algo[] = {'B', 'I', 'P', '0', '3', '4', '0', '
 
 static const unsigned char schnorrsig_extraparams_magic[4] = SECP256K1_SCHNORRSIG_EXTRAPARAMS_MAGIC;
 
-static int nonce_function_bip340(unsigned char *nonce32, const unsigned char *msg, size_t msglen, const unsigned char *key32, const unsigned char *xonly_pk32, const unsigned char *algo, size_t algolen, void *data) {
+static int nonce_function_bip340(unsigned char* nonce32, const unsigned char* msg, size_t msglen, const unsigned char* key32, const unsigned char* xonly_pk32, const unsigned char* algo, size_t algolen, void* data)
+{
     secp256k1_sha256 sha;
     unsigned char masked_key[32];
     int i;
@@ -68,11 +71,10 @@ static int nonce_function_bip340(unsigned char *nonce32, const unsigned char *ms
     } else {
         /* Precomputed TaggedHash("BIP0340/aux", 0x0000...00); */
         static const unsigned char ZERO_MASK[32] = {
-              84, 241, 105, 207, 201, 226, 229, 114,
-             116, 128,  68,  31, 144, 186,  37, 196,
-             136, 244,  97, 199,  11,  94, 165, 220,
-             170, 247, 175, 105, 39,  10, 165,  20
-        };
+            84, 241, 105, 207, 201, 226, 229, 114,
+            116, 128, 68, 31, 144, 186, 37, 196,
+            136, 244, 97, 199, 11, 94, 165, 220,
+            170, 247, 175, 105, 39, 10, 165, 20};
         for (i = 0; i < 32; i++) {
             masked_key[i] = key32[i] ^ ZERO_MASK[i];
         }
@@ -81,8 +83,7 @@ static int nonce_function_bip340(unsigned char *nonce32, const unsigned char *ms
     /* Tag the hash with algo which is important to avoid nonce reuse across
      * algorithms. If this nonce function is used in BIP-340 signing as defined
      * in the spec, an optimized tagging implementation is used. */
-    if (algolen == sizeof(bip340_algo)
-            && secp256k1_memcmp_var(algo, bip340_algo, algolen) == 0) {
+    if (algolen == sizeof(bip340_algo) && secp256k1_memcmp_var(algo, bip340_algo, algolen) == 0) {
         secp256k1_nonce_function_bip340_sha256_tagged(&sha);
     } else {
         secp256k1_sha256_initialize_tagged(&sha, algo, algolen);
@@ -103,7 +104,8 @@ const secp256k1_nonce_function_hardened secp256k1_nonce_function_bip340 = nonce_
 
 /* Initializes SHA256 with fixed midstate. This midstate was computed by applying
  * SHA256 to SHA256("BIP0340/challenge")||SHA256("BIP0340/challenge"). */
-static void secp256k1_schnorrsig_sha256_tagged(secp256k1_sha256 *sha) {
+static void secp256k1_schnorrsig_sha256_tagged(secp256k1_sha256* sha)
+{
     secp256k1_sha256_initialize(sha);
     sha->s[0] = 0x9cecba11ul;
     sha->s[1] = 0x23925381ul;
@@ -116,7 +118,7 @@ static void secp256k1_schnorrsig_sha256_tagged(secp256k1_sha256 *sha) {
     sha->bytes = 64;
 }
 
-static void secp256k1_schnorrsig_challenge(secp256k1_scalar* e, const unsigned char *r32, const unsigned char *msg, size_t msglen, const unsigned char *pubkey32)
+static void secp256k1_schnorrsig_challenge(secp256k1_scalar* e, const unsigned char* r32, const unsigned char* msg, size_t msglen, const unsigned char* pubkey32)
 {
     unsigned char buf[32];
     secp256k1_sha256 sha;
@@ -132,14 +134,15 @@ static void secp256k1_schnorrsig_challenge(secp256k1_scalar* e, const unsigned c
     secp256k1_scalar_set_b32(e, buf, NULL);
 }
 
-static int secp256k1_schnorrsig_sign_internal(const secp256k1_context* ctx, unsigned char *sig64, const unsigned char *msg, size_t msglen, const secp256k1_keypair *keypair, secp256k1_nonce_function_hardened noncefp, void *ndata) {
+static int secp256k1_schnorrsig_sign_internal(const secp256k1_context* ctx, unsigned char* sig64, const unsigned char* msg, size_t msglen, const secp256k1_keypair* keypair, secp256k1_nonce_function_hardened noncefp, void* ndata)
+{
     secp256k1_scalar sk;
     secp256k1_scalar e;
     secp256k1_scalar k;
     secp256k1_gej rj;
     secp256k1_ge pk;
     secp256k1_ge r;
-    unsigned char buf[32] = { 0 };
+    unsigned char buf[32] = {0};
     unsigned char pk_buf[32];
     unsigned char seckey[32];
     int ret = 1;
@@ -196,18 +199,21 @@ static int secp256k1_schnorrsig_sign_internal(const secp256k1_context* ctx, unsi
     return ret;
 }
 
-int secp256k1_schnorrsig_sign32(const secp256k1_context* ctx, unsigned char *sig64, const unsigned char *msg32, const secp256k1_keypair *keypair, const unsigned char *aux_rand32) {
+int secp256k1_schnorrsig_sign32(const secp256k1_context* ctx, unsigned char* sig64, const unsigned char* msg32, const secp256k1_keypair* keypair, const unsigned char* aux_rand32)
+{
     /* We cast away const from the passed aux_rand32 argument since we know the default nonce function does not modify it. */
     return secp256k1_schnorrsig_sign_internal(ctx, sig64, msg32, 32, keypair, secp256k1_nonce_function_bip340, (unsigned char*)aux_rand32);
 }
 
-int secp256k1_schnorrsig_sign(const secp256k1_context* ctx, unsigned char *sig64, const unsigned char *msg32, const secp256k1_keypair *keypair, const unsigned char *aux_rand32) {
+int secp256k1_schnorrsig_sign(const secp256k1_context* ctx, unsigned char* sig64, const unsigned char* msg32, const secp256k1_keypair* keypair, const unsigned char* aux_rand32)
+{
     return secp256k1_schnorrsig_sign32(ctx, sig64, msg32, keypair, aux_rand32);
 }
 
-int secp256k1_schnorrsig_sign_custom(const secp256k1_context* ctx, unsigned char *sig64, const unsigned char *msg, size_t msglen, const secp256k1_keypair *keypair, secp256k1_schnorrsig_extraparams *extraparams) {
+int secp256k1_schnorrsig_sign_custom(const secp256k1_context* ctx, unsigned char* sig64, const unsigned char* msg, size_t msglen, const secp256k1_keypair* keypair, secp256k1_schnorrsig_extraparams* extraparams)
+{
     secp256k1_nonce_function_hardened noncefp = NULL;
-    void *ndata = NULL;
+    void* ndata = NULL;
     VERIFY_CHECK(ctx != NULL);
 
     if (extraparams != NULL) {
@@ -220,7 +226,8 @@ int secp256k1_schnorrsig_sign_custom(const secp256k1_context* ctx, unsigned char
     return secp256k1_schnorrsig_sign_internal(ctx, sig64, msg, msglen, keypair, noncefp, ndata);
 }
 
-int secp256k1_schnorrsig_verify(const secp256k1_context* ctx, const unsigned char *sig64, const unsigned char *msg, size_t msglen, const secp256k1_xonly_pubkey *pubkey) {
+int secp256k1_schnorrsig_verify(const secp256k1_context* ctx, const unsigned char* sig64, const unsigned char* msg, size_t msglen, const secp256k1_xonly_pubkey* pubkey)
+{
     secp256k1_scalar s;
     secp256k1_scalar e;
     secp256k1_gej rj;

@@ -36,12 +36,14 @@ enum class ConnectionDirection {
     Out = (1U << 1),
     Both = (In | Out),
 };
-static inline ConnectionDirection& operator|=(ConnectionDirection& a, ConnectionDirection b) {
+static inline ConnectionDirection& operator|=(ConnectionDirection& a, ConnectionDirection b)
+{
     using underlying = std::underlying_type_t<ConnectionDirection>;
     a = ConnectionDirection(underlying(a) | underlying(b));
     return a;
 }
-static inline bool operator&(ConnectionDirection a, ConnectionDirection b) {
+static inline bool operator&(ConnectionDirection a, ConnectionDirection b)
+{
     using underlying = std::underlying_type_t<ConnectionDirection>;
     return (underlying(a) & underlying(b));
 }
@@ -89,8 +91,7 @@ public:
 };
 
 /** Credentials for proxy authentication */
-struct ProxyCredentials
-{
+struct ProxyCredentials {
     std::string username;
     std::string password;
 };
@@ -98,7 +99,8 @@ struct ProxyCredentials
 /**
  * List of reachable networks. Everything is reachable by default.
  */
-class ReachableNets {
+class ReachableNets
+{
 public:
     void Add(Network net) EXCLUSIVE_LOCKS_REQUIRED(!m_mutex)
     {
@@ -151,8 +153,7 @@ private:
         NET_ONION,
         NET_I2P,
         NET_CJDNS,
-        NET_INTERNAL
-    };
+        NET_INTERNAL};
 };
 
 extern ReachableNets g_reachable_nets;
@@ -166,9 +167,9 @@ enum Network ParseNetwork(const std::string& net);
 std::string GetNetworkName(enum Network net);
 /** Return a vector of publicly routable Network names; optionally append NET_UNROUTABLE. */
 std::vector<std::string> GetNetworkNames(bool append_unroutable = false);
-bool SetProxy(enum Network net, const Proxy &addrProxy);
-bool GetProxy(enum Network net, Proxy &proxyInfoOut);
-bool IsProxy(const CNetAddr &addr);
+bool SetProxy(enum Network net, const Proxy& addrProxy);
+bool GetProxy(enum Network net, Proxy& proxyInfoOut);
+bool IsProxy(const CNetAddr& addr);
 /**
  * Set the name proxy to use for all connections to nodes specified by a
  * hostname. After setting this proxy, connecting to a node specified by a
@@ -185,9 +186,9 @@ bool IsProxy(const CNetAddr &addr);
  *       server in common use (most notably Tor) actually implements UDP
  *       support, and a DNS resolver is beyond the scope of this project.
  */
-bool SetNameProxy(const Proxy &addrProxy);
+bool SetNameProxy(const Proxy& addrProxy);
 bool HaveNameProxy();
-bool GetNameProxy(Proxy &nameProxyOut);
+bool GetNameProxy(Proxy& nameProxyOut);
 
 using DNSLookupFn = std::function<std::vector<CNetAddr>(const std::string&, bool)>;
 extern DNSLookupFn g_dns_lookup;

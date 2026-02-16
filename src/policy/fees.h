@@ -70,8 +70,7 @@ enum class FeeReason {
 };
 
 /* Used to return detailed information about a feerate bucket */
-struct EstimatorBucket
-{
+struct EstimatorBucket {
     double start = -1;
     double end = -1;
     double withinTarget = 0;
@@ -81,16 +80,14 @@ struct EstimatorBucket
 };
 
 /* Used to return detailed information about a fee estimate calculation */
-struct EstimationResult
-{
+struct EstimationResult {
     EstimatorBucket pass;
     EstimatorBucket fail;
     double decay = 0;
     unsigned int scale = 0;
 };
 
-struct FeeCalculation
-{
+struct FeeCalculation {
     EstimationResult est;
     FeeReason reason = FeeReason::NONE;
     int desiredTarget = 0;
@@ -197,6 +194,7 @@ private:
     static constexpr double FEE_SPACING = 1.05;
 
     const fs::path m_estimation_filepath;
+
 public:
     /** Create new BlockPolicyEstimator and initialize stats tracking classes with default values */
     CBlockPolicyEstimator(const fs::path& estimation_filepath, const bool read_stale_estimates);
@@ -224,7 +222,7 @@ public:
      *  the closest target where one can be given.  'conservative' estimates are
      *  valid over longer time horizons also.
      */
-    CFeeRate estimateSmartFee(int confTarget, FeeCalculation *feeCalc, bool conservative) const
+    CFeeRate estimateSmartFee(int confTarget, FeeCalculation* feeCalc, bool conservative) const
         EXCLUSIVE_LOCKS_REQUIRED(!m_cs_fee_estimator);
 
     /** Return a specific fee estimate calculation with a given success
@@ -279,8 +277,7 @@ private:
     unsigned int historicalFirst GUARDED_BY(m_cs_fee_estimator){0};
     unsigned int historicalBest GUARDED_BY(m_cs_fee_estimator){0};
 
-    struct TxStatsInfo
-    {
+    struct TxStatsInfo {
         unsigned int blockHeight{0};
         unsigned int bucketIndex{0};
         TxStatsInfo() = default;
@@ -297,16 +294,16 @@ private:
     unsigned int trackedTxs GUARDED_BY(m_cs_fee_estimator){0};
     unsigned int untrackedTxs GUARDED_BY(m_cs_fee_estimator){0};
 
-    std::vector<double> buckets GUARDED_BY(m_cs_fee_estimator); // The upper-bound of the range for the bucket (inclusive)
+    std::vector<double> buckets GUARDED_BY(m_cs_fee_estimator);              // The upper-bound of the range for the bucket (inclusive)
     std::map<double, unsigned int> bucketMap GUARDED_BY(m_cs_fee_estimator); // Map of bucket upper-bound to index into all vectors by bucket
 
     /** Process a transaction confirmed in a block*/
     bool processBlockTx(unsigned int nBlockHeight, const RemovedMempoolTransactionInfo& tx) EXCLUSIVE_LOCKS_REQUIRED(m_cs_fee_estimator);
 
     /** Helper for estimateSmartFee */
-    double estimateCombinedFee(unsigned int confTarget, double successThreshold, bool checkShorterHorizon, EstimationResult *result) const EXCLUSIVE_LOCKS_REQUIRED(m_cs_fee_estimator);
+    double estimateCombinedFee(unsigned int confTarget, double successThreshold, bool checkShorterHorizon, EstimationResult* result) const EXCLUSIVE_LOCKS_REQUIRED(m_cs_fee_estimator);
     /** Helper for estimateSmartFee */
-    double estimateConservativeFee(unsigned int doubleTarget, EstimationResult *result) const EXCLUSIVE_LOCKS_REQUIRED(m_cs_fee_estimator);
+    double estimateConservativeFee(unsigned int doubleTarget, EstimationResult* result) const EXCLUSIVE_LOCKS_REQUIRED(m_cs_fee_estimator);
     /** Number of blocks of data recorded while fee estimates have been running */
     unsigned int BlockSpan() const EXCLUSIVE_LOCKS_REQUIRED(m_cs_fee_estimator);
     /** Number of blocks of recorded fee estimate data represented in saved data file */

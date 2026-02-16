@@ -49,14 +49,16 @@ constexpr static void CheckNumFormatSpecifiers(const char* str)
         add_arg();
 
         // Consume flags.
-        while (*it == '#' || *it == '0' || *it == '-' || *it == ' ' || *it == '+') ++it;
+        while (*it == '#' || *it == '0' || *it == '-' || *it == ' ' || *it == '+')
+            ++it;
 
         auto parse_size = [&] {
             if (*it == '*') {
                 ++it;
                 add_arg();
             } else {
-                while ('0' <= *it && *it <= '9') ++it;
+                while ('0' <= *it && *it <= '9')
+                    ++it;
             }
         };
 
@@ -255,7 +257,7 @@ std::string ToString(const T& t)
  */
 template <typename T1, size_t PREFIX_LEN>
 [[nodiscard]] inline bool HasPrefix(const T1& obj,
-                                const std::array<uint8_t, PREFIX_LEN>& prefix)
+                                    const std::array<uint8_t, PREFIX_LEN>& prefix)
 {
     return obj.size() >= PREFIX_LEN &&
            std::equal(std::begin(prefix), std::end(prefix), std::begin(obj));

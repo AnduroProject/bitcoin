@@ -12,14 +12,14 @@
 #include "scratch.h"
 
 #ifndef ECMULT_WINDOW_SIZE
-#  define ECMULT_WINDOW_SIZE 15
-#  ifdef DEBUG_CONFIG
-#     pragma message DEBUG_CONFIG_MSG("ECMULT_WINDOW_SIZE undefined, assuming default value")
-#  endif
+#define ECMULT_WINDOW_SIZE 15
+#ifdef DEBUG_CONFIG
+#pragma message DEBUG_CONFIG_MSG("ECMULT_WINDOW_SIZE undefined, assuming default value")
+#endif
 #endif
 
 #ifdef DEBUG_CONFIG
-#  pragma message DEBUG_CONFIG_DEF(ECMULT_WINDOW_SIZE)
+#pragma message DEBUG_CONFIG_DEF(ECMULT_WINDOW_SIZE)
 #endif
 
 /* No one will ever need more than a window size of 24. The code might
@@ -34,16 +34,16 @@
  * because certain expressions will overflow.
  */
 #if ECMULT_WINDOW_SIZE < 2 || ECMULT_WINDOW_SIZE > 24
-#  error Set ECMULT_WINDOW_SIZE to an integer in range [2..24].
+#error Set ECMULT_WINDOW_SIZE to an integer in range [2..24].
 #endif
 
 /** The number of entries a table with precomputed multiples needs to have. */
-#define ECMULT_TABLE_SIZE(w) (1L << ((w)-2))
+#define ECMULT_TABLE_SIZE(w) (1L << ((w) - 2))
 
 /** Double multiply: R = na*A + ng*G */
-static void secp256k1_ecmult(secp256k1_gej *r, const secp256k1_gej *a, const secp256k1_scalar *na, const secp256k1_scalar *ng);
+static void secp256k1_ecmult(secp256k1_gej* r, const secp256k1_gej* a, const secp256k1_scalar* na, const secp256k1_scalar* ng);
 
-typedef int (secp256k1_ecmult_multi_callback)(secp256k1_scalar *sc, secp256k1_ge *pt, size_t idx, void *data);
+typedef int(secp256k1_ecmult_multi_callback)(secp256k1_scalar* sc, secp256k1_ge* pt, size_t idx, void* data);
 
 /**
  * Multi-multiply: R = inp_g_sc * G + sum_i ni * Ai.
@@ -56,6 +56,6 @@ typedef int (secp256k1_ecmult_multi_callback)(secp256k1_scalar *sc, secp256k1_ge
  *          0 if there is not enough scratch space for a single point or
  *          callback returns 0
  */
-static int secp256k1_ecmult_multi_var(const secp256k1_callback* error_callback, secp256k1_scratch *scratch, secp256k1_gej *r, const secp256k1_scalar *inp_g_sc, secp256k1_ecmult_multi_callback cb, void *cbdata, size_t n);
+static int secp256k1_ecmult_multi_var(const secp256k1_callback* error_callback, secp256k1_scratch* scratch, secp256k1_gej* r, const secp256k1_scalar* inp_g_sc, secp256k1_ecmult_multi_callback cb, void* cbdata, size_t n);
 
 #endif /* SECP256K1_ECMULT_H */

@@ -31,6 +31,21 @@ NodeContext& EnsureAnyNodeContext(const std::any& context)
     return *node_context;
 }
 
+/**
+ * Auxpow code may have both a wallet and a node context, which we need
+ * to handle when looking for the context.
+ */
+NodeContext& EnsureAnyNodeContext(const JSONRPCRequest& request)
+{
+    auto nodePtr = util::AnyPtr<NodeContext>(request.context);
+    /* The auxpow methods may have both a wallet and a node context.  */
+    if (!nodePtr)
+        nodePtr = util::AnyPtr<NodeContext>(request.context2);
+    if (!nodePtr)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Node context not found");
+    return *nodePtr;
+}
+
 CTxMemPool& EnsureMemPool(const NodeContext& node)
 {
     if (!node.mempool) {
@@ -137,7 +152,7 @@ AddrMan& EnsureAnyAddrman(const std::any& context)
 void NextEmptyBlockIndex(CBlockIndex& tip, const Consensus::Params& consensusParams, CBlockIndex& next_index)
 {
     CBlockHeader next_header{};
-    next_header.hashPrevBlock  = tip.GetBlockHash();
+    next_header.hashPrevBlock = tip.GetBlockHash();
     UpdateTime(&next_header, consensusParams, &tip);
     next_header.nBits = GetNextWorkRequired(&tip, &next_header, consensusParams);
     next_header.nNonce = 0;

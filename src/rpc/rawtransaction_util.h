@@ -8,8 +8,8 @@
 #include <addresstype.h>
 #include <consensus/amount.h>
 #include <map>
-#include <string>
 #include <optional>
+#include <string>
 
 struct bilingual_str;
 struct FlatSigningProvider;
@@ -32,12 +32,12 @@ void SignTransaction(CMutableTransaction& mtx, const SigningProvider* keystore, 
 void SignTransactionResultToJSON(CMutableTransaction& mtx, bool complete, const std::map<COutPoint, Coin>& coins, const std::map<int, bilingual_str>& input_errors, UniValue& result);
 
 /**
-  * Parse a prevtxs UniValue array and get the map of coins from it
-  *
-  * @param  prevTxsUnival Array of previous txns outputs that tx depends on but may not yet be in the block chain
-  * @param  keystore      A pointer to the temporary keystore if there is one
-  * @param  coins         Map of unspent outputs - coins in mempool and current chain UTXO set, may be extended by previous txns outputs after call
-  */
+ * Parse a prevtxs UniValue array and get the map of coins from it
+ *
+ * @param  prevTxsUnival Array of previous txns outputs that tx depends on but may not yet be in the block chain
+ * @param  keystore      A pointer to the temporary keystore if there is one
+ * @param  coins         Map of unspent outputs - coins in mempool and current chain UTXO set, may be extended by previous txns outputs after call
+ */
 void ParsePrevouts(const UniValue& prevTxsUnival, FlatSigningProvider* keystore, std::map<COutPoint, Coin>& coins);
 
 /** Normalize univalue-represented inputs and add them to the transaction */

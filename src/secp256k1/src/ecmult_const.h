@@ -7,13 +7,13 @@
 #ifndef SECP256K1_ECMULT_CONST_H
 #define SECP256K1_ECMULT_CONST_H
 
-#include "scalar.h"
 #include "group.h"
+#include "scalar.h"
 
 /**
  * Multiply: R = q*A (in constant-time for q)
  */
-static void secp256k1_ecmult_const(secp256k1_gej *r, const secp256k1_ge *a, const secp256k1_scalar *q);
+static void secp256k1_ecmult_const(secp256k1_gej* r, const secp256k1_ge* a, const secp256k1_scalar* q);
 
 /**
  * Same as secp256k1_ecmult_const, but takes in an x coordinate of the base point
@@ -28,11 +28,10 @@ static void secp256k1_ecmult_const(secp256k1_gej *r, const secp256k1_ge *a, cons
  * Constant time in the value of q, but not any other inputs.
  */
 static int secp256k1_ecmult_const_xonly(
-    secp256k1_fe *r,
-    const secp256k1_fe *n,
-    const secp256k1_fe *d,
-    const secp256k1_scalar *q,
-    int known_on_curve
-);
+    secp256k1_fe* r,
+    const secp256k1_fe* n,
+    const secp256k1_fe* d,
+    const secp256k1_scalar* q,
+    int known_on_curve);
 
 #endif /* SECP256K1_ECMULT_CONST_H */

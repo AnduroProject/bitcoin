@@ -110,9 +110,10 @@ constexpr StatTable32 SQR8_TABLE_32({0x1, 0x8c010001, 0x6b9010bb, 0x7faf6b, 0xc4
 constexpr StatTable32 QRT_TABLE_32({0x54fd1264, 0xc26fcd64, 0xc26fcd66, 0x238a7462, 0xc26fcd62, 0x973bccaa, 0x238a746a, 0x77766712, 0xc26fcd72, 0xc1bdd556, 0x973bcc8a, 0x572a094c, 0x238a742a, 0xb693be84, 0x77766792, 0x9555c03e, 0xc26fcc72, 0x568419f8, 0xc1bdd756, 0x96c3d2ca, 0x973bc88a, 0x54861fdc, 0x572a014c, 0xb79badc4, 0x238a642a, 0xb9b99fe0, 0xb6939e84, 0xc519fa86, 0x77762792, 0, 0x9555403e, 0x377627ba});
 typedef Field<uint32_t, 32, 141, StatTable32, &SQR_TABLE_32, &SQR2_TABLE_32, &SQR4_TABLE_32, &SQR8_TABLE_32, &QRT_TABLE_32, &QRT_TABLE_32, IdTrans, &ID_TRANS, &ID_TRANS> Field32;
 #endif
-}
+} // namespace
 
-Sketch* ConstructClMul4Bytes(int bits, int implementation) {
+Sketch* ConstructClMul4Bytes(int bits, int implementation)
+{
     switch (bits) {
 #ifdef ENABLE_FIELD_INT_25
     case 25: return new SketchImpl<Field25>(implementation, 25);
@@ -136,7 +137,8 @@ Sketch* ConstructClMul4Bytes(int bits, int implementation) {
     return nullptr;
 }
 
-Sketch* ConstructClMulTri4Bytes(int bits, int implementation) {
+Sketch* ConstructClMulTri4Bytes(int bits, int implementation)
+{
     switch (bits) {
 #ifdef ENABLE_FIELD_INT_25
     case 25: return new SketchImpl<FieldTri25>(implementation, 25);

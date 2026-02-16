@@ -68,24 +68,24 @@ protected:
     bool fBad;
 
     /** helper function to efficiently calculate the number of nodes at given height in the merkle tree */
-    unsigned int CalcTreeWidth(int height) const {
-        return (nTransactions+(1 << height)-1) >> height;
+    unsigned int CalcTreeWidth(int height) const
+    {
+        return (nTransactions + (1 << height) - 1) >> height;
     }
 
     /** calculate the hash of a node in the merkle tree (at leaf level: the txid's themselves) */
-    uint256 CalcHash(int height, unsigned int pos, const std::vector<uint256> &vTxid);
+    uint256 CalcHash(int height, unsigned int pos, const std::vector<uint256>& vTxid);
 
     /** recursive function that traverses tree nodes, storing the data as bits and hashes */
-    void TraverseAndBuild(int height, unsigned int pos, const std::vector<uint256> &vTxid, const std::vector<bool> &vMatch);
+    void TraverseAndBuild(int height, unsigned int pos, const std::vector<uint256>& vTxid, const std::vector<bool>& vMatch);
 
     /**
      * recursive function that traverses tree nodes, consuming the bits and hashes produced by TraverseAndBuild.
      * it returns the hash of the respective node and its respective index.
      */
-    uint256 TraverseAndExtract(int height, unsigned int pos, unsigned int &nBitsUsed, unsigned int &nHashUsed, std::vector<uint256> &vMatch, std::vector<unsigned int> &vnIndex);
+    uint256 TraverseAndExtract(int height, unsigned int pos, unsigned int& nBitsUsed, unsigned int& nHashUsed, std::vector<uint256>& vMatch, std::vector<unsigned int>& vnIndex);
 
 public:
-
     SERIALIZE_METHODS(CPartialMerkleTree, obj)
     {
         READWRITE(obj.nTransactions, obj.vHash);
@@ -97,7 +97,7 @@ public:
     }
 
     /** Construct a partial merkle tree from a list of transaction ids, and a mask that selects a subset of them */
-    CPartialMerkleTree(const std::vector<uint256> &vTxid, const std::vector<bool> &vMatch);
+    CPartialMerkleTree(const std::vector<uint256>& vTxid, const std::vector<bool>& vMatch);
 
     CPartialMerkleTree();
 
@@ -106,13 +106,12 @@ public:
      * and their respective indices within the partial tree.
      * returns the merkle root, or 0 in case of failure
      */
-    uint256 ExtractMatches(std::vector<uint256> &vMatch, std::vector<unsigned int> &vnIndex);
+    uint256 ExtractMatches(std::vector<uint256>& vMatch, std::vector<unsigned int>& vnIndex);
 
     /** Get number of transactions the merkle proof is indicating for cross-reference with
      * local blockchain knowledge.
      */
     unsigned int GetNumTransactions() const { return nTransactions; };
-
 };
 
 
@@ -135,17 +134,20 @@ public:
      * Used only when a bloom filter is specified to allow
      * testing the transactions which matched the bloom filter.
      */
-    std::vector<std::pair<unsigned int, uint256> > vMatchedTxn;
+    std::vector<std::pair<unsigned int, uint256>> vMatchedTxn;
 
     /**
      * Create from a CBlock, filtering transactions according to filter
      * Note that this will call IsRelevantAndUpdate on the filter for each transaction,
      * thus the filter will likely be modified.
      */
-    CMerkleBlock(const CBlock& block, CBloomFilter& filter) : CMerkleBlock(block, &filter, nullptr) { }
+    CMerkleBlock(const CBlock& block, CBloomFilter& filter) : CMerkleBlock(block, &filter, nullptr) {}
 
     // Create from a CBlock, matching the txids in the set
     CMerkleBlock(const CBlock& block, const std::set<Txid>& txids) : CMerkleBlock{block, nullptr, &txids} {}
+
+    // Create from a CBlock, matching the txids in the set
+    CMerkleBlock(const CBlock& block, std::vector<CTransactionRef> vtx, const std::set<Txid>& txids) : CMerkleBlock{block, vtx, nullptr, &txids} {}
 
     CMerkleBlock() = default;
 
@@ -154,6 +156,7 @@ public:
 private:
     // Combined constructor to consolidate code
     CMerkleBlock(const CBlock& block, CBloomFilter* filter, const std::set<Txid>* txids);
+    CMerkleBlock(const CBlock& block, std::vector<CTransactionRef> vtx, CBloomFilter* filter, const std::set<Txid>* txids);
 };
 
 #endif // BITCOIN_MERKLEBLOCK_H

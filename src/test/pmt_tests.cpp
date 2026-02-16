@@ -20,10 +20,11 @@ public:
     CPartialMerkleTreeTester(FastRandomContext& rng) : m_rng{rng} {}
 
     // flip one bit in one of the hashes - this should break the authentication
-    void Damage() {
+    void Damage()
+    {
         unsigned int n = m_rng.randrange(vHash.size());
         int bit = m_rng.randbits(8);
-        *(vHash[n].begin() + (bit>>3)) ^= 1<<(bit&7);
+        *(vHash[n].begin() + (bit >> 3)) ^= 1 << (bit & 7);
     }
 
     FastRandomContext& m_rng;
@@ -40,20 +41,20 @@ BOOST_AUTO_TEST_CASE(pmt_test1)
 
         // build a block with some dummy transactions
         CBlock block;
-        for (unsigned int j=0; j<nTx; j++) {
+        for (unsigned int j = 0; j < nTx; j++) {
             CMutableTransaction tx;
             tx.nLockTime = j; // actual transaction data doesn't matter; just make the nLockTime's unique
             block.vtx.push_back(MakeTransactionRef(std::move(tx)));
         }
 
         // calculate actual merkle root and height
-        uint256 merkleRoot1 = BlockMerkleRoot(block);
+        uint256 merkleRoot1 = BlockRawMerkleRoot(block, 0);
         std::vector<uint256> vTxid(nTx, uint256());
-        for (unsigned int j=0; j<nTx; j++)
+        for (unsigned int j = 0; j < nTx; j++)
             vTxid[j] = block.vtx[j]->GetHash();
         int nHeight = 1, nTx_ = nTx;
         while (nTx_ > 1) {
-            nTx_ = (nTx_+1)/2;
+            nTx_ = (nTx_ + 1) / 2;
             nHeight++;
         }
 
@@ -62,7 +63,7 @@ BOOST_AUTO_TEST_CASE(pmt_test1)
             // build random subset of txid's
             std::vector<bool> vMatch(nTx, false);
             std::vector<uint256> vMatchTxid1;
-            for (unsigned int j=0; j<nTx; j++) {
+            for (unsigned int j = 0; j < nTx; j++) {
                 bool fInclude = m_rng.randbits(att / 2) == 0;
                 vMatch[j] = fInclude;
                 if (fInclude)
@@ -77,8 +78,8 @@ BOOST_AUTO_TEST_CASE(pmt_test1)
             ss << pmt1;
 
             // verify CPartialMerkleTree's size guarantees
-            unsigned int n = std::min<unsigned int>(nTx, 1 + vMatchTxid1.size()*nHeight);
-            BOOST_CHECK(ss.size() <= 10 + (258*n+7)/8);
+            unsigned int n = std::min<unsigned int>(nTx, 1 + vMatchTxid1.size() * nHeight);
+            BOOST_CHECK(ss.size() <= 10 + (258 * n + 7) / 8);
 
             // deserialize into a tester copy
             CPartialMerkleTreeTester pmt2{m_rng};
@@ -97,7 +98,7 @@ BOOST_AUTO_TEST_CASE(pmt_test1)
             BOOST_CHECK(vMatchTxid1 == vMatchTxid2);
 
             // check that random bit flips break the authentication
-            for (int j=0; j<4; j++) {
+            for (int j = 0; j < 4; j++) {
                 CPartialMerkleTreeTester pmt3(pmt2);
                 pmt3.Damage();
                 std::vector<uint256> vMatchTxid3;
@@ -111,12 +112,18 @@ BOOST_AUTO_TEST_CASE(pmt_test1)
 BOOST_AUTO_TEST_CASE(pmt_malleability)
 {
     std::vector<uint256> vTxid{
-        uint256{1}, uint256{2},
-        uint256{3}, uint256{4},
-        uint256{5}, uint256{6},
-        uint256{7}, uint256{8},
-        uint256{9}, uint256{10},
-        uint256{9}, uint256{10},
+        uint256{1},
+        uint256{2},
+        uint256{3},
+        uint256{4},
+        uint256{5},
+        uint256{6},
+        uint256{7},
+        uint256{8},
+        uint256{9},
+        uint256{10},
+        uint256{9},
+        uint256{10},
     };
     std::vector<bool> vMatch = {false, false, false, false, false, false, false, false, false, true, true, false};
 

@@ -41,8 +41,7 @@ BOOST_AUTO_TEST_CASE(bech32m_testvectors_valid)
         "abcdef1l7aum6echk45nj3s0wdvt2fg8x9yrzpqzd3ryx",
         "11llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllludsr8",
         "split1checkupstagehandshakeupstreamerranterredcaperredlc445v",
-        "?1v759aa"
-    };
+        "?1v759aa"};
     for (const std::string& str : CASES) {
         const auto dec = bech32::Decode(str);
         BOOST_CHECK(dec.encoding == bech32::Encoding::BECH32M);
@@ -56,8 +55,10 @@ BOOST_AUTO_TEST_CASE(bech32_testvectors_invalid)
 {
     static const std::string CASES[] = {
         " 1nwldj5",
-        "\x7f""1axkwrx",
-        "\x80""1eym55h",
+        "\x7f"
+        "1axkwrx",
+        "\x80"
+        "1eym55h",
         "an84characterslonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1569pvx",
         "pzry9x0s0muk",
         "1pzry9x0s0muk",
@@ -108,8 +109,10 @@ BOOST_AUTO_TEST_CASE(bech32m_testvectors_invalid)
 {
     static const std::string CASES[] = {
         " 1xj0phk",
-        "\x7f""1g6xzxy",
-        "\x80""1vctc34",
+        "\x7f"
+        "1g6xzxy",
+        "\x80"
+        "1vctc34",
         "an84characterslonghumanreadablepartthatcontainsthetheexcludedcharactersbioandnumber11d6pts4",
         "qyrz8wqd2c9m",
         "1qyrz8wqd2c9m",

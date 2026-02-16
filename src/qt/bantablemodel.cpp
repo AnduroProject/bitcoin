@@ -51,8 +51,7 @@ public:
 
         cachedBanlist.clear();
         cachedBanlist.reserve(banMap.size());
-        for (const auto& entry : banMap)
-        {
+        for (const auto& entry : banMap) {
             CCombinedBan banEntry;
             banEntry.subnet = entry.first;
             banEntry.banEntry = entry.second;
@@ -69,7 +68,7 @@ public:
         return cachedBanlist.size();
     }
 
-    CCombinedBan *index(int idx)
+    CCombinedBan* index(int idx)
     {
         if (idx >= 0 && idx < cachedBanlist.size())
             return &cachedBanlist[idx];
@@ -78,9 +77,8 @@ public:
     }
 };
 
-BanTableModel::BanTableModel(interfaces::Node& node, QObject* parent) :
-    QAbstractTableModel(parent),
-    m_node(node)
+BanTableModel::BanTableModel(interfaces::Node& node, QObject* parent) : QAbstractTableModel(parent),
+                                                                        m_node(node)
 {
     columns << tr("IP/Netmask") << tr("Banned Until");
     priv.reset(new BanTablePriv());
@@ -91,7 +89,7 @@ BanTableModel::BanTableModel(interfaces::Node& node, QObject* parent) :
 
 BanTableModel::~BanTableModel() = default;
 
-int BanTableModel::rowCount(const QModelIndex &parent) const
+int BanTableModel::rowCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
         return 0;
@@ -99,7 +97,7 @@ int BanTableModel::rowCount(const QModelIndex &parent) const
     return priv->size();
 }
 
-int BanTableModel::columnCount(const QModelIndex &parent) const
+int BanTableModel::columnCount(const QModelIndex& parent) const
 {
     if (parent.isValid()) {
         return 0;
@@ -107,12 +105,12 @@ int BanTableModel::columnCount(const QModelIndex &parent) const
     return columns.length();
 }
 
-QVariant BanTableModel::data(const QModelIndex &index, int role) const
+QVariant BanTableModel::data(const QModelIndex& index, int role) const
 {
-    if(!index.isValid())
+    if (!index.isValid())
         return QVariant();
 
-    CCombinedBan *rec = static_cast<CCombinedBan*>(index.internalPointer());
+    CCombinedBan* rec = static_cast<CCombinedBan*>(index.internalPointer());
 
     const auto column = static_cast<ColumnIndex>(index.column());
     if (role == Qt::DisplayRole) {
@@ -132,17 +130,15 @@ QVariant BanTableModel::data(const QModelIndex &index, int role) const
 
 QVariant BanTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if(orientation == Qt::Horizontal)
-    {
-        if(role == Qt::DisplayRole && section < columns.size())
-        {
+    if (orientation == Qt::Horizontal) {
+        if (role == Qt::DisplayRole && section < columns.size()) {
             return columns[section];
         }
     }
     return QVariant();
 }
 
-Qt::ItemFlags BanTableModel::flags(const QModelIndex &index) const
+Qt::ItemFlags BanTableModel::flags(const QModelIndex& index) const
 {
     if (!index.isValid()) return Qt::NoItemFlags;
 
@@ -150,10 +146,10 @@ Qt::ItemFlags BanTableModel::flags(const QModelIndex &index) const
     return retval;
 }
 
-QModelIndex BanTableModel::index(int row, int column, const QModelIndex &parent) const
+QModelIndex BanTableModel::index(int row, int column, const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
-    CCombinedBan *data = priv->index(row);
+    CCombinedBan* data = priv->index(row);
 
     if (data)
         return createIndex(row, column, data);

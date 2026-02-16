@@ -59,7 +59,7 @@ class PaymentServer : public QObject
 public:
     // Parse URIs on command line
     // Returns false on error
-    static void ipcParseCommandLine(int argc, char *argv[]);
+    static void ipcParseCommandLine(int argc, char* argv[]);
 
     // Returns true if there were URIs on the command line
     // which were successfully sent to an already-running
@@ -73,14 +73,14 @@ public:
     ~PaymentServer();
 
     // OptionsModel is used for getting proxy settings and display unit
-    void setOptionsModel(OptionsModel *optionsModel);
+    void setOptionsModel(OptionsModel* optionsModel);
 
 Q_SIGNALS:
     // Fired when a valid payment request is received
     void receivedPaymentRequest(SendCoinsRecipient);
 
     // Fired when a message should be reported to the user
-    void message(const QString &title, const QString &message, unsigned int style);
+    void message(const QString& title, const QString& message, unsigned int style);
 
 public Q_SLOTS:
     // Signal this when the main window's UI is ready
@@ -96,7 +96,7 @@ private Q_SLOTS:
 protected:
     // Constructor registers this on the parent QApplication to
     // receive QEvent::FileOpen and QEvent:Drop events
-    bool eventFilter(QObject *object, QEvent *event) override;
+    bool eventFilter(QObject* object, QEvent* event) override;
 
 private:
     bool saveURIs{true}; // true during startup

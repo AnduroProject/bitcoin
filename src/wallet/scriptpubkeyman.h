@@ -50,7 +50,7 @@ public:
     virtual bool CanSupportFeature(enum WalletFeature) const = 0;
     virtual void SetMinVersion(enum WalletFeature, WalletBatch* = nullptr) = 0;
     //! Pass the encryption key to cb().
-    virtual bool WithEncryptionKey(std::function<bool (const CKeyingMaterial&)> cb) const = 0;
+    virtual bool WithEncryptionKey(std::function<bool(const CKeyingMaterial&)> cb) const = 0;
     virtual bool HasEncryptionKeys() const = 0;
     virtual bool IsLocked() const = 0;
     //! Callback function for after TopUp completes containing any scripts that were added by a SPKMan
@@ -65,8 +65,7 @@ static const unsigned int DEFAULT_KEYPOOL_SIZE = 1000;
 
 std::vector<CKeyID> GetAffectedKeys(const CScript& spk, const SigningProvider& provider);
 
-struct WalletDestination
-{
+struct WalletDestination {
     CTxDestination dest;
     std::optional<bool> internal;
 };
@@ -98,9 +97,9 @@ public:
     virtual void ReturnDestination(int64_t index, bool internal, const CTxDestination& addr) {}
 
     /** Fills internal address pool. Use within ScriptPubKeyMan implementations should be used sparingly and only
-      * when something from the address pool is removed, excluding GetNewDestination and GetReservedDestination.
-      * External wallet code is primarily responsible for topping up prior to fetching new addresses
-      */
+     * when something from the address pool is removed, excluding GetNewDestination and GetReservedDestination.
+     * External wallet code is primarily responsible for topping up prior to fetching new addresses
+     */
     virtual bool TopUp(unsigned int size = 0) { return false; }
 
     /** Mark unused addresses as being used
@@ -133,8 +132,8 @@ public:
     virtual std::unique_ptr<SigningProvider> GetSolvingProvider(const CScript& script) const { return nullptr; }
 
     /** Whether this ScriptPubKeyMan can provide a SigningProvider (via GetSolvingProvider) that, combined with
-      * sigdata, can produce solving data.
-      */
+     * sigdata, can produce solving data.
+     */
     virtual bool CanProvide(const CScript& script, SignatureData& sigdata) { return false; }
 
     /** Creates new signatures and adds them to the transaction. Returns whether all inputs were signed */
@@ -157,14 +156,14 @@ public:
     };
 
     /** Keypool has new keys */
-    boost::signals2::signal<void ()> NotifyCanGetAddressesChanged;
+    boost::signals2::signal<void()> NotifyCanGetAddressesChanged;
 
     /** Birth time changed */
-    boost::signals2::signal<void (const ScriptPubKeyMan* spkm, int64_t new_birth_time)> NotifyFirstKeyTimeChanged;
+    boost::signals2::signal<void(const ScriptPubKeyMan* spkm, int64_t new_birth_time)> NotifyFirstKeyTimeChanged;
 };
 
 /** OutputTypes supported by the LegacyScriptPubKeyMan */
-static const std::unordered_set<OutputType> LEGACY_OUTPUT_TYPES {
+static const std::unordered_set<OutputType> LEGACY_OUTPUT_TYPES{
     OutputType::LEGACY,
     OutputType::P2SH_SEGWIT,
     OutputType::BECH32,
@@ -190,9 +189,9 @@ private:
     //! keeps track of whether Unlock has run a thorough check before
     bool fDecryptionThoroughlyChecked = true;
 
-    bool AddWatchOnlyInMem(const CScript &dest);
-    virtual bool AddKeyPubKeyInner(const CKey& key, const CPubKey &pubkey);
-    bool AddCryptedKeyInner(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
+    bool AddWatchOnlyInMem(const CScript& dest);
+    virtual bool AddKeyPubKeyInner(const CKey& key, const CPubKey& pubkey);
+    bool AddCryptedKeyInner(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret);
 
     // Helper function to retrieve a conservative superset of all output scripts that may be relevant to this LegacyDataSPKM.
     // It may include scripts that are invalid or not actually watched by this LegacyDataSPKM.
@@ -201,6 +200,7 @@ private:
 
     isminetype IsMine(const CScript& script) const override;
     bool CanProvide(const CScript& script, SignatureData& sigdata) override;
+
 public:
     using ScriptPubKeyMan::ScriptPubKeyMan;
 
@@ -217,23 +217,23 @@ public:
     uint256 GetID() const override { return uint256::ONE; }
 
     // FillableSigningProvider overrides
-    bool HaveKey(const CKeyID &address) const override;
-    bool GetKey(const CKeyID &address, CKey& keyOut) const override;
-    bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const override;
+    bool HaveKey(const CKeyID& address) const override;
+    bool GetKey(const CKeyID& address, CKey& keyOut) const override;
+    bool GetPubKey(const CKeyID& address, CPubKey& vchPubKeyOut) const override;
     bool GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const override;
 
     //! Load metadata (used by LoadWallet)
-    virtual void LoadKeyMetadata(const CKeyID& keyID, const CKeyMetadata &metadata);
-    virtual void LoadScriptMetadata(const CScriptID& script_id, const CKeyMetadata &metadata);
+    virtual void LoadKeyMetadata(const CKeyID& keyID, const CKeyMetadata& metadata);
+    virtual void LoadScriptMetadata(const CScriptID& script_id, const CKeyMetadata& metadata);
 
     //! Adds a watch-only address to the store, without saving it to disk (used by LoadWallet)
-    bool LoadWatchOnly(const CScript &dest);
+    bool LoadWatchOnly(const CScript& dest);
     //! Returns whether the watch-only script is in the wallet
-    bool HaveWatchOnly(const CScript &dest) const;
+    bool HaveWatchOnly(const CScript& dest) const;
     //! Adds a key to the store, without saving it to disk (used by LoadWallet)
-    bool LoadKey(const CKey& key, const CPubKey &pubkey);
+    bool LoadKey(const CKey& key, const CPubKey& pubkey);
     //! Adds an encrypted key to the store, without saving it to disk (used by LoadWallet)
-    bool LoadCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret, bool checksum_valid);
+    bool LoadCryptedKey(const CPubKey& vchPubKey, const std::vector<unsigned char>& vchCryptedSecret, bool checksum_valid);
     //! Adds a CScript to the store
     bool LoadCScript(const CScript& redeemScript);
     //! Load a HD chain model (used by LoadWallet)
@@ -242,7 +242,7 @@ public:
     const CHDChain& GetHDChain() const { return m_hd_chain; }
 
     //! Fetches a pubkey from mapWatchKeys if it exists there
-    bool GetWatchPubKey(const CKeyID &address, CPubKey &pubkey_out) const;
+    bool GetWatchPubKey(const CKeyID& address, CPubKey& pubkey_out) const;
 
     /**
      * Retrieves scripts that were imported by bugs into the legacy spkm and are
@@ -262,23 +262,25 @@ class LegacySigningProvider : public SigningProvider
 {
 private:
     const LegacyDataSPKM& m_spk_man;
+
 public:
     explicit LegacySigningProvider(const LegacyDataSPKM& spk_man) : m_spk_man(spk_man) {}
 
-    bool GetCScript(const CScriptID &scriptid, CScript& script) const override { return m_spk_man.GetCScript(scriptid, script); }
-    bool HaveCScript(const CScriptID &scriptid) const override { return m_spk_man.HaveCScript(scriptid); }
-    bool GetPubKey(const CKeyID &address, CPubKey& pubkey) const override { return m_spk_man.GetPubKey(address, pubkey); }
-    bool GetKey(const CKeyID &address, CKey& key) const override { return false; }
-    bool HaveKey(const CKeyID &address) const override { return false; }
+    bool GetCScript(const CScriptID& scriptid, CScript& script) const override { return m_spk_man.GetCScript(scriptid, script); }
+    bool HaveCScript(const CScriptID& scriptid) const override { return m_spk_man.HaveCScript(scriptid); }
+    bool GetPubKey(const CKeyID& address, CPubKey& pubkey) const override { return m_spk_man.GetPubKey(address, pubkey); }
+    bool GetKey(const CKeyID& address, CKey& key) const override { return false; }
+    bool HaveKey(const CKeyID& address) const override { return false; }
     bool GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const override { return m_spk_man.GetKeyOrigin(keyid, info); }
 };
 
 class DescriptorScriptPubKeyMan : public ScriptPubKeyMan
 {
     friend class LegacyDataSPKM;
+
 private:
     using ScriptPubKeyMap = std::map<CScript, int32_t>; // Map of scripts to descriptor range index
-    using PubKeyMap = std::map<CPubKey, int32_t>; // Map of pubkeys involved in scripts to descriptor range index
+    using PubKeyMap = std::map<CPubKey, int32_t>;       // Map of pubkeys involved in scripts to descriptor range index
     using CryptedKeyMap = std::map<CKeyID, std::pair<CPubKey, std::vector<unsigned char>>>;
     using KeyMap = std::map<CKeyID, CKey>;
 
@@ -295,7 +297,7 @@ private:
     //! Number of pre-generated keys/scripts (part of the look-ahead process, used to detect payments)
     int64_t m_keypool_size GUARDED_BY(cs_desc_man){DEFAULT_KEYPOOL_SIZE};
 
-    bool AddDescriptorKeyWithDB(WalletBatch& batch, const CKey& key, const CPubKey &pubkey) EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);
+    bool AddDescriptorKeyWithDB(WalletBatch& batch, const CKey& key, const CPubKey& pubkey) EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);
 
     KeyMap GetKeys() const EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);
 
@@ -314,14 +316,16 @@ protected:
 
 public:
     DescriptorScriptPubKeyMan(WalletStorage& storage, WalletDescriptor& descriptor, int64_t keypool_size)
-        :   ScriptPubKeyMan(storage),
-            m_keypool_size(keypool_size),
-            m_wallet_descriptor(descriptor)
-        {}
+        : ScriptPubKeyMan(storage),
+          m_keypool_size(keypool_size),
+          m_wallet_descriptor(descriptor)
+    {
+    }
     DescriptorScriptPubKeyMan(WalletStorage& storage, int64_t keypool_size)
-        :   ScriptPubKeyMan(storage),
-            m_keypool_size(keypool_size)
-        {}
+        : ScriptPubKeyMan(storage),
+          m_keypool_size(keypool_size)
+    {
+    }
 
     mutable RecursiveMutex cs_desc_man;
 
@@ -382,7 +386,7 @@ public:
     bool HasWalletDescriptor(const WalletDescriptor& desc) const;
     util::Result<void> UpdateWalletDescriptor(WalletDescriptor& descriptor);
     bool CanUpdateToWalletDescriptor(const WalletDescriptor& descriptor, std::string& error);
-    void AddDescriptorKey(const CKey& key, const CPubKey &pubkey);
+    void AddDescriptorKey(const CKey& key, const CPubKey& pubkey);
     void WriteDescriptor();
 
     WalletDescriptor GetWalletDescriptor() const EXCLUSIVE_LOCKS_REQUIRED(cs_desc_man);
@@ -396,8 +400,7 @@ public:
 };
 
 /** struct containing information needed for migrating legacy wallets to descriptor wallets */
-struct MigrationData
-{
+struct MigrationData {
     CExtKey master_key;
     std::vector<std::pair<std::string, int64_t>> watch_descs;
     std::vector<std::pair<std::string, int64_t>> solvable_descs;

@@ -11,6 +11,7 @@
 #include <primitives/transaction.h>
 #include <sync.h>
 
+#include <coordinate/signed_block.h>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -44,7 +45,8 @@ struct NewMempoolTransactionInfo;
  * synchronization. No ordering should be assumed across
  * ValidationInterface() subscribers.
  */
-class CValidationInterface {
+class CValidationInterface
+{
 protected:
     /**
      * Protected destructor so that instances can only be deleted by derived classes.
@@ -60,7 +62,7 @@ protected:
      *
      * Called on a background thread. Only called for the active chainstate.
      */
-    virtual void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) {}
+    virtual void UpdatedBlockTip(const CBlockIndex* pindexNew, const CBlockIndex* pindexFork, bool fInitialDownload) {}
     /**
      * Notifies listeners any time the block chain tip changes, synchronously.
      */
@@ -118,7 +120,8 @@ protected:
      *
      * Called on a background thread.
      */
-    virtual void BlockConnected(ChainstateRole role, const std::shared_ptr<const CBlock> &block, const CBlockIndex *pindex) {}
+    virtual void BlockConnected(ChainstateRole role, const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex) {}
+    virtual void SignedBlockConnected(const SignedBlock& block) {}
     /**
      * Notifies listeners of a block being disconnected
      * Provides the block that was disconnected.
@@ -126,7 +129,7 @@ protected:
      * Called on a background thread. Only called for the active chainstate, since
      * background chainstates should never disconnect blocks.
      */
-    virtual void BlockDisconnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex* pindex) {}
+    virtual void BlockDisconnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex) {}
     /**
      * Notifies listeners of the new active block chain on-disk.
      *
@@ -143,7 +146,7 @@ protected:
      *
      * Called on a background thread.
      */
-    virtual void ChainStateFlushed(ChainstateRole role, const CBlockLocator &locator) {}
+    virtual void ChainStateFlushed(ChainstateRole role, const CBlockLocator& locator) {}
     /**
      * Notifies listeners of a block validation result.
      * If the provided BlockValidationState IsValid, the provided block
@@ -155,13 +158,14 @@ protected:
      * Notifies listeners that a block which builds directly on our current tip
      * has been received and connected to the headers tree, though not validated yet.
      */
-    virtual void NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>& block) {};
+    virtual void NewPoWValidBlock(const CBlockIndex* pindex, const std::shared_ptr<const CBlock>& block) {};
     friend class ValidationSignals;
     friend class ValidationInterfaceTest;
 };
 
 class ValidationSignalsImpl;
-class ValidationSignals {
+class ValidationSignals
+{
 private:
     std::unique_ptr<ValidationSignalsImpl> m_internals;
 
@@ -203,7 +207,7 @@ public:
      * wait for things like cs_main, so blocking until func is called with cs_main
      * will result in a deadlock (that DEBUG_LOCKORDER will miss).
      */
-    void CallFunctionInValidationInterfaceQueue(std::function<void ()> func);
+    void CallFunctionInValidationInterfaceQueue(std::function<void()> func);
 
     /**
      * This is a synonym for the following, which asserts certain locks are not
@@ -216,16 +220,17 @@ public:
      */
     void SyncWithValidationInterfaceQueue() LOCKS_EXCLUDED(cs_main);
 
-    void UpdatedBlockTip(const CBlockIndex *, const CBlockIndex *, bool fInitialDownload);
+    void UpdatedBlockTip(const CBlockIndex*, const CBlockIndex*, bool fInitialDownload);
     void ActiveTipChange(const CBlockIndex&, bool);
     void TransactionAddedToMempool(const NewMempoolTransactionInfo&, uint64_t mempool_sequence);
     void TransactionRemovedFromMempool(const CTransactionRef&, MemPoolRemovalReason, uint64_t mempool_sequence);
     void MempoolTransactionsRemovedForBlock(const std::vector<RemovedMempoolTransactionInfo>&, unsigned int nBlockHeight);
-    void BlockConnected(ChainstateRole, const std::shared_ptr<const CBlock> &, const CBlockIndex *pindex);
-    void BlockDisconnected(const std::shared_ptr<const CBlock> &, const CBlockIndex* pindex);
-    void ChainStateFlushed(ChainstateRole, const CBlockLocator &);
+    void BlockConnected(ChainstateRole, const std::shared_ptr<const CBlock>&, const CBlockIndex* pindex);
+    void SignBlockConnected(const SignedBlock& pblock);
+    void BlockDisconnected(const std::shared_ptr<const CBlock>&, const CBlockIndex* pindex);
+    void ChainStateFlushed(ChainstateRole, const CBlockLocator&);
     void BlockChecked(const CBlock&, const BlockValidationState&);
-    void NewPoWValidBlock(const CBlockIndex *, const std::shared_ptr<const CBlock>&);
+    void NewPoWValidBlock(const CBlockIndex*, const std::shared_ptr<const CBlock>&);
 };
 
 #endif // BITCOIN_VALIDATIONINTERFACE_H

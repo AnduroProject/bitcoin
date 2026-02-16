@@ -16,7 +16,7 @@ class ExternalSigner;
 class WalletModel;
 
 namespace Ui {
-    class CreateWalletDialog;
+class CreateWalletDialog;
 }
 
 /** Dialog for creating wallets
@@ -38,7 +38,7 @@ public:
     bool isExternalSignerChecked() const;
 
 private:
-    Ui::CreateWalletDialog *ui;
+    Ui::CreateWalletDialog* ui;
     bool m_has_signers = false;
 };
 

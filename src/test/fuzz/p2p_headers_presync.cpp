@@ -43,7 +43,7 @@ public:
         peerman_opts.ignore_incoming_txs = true;
         m_node.peerman = PeerManager::make(*m_node.connman, *m_node.addrman,
                                            m_node.banman.get(), *m_node.chainman,
-                                           *m_node.mempool, *m_node.warnings, peerman_opts);
+                                           *m_node.mempool, *m_node.preconfmempool, *m_node.warnings, peerman_opts);
 
         CConnman::Options options;
         options.m_msgproc = m_node.peerman.get();
@@ -65,8 +65,7 @@ void HeadersSyncSetup::ResetAndInitialize()
     std::vector<ConnectionType> conn_types = {
         ConnectionType::OUTBOUND_FULL_RELAY,
         ConnectionType::BLOCK_RELAY,
-        ConnectionType::INBOUND
-    };
+        ConnectionType::INBOUND};
 
     for (auto conn_type : conn_types) {
         CAddress addr{};

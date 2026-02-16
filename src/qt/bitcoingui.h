@@ -45,7 +45,7 @@ namespace interfaces {
 class Handler;
 class Node;
 struct BlockAndHeaderTipInfo;
-}
+} // namespace interfaces
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -58,7 +58,7 @@ QT_END_NAMESPACE
 namespace GUIUtil {
 class ClickableLabel;
 class ClickableProgressBar;
-}
+} // namespace GUIUtil
 
 /**
   Bitcoin GUI main class. This class represents the main window of the Bitcoin UI. It communicates with both the client and
@@ -71,13 +71,13 @@ class BitcoinGUI : public QMainWindow
 public:
     static const std::string DEFAULT_UIPLATFORM;
 
-    explicit BitcoinGUI(interfaces::Node& node, const PlatformStyle *platformStyle, const NetworkStyle *networkStyle, QWidget *parent = nullptr);
+    explicit BitcoinGUI(interfaces::Node& node, const PlatformStyle* platformStyle, const NetworkStyle* networkStyle, QWidget* parent = nullptr);
     ~BitcoinGUI();
 
     /** Set the client model.
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
     */
-    void setClientModel(ClientModel *clientModel = nullptr, interfaces::BlockAndHeaderTipInfo* tip_info = nullptr);
+    void setClientModel(ClientModel* clientModel = nullptr, interfaces::BlockAndHeaderTipInfo* tip_info = nullptr);
 #ifdef ENABLE_WALLET
     void setWalletController(WalletController* wallet_controller, bool show_loading_minimized);
     WalletController* getWalletController();
@@ -105,12 +105,12 @@ public:
     bool isPrivacyModeActivated() const;
 
 protected:
-    void changeEvent(QEvent *e) override;
-    void closeEvent(QCloseEvent *event) override;
-    void showEvent(QShowEvent *event) override;
-    void dragEnterEvent(QDragEnterEvent *event) override;
-    void dropEvent(QDropEvent *event) override;
-    bool eventFilter(QObject *object, QEvent *event) override;
+    void changeEvent(QEvent* e) override;
+    void closeEvent(QCloseEvent* event) override;
+    void showEvent(QShowEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
+    bool eventFilter(QObject* object, QEvent* event) override;
 
 private:
     interfaces::Node& m_node;
@@ -164,7 +164,7 @@ private:
     QAction* m_migrate_wallet_action{nullptr};
     QMenu* m_migrate_wallet_menu{nullptr};
 
-    QLabel *m_wallet_selector_label = nullptr;
+    QLabel* m_wallet_selector_label = nullptr;
     QComboBox* m_wallet_selector = nullptr;
 
     QSystemTrayIcon* trayIcon = nullptr;
@@ -184,7 +184,7 @@ private:
     int prevBlocks = 0;
     int spinnerFrame = 0;
 
-    const PlatformStyle *platformStyle;
+    const PlatformStyle* platformStyle;
     const NetworkStyle* const m_network_style;
 
     /** Create the main UI actions. */
@@ -216,7 +216,7 @@ private:
 Q_SIGNALS:
     void quitRequested();
     /** Signal raised when a URI was entered or dragged to the GUI */
-    void receivedURI(const QString &uri);
+    void receivedURI(const QString& uri);
     /** Signal raised when RPC console shown */
     void consoleShown(RPCConsole* console);
     void setPrivacy(bool privacy);
@@ -245,7 +245,7 @@ public Q_SLOTS:
     void setCurrentWallet(WalletModel* wallet_model);
     void setCurrentWalletBySelectorIndex(int index);
     /** Set the UI status indicators based on the currently selected wallet.
-    */
+     */
     void updateWalletStatus();
 
 private:
@@ -317,7 +317,7 @@ public Q_SLOTS:
     void detectShutdown();
 
     /** Show progress dialog e.g. for verifychain */
-    void showProgress(const QString &title, int nProgress);
+    void showProgress(const QString& title, int nProgress);
 
     void showModalOverlay();
 };
@@ -327,13 +327,13 @@ class UnitDisplayStatusBarControl : public QLabel
     Q_OBJECT
 
 public:
-    explicit UnitDisplayStatusBarControl(const PlatformStyle *platformStyle);
+    explicit UnitDisplayStatusBarControl(const PlatformStyle* platformStyle);
     /** Lets the control know about the Options Model (and its signals) */
-    void setOptionsModel(OptionsModel *optionsModel);
+    void setOptionsModel(OptionsModel* optionsModel);
 
 protected:
     /** So that it responds to left-button clicks */
-    void mousePressEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent* event) override;
     void changeEvent(QEvent* e) override;
 
 private:

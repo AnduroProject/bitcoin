@@ -25,10 +25,7 @@ struct WalletContext;
 
 extern const std::string HELP_REQUIRING_PASSPHRASE;
 
-static const RPCResult RESULT_LAST_PROCESSED_BLOCK { RPCResult::Type::OBJ, "lastprocessedblock", "hash and height of the block this information was generated on",{
-    {RPCResult::Type::STR_HEX, "hash", "hash of the block this information was generated on"},
-    {RPCResult::Type::NUM, "height", "height of the block this information was generated on"}}
-};
+static const RPCResult RESULT_LAST_PROCESSED_BLOCK{RPCResult::Type::OBJ, "lastprocessedblock", "hash and height of the block this information was generated on", {{RPCResult::Type::STR_HEX, "hash", "hash of the block this information was generated on"}, {RPCResult::Type::NUM, "height", "height of the block this information was generated on"}}};
 
 /**
  * Figures out what wallet, if any, to use for a JSONRPCRequest.

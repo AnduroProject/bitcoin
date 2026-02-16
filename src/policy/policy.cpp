@@ -7,10 +7,14 @@
 
 #include <policy/policy.h>
 
+#include <algorithm>
 #include <coins.h>
 #include <consensus/amount.h>
 #include <consensus/consensus.h>
 #include <consensus/validation.h>
+#include <coordinate/coordinate_mempool_entry.h>
+#include <cstddef>
+#include <logging.h>
 #include <policy/feerate.h>
 #include <primitives/transaction.h>
 #include <script/interpreter.h>
@@ -18,9 +22,6 @@
 #include <script/solver.h>
 #include <serialize.h>
 #include <span.h>
-
-#include <algorithm>
-#include <cstddef>
 #include <vector>
 
 CAmount GetDustThreshold(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
@@ -70,7 +71,13 @@ bool IsDust(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 std::vector<uint32_t> GetDust(const CTransaction& tx, CFeeRate dust_relay_rate)
 {
     std::vector<uint32_t> dust_outputs;
-    for (uint32_t i{0}; i < tx.vout.size(); ++i) {
+    uint32_t startIndex = 0;
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+       startIndex = 2;
+    } else if (tx.version == TRANSACTION_PRECONF_VERSION) {
+        startIndex = 1;
+    }
+    for (uint32_t i{startIndex}; i < tx.vout.size(); ++i) {
         if (IsDust(tx.vout[i], dust_relay_rate)) dust_outputs.push_back(i);
     }
     return dust_outputs;
@@ -78,7 +85,7 @@ std::vector<uint32_t> GetDust(const CTransaction& tx, CFeeRate dust_relay_rate)
 
 bool IsStandard(const CScript& scriptPubKey, TxoutType& whichType)
 {
-    std::vector<std::vector<unsigned char> > vSolutions;
+    std::vector<std::vector<unsigned char>> vSolutions;
     whichType = Solver(scriptPubKey, vSolutions);
 
     if (whichType == TxoutType::NONSTANDARD) {
@@ -98,23 +105,33 @@ bool IsStandard(const CScript& scriptPubKey, TxoutType& whichType)
 
 bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_datacarrier_bytes, bool permit_bare_multisig, const CFeeRate& dust_relay_fee, std::string& reason)
 {
-    if (tx.version > TX_MAX_STANDARD_VERSION || tx.version < 1) {
-        reason = "version";
-        return false;
+    if (tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && tx.version != TRANSACTION_PRECONF_VERSION && tx.version != TRANSACTION_PEGIN_VERSION) {
+        if (tx.version > TX_MAX_STANDARD_VERSION || tx.version < 1) {
+            reason = "version";
+            return false;
+        }
     }
+
 
     // Extremely large transactions with lots of inputs can cost the network
     // almost as much to process as they cost the sender in fees, because
     // computing signature hashes is O(ninputs*txsize). Limiting transactions
     // to MAX_STANDARD_TX_WEIGHT mitigates CPU exhaustion attacks.
-    unsigned int sz = GetTransactionWeight(tx);
-    if (sz > MAX_STANDARD_TX_WEIGHT) {
-        reason = "tx-size";
-        return false;
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_CREATE_VERSION) {
+        unsigned int sz = GetTransactionWeight(tx);
+        if (sz > MAX_STANDARD_TX_WEIGHT_ASSET) {
+            reason = "tx-size";
+            return false;
+        }
+    } else {
+        unsigned int sz = GetTransactionWeight(tx);
+        if (sz > MAX_STANDARD_TX_WEIGHT) {
+            reason = "tx-size";
+            return false;
+        }
     }
 
-    for (const CTxIn& txin : tx.vin)
-    {
+    for (const CTxIn& txin : tx.vin) {
         // Biggest 'standard' txin involving only keys is a 15-of-15 P2SH
         // multisig with compressed keys (remember the MAX_SCRIPT_ELEMENT_SIZE byte limit on
         // redeemScript size). That works out to a (15*(33+1))+3=513 byte
@@ -156,10 +173,100 @@ bool IsStandardTx(const CTransaction& tx, const std::optional<unsigned>& max_dat
 
     // Only MAX_DUST_OUTPUTS_PER_TX dust is permitted(on otherwise valid ephemeral dust)
     if (GetDust(tx, dust_relay_fee).size() > MAX_DUST_OUTPUTS_PER_TX) {
-        reason = "dust";
+        if (tx.version != TRANSACTION_COORDINATE_ASSET_CREATE_VERSION && tx.version != TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
+            reason = "dust";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool AreCoordinateTransactionStandard(const CTransaction& tx, CCoinsViewCache& mapInputs)
+{
+    if (tx.version == TRANSACTION_PEGIN_VERSION) {
+        return true;
+    }
+    LogPrintf("transaction version is %i \n", tx.version);
+    CAmount amountAssetInOut = CAmount(0);
+    std::vector<unsigned char> currentAssetID = {};
+    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+        bool fBitAsset = false;
+        bool fBitAssetControl = false;
+        std::vector<unsigned char> nAssetID = {};
+        Coin coin;
+        CAmount coinValue = 0;
+
+        CoordinateMempoolEntry assetMempoolObj;
+        bool is_mempool_asset = getMempoolAsset(tx.vin[i].prevout.hash, tx.vin[i].prevout.n, &assetMempoolObj);
+        if (is_mempool_asset) {
+            fBitAsset = true;
+            fBitAssetControl = false;
+            nAssetID = assetMempoolObj.assetID;
+            coinValue = assetMempoolObj.nValue;
+        } else {
+            // check input is unspent
+            bool is_asset = mapInputs.getAssetCoin(tx.vin[i].prevout, fBitAsset, fBitAssetControl, nAssetID, &coin);
+            if (!is_asset) {
+                LogPrintf("Invalid inputs \n");
+                return false;
+            } else {
+                coinValue = coin.out.nValue;
+            }
+        }
+
+
+        if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION) {
+            // check first input is asset
+            if (fBitAssetControl) {
+                LogPrintf("Asset controller value not accepted \n");
+                return false;
+            }
+
+            if (fBitAsset) {
+                if (i == 0) {
+                    // check first index asset id
+                    currentAssetID = nAssetID;
+                } else {
+                    // prevent to include multiple asset id
+                    if (getAssetHash(currentAssetID) != getAssetHash(nAssetID)) {
+                        LogPrintf(" Multiple asset is detected and it is invalid \n");
+                        return false;
+                    }
+                }
+                amountAssetInOut = amountAssetInOut + coinValue;
+            }
+        }
+
+        if (tx.version == 2 && fBitAsset) {
+            LogPrintf("Asset inputs not accepted in standard transaction \n");
+            return false;
+        }
+    }
+
+    if (tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION && amountAssetInOut == 0) {
+        LogPrintf("Asset inputs missing \n");
         return false;
     }
 
+    if (amountAssetInOut > 0 && !(tx.version == TRANSACTION_COORDINATE_ASSET_TRANSFER_VERSION)) {
+        LogPrintf("Invalid transaction hold asset input \n");
+    }
+
+    if (amountAssetInOut > 0) {
+        CAmount amountAssetOut = CAmount(0);
+        for (unsigned int i = 0; i < tx.vout.size(); i++) {
+            if (amountAssetOut == amountAssetInOut) {
+                break;
+            }
+            amountAssetOut = amountAssetOut + tx.vout[i].nValue;
+        }
+        // check asset full spent on output
+        if (amountAssetOut != amountAssetInOut) {
+            LogPrintf("Enough asset not included in output \n");
+            return false;
+        }
+    }
     return true;
 }
 
@@ -171,7 +278,7 @@ static bool CheckSigopsBIP54(const CTransaction& tx, const CCoinsViewCache& inpu
     Assert(!tx.IsCoinBase());
 
     unsigned int sigops{0};
-    for (const auto& txin: tx.vin) {
+    for (const auto& txin : tx.vin) {
         const auto& prev_txo{inputs.AccessCoin(txin.prevout).out};
 
         // Unlike the existing block wide sigop limit which counts sigops present in the block
@@ -223,7 +330,7 @@ bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
         const CTxOut& prev = mapInputs.AccessCoin(tx.vin[i].prevout).out;
 
-        std::vector<std::vector<unsigned char> > vSolutions;
+        std::vector<std::vector<unsigned char>> vSolutions;
         TxoutType whichType = Solver(prev.scriptPubKey, vSolutions);
         if (whichType == TxoutType::NONSTANDARD || whichType == TxoutType::WITNESS_UNKNOWN) {
             // WITNESS_UNKNOWN failures are typically also caught with a policy
@@ -232,7 +339,7 @@ bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
             // validation.
             return false;
         } else if (whichType == TxoutType::SCRIPTHASH) {
-            std::vector<std::vector<unsigned char> > stack;
+            std::vector<std::vector<unsigned char>> stack;
             // convert the scriptSig into a stack, so we can inspect the redeemScript
             if (!EvalScript(stack, tx.vin[i].scriptSig, SCRIPT_VERIFY_NONE, BaseSignatureChecker(), SigVersion::BASE))
                 return false;
@@ -253,14 +360,13 @@ bool IsWitnessStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
     if (tx.IsCoinBase())
         return true; // Coinbases are skipped
 
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
-    {
+    for (unsigned int i = 0; i < tx.vin.size(); i++) {
         // We don't care if witness for this input is empty, since it must not be bloated.
         // If the script is invalid without witness, it would be caught sooner or later during validation.
         if (tx.vin[i].scriptWitness.IsNull())
             continue;
 
-        const CTxOut &prev = mapInputs.AccessCoin(tx.vin[i].prevout).out;
+        const CTxOut& prev = mapInputs.AccessCoin(tx.vin[i].prevout).out;
 
         // get the scriptPubKey corresponding to this input:
         CScript prevScript = prev.scriptPubKey;
@@ -272,7 +378,7 @@ bool IsWitnessStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
 
         bool p2sh = false;
         if (prevScript.IsPayToScriptHash()) {
-            std::vector <std::vector<unsigned char> > stack;
+            std::vector<std::vector<unsigned char>> stack;
             // If the scriptPubKey is P2SH, we try to extract the redeemScript casually by converting the scriptSig
             // into a stack. We do not check IsPushOnly nor compare the hash as these will be done later anyway.
             // If the check fails at this stage, we know that this txid must be a bad one.
@@ -317,7 +423,7 @@ bool IsWitnessStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
             if (stack.size() >= 2) {
                 // Script path spend (2 or more stack elements after removing optional annex)
                 const auto& control_block = SpanPopBack(stack);
-                SpanPopBack(stack); // Ignore script
+                SpanPopBack(stack);                      // Ignore script
                 if (control_block.empty()) return false; // Empty control block is invalid
                 if ((control_block[0] & TAPROOT_LEAF_MASK) == TAPROOT_LEAF_TAPSCRIPT) {
                     // Leaf version 0xc0 (aka Tapscript, see BIP 342)

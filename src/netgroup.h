@@ -13,11 +13,13 @@
 /**
  * Netgroup manager
  */
-class NetGroupManager {
+class NetGroupManager
+{
 public:
     explicit NetGroupManager(std::vector<bool> asmap)
         : m_asmap{std::move(asmap)}
-    {}
+    {
+    }
 
     /** Get a checksum identifying the asmap being used. */
     uint256 GetAsmapChecksum() const;
